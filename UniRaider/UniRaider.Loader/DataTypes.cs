@@ -30,7 +30,25 @@ namespace UniRaider.Loader
         public tr2_room[] Rooms { get; set; }
         public uint NumFloorData { get; set; }
         // TODO: Store Floor Data somewhere
-           
+        public ushort[] FloorData;
+        public uint NumMeshData { get; set; }
+        public tr2_mesh[] Meshes { get; set; }
+        public uint NumMeshPointers { get; set; }
+        public uint[] MeshPointers { get; set; }
+        public uint NumAnimations { get; set; }
+        public tr2_animation[] Animations { get; set; }
+        public uint NumStateChanges { get; set; }
+        public tr2_state_change[] StateChanges { get; set; }
+        public uint NumAnimDispatches { get; set; }
+        public tr2_anim_dispatch AnimDispatches { get; set; }
+        public uint NumAnimCommands { get; set; }
+        public tr2_anim_command AnimCommands { get; set; }
+        public uint NumMeshTrees { get; set; }
+        public tr2_meshtree[] MeshTrees { get; set; }
+        public uint NumFrames { get; set; }
+        public ushort[] Frames { get; set; }
+        public uint NumMoveables { get; set; }
+        public tr2_moveable[] Moveables { get; set; }
     }
 
     public enum TR2LevelVersion : uint
