@@ -14,7 +14,7 @@ namespace UniRaider.TestApp
             }
             else
             {
-                var lvl2 = TR2LevelParser.ParseFile(args[0]);
+                var lvl2 = TombLevelParser.ParseFile(args[0]);
             }
             
             Console.ReadLine();

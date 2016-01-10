@@ -33,6 +33,22 @@ namespace UniRaider.Loader
             return arr;
         }
 
+        public static uint[] ReadUInt32Array(this BinaryReader br, long arrLength)
+        {
+            var arr = new uint[arrLength];
+            for (long i = 0; i < arrLength; i++)
+                arr[i] = br.ReadUInt32();
+            return arr;
+        }
+
+        public static short[] ReadInt16Array(this BinaryReader br, long arrLength)
+        {
+            var arr = new short[arrLength];
+            for (long i = 0; i < arrLength; i++)
+                arr[i] = br.ReadInt16();
+            return arr;
+        }
+
         public static string[] ReadStringArray(this BinaryReader br, long arrLength)
         {
             var arr = new List<string>();

@@ -41,12 +41,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataTypes.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TOMBPCFile.cs" />
     <Compile Include="TOMBPCParser.cs" />
-    <Compile Include="DataTypes.cs" />
-    <Compile Include="TR2LevelParser.cs" />
+    <Compile Include="TR1_DataTypes.cs" />
+    <Compile Include="TR2_DataTypes.cs" />
+    <Compile Include="TombLevelParser.cs" />
+    <Compile Include="TR3_DataTypes.cs" />
     <Compile Include="XORCrypt.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
