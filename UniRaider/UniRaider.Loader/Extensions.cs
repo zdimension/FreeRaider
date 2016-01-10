@@ -63,7 +63,7 @@ namespace UniRaider.Loader
         public static T[] ReadArray<T>(this BinaryReader br, long arrLength)
         {
             var arr = new List<T>();
-            var tc = Type.GetTypeCode(typeof (T));
+            var tc = Type.GetTypeCode(typeof(T));
             var reader = new Func<dynamic>(() => null);
 
 

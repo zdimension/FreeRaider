@@ -9,6 +9,7 @@ namespace UniRaider.Loader
         public static TR2Level ParseFile(string filePath)
         {
             var lvl = new TR2Level();
+
             using (var fs = new FileStream(filePath, FileMode.Open))
             {
                 using (var br = new BinaryReader(fs))
