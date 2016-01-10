@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace UniRaider.Loader
 {
@@ -49,26 +50,24 @@ namespace UniRaider.Loader
             return arr;
         }
 
-        public static string[] ReadStringArray(this BinaryReader br, long arrLength)
+        public static string[] ReadStringArray(this BinaryReader br, long arrLength, byte xorKey = 0)
         {
-            var arr = new List<string>();
+            var arr = new string[arrLength];
             var stringOffsets = br.ReadUInt16Array(arrLength).ToList();
             var stringDataSize = br.ReadUInt16();
-            var current = "";
+            var tmp = new char[stringDataSize];
             for(ushort i = 0; i < stringDataSize; i++)
             {
-                if(i != 0 && stringOffsets.Contains(i))
-                {
-                    arr.Add(current);
-                    current = "";
-                    stringOffsets.Remove(i);
-                }
-                else
-                {
-                    current += (char) br.ReadByte();
-                }
+                tmp[i] = (char) (br.ReadByte() ^ xorKey);
             }
-            return arr.ToArray();
+            for(var i = 0; i < arrLength; i++)
+            {
+                var st = stringOffsets[i];
+                var s = new string(tmp, st, i == arrLength - 1 ? tmp.Length - st : stringOffsets[i + 1] - st);
+                if (s[s.Length - 1] == '\0') s = s.Remove(s.Length - 1);
+                arr[i] = s.ConvertTR2Accent();
+            }
+            return arr;
         }
 
         public static string[] XORArray(this IList<string> arr, int key)
@@ -79,7 +78,7 @@ namespace UniRaider.Loader
         public static T[] ReadArray<T>(this BinaryReader br, long arrLength)
         {
             var arr = new List<T>();
-            var tc = Type.GetTypeCode(typeof(T));
+            var tc = Type.GetTypeCode(typeof (T));
             var reader = new Func<dynamic>(() => null);
 
 
@@ -134,6 +133,24 @@ namespace UniRaider.Loader
                 arr.Add(reader());
             }
             return arr.ToArray();
+        }
+
+        public static string ConvertTR2Accent(this string s)
+        {
+            var repl = new Dictionary<string, string>
+            {
+                {"Red)marrer un niveau", "Redémarrer un niveau" }
+            };
+
+            if (repl.ContainsKey(s)) return repl[s];
+
+            var t = s;
+
+            t = Regex.Replace(t, @"\)(\w)", "$1\u0301");
+            t = Regex.Replace(t, @"\((\w)", "$1\u0302");
+            t = Regex.Replace(t, @"\$(\w)", "$1\u0300");
+            t = t.Normalize(NormalizationForm.FormC);
+            return t;
         }
     }
 }

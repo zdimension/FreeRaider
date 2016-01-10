@@ -1,19 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace UniRaider.Loader
 {
     public struct TR3Level : ILevel
     {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
-        private tr2_colour[] _palette;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
-        private tr2_colour4[] _palette16;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)] private tr2_colour[] _palette;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)] private tr2_colour4[] _palette16;
 
         public TR2LevelVersion GameVersion { get; set; }
 
@@ -111,9 +105,9 @@ namespace UniRaider.Loader
                 }
                 fixed (ushort* ptr = (&buffer[meshPointer / 2]))
                 {
-                    char* tmpPtr = (char*)ptr;
+                    char* tmpPtr = (char*) ptr;
                     var mem =
-                        new BinaryReader(new UnmanagedMemoryStream((byte*)tmpPtr,
+                        new BinaryReader(new UnmanagedMemoryStream((byte*) tmpPtr,
                             (numMeshData * 2) - meshPointer));
                     lvl.Meshes[i] = tr2_mesh.Parse(mem);
                 }
@@ -248,16 +242,16 @@ namespace UniRaider.Loader
     }
 
 
-
-
     /// <summary>
-    /// Here's where all the room data come together. As it's stored in the file, the <see cref="tr2_room_info"/> structure comes first, followed by a <see cref="uint"/> NumDataWords, which specifies the number of 16-bit words to follow.  Those data words must be parsed in order to interpret and construct the variable-length arrays of vertices, meshes, doors, and sectors.
+    ///     Here's where all the room data come together. As it's stored in the file, the <see cref="tr2_room_info" />
+    ///     structure comes first, followed by a <see cref="uint" /> NumDataWords, which specifies the number of 16-bit words
+    ///     to follow.  Those data words must be parsed in order to interpret and construct the variable-length arrays of
+    ///     vertices, meshes, doors, and sectors.
     /// </summary>
     public struct tr3_room
     {
         public tr2_room_info info; // where the room exists, in world coordinates 
         public tr2_room_data RoomData; // the room mesh
-        public ushort NumPortals; // number of visibility portals to other rooms
         public tr2_room_portal[] Portals; // list of visibility portals
         public ushort NumZsectors; // "width" of sector list
         public ushort NumXsectors; // "height" of sector list
@@ -266,9 +260,7 @@ namespace UniRaider.Loader
 
         public short AmbientIntensity2;
         // almost always the same value as AmbientIntensity1 [absent from TR1 data files]
-        public ushort NumLights; // number of point lights in this room
         public tr2_room_light[] Lights; // list of point lights
-        public ushort NumStaticMeshes; // number of static meshes
         public tr2_room_staticmesh[] StaticMeshes; // list of static meshes
         public short AlternateRoom; // number of the room that this room can alternate with
         public tr2_room_Flags Flags;
@@ -280,19 +272,19 @@ namespace UniRaider.Loader
             ret.info = tr2_room_info.Parse(br);
             var numData = br.ReadUInt32();
             ret.RoomData = tr2_room_data.Parse(br);
-            ret.NumPortals = br.ReadUInt16();
-            ret.Portals = br.ReadArray<tr2_room_portal>(ret.NumPortals);
+            var numPortals = br.ReadUInt16();
+            ret.Portals = br.ReadArray<tr2_room_portal>(numPortals);
             ret.NumZsectors = br.ReadUInt16();
             ret.NumXsectors = br.ReadUInt16();
             ret.SectorList = br.ReadArray<tr2_room_sector>(ret.NumZsectors * ret.NumXsectors);
             ret.AmbientIntensity1 = br.ReadInt16();
             ret.AmbientIntensity2 = br.ReadInt16();
-            ret.NumLights = br.ReadUInt16();
-            ret.Lights = br.ReadArray<tr2_room_light>(ret.NumLights);
-            ret.NumStaticMeshes = br.ReadUInt16();
-            ret.StaticMeshes = br.ReadArray<tr2_room_staticmesh>(ret.NumStaticMeshes);
+            var numLights = br.ReadUInt16();
+            ret.Lights = br.ReadArray<tr2_room_light>(numLights);
+            var numStaticMeshes = br.ReadUInt16();
+            ret.StaticMeshes = br.ReadArray<tr2_room_staticmesh>(numStaticMeshes);
             ret.AlternateRoom = br.ReadInt16();
-            ret.Flags = (tr2_room_Flags)br.ReadInt16();
+            ret.Flags = (tr2_room_Flags) br.ReadInt16();
             ret.RoomLightColour = tr2_colour.Parse(br);
             return ret;
         }

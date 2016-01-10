@@ -1,7 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace UniRaider.Loader
 {
@@ -15,23 +13,30 @@ namespace UniRaider.Loader
             {
                 using (var br = new BinaryReader(fs))
                 {
-                    var ver = GameVersionHelper.ParseVersion(br, Path.GetExtension(filePath));
-
-                    switch (ver)
+                    try
                     {
-                        case TR2LevelVersion.TR1:
-                        case TR2LevelVersion.TR1UnfinishedBusiness:
-                            lvl = TR1Level.Parse(br);
-                            break;
-                        case TR2LevelVersion.TR2:
-                            lvl = TR2Level.Parse(br);
-                            break;
-                        case TR2LevelVersion.TR3:
-                            lvl = TR3Level.Parse(br);
-                            break;
-                    }
+                        var ver = GameVersionHelper.ParseVersion(br, Path.GetExtension(filePath));
 
-                    lvl.GameVersion = ver;
+                        switch (ver)
+                        {
+                            case TR2LevelVersion.TR1:
+                            case TR2LevelVersion.TR1UnfinishedBusiness:
+                                lvl = TR1Level.Parse(br);
+                                break;
+                            case TR2LevelVersion.TR2:
+                                lvl = TR2Level.Parse(br);
+                                break;
+                            case TR2LevelVersion.TR3:
+                                lvl = TR3Level.Parse(br);
+                                break;
+                        }
+
+                        lvl.GameVersion = ver;
+                    }
+                    catch(Exception e)
+                    {
+                        throw new LevelParseException(e, br.BaseStream.Position);
+                    }
                 }
             }
             return lvl;

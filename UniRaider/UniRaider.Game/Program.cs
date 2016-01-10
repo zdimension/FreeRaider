@@ -13,17 +13,11 @@ namespace UniRaider.Game
         {
             using (var game = new GameWindow())
             {
-                game.Load += (sender, e) =>
-                {
-                    game.VSync = VSyncMode.On;
-                };
-                game.Resize += (sender, e) =>
-                {
-                    GL.Viewport(0, 0, game.Width, game.Height);
-                };
+                game.Load += (sender, e) => { game.VSync = VSyncMode.On; };
+                game.Resize += (sender, e) => { GL.Viewport(0, 0, game.Width, game.Height); };
                 game.UpdateFrame += (sender, e) =>
                 {
-                    if(game.Keyboard[Key.Escape])
+                    if (game.Keyboard[Key.Escape])
                     {
                         game.Exit();
                     }

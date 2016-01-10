@@ -45,7 +45,6 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TOMBPCFile.cs" />
-    <Compile Include="TOMBPCParser.cs" />
     <Compile Include="TR1_DataTypes.cs" />
     <Compile Include="TR2_DataTypes.cs" />
     <Compile Include="TombLevelParser.cs" />
