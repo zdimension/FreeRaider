@@ -136,6 +136,89 @@ namespace UniRaider.Loader
         }
     }
 
+    public struct FloatColor
+    {
+        /// <summary>
+        /// Red component
+        /// </summary>
+        public float R { get; set; }
+
+        /// <summary>
+        /// Green component
+        /// </summary>
+        public float G { get; set; }
+
+        /// <summary>
+        /// Blue component
+        /// </summary>
+        public float B { get; set; }
+
+        /// <summary>
+        /// Alpha (transparency) component
+        /// </summary>
+        public float A { get; set; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FloatColor"/> class.
+        /// </summary>
+        /// <param name="r">Red component</param>
+        /// <param name="g">Green component</param>
+        /// <param name="b">Blue component</param>
+        public FloatColor(float r, float g, float b) : this(r, g, b, 1.0f)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ByteColor"/> class.
+        /// </summary>
+        /// <param name="r">Red component</param>
+        /// <param name="g">Green component</param>
+        /// <param name="b">Blue component</param>
+        /// <param name="a">Alpha (transparency) component</param>
+        public FloatColor(float r, float g, float b, float a)
+        {
+            R = r;
+            G = g;
+            B = b;
+            A = a;
+        }
+
+        /// <summary>
+        /// Reads a <see cref="FloatColor"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="FloatColor"/></param>
+        /// <returns>The <see cref="FloatColor"/></returns>
+        public static FloatColor Read(BinaryReader br, bool withAlpha = true)
+        {
+            return new FloatColor(
+                br.ReadByte() / 255.0f,
+                br.ReadByte() / 255.0f,
+                br.ReadByte() / 255.0f,
+                withAlpha ? br.ReadByte() / 255.0f : 1.0f
+                );
+        }
+
+        /// <summary>
+        /// Reads a <see cref="FloatColor"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="FloatColor"/></param>
+        /// <returns>The <see cref="FloatColor"/></returns>
+        public static FloatColor ReadF(BinaryReader br, bool withAlpha = true)
+        {
+            return new FloatColor(
+                br.ReadSingle(),
+                br.ReadSingle(),
+                br.ReadSingle(),
+                withAlpha ? br.ReadSingle() : 1.0f
+                );
+        }
+
+        public override string ToString()
+        {
+            return $"FloatColor [R={R}; G={G}; B={B}; A={A}]";
+        }
+    }
+
     public struct Vertex
     {
         /// <summary>
@@ -657,6 +740,12 @@ namespace UniRaider.Loader
         /// </summary>
         public Vertex Direction2 { get; set; }
 
+        /// <summary>
+        /// Reads a <see cref="Light"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Light"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>A <see cref="Light"/></returns>
         public static Light Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
         {
             var ret = new Light();
@@ -702,8 +791,9 @@ namespace UniRaider.Loader
                 else
                 {
                     ret.Color = ByteColor.ReadF(br, true);
-                    if(br.ReadUInt32() != 0xCDCDCDCD)
-                        throw new ArgumentException("Wrong value, should be 0xCDCDCDCD", "separator1");
+                    var separator1 = br.ReadUInt32();
+                    if(separator1 != 0xCDCDCDCD)
+                        throw new ArgumentException("Light.Read: Found 0x" + separator1.ToString("X8") + ", Expected 0xCDCDCDCD", "separator1");
                     ret.Intensity = 1;
                     ret.Hotspot = br.ReadSingle();
                     ret.Falloff = br.ReadSingle();
@@ -715,14 +805,15 @@ namespace UniRaider.Loader
                     ret.Direction2 = Vertex.Read32(br);
                     ret.lightType = br.ReadByte();
 
-                    if (br.ReadByte() != 0xCD)
-                        throw new ArgumentException("Wrong value, should be 0xCD", "separator2");
-
-                    if (br.ReadByte() != 0xCD)
-                        throw new ArgumentException("Wrong value, should be 0xCD", "separator3");
-
-                    if (br.ReadByte() != 0xCD)
-                        throw new ArgumentException("Wrong value, should be 0xCD", "separator4");
+                    var sep = br.ReadByte();
+                    if (sep != 0xCD)
+                        throw new ArgumentException("Light.Read: Found 0x" + sep.ToString("X2") + ", Expected 0xCD", "separator2");
+                                                                                            
+                    if ((sep = br.ReadByte()) != 0xCD)                                      
+                        throw new ArgumentException("Light.Read: Found 0x" + sep.ToString("X2") + ", Expected 0xCD", "separator3");
+                                                                                            
+                    if ((sep = br.ReadByte()) != 0xCD)                                      
+                        throw new ArgumentException("Light.Read: Found 0x" + sep.ToString("X2") + ", Expected 0xCD", "separator4");
                 }
             }
             else
@@ -747,18 +838,512 @@ namespace UniRaider.Loader
     public struct Sprite
     {
         /// <summary>
-        /// Offset into vertex list
+        /// Initializes a new instance of the <see cref="Sprite"/> class.
+        /// </summary>
+        /// <param name="vertex">Offset into <see cref="Vertex"/> list</param>
+        /// <param name="texture">Offset into sprite texture list</param>
+        public Sprite(short vertex, short texture)
+        {
+            Vertex = vertex;
+            Texture = texture;
+        }
+
+        /// <summary>
+        /// Offset into <see cref="Vertex"/> list
         /// </summary>
         public short Vertex { get; set; }
 
         /// <summary>
-        /// Offset into sprite list
+        /// Offset into sprite texture list TODO
         /// </summary>
         public short Texture { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="Sprite"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Sprite"/></param>
+        /// <returns>A <see cref="Sprite"/></returns>
+        public static Sprite Read(BinaryReader br)
+        {
+            return new Sprite(br.ReadInt16(), br.ReadInt16());
+        }
+    }
+
+    /// <summary>
+    /// Room layer (TR5)
+    /// </summary>
+    public struct Layer
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Layer"/> class.
+        /// </summary>
+        public Layer(ushort numVertices, ushort unknownL1, ushort unknownL2, ushort numRectangles, ushort numTriangles, ushort unknownL3, BoundingBox boundingBox, uint unknownL4, uint unknownL5, uint unknownL6)
+        {
+            NumVertices = numVertices;
+            Unknown_l1 = unknownL1;
+            Unknown_l2 = unknownL2;
+            NumRectangles = numRectangles;
+            NumTriangles = numTriangles;
+            Unknown_l3 = unknownL3;
+            BoundingBox = boundingBox;
+            Unknown_l4 = unknownL4;
+            Unknown_l5 = unknownL5;
+            Unknown_l6 = unknownL6;
+        }
+
+        /// <summary>
+        /// Number of vertices in this layer
+        /// </summary>
+        public ushort NumVertices { get; set; }
+        public ushort Unknown_l1 { get; set; }
+        public ushort Unknown_l2 { get; set; }
+        /// <summary>
+        /// Number of rectangles in this layer
+        /// </summary>
+        public ushort NumRectangles { get; set; }
+        /// <summary>
+        /// Number of triangles in this layer
+        /// </summary>
+        public ushort NumTriangles { get; set; }
+        public ushort Unknown_l3 { get; set; }
+
+        /// <summary>
+        /// Bounding box of the layer
+        /// </summary>
+        public BoundingBox BoundingBox { get; set; }
+
+        public uint Unknown_l4 { get; set; }
+        public uint Unknown_l5 { get; set; }
+        public uint Unknown_l6 { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="Layer"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Layer"/></param>
+        /// <returns>A <see cref="Layer"/></returns>
+        public static Layer Read(BinaryReader br)
+        {
+            var ret = new Layer();
+            ret.NumVertices = br.ReadUInt16();
+            ret.Unknown_l1 = br.ReadUInt16();
+            ret.Unknown_l2 = br.ReadUInt16();
+            ret.NumRectangles = br.ReadUInt16();
+            ret.NumTriangles = br.ReadUInt16();
+            ret.Unknown_l3 = br.ReadUInt16();
+            var filler = br.ReadUInt16();
+            if (filler != 0)
+                throw new ArgumentException("Layer.Read: Found " + filler + ", Expected 0", "filler");
+            var filler2 = br.ReadUInt16();
+            if(filler2 != 0)
+                throw new ArgumentException("Layer.Read: Found " + filler2 + ", Expected 0", "filler2");
+            ret.BoundingBox = BoundingBox.Read(br);
+            var filler3 = br.ReadUInt32();
+            if(filler3 != 0)
+                throw new ArgumentException("Layer.Read: Found " + filler3.ToString("X8") + ", Expected 0", "filler3");
+            ret.Unknown_l4 = br.ReadUInt32();
+            ret.Unknown_l5 = br.ReadUInt32();
+            ret.Unknown_l6 = br.ReadUInt32();
+            return ret;
+        }
+    }
+
+    public struct BoundingBox
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BoundingBox"/> class.
+        /// </summary>
+        public BoundingBox(Vertex point1, Vertex point2)
+        {
+            Point1 = point1;
+            Point2 = point2;
+        }
+
+        /// <summary>
+        /// First point
+        /// </summary>
+        public Vertex Point1 { get; set; }
+
+        /// <summary>
+        /// Second point
+        /// </summary>
+        public Vertex Point2 { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="BoundingBox"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="BoundingBox"/></param>
+        /// <returns>A <see cref="BoundingBox"/></returns>
+        public static BoundingBox Read(BinaryReader br)
+        {
+            return new BoundingBox(Vertex.ReadF(br), Vertex.ReadF(br));
+        }
+    }
+
+    [Flags]
+    public enum SpecialRenderingEffects : ushort
+    {
+        Normal = 0x0010,
+        WaterSurfaceMovement = 0x2000,
+        UnderWaterLightingModulation = 0x4000,
+        WaterSurface = 0x8000
+    }
+
+    public struct RoomVertex
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RoomVertex"/> class.
+        /// </summary>
+        public RoomVertex(Vertex vertex, short lighting1, SpecialRenderingEffects attributes = SpecialRenderingEffects.Normal, short lighting2 = 0, Vertex normal = default(Vertex), FloatColor color = default(FloatColor))
+        {
+            Vertex = vertex;
+            Lighting1 = lighting1;
+            Attributes = attributes;
+            Lighting2 = lighting2;
+            Normal = normal;
+            Color = color;
+        }
+
+        /// <summary>
+        /// Where this <see cref="RoomVertex"/> lies (relative to tr2_room_info::x/z) TODO
+        /// </summary>
+        public Vertex Vertex { get; set; }
+
+        public short Lighting1 { get; set; }
+
+        /// <summary>
+        /// A set of flags for special rendering effects [absent from TR1 data files]
+        /// </summary>
+        public SpecialRenderingEffects Attributes { get; set; }
+
+        /// <summary>
+        /// Almost always equal to <see cref="Lighting1"/> [absent from TR1 data files]
+        /// </summary>
+        public short Lighting2 { get; set; }
+
+        // TR5 only
+        public Vertex Normal { get; set; }
+        public FloatColor Color { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="RoomVertex"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="RoomVertex"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>A <see cref="RoomVertex"/></returns>
+        public static RoomVertex Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        {
+            var ret = new RoomVertex();
+            if (ver == TRVersion.TR5)
+            {
+                ret.Vertex = Vertex.ReadF(br);
+                ret.Normal = Vertex.ReadF(br);
+                ret.Color = FloatColor.Read(br);
+            }
+            else
+            {
+                ret.Vertex = Vertex.Read16(br);
+                ret.Lighting1 = ver >= TRVersion.TR3 ? br.ReadInt16() : (short) ((8191 - br.ReadInt16()) << 2);
+                if (ver > TRVersion.TR1)
+                {
+                    ret.Attributes = (SpecialRenderingEffects) br.ReadUInt16();
+                    ret.Lighting2 = ret.Lighting1;
+                }
+                else
+                {
+                    ret.Lighting2 = ver >= TRVersion.TR3 ? br.ReadInt16() : (short) ((8191 - br.ReadInt16()) << 2);
+                }
+                ret.Normal = Vertex.Zero;
+                if (ver < TRVersion.TR3)
+                    ret.Color = new FloatColor(
+                        ret.Lighting1 / 32768.0f, 
+                        ret.Lighting1 / 32768.0f,
+                        ret.Lighting1 / 32768.0f);
+                else if (ver == TRVersion.TR3)
+                    ret.Color = new FloatColor(
+                        ((ret.Lighting2 & 0x7C00) >> 10) / 62.0f,
+                        ((ret.Lighting2 & 0x03E0) >> 5) / 62.0f, 
+                        (ret.Lighting2 & 0x001F) / 62.0f);
+                else if (ver == TRVersion.TR4)
+                    ret.Color = new FloatColor(
+                        ((ret.Lighting2 & 0x7C00) >> 10) / 31.0f,
+                        ((ret.Lighting2 & 0x03E0) >> 5) / 31.0f,
+                        (ret.Lighting2 & 0x001F) / 31.0f);
+            }
+            return ret;
+        }
+    }
+
+    public struct RoomStaticMesh
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RoomStaticMesh"/> class.
+        /// </summary>
+        public RoomStaticMesh(Vertex position, float rotation, short intensity1, short intensity2, ushort objectId, FloatColor tint)
+        {
+            Position = position;
+            Rotation = rotation;
+            Intensity1 = intensity1;
+            Intensity2 = intensity2;
+            ObjectID = objectId;
+            Tint = tint;
+        }
+
+        /// <summary>
+        /// Position in world coordinates
+        /// </summary>
+        public Vertex Position { get; set; }
+
+        /// <summary>
+        /// High two bits (0xC000) indicate steps of 90 degrees (e.g. (Rotation >> 14) * 90)
+        /// </summary>
+        public float Rotation { get; set; }
+
+        /// <summary>
+        /// Constant lighting; -1 means use mesh lighting
+        /// </summary>
+        public short Intensity1 { get; set; }
+
+        /// <summary>
+        /// Like <see cref="Intensity1"/>, and almost always the same value [absent from TR1 data files]
+        /// </summary>
+        public short Intensity2 { get; set; }
+
+        /// <summary>
+        /// Determines which StaticMesh item to draw TODO
+        /// </summary>
+        public ushort ObjectID { get; set; }
+
+        /// <summary>
+        /// Tint, extracted from intensity
+        /// </summary>
+        public FloatColor Tint { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="RoomStaticMesh"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="RoomStaticMesh"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>A <see cref="RoomStaticMesh"/></returns>
+        public static RoomStaticMesh Parse(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        {
+            var rsm = new RoomStaticMesh();
+            rsm.Position = Vertex.Read32(br);
+            rsm.Rotation = br.ReadUInt16() / 16384.0f * -90;
+            rsm.Intensity1 = br.ReadInt16();
+            rsm.Intensity2 = ver < TRVersion.TR2 ? rsm.Intensity1 : br.ReadInt16();
+            rsm.ObjectID = br.ReadUInt16();
+
+            if (rsm.Intensity1 >= 0)
+                rsm.Intensity1 = (short)((8191 - rsm.Intensity1) << 2);
+
+            if (rsm.Intensity2 >= 0)
+                rsm.Intensity2 = (short)((8191 - rsm.Intensity2) << 2);
+
+            if(ver < TRVersion.TR3)
+            {
+                var c = rsm.Intensity2 / 16384.0f;
+                rsm.Tint = new FloatColor(c, c, c);
+            }
+            else
+            {
+                rsm.Tint = new FloatColor(
+                    (rsm.Intensity1 & 0x001F) / 62.0f,
+                    ((rsm.Intensity1 & 0x03E0) >> 5) / 62.0f,
+                    ((rsm.Intensity1 & 0x7C00) >> 10) / 62.0f);
+            }
+
+            return rsm;
+        }
+    }
+
+    [Flags]
+    public enum RoomFlags : ushort
+    {
+        None = 0,
+        FilledWithWater = 0x0001,
+        WindBlowPonytail = 0x0020
+        // TR1 has only the water flag and the extra unknown flag 0x0100.
+        // TR3 most likely has flags for "is raining", "is snowing", "water is cold", and "is filled by quicksand", among others.
+    }
+
+    public enum ReverbInfo : byte
+    {
+        Outside = 0,
+        SmallRoom = 1,
+        MediumRoom = 2,
+        LargeRoom = 3,
+        Pipe = 4
     }
 
     public struct Room
     {
-        Error here 
+        /// <summary>
+        /// Offset of room (world coordinates)
+        /// </summary>
+        public Vertex Offset { get; set; }
+
+        /// <summary>
+        /// Lowest point in the room
+        /// </summary>
+        public float Y_Bottom { get; set; }
+
+        /// <summary>
+        /// Highest point in the room
+        /// </summary>
+        public float Y_Top { get; set; }
+
+        /// <summary>
+        /// List of layers (TR5)
+        /// </summary>
+        public Layer[] Layers { get; set; }
+
+        /// <summary>
+        /// List of vertices (relative coordinates)
+        /// </summary>
+        public RoomVertex[] Vertices { get; set; }
+
+        /// <summary>
+        /// List of textured rectangles
+        /// </summary>
+        public QuadFace[] Rectangles { get; set; }
+
+        /// <summary>
+        /// List of textured triangles
+        /// </summary>
+        public Triangle[] Triangles { get; set; }
+
+        /// <summary>
+        /// List of sprites
+        /// </summary>
+        public Sprite[] Sprites { get; set; }
+
+        /// <summary>
+        /// List of visibility portals
+        /// </summary>
+        public Portal[] Portals { get; set; }
+
+        /// <summary>
+        /// "Width" of sector list
+        /// </summary>
+        public ushort Num_Z_Sectors { get; set; }
+
+        /// <summary>
+        /// "Height" of sector list
+        /// </summary>
+        public ushort Num_X_Sectors { get; set; }
+
+        /// <summary>
+        /// List of sectors [<see cref="Num_Z_Sectors"/> * <see cref="Num_X_Sectors"/>]
+        /// </summary>
+        public Sector[] Sectors { get; set; }
+
+        /// <summary>
+        /// This and the next one only affect externally-lit objects
+        /// </summary>
+        public short Intensity1 { get; set; }
+
+        /// <summary>
+        /// Almost always the same value as <see cref="Intensity1"/> [absent from TR1 data files]
+        /// </summary>
+        public short Intensity2 { get; set; }
+
+        /// <summary>
+        /// 0 is normal; 1 is flickering (?); 2 and 3 are uncertain [present only in TR2]
+        /// </summary>
+        public short LightMode { get; set; }
+
+        /// <summary>
+        /// List of point lights
+        /// </summary>
+        public Light[] Lights { get; set; }
+
+        /// <summary>
+        /// List of static meshes
+        /// </summary>
+        public RoomStaticMesh[] StaticMeshes { get; set; }
+
+        /// <summary>
+        /// ID of the room that this room can alternate with
+        /// </summary>
+        public short AlternateRoom { get; set; }
+
+        /// <summary>
+        /// ID of the group which is used to switch alternate rooms
+        /// </summary>
+        public sbyte AlternateGroup { get; set; }
+
+        /// <summary>
+        /// Flags
+        /// </summary>
+        public RoomFlags Flags { get; set; }
+
+        /// <summary>
+        /// Water scheme is used with various room options, for example, R and M room flags in TRLE. Also, it specifies lighting scheme, when 0x4000 vertex attribute is set.
+        /// </summary>
+        public byte WaterScheme { get; set; }
+
+        /// <summary>
+        /// Used in TR3-5 and specifies reverb type
+        /// </summary>
+        public ReverbInfo ReverbInfo { get; set; }
+
+        /// <summary>
+        /// Present in TR5 only
+        /// </summary>
+        public FloatColor LightColor { get; set; }
+
+        public float Room_X { get; set; }
+        public float Room_Z { get; set; }
+        public float Room_Y_Bottom { get; set; }
+        public float Room_Y_Top { get; set; }
+
+        public uint Unknown_R1 { get; set; }
+        public uint Unknown_R2 { get; set; }
+        public uint Unknown_R3 { get; set; }
+        public ushort Unknown_R4a { get; set; }
+        public ushort Unknown_R4b { get; set; }
+        public uint Unknown_R5 { get; set; }
+        public uint Unknown_R6 { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="Room"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Room"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>A <see cref="Room"/></returns>
+        public static Room Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        {
+            var r = new Room();
+
+            if(ver == TRVersion.TR5)
+            {
+
+            }
+            else
+            {
+                r.Offset = new Vertex(br.ReadInt32(), 0, -br.ReadInt32());
+                r.Y_Bottom = -br.ReadInt32();
+                r.Y_Bottom = -br.ReadInt32();
+
+                var numDataWords = br.ReadUInt32();
+                var pos = br.BaseStream.Position;
+
+                r.Vertices = br.ReadArray(br.ReadUInt16(), () => RoomVertex.Read(br, ver));
+                r.Rectangles = br.ReadArray(br.ReadUInt16(), () => QuadFace.Read(br, TRVersion.TR1));
+                r.Triangles = br.ReadArray(br.ReadUInt16(), () => Triangle.Read(br, TRVersion.TR1));
+                r.Sprites = br.ReadArray(br.ReadUInt16(), () => Sprite.Read(br));
+
+                br.BaseStream.Position = pos + numDataWords * 2;
+
+                r.Portals = br.ReadArray(br.ReadUInt16(), () => Portal.Read(br));
+
+                r.Num_Z_Sectors = br.ReadUInt16();
+                r.Num_X_Sectors = br.ReadUInt16();
+
+                r.Sectors = br.ReadArray(r.Num_Z_Sectors * r.Num_X_Sectors, () => Sector.Read(br));
+            }
+
+            return r;
+        }
     }
 }
