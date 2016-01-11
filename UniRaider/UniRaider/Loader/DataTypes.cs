@@ -1043,7 +1043,7 @@ namespace UniRaider.Loader
             {
                 ret.Vertex = Vertex.Read16(br);
                 ret.Lighting1 = ver >= TRVersion.TR3 ? br.ReadInt16() : (short) ((8191 - br.ReadInt16()) << 2);
-                if (ver > TRVersion.TR1)
+                if (ver >= TRVersion.TR2)
                 {
                     ret.Attributes = (SpecialRenderingEffects) br.ReadUInt16();
                     ret.Lighting2 = ret.Lighting1;
@@ -1161,9 +1161,10 @@ namespace UniRaider.Loader
     {
         None = 0,
         FilledWithWater = 0x0001,
-        WindBlowPonytail = 0x0020
+        WindBlowPonytail = 0x0020,
+        Quicksand = 0x0080
         // TR1 has only the water flag and the extra unknown flag 0x0100.
-        // TR3 most likely has flags for "is raining", "is snowing", "water is cold", and "is filled by quicksand", among others.
+        // TR3 most likely has flags for "is raining", "is snowing", "water is cold", and "is filled by quicksand" (0x0080), among others.
     }
 
     public enum ReverbInfo : byte
@@ -1275,7 +1276,7 @@ namespace UniRaider.Loader
         /// <summary>
         /// Flags
         /// </summary>
-        public RoomFlags Flags { get; set; }
+        public ushort Flags { get; set; }
 
         /// <summary>
         /// Water scheme is used with various room options, for example, R and M room flags in TRLE. Also, it specifies lighting scheme, when 0x4000 vertex attribute is set.
@@ -1315,9 +1316,195 @@ namespace UniRaider.Loader
         {
             var r = new Room();
 
-            if(ver == TRVersion.TR5)
+            if (ver == TRVersion.TR5)
             {
+                if (br.ReadUInt32() != 0x414C4558)
+                    throw new FormatException("Room.Read: TR5 'XELA' header not found");
 
+                var roomDataSize = br.ReadUInt32();
+                var pos = br.BaseStream.Position;
+                var endPos = pos + roomDataSize;
+
+                r.Intensity1 = 32767;
+                r.Intensity2 = 32767;
+                r.LightMode = 0;
+
+                var separator1 = br.ReadUInt32();
+                if (separator1 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator1.ToString("X8") + ", Expected 0xCDCDCDCD", "separator1");
+
+                var portalOffset = br.ReadInt32();
+                var sectorDataOffset = br.ReadUInt32();
+
+                var separator2 = br.ReadUInt32();
+                if (separator2 != 0 && separator2 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator2.ToString("X8") + ", Expected 0xCDCDCDCD", "separator2");
+
+                var staticMeshesOffset = br.ReadUInt32();
+
+                r.Offset = new Vertex(br.ReadInt32(), br.ReadUInt32(), -br.ReadInt32());
+                r.Y_Bottom = -br.ReadInt32();
+                r.Y_Top = -br.ReadInt32();
+
+                r.Num_Z_Sectors = br.ReadUInt16();
+                r.Num_X_Sectors = br.ReadUInt16();
+
+                var lc = FloatColor.Read(br);
+                r.LightColor = new FloatColor(lc.R, lc.G, lc.B, 1.0f);
+
+                var numLights = br.ReadUInt16();
+                if (numLights > 512)
+                    throw new ArgumentOutOfRangeException("numLights", numLights, "Room.Read: numLights > 512");
+
+                var numStaticMeshes = br.ReadUInt16();
+                if (numStaticMeshes > 512)
+                    throw new ArgumentOutOfRangeException("numStaticMeshes", numStaticMeshes,
+                        "Room.Read: numStaticMeshes > 512");
+
+                r.ReverbInfo = (ReverbInfo) br.ReadByte();
+                r.AlternateGroup = br.ReadSByte();
+                r.WaterScheme = (byte) br.ReadUInt16();
+
+                var filler1 = br.ReadUInt32();
+                if (filler1 != 0x00007FFF)
+                    throw new ArgumentException("Room.Read: Found " + filler1.ToString("X8") + ", Expected 0x00007FFF",
+                        "filler1");
+
+                var filler2 = br.ReadUInt32();
+                if (filler2 != 0x00007FFF)
+                    throw new ArgumentException("Room.Read: Found " + filler2.ToString("X8") + ", Expected 0x00007FFF",
+                        "filler2");
+
+                var separator4 = br.ReadUInt32();
+                if (separator4 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator4.ToString("X8") + ", Expected 0xCDCDCDCD", "separator4");
+
+                var separator5 = br.ReadUInt32();
+                if (separator5 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator5.ToString("X8") + ", Expected 0xCDCDCDCD", "separator5");
+
+                var separator6 = br.ReadUInt32();
+                if (separator6 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator6.ToString("X8") + ", Expected 0xCDCDCDCD", "separator6");
+
+                r.AlternateRoom = br.ReadInt16();
+
+                r.Flags = br.ReadUInt16();
+
+                r.Unknown_R1 = br.ReadUInt32();
+                r.Unknown_R2 = br.ReadUInt32();
+                r.Unknown_R3 = br.ReadUInt32();
+
+                var separator7 = br.ReadUInt32();
+                if(separator7 != 0 && separator7 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator7.ToString("X8") + ", Expected 0xCDCDCDCD", "separator7");
+
+                r.Unknown_R4a = br.ReadUInt16();
+                r.Unknown_R4b = br.ReadUInt16();
+
+                r.Room_X = br.ReadSingle();
+                r.Unknown_R5 = br.ReadUInt32();
+                r.Room_Z = -br.ReadSingle();
+
+                var separator8 = br.ReadUInt32();
+                if (separator8 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator8.ToString("X8") + ", Expected 0xCDCDCDCD", "separator8");
+
+                var separator9 = br.ReadUInt32();
+                if (separator9 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator9.ToString("X8") + ", Expected 0xCDCDCDCD", "separator9");
+
+                var separator10 = br.ReadUInt32();
+                if (separator10 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator10.ToString("X8") + ", Expected 0xCDCDCDCD", "separator10");
+
+                var separator11 = br.ReadUInt32();
+                if (separator11 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator11.ToString("X8") + ", Expected 0xCDCDCDCD", "separator11");
+
+                var separator12 = br.ReadUInt32();
+                if (separator12 != 0 && separator12 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator12.ToString("X8") + ", Expected 0xCDCDCDCD", "separator12");
+
+                var separator13 = br.ReadUInt32();
+                if (separator13 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator13.ToString("X8") + ", Expected 0xCDCDCDCD", "separator13");
+
+                var numTriangles = br.ReadUInt32();
+                if (numTriangles == 0xCDCDCDCD) numTriangles = 0;
+                if(numTriangles > 512)
+                    throw new ArgumentOutOfRangeException("numTriangles", numTriangles,
+                        "Room.Read: numTriangles > 512");
+
+                var numRectangles = br.ReadUInt32();
+                if (numRectangles == 0xCDCDCDCD) numRectangles = 0;
+                if (numRectangles > 1024)
+                    throw new ArgumentOutOfRangeException("numRectangles", numRectangles,
+                        "Room.Read: numRectangles > 1024");
+
+                var separator14 = br.ReadUInt32();
+                if (separator14 != 0)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator14.ToString("X8") + ", Expected 0", "separator14");
+
+                var lightSize = br.ReadUInt32();
+                var numLights2 = br.ReadUInt32();
+                if(numLights2 != numLights)
+                    throw new ArgumentException("Room.Read: Room.numLights2 != Room.numLights", "numLights2");
+
+                r.Unknown_R6 = br.ReadUInt32();
+                r.Room_Y_Top = -br.ReadSingle();
+                r.Room_Y_Bottom = -br.ReadSingle();
+
+                var numLayers = br.ReadUInt32();
+
+                var layerOffset = br.ReadUInt32();
+                var verticesOffset = br.ReadUInt32();
+                var polyOffset = br.ReadUInt32();
+                var polyOffset2 = br.ReadUInt32();
+                if(polyOffset != polyOffset2)
+                    throw new ArgumentException("Room.Read: Room.polyOffset2 != Room.polyOffset", "polyOffset2");
+
+                var verticesSize = br.ReadUInt32();
+                if(verticesSize % 28 != 0)
+                    throw new ArgumentException(
+                        "Room.Read: verticesSize has wrong value: " + verticesSize, "verticesSize");
+
+                var separator15 = br.ReadUInt32();
+                if (separator15 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator15.ToString("X8") + ", Expected 0xCDCDCDCD", "separator15");
+
+                var separator16 = br.ReadUInt32();
+                if (separator16 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator16.ToString("X8") + ", Expected 0xCDCDCDCD", "separator16");
+
+                var separator17 = br.ReadUInt32();
+                if (separator17 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator17.ToString("X8") + ", Expected 0xCDCDCDCD", "separator17");
+
+                var separator18 = br.ReadUInt32();
+                if (separator18 != 0xCDCDCDCD)
+                    throw new ArgumentException(
+                        "Room.Read: Found " + separator18.ToString("X8") + ", Expected 0xCDCDCDCD", "separator18");
+
+                r.Lights = br.ReadArray(numLights, () => Light.Read(br, TRVersion.TR5));
+
+                br.BaseStream.Position = pos + 208 + sectorDataOffset;
             }
             else
             {
@@ -1341,6 +1528,68 @@ namespace UniRaider.Loader
                 r.Num_X_Sectors = br.ReadUInt16();
 
                 r.Sectors = br.ReadArray(r.Num_Z_Sectors * r.Num_X_Sectors, () => Sector.Read(br));
+
+                if (ver < TRVersion.TR3)
+                {
+                    r.Intensity1 = (short) ((8191 - br.ReadInt16()) << 2);
+                    r.Intensity2 = ver < TRVersion.TR2 ? r.Intensity1 : (short) ((8191 - br.ReadInt16()) << 2);
+                }
+                if (ver == TRVersion.TR2)
+                {
+                    r.LightMode = br.ReadInt16();
+                }
+
+                r.Lights = br.ReadArray(br.ReadUInt16(), () => Light.Read(br, ver));
+
+                r.StaticMeshes = br.ReadArray(br.ReadUInt16(), () => RoomStaticMesh.Parse(br, ver));
+
+                r.AlternateRoom = br.ReadInt16();
+
+                r.Flags = br.ReadUInt16();
+
+                if (ver == TRVersion.TR1)
+                {
+                    r.ReverbInfo = ReverbInfo.MediumRoom;
+
+                    var c = r.Intensity1 / 32767.0f;
+                    r.LightColor = new FloatColor(c, c, c);
+                }
+                else if (ver == TRVersion.TR2)
+                {
+                    r.ReverbInfo =
+                        ((RoomFlags) r.Flags).HasFlag(RoomFlags.WindBlowPonytail)
+                            ? ReverbInfo.Outside
+                            : ReverbInfo.MediumRoom;
+
+                    var c = r.Intensity1 / 16384.0f;
+                    r.LightColor = new FloatColor(c, c, c);
+                }
+                else if (ver == TRVersion.TR3)
+                {
+                    if (((RoomFlags) r.Flags).HasFlag(RoomFlags.Quicksand))
+                    {
+                        // Move quicksand flag to another bit to avoid confusion with NL flag.
+                        r.Flags = (ushort) ((r.Flags | 0x0002) ^ 0x0080);
+                    }
+                    r.WaterScheme = br.ReadByte();
+                    r.ReverbInfo = (ReverbInfo) br.ReadByte();
+                    r.AlternateGroup = br.ReadSByte();
+
+                    var c = r.Intensity1 / 65534.0f;
+                    r.LightColor = new FloatColor(c, c, c);
+                }
+                else if (ver == TRVersion.TR4)
+                {
+                    r.WaterScheme = br.ReadByte();
+                    r.ReverbInfo = (ReverbInfo) br.ReadByte();
+                    r.AlternateGroup = br.ReadSByte();
+
+                    r.LightColor = new FloatColor(
+                        (r.Intensity2 & 0x00FF) / 255.0f,
+                        ((r.Intensity1 & 0xFF00) >> 8) / 255.0f,
+                        (r.Intensity1 & 0x00FF) / 255.0f,
+                        ((r.Intensity2 & 0xFF00) >> 8) / 255.0f);
+                }
             }
 
             return r;
