@@ -13,7 +13,11 @@ namespace UniRaider.Game
         {
             using (var game = new GameWindow())
             {
-                game.Load += (sender, e) => { game.VSync = VSyncMode.On; };
+                game.Load += (sender, e) => 
+                {
+                    game.VSync = VSyncMode.On;
+                    LevelManager.SetLevel(args[0]);
+                };
                 game.Resize += (sender, e) => { GL.Viewport(0, 0, game.Width, game.Height); };
                 game.UpdateFrame += (sender, e) =>
                 {
