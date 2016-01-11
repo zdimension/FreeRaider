@@ -99,16 +99,16 @@ namespace UniRaider.Loader
             for (uint i = 0; i < numMeshPointers; i++)
             {
                 var meshPointer = br.ReadUInt32();
-                if (numMeshData < (meshPointer / 2))
+                if (numMeshData < meshPointer / 2)
                 {
-                    throw new Exception("Invalid mesh: " + (meshPointer / 2) + " > " + numMeshData);
+                    throw new Exception("Invalid mesh: " + meshPointer / 2 + " > " + numMeshData);
                 }
-                fixed (ushort* ptr = (&buffer[meshPointer / 2]))
+                fixed (ushort* ptr = &buffer[meshPointer / 2])
                 {
                     char* tmpPtr = (char*) ptr;
                     var mem =
                         new BinaryReader(new UnmanagedMemoryStream((byte*) tmpPtr,
-                            (numMeshData * 2) - meshPointer));
+                            numMeshData * 2 - meshPointer));
                     lvl.Meshes[i] = tr2_mesh.Parse(mem);
                 }
             }

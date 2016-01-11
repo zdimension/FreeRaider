@@ -4,15 +4,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{9D86F28A-4375-4C47-85E5-AF7F6E123EB4}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{CB771C19-AD67-47C4-B65A-2706F41DD5B8}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>UniRaider.Loader</RootNamespace>
-    <AssemblyName>UniRaider.Loader</AssemblyName>
+    <RootNamespace>UniRaider</RootNamespace>
+    <AssemblyName>UniRaider</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -20,9 +21,9 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -46,17 +47,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataTypes.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="Loader\DataTypes.cs" />
+    <Compile Include="Loader\TR1Level.cs" />
+    <Compile Include="Loader\TR2Level.cs" />
+    <Compile Include="Loader\TR3Level.cs" />
+    <Compile Include="Loader\TR4Level.cs" />
+    <Compile Include="Loader\TR5Level.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TOMBPCFile.cs" />
-    <Compile Include="TR1_DataTypes.cs" />
-    <Compile Include="TR2_DataTypes.cs" />
-    <Compile Include="TombLevelParser.cs" />
-    <Compile Include="TR3_DataTypes.cs" />
-    <Compile Include="XORCrypt.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

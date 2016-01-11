@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using OpenTK;
 
 namespace UniRaider.Loader
 {
@@ -127,6 +128,11 @@ namespace UniRaider.Loader
                 y = br.ReadInt16(),
                 z = br.ReadInt16()
             };
+        }
+
+        public Vector3 ToVector3()
+        {
+            return new Vector3(x, y, z);
         }
     }
 
