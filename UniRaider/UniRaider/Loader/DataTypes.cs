@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -793,7 +794,7 @@ namespace UniRaider.Loader
                     ret.Color = ByteColor.ReadF(br, true);
                     var separator1 = br.ReadUInt32();
                     if(separator1 != 0xCDCDCDCD)
-                        throw new ArgumentException("Light.Read: Found 0x" + separator1.ToString("X8") + ", Expected 0xCDCDCDCD", "separator1");
+                        throw new ArgumentException("Light.Read[TR5]: Found 0x" + separator1.ToString("X8") + ", Expected 0xCDCDCDCD", "separator1");
                     ret.Intensity = 1;
                     ret.Hotspot = br.ReadSingle();
                     ret.Falloff = br.ReadSingle();
@@ -807,13 +808,13 @@ namespace UniRaider.Loader
 
                     var sep = br.ReadByte();
                     if (sep != 0xCD)
-                        throw new ArgumentException("Light.Read: Found 0x" + sep.ToString("X2") + ", Expected 0xCD", "separator2");
+                        throw new ArgumentException("Light.Read[TR5]: Found 0x" + sep.ToString("X2") + ", Expected 0xCD", "separator2");
                                                                                             
                     if ((sep = br.ReadByte()) != 0xCD)                                      
-                        throw new ArgumentException("Light.Read: Found 0x" + sep.ToString("X2") + ", Expected 0xCD", "separator3");
+                        throw new ArgumentException("Light.Read[TR5]: Found 0x" + sep.ToString("X2") + ", Expected 0xCD", "separator3");
                                                                                             
                     if ((sep = br.ReadByte()) != 0xCD)                                      
-                        throw new ArgumentException("Light.Read: Found 0x" + sep.ToString("X2") + ", Expected 0xCD", "separator4");
+                        throw new ArgumentException("Light.Read[TR5]: Found 0x" + sep.ToString("X2") + ", Expected 0xCD", "separator4");
                 }
             }
             else
@@ -1312,6 +1313,7 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Room"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Room"/></returns>
+        [SuppressMessage("ReSharper", "NotResolvedInText")]
         public static Room Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
         {
             var r = new Room();
@@ -1332,7 +1334,7 @@ namespace UniRaider.Loader
                 var separator1 = br.ReadUInt32();
                 if (separator1 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator1.ToString("X8") + ", Expected 0xCDCDCDCD", "separator1");
+                        "Room.Read[TR5]: Found " + separator1.ToString("X8") + ", Expected 0xCDCDCDCD", "separator1");
 
                 var portalOffset = br.ReadInt32();
                 var sectorDataOffset = br.ReadUInt32();
@@ -1340,7 +1342,7 @@ namespace UniRaider.Loader
                 var separator2 = br.ReadUInt32();
                 if (separator2 != 0 && separator2 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator2.ToString("X8") + ", Expected 0xCDCDCDCD", "separator2");
+                        "Room.Read[TR5]: Found " + separator2.ToString("X8") + ", Expected 0xCDCDCDCD", "separator2");
 
                 var staticMeshesOffset = br.ReadUInt32();
 
@@ -1356,12 +1358,12 @@ namespace UniRaider.Loader
 
                 var numLights = br.ReadUInt16();
                 if (numLights > 512)
-                    throw new ArgumentOutOfRangeException("numLights", numLights, "Room.Read: numLights > 512");
+                    throw new ArgumentOutOfRangeException("numLights", numLights, "Room.Read[TR5]: numLights > 512");
 
                 var numStaticMeshes = br.ReadUInt16();
                 if (numStaticMeshes > 512)
                     throw new ArgumentOutOfRangeException("numStaticMeshes", numStaticMeshes,
-                        "Room.Read: numStaticMeshes > 512");
+                        "Room.Read[TR5]: numStaticMeshes > 512");
 
                 r.ReverbInfo = (ReverbInfo) br.ReadByte();
                 r.AlternateGroup = br.ReadSByte();
@@ -1369,28 +1371,28 @@ namespace UniRaider.Loader
 
                 var filler1 = br.ReadUInt32();
                 if (filler1 != 0x00007FFF)
-                    throw new ArgumentException("Room.Read: Found " + filler1.ToString("X8") + ", Expected 0x00007FFF",
+                    throw new ArgumentException("Room.Read[TR5]: Found " + filler1.ToString("X8") + ", Expected 0x00007FFF",
                         "filler1");
 
                 var filler2 = br.ReadUInt32();
                 if (filler2 != 0x00007FFF)
-                    throw new ArgumentException("Room.Read: Found " + filler2.ToString("X8") + ", Expected 0x00007FFF",
+                    throw new ArgumentException("Room.Read[TR5]: Found " + filler2.ToString("X8") + ", Expected 0x00007FFF",
                         "filler2");
 
                 var separator4 = br.ReadUInt32();
                 if (separator4 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator4.ToString("X8") + ", Expected 0xCDCDCDCD", "separator4");
+                        "Room.Read[TR5]: Found " + separator4.ToString("X8") + ", Expected 0xCDCDCDCD", "separator4");
 
                 var separator5 = br.ReadUInt32();
                 if (separator5 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator5.ToString("X8") + ", Expected 0xCDCDCDCD", "separator5");
+                        "Room.Read[TR5]: Found " + separator5.ToString("X8") + ", Expected 0xCDCDCDCD", "separator5");
 
                 var separator6 = br.ReadUInt32();
                 if (separator6 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator6.ToString("X8") + ", Expected 0xCDCDCDCD", "separator6");
+                        "Room.Read[TR5]: Found " + separator6.ToString("X8") + ", Expected 0xCDCDCDCD", "separator6");
 
                 r.AlternateRoom = br.ReadInt16();
 
@@ -1403,7 +1405,7 @@ namespace UniRaider.Loader
                 var separator7 = br.ReadUInt32();
                 if(separator7 != 0 && separator7 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator7.ToString("X8") + ", Expected 0xCDCDCDCD", "separator7");
+                        "Room.Read[TR5]: Found " + separator7.ToString("X8") + ", Expected 0xCDCDCDCD", "separator7");
 
                 r.Unknown_R4a = br.ReadUInt16();
                 r.Unknown_R4b = br.ReadUInt16();
@@ -1415,54 +1417,54 @@ namespace UniRaider.Loader
                 var separator8 = br.ReadUInt32();
                 if (separator8 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator8.ToString("X8") + ", Expected 0xCDCDCDCD", "separator8");
+                        "Room.Read[TR5]: Found " + separator8.ToString("X8") + ", Expected 0xCDCDCDCD", "separator8");
 
                 var separator9 = br.ReadUInt32();
                 if (separator9 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator9.ToString("X8") + ", Expected 0xCDCDCDCD", "separator9");
+                        "Room.Read[TR5]: Found " + separator9.ToString("X8") + ", Expected 0xCDCDCDCD", "separator9");
 
                 var separator10 = br.ReadUInt32();
                 if (separator10 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator10.ToString("X8") + ", Expected 0xCDCDCDCD", "separator10");
+                        "Room.Read[TR5]: Found " + separator10.ToString("X8") + ", Expected 0xCDCDCDCD", "separator10");
 
                 var separator11 = br.ReadUInt32();
                 if (separator11 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator11.ToString("X8") + ", Expected 0xCDCDCDCD", "separator11");
+                        "Room.Read[TR5]: Found " + separator11.ToString("X8") + ", Expected 0xCDCDCDCD", "separator11");
 
                 var separator12 = br.ReadUInt32();
                 if (separator12 != 0 && separator12 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator12.ToString("X8") + ", Expected 0xCDCDCDCD", "separator12");
+                        "Room.Read[TR5]: Found " + separator12.ToString("X8") + ", Expected 0xCDCDCDCD", "separator12");
 
                 var separator13 = br.ReadUInt32();
                 if (separator13 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator13.ToString("X8") + ", Expected 0xCDCDCDCD", "separator13");
+                        "Room.Read[TR5]: Found " + separator13.ToString("X8") + ", Expected 0xCDCDCDCD", "separator13");
 
                 var numTriangles = br.ReadUInt32();
                 if (numTriangles == 0xCDCDCDCD) numTriangles = 0;
                 if(numTriangles > 512)
                     throw new ArgumentOutOfRangeException("numTriangles", numTriangles,
-                        "Room.Read: numTriangles > 512");
+                        "Room.Read[TR5]: numTriangles > 512");
 
                 var numRectangles = br.ReadUInt32();
                 if (numRectangles == 0xCDCDCDCD) numRectangles = 0;
                 if (numRectangles > 1024)
                     throw new ArgumentOutOfRangeException("numRectangles", numRectangles,
-                        "Room.Read: numRectangles > 1024");
+                        "Room.Read[TR5]: numRectangles > 1024");
 
                 var separator14 = br.ReadUInt32();
                 if (separator14 != 0)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator14.ToString("X8") + ", Expected 0", "separator14");
+                        "Room.Read[TR5]: Found " + separator14.ToString("X8") + ", Expected 0", "separator14");
 
                 var lightSize = br.ReadUInt32();
                 var numLights2 = br.ReadUInt32();
                 if(numLights2 != numLights)
-                    throw new ArgumentException("Room.Read: Room.numLights2 != Room.numLights", "numLights2");
+                    throw new ArgumentException("Room.Read[TR5]: Room.numLights2 != Room.numLights", "numLights2");
 
                 r.Unknown_R6 = br.ReadUInt32();
                 r.Room_Y_Top = -br.ReadSingle();
@@ -1475,32 +1477,32 @@ namespace UniRaider.Loader
                 var polyOffset = br.ReadUInt32();
                 var polyOffset2 = br.ReadUInt32();
                 if(polyOffset != polyOffset2)
-                    throw new ArgumentException("Room.Read: Room.polyOffset2 != Room.polyOffset", "polyOffset2");
+                    throw new ArgumentException("Room.Read[TR5]: Room.polyOffset2 != Room.polyOffset", "polyOffset2");
 
                 var verticesSize = br.ReadUInt32();
                 if(verticesSize % 28 != 0)
                     throw new ArgumentException(
-                        "Room.Read: verticesSize has wrong value: " + verticesSize, "verticesSize");
+                        "Room.Read[TR5]: verticesSize has wrong value: " + verticesSize, "verticesSize");
 
                 var separator15 = br.ReadUInt32();
                 if (separator15 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator15.ToString("X8") + ", Expected 0xCDCDCDCD", "separator15");
+                        "Room.Read[TR5]: Found " + separator15.ToString("X8") + ", Expected 0xCDCDCDCD", "separator15");
 
                 var separator16 = br.ReadUInt32();
                 if (separator16 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator16.ToString("X8") + ", Expected 0xCDCDCDCD", "separator16");
+                        "Room.Read[TR5]: Found " + separator16.ToString("X8") + ", Expected 0xCDCDCDCD", "separator16");
 
                 var separator17 = br.ReadUInt32();
                 if (separator17 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator17.ToString("X8") + ", Expected 0xCDCDCDCD", "separator17");
+                        "Room.Read[TR5]: Found " + separator17.ToString("X8") + ", Expected 0xCDCDCDCD", "separator17");
 
                 var separator18 = br.ReadUInt32();
                 if (separator18 != 0xCDCDCDCD)
                     throw new ArgumentException(
-                        "Room.Read: Found " + separator18.ToString("X8") + ", Expected 0xCDCDCDCD", "separator18");
+                        "Room.Read[TR5]: Found " + separator18.ToString("X8") + ", Expected 0xCDCDCDCD", "separator18");
 
                 r.Lights = br.ReadArray(numLights, () => Light.Read(br, TRVersion.TR5));
 
@@ -1593,6 +1595,332 @@ namespace UniRaider.Loader
             }
 
             return r;
+        }
+    }
+
+    public struct Mesh
+    {
+        /// <summary>
+        /// Usually close to mesh's centroid
+        /// </summary>
+        public Vertex Centre { get; set; }
+
+        /// <summary>
+        /// Radius of collisional sphere
+        /// </summary>
+        public int CollisionSize { get; set; }
+
+        /// <summary>
+        /// List of vertices
+        /// </summary>
+        public Vertex[] Vertices { get; set; }
+
+        /// <summary>
+        /// List of normals
+        /// </summary>
+        public Vertex[] Normals { get; set; }
+
+        /// <summary>
+        /// List of light values
+        /// </summary>
+        public short[] Lights { get; set; }
+
+        /// <summary>
+        /// List of textured rectangles
+        /// </summary>
+        public QuadFace[] TexturedRectangles { get; set; }
+
+        /// <summary>
+        /// List of textured triangles
+        /// </summary>
+        public Triangle[] TexturedTriangles { get; set; }
+
+        /// <summary>
+        /// List of coloured rectangles
+        /// </summary>
+        public QuadFace[] ColouredRectangles { get; set; }
+
+        /// <summary>
+        /// List of coloured triangles
+        /// </summary>
+        public Triangle[] ColouredTriangles { get; set; }
+        
+        /// <summary>
+        /// Reads a <see cref="Mesh"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Mesh"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>A <see cref="Mesh"/></returns>
+        public static Mesh Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        {
+            var ret = new Mesh();
+
+            ret.Centre = Vertex.Read16(br);
+            ret.CollisionSize = br.ReadInt32();
+
+            ret.Vertices = br.ReadArray(br.ReadInt16(), () => Vertex.Read16(br));
+
+            var numNormals = br.ReadInt16();
+            if (numNormals >= 0)
+                ret.Normals = br.ReadArray(numNormals, () => Vertex.Read16(br));
+            else
+                ret.Lights = br.ReadInt16Array(-numNormals);
+
+            ret.TexturedRectangles = br.ReadArray(br.ReadInt16(), () => QuadFace.Read(br, ver));
+            ret.TexturedTriangles = br.ReadArray(br.ReadInt16(), () => Triangle.Read(br, ver));
+
+            if(ver == TRVersion.TR1)
+            {
+                ret.ColouredRectangles = br.ReadArray(br.ReadInt16(), () => QuadFace.Read(br, ver));
+                ret.ColouredTriangles = br.ReadArray(br.ReadInt16(), () => Triangle.Read(br, ver));
+            }
+
+            return ret;
+        }
+    }
+
+    public struct StaticMesh
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="StaticMesh"/> class.
+        /// </summary>
+        public StaticMesh(uint objectId, ushort mesh, Vertex[] visibilityBox, Vertex[] collisionBox, ushort flags)
+        {
+            ObjectID = objectId;
+            Mesh = mesh;
+            VisibilityBox = visibilityBox;
+            CollisionBox = collisionBox;
+            Flags = flags;
+        }
+
+        /// <summary>
+        /// Object Identifier (matched in Items[])
+        /// </summary>
+        public uint ObjectID { get; set; }
+
+        /// <summary>
+        /// Mesh (offset into MeshPointers[])
+        /// </summary>
+        public ushort Mesh { get; set; }
+
+        public Vertex[] VisibilityBox { get; set; }
+
+        public Vertex[] CollisionBox { get; set; }
+
+        /// <summary>
+        /// Meaning is uncertain, it's usually 2, and is 3 for objects Lara can travel through
+        /// </summary>
+        public ushort Flags { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="StaticMesh"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="StaticMesh"/></param>
+        /// <returns>A <see cref="StaticMesh"/></returns>
+        public static StaticMesh Read(BinaryReader br)
+        {
+            var ret = new StaticMesh();
+
+            ret.ObjectID = br.ReadUInt32();
+            ret.Mesh = br.ReadUInt16();
+
+            ret.VisibilityBox = new[]
+            {
+                new Vertex(br.ReadInt16(), br.ReadInt16(), -br.ReadInt16()),
+                new Vertex(-br.ReadInt16(), -br.ReadInt16(), -br.ReadInt16()) 
+            };
+
+            ret.CollisionBox = new[]
+            {
+                new Vertex(br.ReadInt16(), br.ReadInt16(), -br.ReadInt16()),
+                new Vertex(-br.ReadInt16(), -br.ReadInt16(), -br.ReadInt16())
+            };
+
+            ret.Flags = br.ReadUInt16();
+
+            return ret;
+        }
+    }
+
+    public struct MeshTree
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MeshTree"/> class.
+        /// </summary>
+        public MeshTree(uint flags, Vertex offset)
+        {
+            Flags = flags;
+            Offset = offset;
+        }
+
+        /// <summary>
+        /// Bit 1 (0x0002) indicates "put the parent mesh on the mesh stack"<br/>
+        /// Bit 0 (0x0001) indicates "take the top mesh off the mesh stack and use as the parent mesh"
+        /// </summary>
+        public uint Flags { get; set; }
+
+        public Vertex Offset { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="MeshTree"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="MeshTree"/></param>
+        /// <returns>A <see cref="MeshTree"/></returns>
+        public static MeshTree Read(BinaryReader br)
+        {
+            return new MeshTree(br.ReadUInt32(), Vertex.Read32(br));
+        }
+    }
+
+    public struct Moveable
+    {
+        /// <summary>
+        /// Item Identifier (matched in Items[])
+        /// </summary>
+        public uint ObjectID { get; set; }
+
+        /// <summary>
+        /// Number of meshes in this object
+        /// </summary>
+        public ushort NumMeshes { get; set; }
+
+        /// <summary>
+        /// Starting mesh (offset into MeshPointers[])
+        /// </summary>
+        public ushort StartingMesh { get; set; }
+
+        /// <summary>
+        /// Offset into MeshTree[]
+        /// </summary>
+        public uint MeshTreeIndex { get; set; }
+
+        /// <summary>
+        /// Byte offset into Frames[] (divide by 2 for Frames[i])
+        /// </summary>
+        public uint FrameOffset { get; set; }
+
+        public uint FrameIndex { get; set; }
+
+        /// <summary>
+        /// Offset into Animations[]
+        /// </summary>
+        public ushort AnimationIndex { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="Moveable"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Moveable"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>A <see cref="Moveable"/></returns>
+        public static Moveable Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        {
+            var ret = new Moveable
+            {
+                ObjectID = br.ReadUInt32(),
+                NumMeshes = br.ReadUInt16(),
+                StartingMesh = br.ReadUInt16(),
+                MeshTreeIndex = br.ReadUInt32(),
+                FrameOffset = br.ReadUInt32(),
+                AnimationIndex = br.ReadUInt16()
+            };
+            
+            if(ver == TRVersion.TR5)
+            {
+                var filler = br.ReadUInt16();
+                if(filler != 0xFFEF)
+                    throw new ArgumentException("Moveable.Read[TR5]: Found " + filler.ToString("X4") + ", Expected 0xFFEF", "filler");
+            }
+
+            return ret;
+        }
+    }
+
+    public struct Item
+    {
+        /// <summary>
+        /// Object Identifier (matched in Moveables[] or SpriteSequences[] as appropriate)
+        /// </summary>
+        public short ObjectID { get; set; }
+
+        /// <summary>
+        /// Which room contains this item
+        /// </summary>
+        public short Room { get; set; }
+
+        /// <summary>
+        /// Position (in world coordinates)
+        /// </summary>
+        public Vertex Position { get; set; }
+
+        /// <summary>
+        /// Rotation -> ((0xc000 >> 14) * 90) degrees
+        /// </summary>
+        public float Rotation { get; set; }
+
+        /// <summary>
+        /// Constant lighting, -1 means use mesh lighting
+        /// </summary>
+        public short Intensity1 { get; set; }
+
+        /// <summary>
+        /// Like Intensity1, and almost always the same value [absent from TR1 data files]
+        /// </summary>
+        public short Intensity2 { get; set; }
+
+        /// <summary>
+        /// Object code bit - used for altering entity behavior. Used only in TR4-5
+        /// </summary>
+        public short ObjectCodeBit { get; set; }
+
+        /// <summary>
+        /// 0x0100 indicates "initially invisible"<br/>
+        /// 0x3e00 indicates "open" or "activated"
+        /// </summary>
+        public ushort Flags { get; set; }
+
+        public ushort ActivationMash => (ushort)((Flags & 0x3e00) >> 9);
+
+        /// <summary>
+        /// Determines if the <see cref="Item"/> is initially invisible
+        /// </summary>
+        public bool InitiallyInvisible => (Flags & 0x0100) != 0;
+
+        /// <summary>
+        /// Reads a <see cref="Item"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Item"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>An <see cref="Item"/></returns>
+        public static Item Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        {
+            var ret = new Item();
+
+            ret.ObjectID = br.ReadInt16();
+            ret.Room = br.ReadInt16();
+            ret.Position = Vertex.Read32(br);
+            ret.Rotation = br.ReadUInt16() / 16384.0f * -90;
+            ret.Intensity1 = (short)br.ReadUInt16();
+            if (ver < TRVersion.TR3)
+                if (ret.Intensity1 >= 0)
+                    ret.Intensity1 = (short)((8191 - ret.Intensity1) << 2);
+
+
+            if (ver == TRVersion.TR2 || ver == TRVersion.TR3)
+                ret.Intensity2 = (short)br.ReadUInt16();
+
+
+            if(ver < TRVersion.TR4)
+            {
+                ret.ObjectCodeBit = 0;
+            }
+            else
+            {
+                ret.ObjectCodeBit = (short)br.ReadUInt16();
+            }
+
+            ret.Flags = br.ReadUInt16();
+
+            return ret;
         }
     }
 }
