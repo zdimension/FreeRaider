@@ -1900,16 +1900,23 @@ namespace UniRaider.Loader
             ret.Position = Vertex.Read32(br);
             ret.Rotation = br.ReadUInt16() / 16384.0f * -90;
             ret.Intensity1 = (short)br.ReadUInt16();
+
             if (ver < TRVersion.TR3)
                 if (ret.Intensity1 >= 0)
                     ret.Intensity1 = (short)((8191 - ret.Intensity1) << 2);
 
 
             if (ver == TRVersion.TR2 || ver == TRVersion.TR3)
-                ret.Intensity2 = (short)br.ReadUInt16();
+                ret.Intensity2 = (short) br.ReadUInt16(); // TODO: Cast ushort to short? weird
+            else
+                ret.Intensity2 = ret.Intensity1; 
+
+            if(ver == TRVersion.TR2)
+                if (ret.Intensity2 >= 0)
+                    ret.Intensity2 = (short)((8191 - ret.Intensity2) << 2);
 
 
-            if(ver < TRVersion.TR4)
+            if (ver < TRVersion.TR4)
             {
                 ret.ObjectCodeBit = 0;
             }
@@ -1923,4 +1930,215 @@ namespace UniRaider.Loader
             return ret;
         }
     }
+
+    public struct SpriteTexture
+    {
+        public ushort Tile { get; set; }
+
+        public short X0 { get; set; }
+
+        public short Y0 { get; set; }
+
+        public short X1 { get; set; }
+
+        public short Y1 { get; set; }
+
+        public short LeftSide { get; set; }
+
+        public short TopSide { get; set; }
+
+        public short RightSide { get; set; }
+
+        public short BottomSide { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="SpriteTexture"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="SpriteTexture"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>An <see cref="SpriteTexture"/></returns>
+        public static SpriteTexture Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        {
+            var ret = new SpriteTexture();
+
+            ret.Tile = br.ReadUInt16();
+
+            var tx = br.ReadByte();
+            var ty = br.ReadByte();
+            var tw = br.ReadUInt16();
+            var th = br.ReadUInt16();
+            var tleft = br.ReadInt16();
+            var ttop = br.ReadInt16();
+            var tright = br.ReadInt16();
+            var tbottom = br.ReadInt16();
+
+            if(ver < TRVersion.TR4)
+            {
+                ret.X0 = tx;
+                ret.Y0 = ty;
+                ret.X1 = (short)(tx + tw / 256.0f);
+                ret.Y1 = (short)(ty + th / 256.0f);
+
+                ret.LeftSide = tleft;
+                ret.RightSide = tright;
+                ret.TopSide = (short)-tbottom;
+                ret.BottomSide = (short)-ttop;
+            }
+            else
+            {
+                ret.X0 = tleft;
+                ret.X1 = tright;
+                ret.Y0 = tbottom;
+                ret.Y1 = ttop;
+
+                ret.LeftSide = tx;
+                ret.RightSide = (short)(tx + tw / 256.0f);
+                ret.BottomSide = ty;
+                ret.TopSide = (short) (ty + th / 256.0f);
+            }
+
+            return ret;
+        }
+    }
+
+    public struct SpriteSequence
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SpriteSequence"/> class.
+        /// </summary>
+        public SpriteSequence(int spriteId, short negativeLength, short offset)
+        {
+            SpriteID = spriteId;
+            NegativeLength = negativeLength;
+            Offset = offset;
+        }
+
+        /// <summary>
+        /// Sprite identifier 
+        /// </summary>
+        public int SpriteID { get; set; }
+
+        /// <summary>
+        /// Negative of 'how many sprites are in this sequence'
+        /// </summary>
+        public short NegativeLength { get; set; }
+
+        /// <summary>
+        /// Where (in sprite texture list) this sequence starts
+        /// </summary>
+        public short Offset { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="SpriteSequence"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="SpriteSequence"/></param>
+        /// <returns>A <see cref="SpriteSequence"/></returns>
+        public static SpriteSequence Read(BinaryReader br)
+        {
+            return new SpriteSequence
+            {
+                SpriteID = br.ReadInt32(),
+                NegativeLength = (short)-br.ReadInt16(),
+                Offset = br.ReadInt16()
+            };
+        } 
+    }
+
+    public struct Animation
+    {
+        /// <summary>
+        /// Byte offset into Frames[] (divide by 2 for Frames[i])
+        /// </summary>
+        public uint FrameOffset { get; set; }
+
+        /// <summary>
+        /// Engine ticks per frame
+        /// </summary>
+        public byte FrameRate { get; set; }
+
+        /// <summary>
+        /// Number of <see cref="short"/> in Frames[] used by this animation
+        /// </summary>
+        public byte FrameSize { get; set; }
+
+        public ushort StateID { get; set; }
+
+        public int Speed { get; set; }
+
+        public int Acceleration { get; set; }
+
+        public int SpeedLateral { get; set; }
+
+        public int AccelerationLateral { get; set; }
+
+        /// <summary>
+        /// First frame in this animation
+        /// </summary>
+        public ushort FrameStart { get; set; }
+
+        /// <summary>
+        /// Last frame in this animation
+        /// </summary>
+        public ushort FrameEnd { get; set; }
+
+        public ushort NextAnimation { get; set; }
+
+        public ushort NextFrame { get; set; }
+
+        public ushort NumStateChanges { get; set; }
+
+        /// <summary>
+        /// Offset into StateChanges[]
+        /// </summary>
+        public ushort StateChangeOffset { get; set; }
+
+        /// <summary>
+        /// How many of them to use
+        /// </summary>
+        public ushort NumAnimCommands { get; set; }
+
+        /// <summary>
+        /// Offset into AnimCommand[]
+        /// </summary>
+        public ushort AnimCommand { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="Animation"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Animation"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>An <see cref="Animation"/></returns>
+        public static Animation Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        {
+            var ret = new Animation();
+
+            ret.FrameOffset = br.ReadUInt32();
+            ret.FrameRate = br.ReadByte();
+            ret.FrameSize = br.ReadByte();
+            ret.StateID = br.ReadUInt16();
+
+            ret.Speed = br.ReadInt32();
+            ret.Acceleration = br.ReadInt32();
+
+            if(ver >= TRVersion.TR4)
+            {
+                ret.SpeedLateral = br.ReadInt32();
+                ret.AccelerationLateral = br.ReadInt32();
+            }
+
+            ret.FrameStart = br.ReadUInt16();
+            ret.FrameEnd = br.ReadUInt16();
+            ret.NextAnimation = br.ReadUInt16();
+            ret.NextFrame = br.ReadUInt16();
+
+            ret.NumStateChanges = br.ReadUInt16();
+            ret.StateChangeOffset = br.ReadUInt16();
+            ret.NumAnimCommands = br.ReadUInt16();
+            ret.AnimCommand = br.ReadUInt16();
+
+            return ret;
+        }
+    }
+
+
 }
