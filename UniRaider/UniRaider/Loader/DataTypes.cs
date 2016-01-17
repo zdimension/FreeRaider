@@ -2502,4 +2502,166 @@ namespace UniRaider.Loader
             return ret;
         }
     }
+
+    public enum BlendingMode : ushort
+    {
+        /// <summary>
+        /// Texture is all-opaque, and that transparency information is ignored.
+        /// </summary>
+        Opaque = 0,
+
+        /// <summary>
+        /// Texture uses alpha testing, i.e. it may contain opaque and completely transparent regions.<br/>
+        /// In 8-bit colour, index 0 is the transparent colour, while in 16-bit colour, the top bit (0x8000) is the alpha channel (1 = opaque, 0 = transparent).<br/>
+        /// In 32-bit textures, transparency is specified by full magenta colour value (RGB = 255,0,255) — i.e. pixel has to be magenta to be transparent.
+        /// </summary>
+        Transparent = 1,
+
+        /// <summary>
+        /// Texture uses alpha blending with additive operation.<br/>
+        /// No depth sorting is done on alpha-blended textures.
+        /// </summary>
+        Multiply = 2,
+
+        /// <summary>
+        /// Not implemented properly in PC version, but on PlayStation this type produces alpha blending with inversion operation, thus converting all the bright zones to dark, and dark zones to bright.<br/>
+        /// This blending mode was used for smooth textured shadows, footprints and black smoke sprites.<br/>
+        /// There is a remnant of this blending mode in the form of entity type named smoke emitter black.
+        /// </summary>
+        SimpleShade = 3,
+
+        /// <summary>
+        /// Alpha-tested face without Z testing, i.e. depth information is ignored. Used for GUI elements (such as fonts) and skyboxes.
+        /// </summary>
+        TransparentIgnoreZ = 4,
+
+        /// <summary>
+        /// Unused.<br/>
+        /// Possibly was used in PlayStation versions.
+        /// </summary>
+        InvertSrc = 5,
+
+        /// <summary>
+        /// Wireframe mode.<br/>
+        /// Used for “line particles”, such as gun sparks, water drops and laser beams. Possibly was also used for debug purposes.
+        /// </summary>
+        Wireframe = 6,
+        /// <summary>
+        /// Forced alpha value.<br/>
+        /// It’s ordinary alpha-tested face, but alpha value for this face is overridden with global variable.<br/>
+        /// Used to “fade out” specific meshes, like vanishing enemy bodies or Semerkhet ghost in “Tomb of Semerkhet” level.
+        /// </summary>
+        TransparentAlpha = 7,
+        InvertDst = 8,
+        Screen = 9,
+        Hide = 10,
+        AnimatedTexture = 11
+    }
+
+    public struct ObjectTexture
+    {
+        /// <summary>
+        /// Specifies transparency mode (i.e. blending mode) used for face with this texture applied.
+        /// </summary>
+        public BlendingMode TransparencyFlags { get; set; }
+
+        /// <summary>
+        /// Index into textile list
+        /// </summary>
+        public ushort TileAndFlag { get; set; }
+
+        public ushort NewFlags { get; set; }
+
+        /// <summary>
+        /// The four corners of the texture
+        /// </summary>
+        public ObjectTextureVertex[] Vertices { get; set; }
+
+        public uint OriginalU { get; set; }
+
+        public uint OriginalV { get; set; }
+
+        /// <summary>
+        /// Actually Width-1
+        /// </summary>
+        public uint Width { get; set; }
+
+        /// <summary>
+        /// Actually Height-1
+        /// </summary>
+        public uint Height { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="ObjectTexture"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="ObjectTexture"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>A <see cref="ObjectTexture"/></returns>
+        public static ObjectTexture Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        {
+            var ret = new ObjectTexture();
+
+            ret.TransparencyFlags = (BlendingMode) br.ReadUInt16();
+            ret.TileAndFlag = br.ReadUInt16();
+
+            if (ver >= TRVersion.TR4)
+            {
+                if ((ret.TileAndFlag & 0x7FFF) > 128)
+                    throw new ArgumentOutOfRangeException("tileAndFlag", ret.TileAndFlag,
+                        "ObjectTexture.Read[" + ver + "]: tileAndFlag > 128");
+
+                ret.NewFlags = br.ReadUInt16();
+            }
+            else
+            {
+                if (ret.TileAndFlag > 64)
+                    throw new ArgumentOutOfRangeException("tileAndFlag", ret.TileAndFlag,
+                        "ObjectTexture.Read[" + ver + "]: tileAndFlag > 64");
+
+                if((ret.TileAndFlag & (1 << 15)) != 0)
+                    throw new ArgumentException("ObjectTexture.Read[" + ver + "]: tileAndFlag has top bit set", "tileAndFlag");
+            }
+
+            ret.Vertices = br.ReadArray(4, () => ObjectTextureVertex.Read(br, ver));
+
+            if(ver >= TRVersion.TR4)
+            {
+                ret.OriginalU = br.ReadUInt32();
+                ret.OriginalV = br.ReadUInt32();
+
+                ret.Width = br.ReadUInt32();
+                ret.Height = br.ReadUInt32();
+            }
+
+            if(ver == TRVersion.TR5)
+            {
+                var filler = br.ReadUInt16();
+
+                if(filler != 0)
+                    throw new ArgumentException(
+                        "ObjectTexture.Read[TR5]: Found " + filler.ToString("X4") + ", Expected 0", "filler");
+            }
+
+            return ret;
+        }
+    }
+
+    public struct AnimatedTexture
+    {
+        /// <summary>
+        /// Offsets into ObjectTextures[], in animation order
+        /// </summary>
+        public short[] TextureIDs { get; set; }
+    }
+
+    public struct Camera
+    {
+        public int X { get; set; }
+
+        public int Y { get; set; }
+
+        public int Z { get; set; }
+
+       
+    }
 }
