@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL;
@@ -2140,5 +2141,365 @@ namespace UniRaider.Loader
         }
     }
 
+    public struct StateChange
+    {
+        public ushort StateID { get; set; }
 
+        /// <summary>
+        /// Number of ranges (seems to always be 1..5)
+        /// </summary>
+        public ushort NumAnimDispatches { get; set; }
+
+        /// <summary>
+        /// Offset into AnimDispatches[]
+        /// </summary>
+        public ushort AnimDispatch { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="StateChange"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="StateChange"/></param>
+        /// <returns>A <see cref="StateChange"/></returns>
+        public static StateChange Read(BinaryReader br)
+        {
+            return new StateChange
+            {
+                StateID = br.ReadUInt16(),
+                NumAnimDispatches = br.ReadUInt16(),
+                AnimDispatch = br.ReadUInt16()
+            };
+        }
+    }
+
+    public struct AnimDispatch
+    {
+        /// <summary>
+        /// Lowest frame that uses this range
+        /// </summary>
+        public short Low { get; set; }
+
+        /// <summary>
+        /// Highest frame that uses this range
+        /// </summary>
+        public short High { get; set; }
+
+        /// <summary>
+        /// Animation to dispatch to
+        /// </summary>
+        public short NextAnimation { get; set; }
+
+        /// <summary>
+        /// Frame offset to dispatch to
+        /// </summary>
+        public short NextFrame { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="AnimDispatch"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="AnimDispatch"/></param>
+        /// <returns>A <see cref="AnimDispatch"/></returns>
+        public static AnimDispatch Read(BinaryReader br)
+        {
+            return new AnimDispatch
+            {
+                Low = br.ReadInt16(),
+                High = br.ReadInt16(),
+                NextAnimation = br.ReadInt16(),
+                NextFrame = br.ReadInt16()
+            };
+        }
+    }
+
+    public struct Box
+    {
+        /// <summary>
+        /// Horizontal dimensions in global units
+        /// </summary>
+        public uint Zmin { get; set; }
+
+        public uint Zmax { get; set; }
+
+        public uint Xmin { get; set; }
+
+        public uint Xmax { get; set; }
+
+        /// <summary>
+        /// Height value in global units
+        /// </summary>
+        public short TrueFloor { get; set; }
+
+        /// <summary>
+        /// Index into Overlaps[]<br/>
+        /// High bit is sometimes set; this occurs in front of swinging doors and the like
+        /// </summary>
+        public short OverlapIndex { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="Box"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Box"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>A <see cref="Box"/></returns>
+        public static Box Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        {
+            var ret = new Box();
+            
+            if(ver >= TRVersion.TR2)
+            {
+                ret.Zmin = (uint) (1024 * br.ReadByte()); // todo: opentomb multiplies by -1024
+                ret.Zmax = (uint) (1024 * br.ReadByte());
+                ret.Xmin = (uint) (1024 * br.ReadByte());
+                ret.Xmax = (uint) (1024 * br.ReadByte());
+            }
+            else
+            {
+                ret.Zmin = br.ReadUInt32();
+                ret.Zmax = br.ReadUInt32();
+                ret.Xmin = br.ReadUInt32();
+                ret.Xmax = br.ReadUInt32();
+            }
+
+            ret.TrueFloor = br.ReadInt16();
+            ret.OverlapIndex = br.ReadInt16();
+
+            return ret;
+        }
+    }
+
+    public struct Zone
+    {
+        public ushort[] GroundZonesNormal { get; set; }
+
+        public ushort FlyZoneNormal { get; set; }
+
+        public ushort[] GroundZonesAlternate { get; set; }
+
+        public ushort FlyZoneAlternate { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="Zone"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Zone"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>A <see cref="Zone"/></returns>
+        public static Zone Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        {
+            var ret = new Zone();
+
+            var arrSize = ver < TRVersion.TR2 ? 2 : 4;
+
+            ret.GroundZonesNormal = br.ReadUInt16Array(arrSize); // todo: OpenTomb inverts the two fields
+            ret.FlyZoneNormal = br.ReadUInt16();
+            ret.GroundZonesAlternate = br.ReadUInt16Array(arrSize);
+            ret.FlyZoneAlternate = br.ReadUInt16();
+
+            return ret;
+        }
+    }
+
+    public struct SoundSource
+    {
+        /// <summary>
+        /// Absolute X position of sound source (world coordinates)
+        /// </summary>
+        public int X { get; set; }
+
+        /// <summary>
+        /// Absolute Y position of sound source (world coordinates)
+        /// </summary>
+        public int Y { get; set; }
+
+        /// <summary>
+        /// Absolute Z position of sound source (world coordinates)
+        /// </summary>
+        public int Z { get; set; }
+
+        /// <summary>
+        /// Internal sound index
+        /// </summary>
+        public ushort SoundID { get; set; }
+
+        /// <summary>
+        /// 0x40, 0x80 or 0xc0
+        /// </summary>
+        public ushort Flags { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="SoundSource"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="SoundSource"/></param>
+        /// <returns>A <see cref="SoundSource"/></returns>
+        public static SoundSource Read(BinaryReader br)
+        {
+            var ret = new SoundSource
+            {
+                X = br.ReadInt32(),
+                Y = br.ReadInt32(),
+                Z = br.ReadInt32(),
+                SoundID = br.ReadUInt16(),
+                Flags = br.ReadUInt16()
+            };
+
+            return ret;
+        }
+    }
+
+    public enum LoopType
+    {
+        /// <summary>
+        /// Normal playback (0)
+        /// </summary>
+        None,
+        /// <summary>
+        /// Looped (2 in TR1, 3 in other games), meaning the sound will be looped until strictly stopped by an engine event
+        /// </summary>
+        Forward,
+        /// <summary>
+        /// One-shot rewound (1 in TR1/TR2, 2 in other games), meaning the sound will be rewound if triggered again
+        /// </summary>
+        PingPong,
+        /// <summary>
+        /// One-shot wait mode (only present above TR2, value 1), meaning the same sound will be ignored until current one stops
+        /// </summary>
+        Wait
+    }
+
+    public struct SoundDetails
+    {
+        /// <summary>
+        /// Index into SampleIndices[]
+        /// </summary>
+        public ushort Sample { get; set; }
+
+        /// <summary>
+        /// Global sample volume
+        /// </summary>
+        public ushort Volume { get; set; }
+
+        /// <summary>
+        /// Sound range
+        /// </summary>
+        public ushort SoundRange { get; set; }
+
+        /// <summary>
+        /// Chance to play
+        /// </summary>
+        public ushort Chance { get; set; }
+
+        /// <summary>
+        /// Pitch shift
+        /// </summary>
+        public short Pitch { get; set; }
+
+        public ushort Characteristics { get; set; }
+
+        public LoopType GetLoopType(TRVersion ver = TRVersion.Unknown)
+        {
+            switch(Characteristics & 3)
+            {
+                case 1:
+                    return ver < TRVersion.TR3 ? LoopType.PingPong : LoopType.Wait;
+                case 2:
+                    return ver == TRVersion.TR1 ? LoopType.Forward : LoopType.PingPong;
+                case 3:
+                    if(ver >= TRVersion.TR3) return LoopType.Forward;
+                    break;
+            }
+            return LoopType.None;
+        }
+
+        /// <summary>
+        /// Number of sound samples in this group. If there are more than one samples, then engine will select one to play based on randomizer (for example, listen to Lara footstep sounds).
+        /// </summary>
+        public byte SampleCount => (byte)((Characteristics >> 2) & 0x0f);
+
+        /// <summary>
+        /// Randomize pitch. When this flag is set, sound pitch will be slightly varied with each playback event.
+        /// </summary>
+        public bool UseRandomPitch => ((Characteristics >> 8) & 0x20) == 0x20;
+
+        /// <summary>
+        /// Randomize gain. When this flag is set, sound volume (gain) will be slightly varied with each playback event.
+        /// </summary>
+        public bool UseRandomVolume => ((Characteristics >> 8) & 0x40) == 0x40;
+
+        public const int DefaultRange = 8;
+        public const short DefaultPitch = 1;
+
+        /// <summary>
+        /// Reads a <see cref="SoundDetails"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="SoundDetails"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>A <see cref="SoundDetails"/></returns>
+        public static SoundDetails Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        {
+            var ret = new SoundDetails();
+
+            ret.Sample = br.ReadUInt16();
+            
+            if(ver < TRVersion.TR3)
+            {
+                ret.Volume = br.ReadUInt16();
+                ret.Chance = br.ReadUInt16();
+                ret.Characteristics = br.ReadUInt16();
+                ret.SoundRange = DefaultRange;
+                ret.Pitch = DefaultPitch;
+            }
+            else
+            {
+                ret.Volume = br.ReadByte();
+                ret.SoundRange = br.ReadByte();
+                ret.Chance = br.ReadByte();
+                ret.Pitch = br.ReadByte();
+                ret.Characteristics = br.ReadUInt16();
+            }
+
+            return ret;
+        }
+    }
+
+    public struct ObjectTextureVertex
+    {
+        /// <summary>
+        /// 1 if <see cref="Xpixel"/> is the low value, -1 if <see cref="Xpixel"/> is the high value in the object texture
+        /// </summary>
+        public sbyte Xcoordinate { get; set; }
+
+        public byte Xpixel { get; set; }
+
+        /// <summary>
+        /// 1 if <see cref="Ypixel"/> is the low value, -1 if <see cref="Ypixel"/> is the high value in the object texture
+        /// </summary>
+        public sbyte Ycoordinate { get; set; }
+
+        public byte Ypixel { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="ObjectTextureVertex"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="ObjectTextureVertex"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>A <see cref="ObjectTextureVertex"/></returns>
+        public static ObjectTextureVertex Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        {
+            var ret = new ObjectTextureVertex();
+
+            ret.Xcoordinate = br.ReadSByte();
+            ret.Xpixel = br.ReadByte();
+            ret.Ycoordinate = br.ReadSByte();
+            ret.Ypixel = br.ReadByte();
+
+            if(ver >= TRVersion.TR4)
+            {
+                if (ret.Xcoordinate == 0)
+                    ret.Xcoordinate = 1;
+
+                if (ret.Ycoordinate == 0)
+                    ret.Ycoordinate = 1;
+            }
+
+            return ret;
+        }
+    }
 }
