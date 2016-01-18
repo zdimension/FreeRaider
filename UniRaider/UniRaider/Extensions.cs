@@ -20,14 +20,6 @@ namespace UniRaider
             return Encoding.ASCII.GetString(str);
         }
 
-        public static byte[] ReadByteArray(this BinaryReader br, long arrLength)
-        {
-            var arr = new byte[arrLength];
-            for (long i = 0; i < arrLength; i++)
-                arr[i] = br.ReadByte();
-            return arr;
-        }
-
         public static ushort[] ReadUInt16Array(this BinaryReader br, long arrLength)
         {
             var arr = new ushort[arrLength];
@@ -168,6 +160,13 @@ namespace UniRaider
             foreach (var t in s)
                 sb.Append((char)(t ^ key));
             return sb.ToString();
+        }
+
+        public static void Replace<T>(this T[] items, T oldValue, T newValue)
+        {
+            for (var i = 0; i < items.Length; i++)
+                if (items[i].Equals(oldValue))
+                    items[i] = newValue;
         }
     }
 }

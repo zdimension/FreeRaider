@@ -48,9 +48,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions.cs" />
+    <Compile Include="Helper.cs" />
     <Compile Include="LoaderTests\Loader.cs" />
     <Compile Include="LoaderTests\TR2Level.cs" />
     <Compile Include="Loader\DataTypes.cs" />
+    <Compile Include="Loader\Level.cs" />
     <Compile Include="Loader\TR1Level.cs" />
     <Compile Include="Loader\TR2Level.cs" />
     <Compile Include="Loader\TR3Level.cs" />

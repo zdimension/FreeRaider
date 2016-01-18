@@ -7,7 +7,7 @@ namespace UniRaider.TestApp
     {
         static void Main(string[] args)
         {
-            bool testtombpc = true;
+            bool testtombpc = false;
             if (testtombpc)
             {
                 var lvl1 = TOMBPCFile.ParseFile(args[0]);

@@ -1049,18 +1049,23 @@ namespace UniRaider.Loader
                 if (ver >= TRVersion.TR2)
                 {
                     ret.Attributes = (SpecialRenderingEffects) br.ReadUInt16();
-                    ret.Lighting2 = ret.Lighting1;
+                    ret.Lighting2 = ver >= TRVersion.TR3 ? br.ReadInt16() : (short)((8191 - br.ReadInt16()) << 2);  
                 }
                 else
                 {
-                    ret.Lighting2 = ver >= TRVersion.TR3 ? br.ReadInt16() : (short) ((8191 - br.ReadInt16()) << 2);
+                    ret.Lighting2 = ret.Lighting1;
                 }
                 ret.Normal = Vertex.Zero;
-                if (ver < TRVersion.TR3)
+                if (ver < TRVersion.TR2)
                     ret.Color = new FloatColor(
-                        ret.Lighting1 / 32768.0f, 
+                        ret.Lighting1 / 32768.0f,
                         ret.Lighting1 / 32768.0f,
                         ret.Lighting1 / 32768.0f);
+                else if (ver == TRVersion.TR2)
+                    ret.Color = new FloatColor(
+                        ret.Lighting2 / 32768.0f, 
+                        ret.Lighting2 / 32768.0f,
+                        ret.Lighting2 / 32768.0f);
                 else if (ver == TRVersion.TR3)
                     ret.Color = new FloatColor(
                         ((ret.Lighting2 & 0x7C00) >> 10) / 62.0f,
@@ -1519,10 +1524,14 @@ namespace UniRaider.Loader
                 var numDataWords = br.ReadUInt32();
                 var pos = br.BaseStream.Position;
 
-                r.Vertices = br.ReadArray(br.ReadUInt16(), () => RoomVertex.Read(br, ver));
-                r.Rectangles = br.ReadArray(br.ReadUInt16(), () => QuadFace.Read(br, TRVersion.TR1));
-                r.Triangles = br.ReadArray(br.ReadUInt16(), () => Triangle.Read(br, TRVersion.TR1));
-                r.Sprites = br.ReadArray(br.ReadUInt16(), () => Sprite.Read(br));
+                var numVertices = br.ReadUInt16();
+                r.Vertices = br.ReadArray(numVertices, () => RoomVertex.Read(br, ver));
+                var numRectangles = br.ReadUInt16();
+                r.Rectangles = br.ReadArray(numRectangles, () => QuadFace.Read(br, TRVersion.TR1));
+                var numTriangles = br.ReadUInt16();
+                r.Triangles = br.ReadArray(numTriangles, () => Triangle.Read(br, TRVersion.TR1));
+                var numSprites = br.ReadUInt16();
+                r.Sprites = br.ReadArray(numSprites, () => Sprite.Read(br));
 
                 br.BaseStream.Position = pos + numDataWords * 2;
 
@@ -1671,7 +1680,7 @@ namespace UniRaider.Loader
             ret.TexturedRectangles = br.ReadArray(br.ReadInt16(), () => QuadFace.Read(br, ver));
             ret.TexturedTriangles = br.ReadArray(br.ReadInt16(), () => Triangle.Read(br, ver));
 
-            if(ver == TRVersion.TR1)
+            if(ver < TRVersion.TR4)
             {
                 ret.ColouredRectangles = br.ReadArray(br.ReadInt16(), () => QuadFace.Read(br, ver));
                 ret.ColouredTriangles = br.ReadArray(br.ReadInt16(), () => Triangle.Read(br, ver));
@@ -2886,7 +2895,7 @@ namespace UniRaider.Loader
         {
             return new LightMap
             {
-                Map = br.ReadByteArray(8192) // 32 * 256
+                Map = br.ReadBytes(8192) // 32 * 256
             };
         }
     }

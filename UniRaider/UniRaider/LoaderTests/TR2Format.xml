@@ -1,13 +1,118 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 
 <format id="tr2">
-  <field type="uint32" name="version" />
+  <!--<field type="uint32" name="version" />
   <field type="array" name="palette" size="256">
-    <item>
+    <field type="struct">
       <field type="uint8" name="r" />
       <field type="uint8" name="g" />
       <field type="uint8" name="b" />
-    </item>
+    </field>
   </field>
-
+  <field type="array" name="palette16" size="256">
+    <field type="struct">
+      <field type="uint8" name="r" />
+      <field type="uint8" name="g" />
+      <field type="uint8" name="b" />
+      <field type="uint8" name="u" />
+    </field>
+  </field>
+  <field type="uint32" name="numTextiles" />
+  <field type="array" name="textile8" sizef="numTextiles">
+  	<field type="array" size="65536">
+  		<field type="uint8" />
+  	</field>
+  </field>
+  <field type="array" name="textile16" sizef="numTextiles">
+  	<field type="array" size="65536">
+  		<field type="uint16" />
+  	</field>
+  </field>
+  <field type="uint32" name="unused1" />
+  <field type="uint16" name="numRooms" />
+  <field type="array" name="rooms" sizef="numRooms">
+  	<field type="struct">
+  		<field type="struct" name="info">
+  			<field type="int32" name="x" />
+  			<field type="int32" name="z" />
+  			<field type="int32" name="yBottom" />
+  			<field type="int32" name="yTop" />
+  		</field>
+  		<field type="uint16" name="numVertices" />
+  		<field type="uint32" name="numData" />
+  		<field type="struct" name="roomData">
+  			<field type="uint16" name="numVertices" />
+  			<field type="array" name="vertices" sizef="numVertices">
+  				<field type="struct">
+  					<field type="struct" name="vertex">
+  						<field type="int16" name="x" />
+  						<field type="int16" name="y" />
+  						<field type="int16" name="z" />
+  					</field>
+  					<field type="int16" name="lighting" />
+  					<field type="uint16" name="attributes" />
+  					<field type="int16" name="lighting2" />
+  				</field>
+  			</field>
+  			<field type="uint16" name="numRectangles" />
+  			<field type="array" name="rectangles" sizef="numRectangles">
+  				<field type="struct">
+  					<field type="array" name="vertices" size="4">
+  						<field type="uint16" />
+  					</field>
+  					<field type="uint16" name="texture" />
+  				</field>
+  			</field>
+  			<field type="uint16" name="numTriangles" />
+  			<field type="array" name="triangles" sizef="numTriangles">
+  				<field type="struct">
+  					<field type="array" name="vertices" size="3">
+  						<field type="uint16" />
+  					</field>
+  					<field type="uint16" name="texture" />
+  				</field>
+  			</field>
+  			<field type="uint16" name="numSprites" />
+  			<field type="array" name="sprites" sizef="numSprites">
+  				<field type="struct">
+  					<field type="int16" name="vertex" />
+  					<field type="uint16" name="texture" />
+  				</field>
+  			</field>
+  		</field>
+  		<field type="uint16" name="numPortals" />
+  		<field type="array" name="portals" sizef="numPortals">
+  			<field type="struct">
+  				<field type="uint16" name="adjoiningRoom" />
+  				<field type="struct" name="normal">
+  					<field type="int16" name="x" />
+					<field type="int16" name="y" />
+					<field type="int16" name="z" />
+				</field>
+				<field type="array" name="vertices" size="4">
+					<field type="struct">
+  						<field type="int16" name="x" />
+  						<field type="int16" name="y" />
+  						<field type="int16" name="z" />
+  					</field>
+  				</field>
+  			</field>
+  		</field>
+  		<field type="uint16" name="numZsectors" />
+  		<field type="uint16" name="numXsectors" />
+  		<field type="array" name="sectorList" sizef="{*}numZsectors;numXsectors">
+  			<field type="struct">
+  				<field type="uint16" name="FDindex" />
+  				<field type="uint16" name="boxIndex" />
+  				<field type="uint8" name="roomBelow" />
+  				<field type="int8" name="floor" />
+  				<field type="uint8" name="roomAbove" />
+  				<field type="int8" name="ceiling" />
+  			</field>
+  		</field>
+  		<field type="int16" name="ambientIntensity1" />
+  		<field type="int16" name="ambientIntensity2" />
+  		<field type="int16" name="lightMode" />
+  		<field type="uint16" name="numLights" />-->
+  		
 </format>
