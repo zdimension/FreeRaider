@@ -226,17 +226,17 @@ namespace UniRaider.Loader
         /// <summary>
         /// X component
         /// </summary>
-        public float x { get; set; }
+        public float X { get; set; }
 
         /// <summary>
         /// Y component
         /// </summary>
-        public float y { get; set; }
+        public float Y { get; set; }
 
         /// <summary>
         /// Z component
         /// </summary>
-        public float z { get; set; }
+        public float Z { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Vertex"/> class.
@@ -246,9 +246,9 @@ namespace UniRaider.Loader
         /// <param name="z">Z component</param>
         public Vertex(float x, float y, float z)
         {
-            this.x = x;
-            this.y = y;
-            this.z = z;
+            this.X = x;
+            this.Y = y;
+            this.Z = z;
         }
 
         /// <summary>
@@ -284,7 +284,7 @@ namespace UniRaider.Loader
 
         public override string ToString()
         {
-            return $"Vertex [{x} {y} {z}]";
+            return $"Vertex [{X} {Y} {Z}]";
         }
 
         public static readonly Vertex Zero = new Vertex(0, 0, 0);
@@ -2674,14 +2674,14 @@ namespace UniRaider.Loader
             
             ret.Position = Vertex.Read32(br, false);
             
-            br.Room = br.ReadInt16();
-            br.Flag = br.ReadUInt16();
+            ret.Room = br.ReadInt16();
+            ret.Flag = br.ReadUInt16();
             
             return ret;
         }
     }
     
-    public struct FlybyCameram
+    public struct FlybyCamera
     {
         /// <summary>
         /// Camera position
@@ -2692,9 +2692,224 @@ namespace UniRaider.Loader
         /// Camera target
         /// </summary>
         public Vertex Target { get; set; }
-        
+
+        /// <summary>
+        /// Number of flyby camera “chain” this particular camera belongs to. Maximum amount of flyby sequences in single level is 8
+        /// </summary>
         public byte Sequence { get; set; }
-        
+
+        /// <summary>
+        /// Order of the cameras in this particular sequence. Camera with index 0 will be first one in sequence, index 1 means camera will be second in sequence, and so on.
+        /// </summary>
         public byte Index { get; set; }
+
+        /// <summary>
+        /// Specifies this camera's field of view.
+        /// </summary>
+        public ushort FieldOfView { get; set; }
+
+        /// <summary>
+        /// Specifies the roll factor of this camera. When this parameter is not zero, camera will rotate either left or right along roll axis, creating so-called “dutch angle”.
+        /// </summary>
+        public short Roll { get; set; } // TODO: OpenTomb uses ushort instead
+
+        /// <summary>
+        /// Mainly used to stop camera movement for a given time (in game frames). As this parameter is temporal, it won’t be interpolated between two cameras.
+        /// </summary>
+        public ushort Timer { get; set; }
+
+        /// <summary>
+        /// Specifies movement speed for this particular camera.
+        /// </summary>
+        public ushort Speed { get; set; }
+
+        /// <summary>
+        /// Array of bit flags specifying different camera options
+        /// </summary>
+        public ushort Flags { get; set; }
+
+        /// <summary>
+        /// Should be valid for a given flyby camera, so it will display properly, as well as have the ability to activate heavy triggers.
+        /// </summary>
+        public uint RoomID { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="FlybyCamera"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="FlybyCamera"/></param>
+        /// <returns>A <see cref="FlybyCamera"/></returns>
+        public static FlybyCamera Read(BinaryReader br)
+        {
+            var ret = new FlybyCamera();
+
+            ret.Position = Vertex.Read32(br, false);
+            ret.Target = Vertex.Read32(br, false);
+
+            ret.Sequence = br.ReadByte();
+            ret.Index = br.ReadByte();
+
+            ret.FieldOfView = br.ReadUInt16();
+            ret.Roll = br.ReadInt16();
+            ret.Timer = br.ReadUInt16();
+            ret.Speed = br.ReadUInt16();
+            ret.Flags = br.ReadUInt16();
+
+            ret.RoomID = br.ReadUInt32();
+
+            return ret;
+        }
+    }
+
+    public struct AIObject
+    {
+        /// <summary>
+        /// Object type ID (same meaning as with tr4_entity)
+        /// </summary>
+        public ushort TypeID { get; set; }
+
+        /// <summary>
+        /// Room where AI object is placed
+        /// </summary>
+        public ushort Room { get; set; }
+
+        /// <summary>
+        /// Coordinates
+        /// </summary>
+        public Vertex Position { get; set; }
+
+        /// <summary>
+        /// Same meaning as with tr4_entity
+        /// </summary>
+        public short OCB { get; set; }
+
+        /// <summary>
+        /// Activation mask, bitwise-shifted left by 1
+        /// </summary>
+        public ushort Flags { get; set; }
+
+        public int Angle { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="AIObject"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="AIObject"/></param>
+        /// <returns>A <see cref="AIObject"/></returns>
+        public static AIObject Read(BinaryReader br)
+        {
+            var ret = new AIObject();
+
+            ret.TypeID = br.ReadUInt16();
+            ret.Room = br.ReadUInt16();
+
+            ret.Position = Vertex.Read32(br, false);
+
+            ret.OCB = br.ReadInt16();
+            ret.Flags = br.ReadUInt16();
+            ret.Angle = br.ReadInt32();
+
+            return ret;
+        }
+    }
+
+    public struct CinematicFrame
+    {
+        /// <summary>
+        /// Rotation about Y axis, +/- 32767 == +/- 180 degrees
+        /// </summary>
+        public short RotationY { get; set; }
+
+        /// <summary>
+        /// Rotation about Z axis, +/- 32767 == +/- 180 degrees
+        /// </summary>
+        public short RotationZ { get; set; }
+
+        /// <summary>
+        /// Seems to work a lot like rotZ; I haven't yet been able to differentiate them
+        /// </summary>
+        public short RotationZ2 { get; set; }
+
+        /// <summary>
+        /// camera position relative to something (target? Lara? room origin?) *NOT IN WORLD COORDINATES
+        /// </summary>
+        public Vertex Position { get; set; }
+
+        /// <summary>
+        /// Changing this can cause a runtime error
+        /// </summary>
+        public short Unknown { get; set; }
+
+        /// <summary>
+        /// Rotation about X axis, +/- 32767 == +/- 180 degrees
+        /// </summary>
+        public short RotationX { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="CinematicFrame"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="CinematicFrame"/></param>
+        /// <returns>A <see cref="CinematicFrame"/></returns>
+        public static CinematicFrame Read(BinaryReader br)
+        {
+            var ret = new CinematicFrame();
+
+            ret.RotationY = br.ReadInt16();
+            ret.RotationZ = br.ReadInt16();
+            ret.RotationZ2 = br.ReadInt16();
+
+            ret.Position = new Vertex
+            {
+                Z = br.ReadInt16(),
+                Y = br.ReadInt16(),
+                X = br.ReadInt16()
+            };
+
+            ret.Unknown = br.ReadInt16();
+            ret.RotationX = br.ReadInt16();
+
+            return ret;
+        }
+    }
+
+    public struct LightMap
+    {
+        /// <summary>
+        /// 32 * 256 (8192) byte array, which is apparently for applying light to 8-bit colour, in some documentation called ColourMap.
+        /// </summary>
+        public byte[] Map { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="LightMap"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="LightMap"/></param>
+        /// <returns>A <see cref="LightMap"/></returns>
+        public static LightMap Read(BinaryReader br)
+        {
+            return new LightMap
+            {
+                Map = br.ReadByteArray(8192) // 32 * 256
+            };
+        }
+    }
+
+    public struct Palette
+    {
+        /// <summary>
+        /// Palette entries
+        /// </summary>
+        public ByteColor[] Colour { get; set; }
+
+        /// <summary>
+        /// Reads a <see cref="Palette"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Palette"/></param>
+        /// <param name="ver">The game version</param>
+        /// <returns>A <see cref="Palette"/></returns>
+        public static Palette Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        {
+            return new Palette
+            {
+                Colour = br.ReadArray(256, () => ByteColor.Read(br, ver))
+            };
+        }
     }
 }
