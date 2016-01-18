@@ -117,7 +117,7 @@ namespace UniRaider.Loader
             }
 
             if (!File.Exists(SfxPath))
-                throw new FileNotFoundException("TR2Level.Load: '" + SfxPath + "' not found, no samples loaded");
+                throw new FileNotFoundException("TR3Level.Load: '" + SfxPath + "' not found, no samples loaded");
             else
             {
                 using (var fs = new FileStream(SfxPath, FileMode.Open))
