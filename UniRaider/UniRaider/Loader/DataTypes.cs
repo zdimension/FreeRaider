@@ -266,8 +266,9 @@ namespace UniRaider.Loader
         /// </summary>
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Vertex"/></param>
         /// <returns>A 32-bit integer <see cref="Vertex"/></returns>
-        public static Vertex Read32(BinaryReader br)
+        public static Vertex Read32(BinaryReader br, bool negate = true)
         {
+            if (!negate) return new Vertex(br.ReadInt32(), br.ReadInt32(), br.ReadInt32());
             return new Vertex(br.ReadInt32(), -br.ReadInt32(), -br.ReadInt32());
         }
 
@@ -2656,12 +2657,44 @@ namespace UniRaider.Loader
 
     public struct Camera
     {
-        public int X { get; set; }
+        public Vertex Position { get; set; }
 
-        public int Y { get; set; }
-
-        public int Z { get; set; }
-
-       
+        public short Room { get; set; }
+        
+        public ushort Flag { get; set; }
+        
+        /// <summary>
+        /// Reads a <see cref="Camera"/>
+        /// </summary>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Camera"/></param>
+        /// <returns>A <see cref="Camera"/></returns>
+        public static Camera Read(BinaryReader br)
+        {
+            var ret = new Camera();
+            
+            ret.Position = Vertex.Read32(br, false);
+            
+            br.Room = br.ReadInt16();
+            br.Flag = br.ReadUInt16();
+            
+            return ret;
+        }
+    }
+    
+    public struct FlybyCameram
+    {
+        /// <summary>
+        /// Camera position
+        /// </summary>
+        public Vertex Position { get; set; }
+        
+        /// <summary>
+        /// Camera target
+        /// </summary>
+        public Vertex Target { get; set; }
+        
+        public byte Sequence { get; set; }
+        
+        public byte Index { get; set; }
     }
 }
