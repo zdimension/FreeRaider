@@ -1519,7 +1519,7 @@ namespace UniRaider.Loader
             {
                 r.Offset = new Vertex(br.ReadInt32(), 0, -br.ReadInt32());
                 r.Y_Bottom = -br.ReadInt32();
-                r.Y_Bottom = -br.ReadInt32();
+                r.Y_Top = -br.ReadInt32();
 
                 var numDataWords = br.ReadUInt32();
                 var pos = br.BaseStream.Position;
@@ -1546,6 +1546,11 @@ namespace UniRaider.Loader
                 {
                     r.Intensity1 = (short) ((8191 - br.ReadInt16()) << 2);
                     r.Intensity2 = ver < TRVersion.TR2 ? r.Intensity1 : (short) ((8191 - br.ReadInt16()) << 2);
+                }
+                else
+                {
+                    r.Intensity1 = br.ReadInt16();
+                    r.Intensity2 = br.ReadInt16();
                 }
                 if (ver == TRVersion.TR2)
                 {
@@ -1586,7 +1591,7 @@ namespace UniRaider.Loader
                     }
                     r.WaterScheme = br.ReadByte();
                     r.ReverbInfo = (ReverbInfo) br.ReadByte();
-                    r.AlternateGroup = br.ReadSByte();
+                    br.ReadByte();
 
                     var c = r.Intensity1 / 65534.0f;
                     r.LightColor = new FloatColor(c, c, c);
