@@ -242,9 +242,11 @@ namespace UniRaider.Loader
 
         protected static DWordTexture ConvertTexture(Palette p, ByteTexture t)
         {
-            var ret = new DWordTexture();
+            var ret = new DWordTexture(new uint[256][]);
             for (var y = 0; y < 256; y++)
             {
+                ret.Pixels[y] = new uint[256];
+
                 for (var x = 0; x < 256; x++)
                 {
                     var color = t.Pixels[y][x];
