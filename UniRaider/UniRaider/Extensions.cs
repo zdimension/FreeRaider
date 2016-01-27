@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -7,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using OpenTK;
 
 namespace UniRaider
 {
@@ -167,6 +169,130 @@ namespace UniRaider
             for (var i = 0; i < items.Length; i++)
                 if (items[i].Equals(oldValue))
                     items[i] = newValue;
+        }
+
+        public static Vector3 SafeNormalize(this Vector3 v)
+        {
+            var abs = v.Absolute();
+            var maxIndex = abs.MaxAxis();
+            if (abs[maxIndex] > 0)
+            {
+                v /= abs[maxIndex];
+                return v /= v.Length;
+            }
+            return v = new Vector3(1.0f, 0.0f, 0.0f);
+        }
+
+        public static Vector3 Absolute(this Vector3 v)
+        {
+            return new Vector3(Math.Abs(v.X), Math.Abs(v.Y), Math.Abs(v.Z));
+        }
+
+        public static int MaxAxis(this Vector3 v)
+        {
+            return v.X < v.Y ? (v.Y < v.Z ? 2 : 1) : (v.X < v.Z ? 2 : 0);
+        }
+
+        public static int MinAxis(this Vector3 v)
+        {
+            return v.X < v.Y ? (v.X < v.Z ? 0 : 2) : (v.Y < v.Z ? 1 : 2);
+        }
+
+        public static Vector3 DivideByVector3(this float f, Vector3 v)
+        {
+            return new Vector3(f / v.X, f / v.Y, f / v.Z);
+        }
+
+        public static bool IsBetween(this float f, float a, float b, bool inclusive = true, bool reorder = true)
+        {
+            return ((double) f).IsBetween(a, b, inclusive, reorder);
+        }
+
+        public static bool IsBetween(this int f, int a, int b, bool inclusive = true, bool reorder = true)
+        {
+            return ((double)f).IsBetween(a, b, inclusive, reorder);
+        }
+
+        public static bool IsBetween(this double f, double a, double b, bool inclusive = true, bool reorder = true)
+        { 
+            var c = a;
+            var d = b;
+            if (reorder)
+            {
+                c = Math.Min(a, b);
+                d = Math.Max(a, b);
+            }
+            if (inclusive) return f >= c && f <= d;
+            return f > c & f < d;
+        }
+
+        public static bool IsBetween(this Vector3 v, Vector3 a, Vector3 b, bool inclusive = true, bool reorder = true)
+        {
+            return v.X.IsBetween(a.X, b.X, inclusive, reorder) 
+                && v.Y.IsBetween(a.Y, b.Y, inclusive, reorder) 
+                && v.Z.IsBetween(a.Z, b.Z, inclusive, reorder);
+        }
+
+        public static bool LowerThan(this Vector3 v, Vector3 a, bool orequal = false)
+        {
+            if (orequal) return v.X <= a.X && v.Y <= a.Y && v.Z <= a.Z;
+            return v.X < a.X && v.Y < a.Y && v.Z < a.Z;
+        }
+
+        public static bool HigherThan(this Vector3 v, Vector3 a, bool orequal = false)
+        {
+            if (orequal) return v.X >= a.X && v.Y >= a.Y && v.Z >= a.Z;
+            return v.X > a.X && v.Y > a.Y && v.Z > a.Z;
+        }
+
+        public static TSource MaxBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> selector)
+        {
+            var cpr = Comparer<TKey>.Default;
+            using (var it1 = source.GetEnumerator())
+            {
+                if(!it1.MoveNext())
+                {
+                    throw new InvalidOperationException("no items");
+                }
+                var max = it1.Current;
+                var mkey = selector(max);
+                while(it1.MoveNext())
+                {
+                    var c = it1.Current;
+                    var k = selector(c);
+                    if(cpr.Compare(k, mkey) > 0)
+                    {
+                        max = c;
+                        mkey = k;
+                    }
+                }
+                return max;
+            }
+        }
+
+        public static TSource MinBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> selector)
+        {
+            var cpr = Comparer<TKey>.Default;
+            using (var it1 = source.GetEnumerator())
+            {
+                if (!it1.MoveNext())
+                {
+                    throw new InvalidOperationException("no items");
+                }
+                var max = it1.Current;
+                var mkey = selector(max);
+                while (it1.MoveNext())
+                {
+                    var c = it1.Current;
+                    var k = selector(c);
+                    if (cpr.Compare(k, mkey) < 0)
+                    {
+                        max = c;
+                        mkey = k;
+                    }
+                }
+                return max;
+            }
         }
     }
 }
