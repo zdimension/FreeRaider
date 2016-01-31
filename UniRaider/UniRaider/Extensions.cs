@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using LibSndFile;
 using OpenTK;
 
 namespace UniRaider
@@ -293,6 +294,18 @@ namespace UniRaider
                 }
                 return max;
             }
+        }
+
+        public static T Clamp<T>(this T v, T min, T max) where T : IComparable<T>
+        {
+            if (v.CompareTo(max) > 0) return max;
+            else if (v.CompareTo(min) < 0) return min;
+            else return v;
+        }
+
+        public static SndFileInfo GetSndFileInfo(this SndFile f)
+        {
+            return typeof(SndFileInfo).GetField("sndFileInfo", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(f) as SndFileInfo;
         }
     }
 }
