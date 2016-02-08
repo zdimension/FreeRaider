@@ -569,7 +569,7 @@ namespace UniRaider
         /// <summary>
         /// Maximum number of portals in this room
         /// </summary>
-        public ushort MaxPath { get; set; }
+        public int MaxPath { get; set; }
 
         public List<Room> NearRoomList { get; set; }
 

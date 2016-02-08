@@ -1575,7 +1575,7 @@ namespace UniRaider.Loader
                 else if (ver == TRVersion.TR2)
                 {
                     r.ReverbInfo =
-                        ((RoomFlags) r.Flags).HasFlag(RoomFlags.WindBlowPonytail)
+                        (r.Flags.HasFlagEx(RoomFlags.WindBlowPonytail)
                             ? ReverbInfo.Outside
                             : ReverbInfo.MediumRoom;
 
@@ -1584,7 +1584,7 @@ namespace UniRaider.Loader
                 }
                 else if (ver == TRVersion.TR3)
                 {
-                    if (((RoomFlags) r.Flags).HasFlag(RoomFlags.Quicksand))
+                    if (r.Flags.HasFlagEx(RoomFlags.Quicksand))
                     {
                         // Move quicksand flag to another bit to avoid confusion with NL flag.
                         r.Flags = (ushort) ((r.Flags | 0x0002) ^ 0x0080);

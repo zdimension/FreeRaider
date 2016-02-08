@@ -7,9 +7,18 @@ using OpenTK;
 
 namespace UniRaider
 {
+    public partial class Constants
+    {
+        public const int PORTAL_NORMAL = 0x00;
+        public const int PORTAL_FICTIVE = 0x01;
+
+        public const int SPLIT_EMPTY = 0x00;
+        public const int SPLIT_SUCCESS = 0x01;
+    }
+
     public class Portal
     {
-        public Vector3[] Vertices { get; set; }
+        public List<Vector3> Vertices { get; set; }
 
         public Plane Normal { get; set; }
 
@@ -24,27 +33,27 @@ namespace UniRaider
         public void Move(Vector3 mv)
         {
             Centre += mv;
-            for (var i = 0; i < Vertices.Length; i++)
+            for (var i = 0; i < Vertices.Count; i++)
                 Vertices[i] += mv;
             Normal.MoveTo(Vertices[0]);
         }
 
         public bool RayIntersect(Vector3 ray, Vector3 rayStart)
         {
-            if (Math.Abs(Vector3.Dot(Normal.Normal, ray)) < 0.02) return false;
+            if (Math.Abs(Normal.Normal.Dot(ray)) < 0.02) return false;
             if (-Normal.Distance(rayStart) <= 0) return false;
 
             var T = rayStart - Vertices[0];
             var edge = Vertices[1] - Vertices[0];
-            for (var i = 2; i < Vertices.Length; i++)
+            for (var i = 2; i < Vertices.Count; i++)
             {
                 var prev = edge;
                 edge = Vertices[i] - Vertices[0];
-                var P = Vector3.Cross(ray, edge);
-                var Q = Vector3.Cross(T, prev);
-                var t = Vector3.Dot(P, prev);
-                var u = Vector3.Dot(P, T) / t;
-                var v = Vector3.Dot(Q, ray) / t;
+                var P = ray.Cross(edge);
+                var Q = T.Cross(prev);
+                var t = P.Dot(prev);
+                var u = P.Dot(T) / t;
+                var v = Q.Dot(ray) / t;
                 t = 1.0f - u - v;
                 if (u.IsBetween(0.0f, 1.0f) && v.IsBetween(0.0f, 1.0f) && t.IsBetween(0.0f, 1.0f))
                     return true;

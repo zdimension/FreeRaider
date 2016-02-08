@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using LibSndFile;
 using OpenTK;
 using OpenTK.Audio.OpenAL;
+using UniRaider.Loader;
 
 namespace UniRaider
 {
@@ -20,6 +21,10 @@ namespace UniRaider
         public const int AL_FILTER_NULL = 0;
 
         public const int AL_EFFECTSLOT_NULL = 0;
+
+        public const int AL_EFFECT_NULL = 0;
+
+        public const int SF_FORMAT_SUBMASK = 0x0000FFFF;
 
         /// <summary>
         /// AL_UNITS constant is used to translate native TR coordinates into
@@ -277,7 +282,7 @@ namespace UniRaider
 
         public bool EffectsInitialized { get; set; }
 
-        public bool ListenerIsPlayed { get; set; } // RESERVED FOR FUTURE USE
+        public bool ListenerIsPlayer { get; set; } // RESERVED FOR FUTURE USE
 
         public int StreamBufferSize { get; set; }
     }
@@ -288,7 +293,7 @@ namespace UniRaider
     /// </summary>
     public struct AudioFxManager
     {
-        public uint ALFilter { get; set; }
+        public uint ALFilter;
 
         public uint[] ALEffect { get; set; }
 
@@ -1394,7 +1399,6 @@ else
     std::vector<ALshort> pcm(audio_settings.stream_buffer_size);
 #endif
 */
-            AudioSettings audio_settings = new AudioSettings();
             var pcm = new float[audio_settings.StreamBufferSize];
             var size = 0;
             while (size < pcm.Length - sfInfo.Channels + 1)
@@ -1486,15 +1490,124 @@ else
     {
         #region General audio routines
 
-        public static void InitGlobals();
+        public static void InitGlobals()
+        {
+            audio_settings.MusicVolume = 0.7f;
+            audio_settings.SoundVolume = 0.8f;
+            audio_settings.UseEffects = true;
+            audio_settings.ListenerIsPlayer = false;
+            audio_settings.StreamBufferSize = 32;
+        }
 
-        public static void InitFX();
+        public static void InitFX()
+        {
+            if (audio_settings.EffectsInitialized)
+                return;
 
-        public static void Init(uint numSources = Constants.TR_AUDIO_MAX_CHANNELS);
+            FXManager = new AudioFxManager();
 
-        public static int DeInit();
+            // Set up effect slots, effects and filters.
 
-        public static void Update();
+            FXManager.ALSlot = new uint[Constants.TR_AUDIO_MAX_SLOTS];
+            EffectsExtension.GenAuxiliaryEffectSlots(Constants.TR_AUDIO_MAX_SLOTS, out FXManager.ALSlot[0]);
+
+            FXManager.ALEffect = new uint[(int) TR_AUDIO_FX.LastIndex];
+            EffectsExtension.GenEffects((int) TR_AUDIO_FX.LastIndex, out FXManager.ALEffect[0]);
+
+            uint alFilter = 0;
+            EffectsExtension.GenFilter(out alFilter);
+            FXManager.ALFilter = alFilter;
+
+            EffectsExtension.Filter(alFilter, EfxFilteri.FilterType, (int)EfxFilterType.Lowpass);
+            EffectsExtension.Filter(alFilter, EfxFilterf.LowpassGain, 0.7f); // Low frequencies gain.
+            EffectsExtension.Filter(alFilter, EfxFilterf.LowpassGainHF, 0.0f); // High frequencies gain.
+
+            // Fill up effects with reverb presets
+
+            LoadReverbToFX(TR_AUDIO_FX.Outside, EffectsExtension.ReverbPresets.City.ToEfxEaxReverb());
+            LoadReverbToFX(TR_AUDIO_FX.SmallRoom, EffectsExtension.ReverbPresets.Livingroom.ToEfxEaxReverb());
+            LoadReverbToFX(TR_AUDIO_FX.MediumRoom, EffectsExtension.ReverbPresets.WoodenLongpassage.ToEfxEaxReverb());
+            LoadReverbToFX(TR_AUDIO_FX.LargeRoom, EffectsExtension.ReverbPresets.DomeTomb.ToEfxEaxReverb());
+            LoadReverbToFX(TR_AUDIO_FX.Pipe, EffectsExtension.ReverbPresets.PipeLarge.ToEfxEaxReverb());
+            LoadReverbToFX(TR_AUDIO_FX.Water, EffectsExtension.ReverbPresets.Underwater.ToEfxEaxReverb());
+
+            audio_settings.EffectsInitialized = true;
+        }
+
+        public static void Init(uint numSources = Constants.TR_AUDIO_MAX_CHANNELS)
+        {
+            // FX should be inited first, as source constructor checks for FX slot to be created.
+
+            if(audio_settings.UseEffects) InitFX();
+
+            // Generate new source array.
+
+            numSources -= Constants.TR_AUDIO_STREAM_NUMSOURCES; // Subtract sources reserved for music.
+            engine_world.AudioSources.Resize((int)numSources);
+
+            // Generate stream tracks array.
+
+            engine_world.StreamTracks.Resize(Constants.TR_AUDIO_STREAM_NUMSOURCES);
+
+            // Reset last room type used for assigning reverb.
+
+            FXManager.LastRoomType = (uint)TR_AUDIO_FX.LastIndex;
+        }
+
+        public static bool DeInit()
+        {
+            StopAllSources();
+            StopStreams();
+
+            DeInitDelay();
+
+            var engine_world = new World();
+            engine_world.AudioSources.Clear();
+            engine_world.StreamTracks.Clear();
+            engine_world.StreamTrackMap.Clear();
+
+            // CRITICAL: You must delete all sources before deleting buffers!
+
+            AL.DeleteBuffers(engine_world.AudioBuffers.ToArray());
+            engine_world.AudioBuffers.Clear();
+
+            engine_world.AudioEffects.Clear();
+            engine_world.AudioMap.Clear();
+
+            if(audio_settings.EffectsInitialized)
+            {
+                for (var i = 0; i < Constants.TR_AUDIO_MAX_SLOTS; i++)
+                {
+                    var cur = FXManager.ALSlot[i];
+                    if (cur != 0)
+                    {
+                        EffectsExtension.AuxiliaryEffectSlot(cur, EfxAuxiliaryi.EffectslotEffect, Constants.AL_EFFECT_NULL);
+                        EffectsExtension.DeleteAuxiliaryEffectSlot(ref FXManager.ALSlot[i]);
+                    }
+                }
+
+                EffectsExtension.DeleteFilter(ref FXManager.ALFilter);
+                EffectsExtension.DeleteEffects(FXManager.ALEffect);
+                audio_settings.EffectsInitialized = false;
+            }
+
+            return true;
+        }
+
+        public static void Update()
+        {
+            UpdateSources();
+            UpdateStreams();
+
+            if(audio_settings.ListenerIsPlayer)
+            {
+                UpdateListenerByEntity(engine_world.Character);
+            }
+            else
+            {
+                UpdateListenerByCamera(renderer.camera());
+            }
+        }
 
         #endregion
 
@@ -1559,14 +1672,11 @@ else
         /// <summary>
         /// Send to play effect with given parameters.
         /// </summary>
-        public static TR_AUDIO_SEND Send(int effectID, TR_AUDIO_EMITTER emitterType = TR_AUDIO_EMITTER.Global, int emitterID = 0)
+        public static TR_AUDIO_SEND Send(uint effectID, TR_AUDIO_EMITTER emitterType = TR_AUDIO_EMITTER.Global,
+            int emitterID = 0)
         {
             var sourceNumber = 0;
-            ushort randomValue;
-            float randomFloat;
             AudioEffect effect;
-
-            var engine_world = new World();
 
             // If there are no audio buffers or effect index is wrong, don't process.
 
@@ -1574,16 +1684,16 @@ else
 
             // Remap global engine effect ID to local effect ID.
 
-            if(effectID >= engine_world.AudioMap.Count)
+            if (effectID >= engine_world.AudioMap.Count)
             {
                 return TR_AUDIO_SEND.NoSample; // Sound is out of bounds; stop.
             }
 
-            var realID = (int) engine_world.AudioMap[effectID];
+            var realID = (int) engine_world.AudioMap[(int) effectID];
 
             // Pre-step 1: if there is no effect associated with this ID, bypass audio send.
 
-            if(realID == -1)
+            if (realID == -1)
             {
                 return TR_AUDIO_SEND.Ignored;
             }
@@ -1591,12 +1701,121 @@ else
             {
                 effect = engine_world.AudioEffects[realID];
             }
+
+            // Pre-step 2: check if sound non-looped and chance to play isn't zero,
+            // then randomly select if it should be played or not.
+
+            if (effect.Loop != LoopType.Forward && effect.Chance > 0)
+            {
+                if (effect.Chance < Helper.CPPRand() % 0x7FFF)
+                {
+                    // Bypass audio send, if chance test is not passed.
+                    return TR_AUDIO_SEND.Ignored;
+                }
+            }
+
+            // Pre-step 3: Calculate if effect's hearing sphere intersect listener's hearing sphere.
+            // If it's not, bypass audio send (cause we don't want it to occupy channel, if it's not
+            // heard).
+
+            if (!IsInRange(emitterType, emitterID, effect.Range, effect.Gain))
+            {
+                return TR_AUDIO_SEND.Ignored;
+            }
+
+            // Pre-step 4: check if R (Rewind) flag is set for this effect, if so,
+            // find any effect with similar ID playing for this entity, and stop it.
+            // Otherwise, if W (Wait) or L (Looped) flag is set, and same effect is
+            // playing for current entity, don't send it and exit function.
+
+            sourceNumber = IsEffectPlaying((int) effectID, emitterType, emitterID);
+
+            if (sourceNumber != -1)
+            {
+                if (effect.Loop == LoopType.PingPong)
+                {
+                    engine_world.AudioSources[sourceNumber].Stop();
+                }
+                else if (effect.Loop != LoopType.None) // Any other looping case (Wait / Loop).
+                {
+                    return TR_AUDIO_SEND.Ignored;
+                }
+            }
+            else
+            {
+                sourceNumber = GetFreeSource(); // Get free source
+            }
+
+            if (sourceNumber != -1) // Everything is OK, we're sending audio to channel.
+            {
+                var bufferIndex = 0;
+
+                // Step 1. Assign buffer to source.
+
+                if (effect.SampleCount > 1)
+                {
+                    // Select random buffer, if effect info contains more than 1 assigned samples.
+                    bufferIndex = unchecked((int) (Helper.CPPRand() % effect.SampleCount + effect.SampleIndex));
+                }
+                else
+                {
+                    // Just assign buffer to source, if there is only one assigned sample.
+                    bufferIndex = (int) effect.SampleIndex;
+                }
+
+                var source = engine_world.AudioSources[sourceNumber];
+
+                source.SetBuffer(bufferIndex);
+
+                // Step 2. Check looped flag, and if so, set source type to looped.
+
+                source.IsLooping = effect.Loop == LoopType.Forward;
+
+                // Step 3. Apply internal sound parameters.
+
+                source.EmitterID = emitterID;
+                source.EmitterType = emitterType;
+                source.EffectIndex = effectID;
+
+                // Step 4. Apply sound effect properties.
+
+                source.Pitch = effect.Pitch;
+                if (effect.RandomizePitch) // Vary pitch, if flag is set.
+                {
+                    source.Pitch += (Helper.CPPRand() % effect.RandomizePitchVar - 25.0f) / 200.0f;
+                }
+
+                source.Gain = effect.Gain;
+                if (effect.RandomizeGain) // Vary gain, if flag is set.
+                {
+                    source.Gain += (Helper.CPPRand() % effect.RandomizeGainVar - 25.0f) / 200.0f;
+                }
+
+                source.SetRange(effect.Range); // Set audible range
+
+                source.Play(); // Everything is OK, play sound now!
+
+                return TR_AUDIO_SEND.Processed;
+            }
+
+            return TR_AUDIO_SEND.NoChannel;
         }
 
         /// <summary>
         /// If exist, immediately stop and destroy all effects with given parameters.
         /// </summary>
-        public static int Kill(int effectID, TR_AUDIO_EMITTER emitterType = TR_AUDIO_EMITTER.Global, int emitterID = 0);
+        public static TR_AUDIO_SEND Kill(int effectID, TR_AUDIO_EMITTER emitterType = TR_AUDIO_EMITTER.Global, int emitterID = 0)
+        {
+            var playingSound = IsEffectPlaying(effectID, emitterType, emitterID);
+
+            if(playingSound != -1)
+            {
+                engine_world.AudioSources[playingSound].Stop();
+                return TR_AUDIO_SEND.Processed;
+            }
+
+            return TR_AUDIO_SEND.Ignored;
+        }
 
         /// <summary>
         /// Used to pause all effects currently playing.
@@ -1642,28 +1861,131 @@ else
             AL.GetListener(ALListener3f.Position, out listenerPos);
             ListenerPosition = listenerPos;
 
-            for (var i = 0; i < engine_world.AudioEmitters.Count; i++)
+            for (int i = 0; i < engine_world.AudioEmitters.Count; i++)
             {
-                Send((int)engine_world.AudioEmitters[i].SoundIndex, TR_AUDIO_EMITTER.SoundSource, i);
+                Send(engine_world.AudioEmitters[i].SoundIndex, TR_AUDIO_EMITTER.SoundSource, i);
             }
             
             engine_world.AudioSources.ForEach(x => x.Update());
         }
 
-        public static void UpdateListenerByCamera(Camera cam);
+        /// <summary>
+        /// Updates listener parameters by camera structure. For correct speed calculation
+        /// that function have to be called every game frame.
+        /// </summary>
+        /// <param name="cam">Pointer to the camera structure.</param>
+        public static void UpdateListenerByCamera(Camera cam)
+        {
+            AL.Listener(ALListenerfv.Orientation, ref cam.ViewDirection, ref cam.UpDirection);
+            AL.Listener(ALListener3f.Position, ref cam.Position);
 
-        public static void UpdateListenerByEntity(Entity ent);
+            AL.Listener(ALListener3f.Velocity, ref (cam.Position - cam.previousPosition) / (float)engine_frame_time);
+            cam.previousPosition = cam.Position;
 
-        public static bool FillALBuffer(uint bufNumber, SndFile wavFile, uint bufSize, SndFileInfo sfInfo);
+            if(cam.currentRoom != null)
+            {
+                if(cam.currentRoom.Flags.HasFlagEx(RoomFlags.FilledWithWater))
+                {
+                    FXManager.CurrentRoomType = (uint)TR_AUDIO_FX.Water;
+                }
+                else
+                {
+                    FXManager.CurrentRoomType = cam.currentRoom.ReverbInfo;
+                }
+
+                if(FXManager.WaterState != (cam.currentRoom.Flags.HasFlagEx(RoomFlags.FilledWithWater) ? 1 : 0))
+                {
+                    if((FXManager.WaterState = (sbyte)(cam.currentRoom.Flags.HasFlagEx(RoomFlags.FilledWithWater) ? 1 : 0)) != 0)
+                    {
+                        Send((uint)TR_AUDIO_SOUND.Underwater);
+                    }
+                    else
+                    {
+                        Kill((int) TR_AUDIO_SOUND.Underwater);
+                    }
+                }
+            }
+        }
+
+        public static void UpdateListenerByEntity(Entity ent)
+        {
+            // TODO: Add entity listener updater here
+        }
+
+        public static bool FillALBuffer(uint bufNumber, SndFile wavFile, uint bufSize, SndFileInfo sfInfo)
+        {
+            if (sfInfo.Channels > 1) // We can't use non-mono samples
+            {
+                // TODO: Warn "Error: sample %bufNumber% is not mono!"
+                return false;
+            }
+
+            // TODO: See line 1845
+
+            var frames = new float[bufSize / sizeof (float)];
+            wavFile.Read(frames, frames.Length);
+            AL.BufferData((int)bufNumber, ALFormat.MonoFloat32Ext, frames, (int)bufSize, sfInfo.SamplesPerSecond);
+
+            LogALError();
+            return true;
+        }
 
         public static unsafe int LoadALBufferFromMem(uint bufNumber, byte* samplePointer, uint sampleSize,
             uint uncompSampleSize = 0);
 
-        public static int LoadALBufferFromFile(uint bufNumber, string filename);
+        public static int LoadALBufferFromFile(uint bufNumber, string filename)
+        {
+            try
+            {
+                using (var fs = File.OpenRead(filename))
+                {
+                    using (var file = new SndFile(fs, new SndFileInfo()))
+                    {
+                        var sfInfo = file.GetSndFileInfo();
+                        // TODO: See line 1826 of audio.cpp
+                        return FillALBuffer(bufNumber, file, (uint) file.FramesCount * sizeof (float), sfInfo) ? 0 : -3; // Zero means success
+                    }
+                }
+            }
+            catch
+            {
+                // TODO: Handle warning "Can't open file"
+                return -1;
+            }
+        }
 
         public static void LoadOverridedSamples(World world);
 
-        public static int LoadReverbToFX(int effectID, EffectsExtension.EfxEaxReverb reverb);
+        public static bool LoadReverbToFX(TR_AUDIO_FX effectID, EffectsExtension.EfxEaxReverb reverb)
+        {
+            var effect = FXManager.ALEffect[(int) effectID];
+
+            if(EffectsExtension.IsEffect(effect))
+            {
+                EffectsExtension.Effect(effect, EfxEffecti.EffectType, (int)EfxEffectType.Reverb);
+
+                EffectsExtension.Effect(effect, EfxEffectf.ReverbDensity, reverb.Density);
+                EffectsExtension.Effect(effect, EfxEffectf.ReverbDiffusion, reverb.Diffusion);
+                EffectsExtension.Effect(effect, EfxEffectf.ReverbGain, reverb.Gain);
+                EffectsExtension.Effect(effect, EfxEffectf.ReverbGainHF, reverb.GainHF);
+                EffectsExtension.Effect(effect, EfxEffectf.ReverbDecayTime, reverb.DecayTime);
+                EffectsExtension.Effect(effect, EfxEffectf.ReverbDecayHFRatio, reverb.DecayHFRatio);
+                EffectsExtension.Effect(effect, EfxEffectf.ReverbReflectionsGain, reverb.ReflectionsGain);
+                EffectsExtension.Effect(effect, EfxEffectf.ReverbReflectionsDelay, reverb.ReflectionsDelay);
+                EffectsExtension.Effect(effect, EfxEffectf.ReverbLateReverbGain, reverb.LateReverbGain);
+                EffectsExtension.Effect(effect, EfxEffectf.ReverbLateReverbDelay, reverb.LateReverbDelay);
+                EffectsExtension.Effect(effect, EfxEffectf.ReverbAirAbsorptionGainHF, reverb.AirAbsorptionGainHF);
+                EffectsExtension.Effect(effect, EfxEffectf.ReverbRoomRolloffFactor, reverb.RoomRolloffFactor);
+                EffectsExtension.Effect(effect, EfxEffecti.ReverbDecayHFLimit, reverb.DecayHFLimit);
+            }
+            else
+            {
+                // TODO: Handle error: "OpenAL error: no effect %effect%"
+                return false;
+            }
+
+            return true;
+        }
 
         #endregion
 
@@ -1905,14 +2227,52 @@ else
 
         #region Helper functions
 
-        public static float GetByteDepth(SndFileInfo sfInfo);
+        public static float GetByteDepth(SndFileInfo sfInfo)
+        {
+            switch ((SndFileSubFormat) (sfInfo.Format & Constants.SF_FORMAT_SUBMASK))
+            {
+                case SndFileSubFormat.PCM_S8:
+                case SndFileSubFormat.PCM_U8:
+                    return 1;
+                case SndFileSubFormat.PCM_16:
+                    return 2;
+                case SndFileSubFormat.PCM_24:
+                    return 3;
+                case SndFileSubFormat.PCM_32:
+                case SndFileSubFormat.FLOAT:
+                    return 4;
+                case SndFileSubFormat.DOUBLE:
+                    return 8;
+                case SndFileSubFormat.MS_ADPCM:
+                    return 0.5f;
+                default:
+                    return 1;
+            }
+        }
 
         public static void LoadALExtFunctions(IntPtr device)
         {
             // TODO #ifndef in audio.cpp
         }
 
-        public static bool DeInitDelay();
+        public static bool DeInitDelay()
+        {
+            var sw = new Stopwatch();
+            sw.Start();
+
+            while(IsTrackPlaying() && IsEffectPlaying() >= 0)
+            {
+                if(sw.Elapsed.Seconds > Constants.TR_AUDIO_DEINIT_DELAY)
+                {
+                    // TODO: Handle "Audio deinit timeout reached! Something is wrong with the audio driver!"
+                    break;
+                }
+            }
+
+            sw.Stop();
+
+            return true;
+        }
 
         #endregion
 
@@ -1921,5 +2281,16 @@ else
         public static AudioFxManager FXManager;
 
         public static EffectsExtension EffectsExtension { get; set; } = new EffectsExtension();
+    }
+
+    public enum SF_FORMAT
+    {
+        WAV = 1,
+        PCM_16 = 2,
+        PCM_U8 = 4,
+        Float = 6,
+        PCM_32 = 8,
+        PCM_24 = 10,
+        Submask = 14
     }
 }

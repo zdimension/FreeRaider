@@ -11,6 +11,8 @@ namespace UniRaider
     {
         static void Main(string[] args)
         {
+            Helper.Random = new Random();
+
             var lvl = Level.CreateLoader(args[0]);
 
             Console.ReadLine();

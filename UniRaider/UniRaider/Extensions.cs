@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using LibSndFile;
 using OpenTK;
+using OpenTK.Audio.OpenAL;
 
 namespace UniRaider
 {
@@ -55,7 +56,7 @@ namespace UniRaider
             var tmp = new char[stringDataSize];
             for (ushort i = 0; i < stringDataSize; i++)
             {
-                tmp[i] = (char)(br.ReadByte() ^ xorKey);
+                tmp[i] = (char) (br.ReadByte() ^ xorKey);
             }
             for (var i = 0; i < arrLength; i++)
             {
@@ -75,10 +76,10 @@ namespace UniRaider
         public static T[] ReadArray<T>(this BinaryReader br, long arrLength, Func<T> rd = null)
         {
             var arr = new List<T>();
-            var tc = Type.GetTypeCode(typeof(T));
+            var tc = Type.GetTypeCode(typeof (T));
             Func<dynamic> reader = null;
 
-            if(rd != null) reader = () => rd();
+            if (rd != null) reader = () => rd();
 
             if (reader == null)
             {
@@ -143,7 +144,7 @@ namespace UniRaider
         {
             var repl = new Dictionary<string, string>
             {
-                {"Red)marrer un niveau", "Redémarrer un niveau" }
+                {"Red)marrer un niveau", "Redémarrer un niveau"}
             };
 
             if (repl.ContainsKey(s)) return repl[s];
@@ -161,7 +162,7 @@ namespace UniRaider
         {
             var sb = new StringBuilder();
             foreach (var t in s)
-                sb.Append((char)(t ^ key));
+                sb.Append((char) (t ^ key));
             return sb.ToString();
         }
 
@@ -211,11 +212,11 @@ namespace UniRaider
 
         public static bool IsBetween(this int f, int a, int b, bool inclusive = true, bool reorder = true)
         {
-            return ((double)f).IsBetween(a, b, inclusive, reorder);
+            return ((double) f).IsBetween(a, b, inclusive, reorder);
         }
 
         public static bool IsBetween(this double f, double a, double b, bool inclusive = true, bool reorder = true)
-        { 
+        {
             var c = a;
             var d = b;
             if (reorder)
@@ -229,9 +230,9 @@ namespace UniRaider
 
         public static bool IsBetween(this Vector3 v, Vector3 a, Vector3 b, bool inclusive = true, bool reorder = true)
         {
-            return v.X.IsBetween(a.X, b.X, inclusive, reorder) 
-                && v.Y.IsBetween(a.Y, b.Y, inclusive, reorder) 
-                && v.Z.IsBetween(a.Z, b.Z, inclusive, reorder);
+            return v.X.IsBetween(a.X, b.X, inclusive, reorder)
+                   && v.Y.IsBetween(a.Y, b.Y, inclusive, reorder)
+                   && v.Z.IsBetween(a.Z, b.Z, inclusive, reorder);
         }
 
         public static bool LowerThan(this Vector3 v, Vector3 a, bool orequal = false)
@@ -251,17 +252,17 @@ namespace UniRaider
             var cpr = Comparer<TKey>.Default;
             using (var it1 = source.GetEnumerator())
             {
-                if(!it1.MoveNext())
+                if (!it1.MoveNext())
                 {
                     throw new InvalidOperationException("no items");
                 }
                 var max = it1.Current;
                 var mkey = selector(max);
-                while(it1.MoveNext())
+                while (it1.MoveNext())
                 {
                     var c = it1.Current;
                     var k = selector(c);
-                    if(cpr.Compare(k, mkey) > 0)
+                    if (cpr.Compare(k, mkey) > 0)
                     {
                         max = c;
                         mkey = k;
@@ -305,7 +306,75 @@ namespace UniRaider
 
         public static SndFileInfo GetSndFileInfo(this SndFile f)
         {
-            return typeof(SndFileInfo).GetField("sndFileInfo", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(f) as SndFileInfo;
+            return
+                typeof (SndFileInfo).GetField("sndFileInfo", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(f)
+                    as SndFileInfo;
+        }
+
+        public static EffectsExtension.EfxEaxReverb ToEfxEaxReverb(this EffectsExtension.EaxReverb rb)
+        {
+            var ret = new EffectsExtension.EfxEaxReverb();
+            EffectsExtension.GetEaxFromEfxEax(ref rb, out ret);
+            return ret;
+        }
+
+        // http://stackoverflow.com/a/12232162/2196124
+        public static void Resize<T>(this List<T> list, int sz, T c = default(T))
+        {
+            var cur = list.Count;
+            if (sz < cur)
+                list.RemoveRange(sz, cur - sz);
+            else if (sz > cur)
+                list.AddRange(Enumerable.Repeat(c, sz - cur));
+        }
+
+        public static Vector3 Rotate(this Vector3 vec, Vector3 wAxis, float angle)
+        {
+            var o = wAxis * wAxis.Dot(vec);
+            var x = vec - o;
+            var y = wAxis.Cross(vec);
+
+            return o + x * (float)Math.Cos(angle) + y * (float)Math.Sin(angle);
+        }
+
+        public static bool HasFlagEx(this object theField, object theFlag)
+        {
+            return (Enum.ToObject(theFlag.GetType(), theField) as Enum).HasFlag(theFlag as Enum);
+        }
+
+        public static float Dot(this Vector3 v1, Vector3 v2)
+        {
+            return Vector3.Dot(v1, v2);
+        }
+
+        public static Vector3 Cross(this Vector3 v1, Vector3 v2)
+        {
+            return Vector3.Cross(v1, v2);
+        }
+
+        public static Vector3 MultiplyByVector(this Matrix3 m, Vector3 v)
+        {
+            return new Vector3(m.Row0.Dot(v), m.Row1.Dot(v), m.Row2.Dot(v));
+        }
+
+        public static Vector3 Dot3(this Vector3 v, Vector3 v0, Vector3 v1, Vector3 v2)
+        {
+            return new Vector3(v.Dot(v0), v.Dot(v1), v.Dot(v2));
+        }
+
+        public static Vector3 Lerp(this Vector3 a, Vector3 b, float bend)
+        {
+            return Vector3.Lerp(a, b, bend);
+        }
+
+        public static float Distance2(this Vector3 a, Vector3 b)
+        {
+            return (b - a).LengthSquared;
+        }
+
+        public static T Square<T>(this T t)
+        {
+            return (T) Convert.ChangeType((dynamic) t * (dynamic) t, typeof (T));
         }
     }
 }

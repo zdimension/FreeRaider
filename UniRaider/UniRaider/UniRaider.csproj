@@ -56,6 +56,7 @@
   <ItemGroup>
     <Compile Include="Audio.cs" />
     <Compile Include="BorderedTextureAtlas.cs" />
+    <Compile Include="BSPTree.cs" />
     <Compile Include="BSPTree2D.cs" />
     <Compile Include="Camera.cs" />
     <Compile Include="Engine.cs" />
@@ -71,6 +72,8 @@
     <Compile Include="Loader\TR3Level.cs" />
     <Compile Include="Loader\TR4Level.cs" />
     <Compile Include="Loader\TR5Level.cs" />
+    <Compile Include="OBB.cs" />
+    <Compile Include="Polygon.cs" />
     <Compile Include="Portal.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

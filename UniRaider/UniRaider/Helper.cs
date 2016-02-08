@@ -46,6 +46,14 @@ namespace UniRaider
             }
             return TRVersion.Unknown;
         }
-==
+
+        public static Random Random = null;
+
+
+        public static int CPPRand()
+        {
+            if (Random == null) return 0;
+            return Random.Next(0, ushort.MaxValue);
+        }
     }
 }
