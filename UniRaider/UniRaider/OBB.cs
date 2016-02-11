@@ -12,6 +12,9 @@ namespace UniRaider
         public const float DEFAULT_OBB_TEST_OVERLAP = 1.2f;
     }
 
+    /// <summary>
+    /// Oriented bounding box
+    /// </summary>
     public struct OBB
     {
         /// <summary>
@@ -164,6 +167,10 @@ namespace UniRaider
                                                 select polygon).Any());
         }
 
-        public static int OBB_Test(ref Entity e1, ref Entity e2, float overlap = Constants.DEFAULT_OBB_TEST_OVERLAP);
+        public static int OBB_Test(Entity e1, Entity e2, float overlap = Constants.DEFAULT_OBB_TEST_OVERLAP)
+        {
+            // translation, in parent frame
+
+        }
     }
 }
