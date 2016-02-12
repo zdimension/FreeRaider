@@ -108,17 +108,17 @@ namespace UniRaider
         TR_ROOM_FLAG_WIND = 0x0020,
         TR_ROOM_FLAG_UNKNOWN2 = 0x0040,
 
-        ///@FIXME: Find what it means!!! Always set by Dxtre3d.
+        //@FIXME: Find what it means!!! Always set by Dxtre3d.
         TR_ROOM_FLAG_NO_LENSFLARE = 0x0080, // In TR4-5. Was quicksand in TR3.
         TR_ROOM_FLAG_MIST = 0x0100,
 
-        ///@FIXME: Unknown meaning in TR1!!!
+        //@FIXME: Unknown meaning in TR1!!!
         TR_ROOM_FLAG_CAUSTICS = 0x0200,
         TR_ROOM_FLAG_UNKNOWN3 = 0x0400,
         TR_ROOM_FLAG_DAMAGE = 0x0800,
 
-        ///@FIXME: Is it really damage (D)?
-        TR_ROOM_FLAG_POISON = 0x1000 ///@FIXME: Is it really poison (P)?
+        //@FIXME: Is it really damage (D)?
+        TR_ROOM_FLAG_POISON = 0x1000 //@FIXME: Is it really poison (P)?
     }
 
     public enum RoomLightMode : byte
@@ -575,7 +575,7 @@ namespace UniRaider
 
         public List<Room> OverlappedRoomList { get; set; }
 
-        public RigidBody Body { get; set; }
+        public RigidBody BtBody { get; set; }
 
         public EngineContainer Self { get; set; }
 
@@ -583,7 +583,7 @@ namespace UniRaider
         {
             if (Active) return;
 
-            if (Body != null)
+            if (BtBody != null)
             {
                 // TODO: World.cpp, L815
             }
@@ -603,7 +603,7 @@ namespace UniRaider
         {
             if (!Active) return;
 
-            if (Body != null)
+            if (BtBody != null)
             {
                 // TODO: World.cpp, L850
             }

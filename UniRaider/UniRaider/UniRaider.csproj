@@ -74,12 +74,14 @@
     <Compile Include="Loader\TR3Level.cs" />
     <Compile Include="Loader\TR4Level.cs" />
     <Compile Include="Loader\TR5Level.cs" />
+    <Compile Include="Mesh.cs" />
     <Compile Include="OBB.cs" />
     <Compile Include="Polygon.cs" />
     <Compile Include="Portal.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Transform.cs" />
+    <Compile Include="VertexArray.cs" />
     <Compile Include="VMath.cs" />
     <Compile Include="World.cs" />
   </ItemGroup>
