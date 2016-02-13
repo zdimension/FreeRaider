@@ -14,7 +14,7 @@ using OpenTK.Audio.OpenAL;
 
 namespace UniRaider
 {
-    public static class Extensions
+    public static partial class Extensions
     {
         public static string ParseString(this BinaryReader br, long strLength)
         {

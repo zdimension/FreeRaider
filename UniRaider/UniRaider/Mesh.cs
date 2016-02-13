@@ -581,4 +581,251 @@ namespace UniRaider
         /// </summary>
         public Quaternion QRotate;
     }
+
+    /// <summary>
+    /// Base frame of animated skeletal model
+    /// </summary>
+    public struct BoneFrame
+    {
+        /// <summary>
+        /// 0x01 - move need, 0x02 - 180 rotate need
+        /// </summary>
+        public ushort Command;
+
+        /// <summary>
+        /// Array of bones
+        /// </summary>
+        public List<BoneTag> BoneTags;
+
+        /// <summary>
+        /// Position (base offset)
+        /// </summary>
+        public Vector3 Position;
+
+        /// <summary>
+        /// Bounding box min coordinates
+        /// </summary>
+        public Vector3 BBMin;
+
+        /// <summary>
+        /// Bounding box max coordinates
+        /// </summary>
+        public Vector3 BBMax;
+
+        /// <summary>
+        /// Bounding box centre
+        /// </summary>
+        public Vector3 Centre;
+
+        /// <summary>
+        /// Move command data
+        /// </summary>
+        public Vector3 Move;
+
+        /// <summary>
+        /// Jump command data
+        /// </summary>
+        public float V_Vertical;
+
+        /// <summary>
+        /// Jump command data
+        /// </summary>
+        public float V_Horizontal;
+
+        public static void Copy(BoneFrame dst, BoneFrame src);
+    }
+
+    /// <summary>
+    /// Mesh tree base element structure
+    /// </summary>
+    public struct MeshTreeTag
+    {
+        /// <summary>
+        /// Base mesh - pointer to the first mesh in array
+        /// </summary>
+        public BaseMesh MeshBase;
+
+        /// <summary>
+        /// Base skinned mesh for ТR4+
+        /// </summary>
+        public BaseMesh MeshSkin;
+
+        /// <summary>
+        /// Model position offset
+        /// </summary>
+        public Vector3 Offset;
+
+        /// <summary>
+        /// 0x0001 = POP, 0x0002 = PUSH, 0x0003 = RESET
+        /// </summary>
+        public ushort Flag;
+
+        public uint BodyPart;
+
+        /// <summary>
+        /// Flag for shoot / guns animations (0x00, 0x01, 0x02, 0x03)
+        /// </summary>
+        public byte ReplaceMesh;
+
+        public byte ReplaceAnim;
+    }
+
+    /// <summary>
+    /// Animation switching control structure
+    /// </summary>
+    public struct AnimDispatch
+    {
+        /// <summary>
+        /// "switch to" animation
+        /// </summary>
+        public ushort NextAnim;
+
+        /// <summary>
+        /// "switch to" frame
+        /// </summary>
+        public ushort NextFrame;
+
+        /// <summary>
+        /// Low border of state change condition
+        /// </summary>
+        public ushort FrameLow;
+
+        /// <summary>
+        /// High border of state change condition
+        /// </summary>
+        public ushort FrameHigh;
+    }
+
+    public struct StateChange
+    {
+        public uint ID;
+
+        public List<AnimDispatch> AnimDispatch;
+    }
+
+    /// <summary>
+    /// One animation frame structure
+    /// </summary>
+    public class AnimationFrame
+    {
+        public uint ID;
+
+        public byte OriginalFrameRate;
+
+        /// <summary>
+        /// Forward-backward speed
+        /// </summary>
+        public int SpeedX;
+
+        /// <summary>
+        /// Forward-backward accel
+        /// </summary>
+        public int AccelX;
+
+        /// <summary>
+        /// Left-right speed
+        /// </summary>
+        public int SpeedY;
+
+        /// <summary>
+        /// Left-right accel
+        /// </summary>
+        public int AccelY;
+
+        public uint AnimCommand;
+
+        public uint NumAnimCommands;
+
+        public ushort StateID;
+
+        /// <summary>
+        /// Frame data
+        /// </summary>
+        public List<BoneFrame> Frames;
+
+        /// <summary>
+        /// Animation statechanges data
+        /// </summary>
+        public List<StateChange> StateChange;
+
+        /// <summary>
+        /// Next default animation
+        /// </summary>
+        public AnimationFrame NextAnim;
+
+        /// <summary>
+        /// Next default frame
+        /// </summary>
+        public int NextFrame;
+    }
+
+    /// <summary>
+    /// Skeletal model with animations data
+    /// </summary>
+    public struct SkeletalModel
+    {
+        /// <summary>
+        /// ID
+        /// </summary>
+        public uint ID;
+
+        /// <summary>
+        /// Transparency flags; 0 - opaque; 1 - alpha test; other - blending mode
+        /// </summary>
+        public byte TransparencyFlags;
+
+        /// <summary>
+        /// Bounding box min coordinates
+        /// </summary>
+        public Vector3 BBMin;
+
+        /// <summary>
+        /// Bounding box max coordinates
+        /// </summary>
+        public Vector3 BBMax;
+
+        /// <summary>
+        /// Bounding box centre
+        /// </summary>
+        public Vector3 Centre;
+
+        /// <summary>
+        /// Animations data
+        /// </summary>
+        public List<AnimationFrame> Animations;
+
+        /// <summary>
+        /// Number of model meshes
+        /// </summary>
+        public ushort MeshCount;
+
+        /// <summary>
+        /// Base mesh tree
+        /// </summary>
+        public List<MeshTreeTag> MeshTree;
+
+        public List<ushort> CollisionMap;
+
+        public void Clear();
+
+        public void FillTransparency();
+
+        public void InterpolateFrames();
+
+        public void FillSkinnedMeshMap();
+    }
+
+    public partial class StaticFuncs
+    {
+        public static MeshTreeTag SkeletonClone(MeshTreeTag src, int tagsCount);
+
+        public static void SkeletonCopyMeshes(MeshTreeTag dst, MeshTreeTag src, int tagsCount);
+
+        public static void SkeletonCopyMeshes2(MeshTreeTag dst, MeshTreeTag src, int tagsCount);
+    }
+
+    public static partial class Extensions
+    {
+        public static collis
+    }
 }
