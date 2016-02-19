@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using BulletSharp;
 using OpenTK;
 using OpenTK.Graphics.ES30;
+using VertexAttribPointerType = OpenTK.Graphics.OpenGL.VertexAttribPointerType;
 
 namespace UniRaider
 {
@@ -127,7 +128,7 @@ namespace UniRaider
         /// </summary>
         public float Radius;
 
-        [StructLayout(LayoutKind.Auto, Pack = 1)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public struct MatrixIndex
         {
             public sbyte I;
@@ -166,11 +167,157 @@ namespace UniRaider
             Clear();
         }
 
-        public void Clear();
+        public void Clear()
+        {
+            if(VBOVertexArray != 0)
+            {
+                GL.DeleteBuffer(VBOVertexArray);
+                VBOVertexArray = 0;
+            }
 
-        public void FindBB();
+            if (VBOIndexArray != 0)
+            {
+                GL.DeleteBuffer(VBOIndexArray);
+                VBOIndexArray = 0;
+            }
 
-        public void GenVBO(Render renderer);
+            Polygons.Clear();
+            TransparencyPolygons.Clear();
+            Vertices.Clear();
+            MatrixIndices.Clear();
+            ElementsPerTexture.Clear();
+            Elements.Clear();
+        }
+
+        /// <summary>
+        /// Bounding box calculation
+        /// </summary>
+        public void FindBB()
+        {
+            if(Vertices.Count > 0)
+            {
+                var vecs = Vertices.Select(x => x.Position);
+                BBMin = new Vector3(vecs.Min(x => x.X), vecs.Min(x => x.Y), vecs.Min(x => x.Z));
+                BBMax = new Vector3(vecs.Max(x => x.X), vecs.Max(x => x.Y), vecs.Max(x => x.Z));
+
+                Center = (BBMin + BBMax) / 2;
+            }
+        }
+
+        public void GenVBO(Render renderer)
+        {
+            if (new[] {VBOIndexArray, VBOVertexArray, VBOSkinArray}.Contains((uint) 0))
+                return;
+
+            // now, begin VBO filling!
+            VBOVertexArray = (uint) GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, VBOVertexArray);
+            var vsa = Vertices.Select(x => x.ToStruct()).ToArray();
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) (Marshal.SizeOf(typeof (VertexStruct)) * vsa.Length), vsa,
+                BufferUsageHint.StaticDraw);
+
+            // Store additional skinning information
+            if (MatrixIndices.Count > 0)
+            {
+                VBOSkinArray = (uint) GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ArrayBuffer, VBOSkinArray);
+                GL.BufferData(BufferTarget.ArrayBuffer,
+                    (IntPtr) (Marshal.SizeOf(typeof (MatrixIndex)) * MatrixIndices.Count), MatrixIndices.ToArray(),
+                    BufferUsageHint.StaticDraw);
+            }
+
+            // Fill indices vbo
+            VBOIndexArray = (uint) GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, VBOIndexArray);
+
+            long elementsSize = sizeof (uint) * AlphaElements;
+            for (var i = 0; i < TexturePageCount; i++)
+            {
+                elementsSize += sizeof (uint) * (long) ElementsPerTexture[i];
+            }
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) elementsSize, Elements.ToArray(),
+                BufferUsageHint.StaticDraw);
+
+            // Prepare vertex array
+            var attribs = new[]
+            {
+                new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.Position, 3,
+                    VertexAttribPointerType.Float, false, VBOVertexArray, Marshal.SizeOf(typeof (Vertex)),
+                    (int) Marshal.OffsetOf(typeof (Vertex), "Position")),
+                new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.Normal, 3,
+                    VertexAttribPointerType.Float, false, VBOVertexArray, Marshal.SizeOf(typeof (Vertex)),
+                    (int) Marshal.OffsetOf(typeof (Vertex), "Normal")),
+                new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.Color, 4,
+                    VertexAttribPointerType.Float, false, VBOVertexArray, Marshal.SizeOf(typeof (Vertex)),
+                    (int) Marshal.OffsetOf(typeof (Vertex), "Color")),
+                new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.TexCoord, 2,
+                    VertexAttribPointerType.Float, false, VBOVertexArray, Marshal.SizeOf(typeof (Vertex)),
+                    (int) Marshal.OffsetOf(typeof (Vertex), "TexCoord")),
+                // Only used for skinned meshes
+                new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.MatrixIndex, 2,
+                    VertexAttribPointerType.UnsignedByte, false, VBOSkinArray, 2, 0)
+            };
+            var numAttribs = MatrixIndices.Count == 0 ? 4 : 5;
+            MainVertexArray = new VertexArray(VBOIndexArray, attribs);
+
+            // Now for animated polygons, if any
+            if (AllAnimatedElements.Count > 0)
+            {
+                // And upload.
+                AnimatedVBOVertexArray = (uint) GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ArrayBuffer, AnimatedVBOVertexArray);
+                GL.BufferData(BufferTarget.ArrayBuffer,
+                    (IntPtr) (Marshal.SizeOf(typeof (AnimatedVertex)) * AnimatedVertices.Count),
+                    AnimatedVertices.ToArray(), BufferUsageHint.StaticDraw);
+
+                AnimatedVBOIndexArray = (uint) GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ArrayBuffer, AnimatedVBOIndexArray);
+                GL.BufferData(BufferTarget.ArrayBuffer,
+                    (IntPtr) (sizeof (uint) * AllAnimatedElements.Count),
+                    AllAnimatedElements.ToArray(), BufferUsageHint.StaticDraw);
+
+                // Prepare empty buffer for tex coords
+                AnimatedVBOTexCoordArray = (uint) GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ArrayBuffer, AnimatedVBOTexCoordArray);
+                GL.BufferData(BufferTarget.ArrayBuffer,
+                    (IntPtr) (Marshal.SizeOf(new float[2]) * AnimatedVertices.Count),
+                    IntPtr.Zero, BufferUsageHint.StreamDraw);
+
+                var attribs2 = new[]
+                {
+                    new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.Position, 3,
+                        VertexAttribPointerType.Float, false, AnimatedVBOVertexArray,
+                        Marshal.SizeOf(typeof (AnimatedVertex)),
+                        (int) Marshal.OffsetOf(typeof (AnimatedVertex), "Position")),
+                    new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.Color, 4,
+                        VertexAttribPointerType.Float, false, AnimatedVBOVertexArray,
+                        Marshal.SizeOf(typeof (AnimatedVertex)),
+                        (int) Marshal.OffsetOf(typeof (AnimatedVertex), "Color")),
+                    new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.Normal, 3,
+                        VertexAttribPointerType.Float, false, AnimatedVBOVertexArray,
+                        Marshal.SizeOf(typeof (AnimatedVertex)),
+                        (int) Marshal.OffsetOf(typeof (AnimatedVertex), "Normal")),
+                    new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.TexCoord, 2,
+                        VertexAttribPointerType.Float, false, AnimatedVBOTexCoordArray, Marshal.SizeOf(new float[2]), 0)
+                };
+                AnimatedVertexArray = new VertexArray(AnimatedVBOIndexArray, attribs2);
+            }
+            else
+            {
+                // No animated data
+                AnimatedVBOVertexArray = 0;
+                AnimatedVBOTexCoordArray = 0;
+                AnimatedVertexArray = null;
+            }
+
+            // Update references for transparent polygons
+            for (var i = 0; i < TransparentPolygons.Count; i++)
+            {
+                var p = TransparentPolygons[i];
+                p.UsedVertexArray = p.IsAnimated ? AnimatedVertexArray : MainVertexArray;
+                TransparentPolygons[i] = p;
+            }
+        }
 
         public void GenFaces();
 
@@ -824,8 +971,16 @@ namespace UniRaider
         public static void SkeletonCopyMeshes2(MeshTreeTag dst, MeshTreeTag src, int tagsCount);
     }
 
-    public static partial class Extensions
+    public class CollisionShapeHelper
     {
-        public static collis
+        public static CollisionShape CSfromSphere(float radius);
+
+        public static CollisionShape CSfromBBox(Vector3 bbMin, Vector3 bbMax, bool useCompression, bool buildBvh);
+
+        public static CollisionShape CSfromMesh(ref BaseMesh mesh, bool useCompression, bool buildBvh,
+            bool isStatic = true);
+
+        public static CollisionShape CSfromHeightmap(List<RoomSector> heightmap, List<SectorTween> tweens,
+            bool useCompression, bool buildBvh);
     }
 }

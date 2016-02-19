@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -55,5 +56,9 @@ namespace UniRaider
             if (Random == null) return 0;
             return Random.Next(0, ushort.MaxValue);
         }
+
+        public static string __FILE__ => new StackTrace(new StackFrame(true)).GetFrame(0).GetFileName();
+
+        public static int __LINE__ => new StackTrace(new StackFrame(true)).GetFrame(0).GetFileLineNumber();
     }
 }

@@ -277,7 +277,7 @@ namespace UniRaider
 
         public void CreateGhosts()
         {
-            if(!Bf.Animations.)
+            
         }
 
         public void Enable();

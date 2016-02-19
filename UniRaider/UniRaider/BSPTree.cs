@@ -92,7 +92,7 @@ namespace UniRaider
                 transformed.Transform(pp.Polygon, transform);
                 transformed.DoubleSide = pp.Polygon.DoubleSide;
 
-                if(frustum)
+                //if(frustum)
             }
         }
 

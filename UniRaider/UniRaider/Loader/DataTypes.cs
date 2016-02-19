@@ -1575,7 +1575,7 @@ namespace UniRaider.Loader
                 else if (ver == TRVersion.TR2)
                 {
                     r.ReverbInfo =
-                        (r.Flags.HasFlagEx(RoomFlags.WindBlowPonytail)
+                        r.Flags.HasFlagEx(RoomFlags.WindBlowPonytail)
                             ? ReverbInfo.Outside
                             : ReverbInfo.MediumRoom;
 

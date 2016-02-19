@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using OpenTK;
@@ -22,21 +23,61 @@ namespace UniRaider
         public const float SPLIT_EPSILON = 0.02f;
     }
 
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class Vertex
     {
         public Vector3 Position;
 
         public Vector3 Normal;
 
+        /// <summary>
+        /// [Length 4]
+        /// </summary>
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public float[] Color;
 
+        /// <summary>
+        /// [Length 2]
+        /// </summary>
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+        public float[] TexCoord;
+
+        public VertexStruct ToStruct()
+        {
+            return new VertexStruct
+            {
+                Position = Position,
+                Normal = Normal,
+                Color = Color,
+                TexCoord = TexCoord
+            };
+        }
+    }
+
+    /// <summary>
+    /// TODO: UGLY!!!!!
+    /// </summary>
+    public struct VertexStruct
+    {
+        public Vector3 Position;
+
+        public Vector3 Normal;
+
+        /// <summary>
+        /// [Length 4]
+        /// </summary>
+        public float[] Color;
+
+        /// <summary>
+        /// [Length 2]
+        /// </summary>
         public float[] TexCoord;
     }
 
     public struct Polygon
     {
         /// <summary>
-        /// Vertices data
+        /// Vertices data [Length 4]
         /// </summary>
         public List<Vertex> Vertices { get; set; } 
 
