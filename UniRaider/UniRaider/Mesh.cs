@@ -1460,14 +1460,94 @@ namespace UniRaider
             
             var ret = new SphereShape(radius);
             ret.Margin = Constants.COLLISION_MARGIN_RIGIDBODY;
+
+            return ret;
         }
 
-        public static CollisionShape CSfromBBox(Vector3 bbMin, Vector3 bbMax, bool useCompression, bool buildBvh);
+        public static CollisionShape CSfromBBox(Vector3 bbMin, Vector3 bbMax, bool useCompression, bool buildBvh)
+        {
+            var trimesh = new TriangleMesh();
+            var cnt = 0;
+
+            var obb = new OBB();
+            var pI = 0;
+            var p = obb.Polygons[pI];
+            for (var i = 0; i < 6; i++, p = obb.Polygons[++pI])
+            {
+                if (p.IsBroken) continue;
+
+                for (var j = 1; j + 1 < p.Vertices.Count; j++)
+                {
+                    var v0 = p.Vertices[j + 1].Position;
+                    var v1 = p.Vertices[j].Position;
+                    var v2 = p.Vertices[0].Position;
+                    trimesh.AddTriangle(v0, v1, v2, true);
+                }
+                cnt++;
+            }
+
+            if(cnt == 0)
+            {
+                trimesh = null;
+                return null;
+            }
+
+
+            CollisionShape ret = new ConvexTriangleMeshShape(trimesh, true);
+            ret.Margin = Constants.COLLISION_MARGIN_RIGIDBODY;
+
+            return ret;
+        }
 
         public static CollisionShape CSfromMesh(ref BaseMesh mesh, bool useCompression, bool buildBvh,
-            bool isStatic = true);
+            bool isStatic = true)
+        {
+            var cnt = 0;
+            var trimesh = new TriangleMesh();
+            CollisionShape ret;
+         
+            foreach (var p in mesh.Polygons.Where(p => !p.IsBroken))
+            {
+                for (var j = 1; j + 1 < p.Vertices.Count; j++)
+                {
+                    var v0 = p.Vertices[j + 1].Position;
+                    var v1 = p.Vertices[j].Position;
+                    var v2 = p.Vertices[0].Position;
+                    trimesh.AddTriangle(v0, v1, v2, true);
+                }
+                cnt++;
+            }
+
+            if (cnt == 0)
+            {
+                trimesh = null;
+                return null;
+            }
+
+            if (isStatic)
+            {
+                ret = new BvhTriangleMeshShape(trimesh, useCompression, buildBvh);
+            }
+            else
+            {
+                ret = new ConvexTriangleMeshShape(trimesh, true);
+            }
+            ret.Margin = Constants.COLLISION_MARGIN_RIGIDBODY;
+
+            return ret;
+        }
 
         public static CollisionShape CSfromHeightmap(List<RoomSector> heightmap, List<SectorTween> tweens,
-            bool useCompression, bool buildBvh);
+            bool useCompression, bool buildBvh)
+        {
+            var cnt = 0;
+            var r = heightmap[0].OwnerRoom;
+            var trimesh = new TriangleMesh();
+
+            for (var i = 0; i < r.Sectors.Count; i++)
+            {
+                if(heightmap[i].FloorPenetrationConfig!= Constants.pene)
+            }
+        }
     }
 }

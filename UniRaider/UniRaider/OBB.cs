@@ -37,6 +37,13 @@ namespace UniRaider
 
         public Vector3 Extent;
 
+        public OBB()
+        {
+            BasePolygons = new Polygon[6];
+            Polygons = new Polygon[6];
+            Transform = new Transform();
+        }
+
         public void DoTransform()
         {
             if(Transform != null)
