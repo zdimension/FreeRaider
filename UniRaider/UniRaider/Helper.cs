@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OpenTK;
 using OpenTK.Audio.OpenAL;
 using UniRaider.Loader;
 
@@ -60,5 +61,13 @@ namespace UniRaider
         public static string __FILE__ => new StackTrace(new StackFrame(true)).GetFrame(0).GetFileName();
 
         public static int __LINE__ => new StackTrace(new StackFrame(true)).GetFrame(0).GetFileLineNumber();
+
+        public static void Quat_SetRotation(ref Quaternion quat, Vector3 axis, float angle)
+        {
+            float d = axis.Length;
+            // TODO: Assert d != 0
+            float s = (float)Math.Sin(angle * 0.5) / d;
+            quat = new Quaternion(axis * s, (float)Math.Cos(angle * 0.5));
+        }
     }
 }

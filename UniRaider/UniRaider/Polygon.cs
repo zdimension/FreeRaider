@@ -74,7 +74,7 @@ namespace UniRaider
         public float[] TexCoord;
     }
 
-    public struct Polygon
+    public class Polygon
     {
         /// <summary>
         /// Vertices data [Length 4]
@@ -110,6 +110,12 @@ namespace UniRaider
         /// Polygon plane equation
         /// </summary>
         public Plane Plane { get; set; }
+
+        public Polygon()
+        {
+            Vertices = new List<Vertex>();
+            Plane = new Plane();
+        }
 
         public Polygon(Polygon rhs)
         {

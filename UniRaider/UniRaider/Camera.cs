@@ -202,8 +202,8 @@ namespace UniRaider
             height = 2.0f * distNear / f;
             width = height * aspect;
 
-            frustum.Vertices = new Vector3[3];
-            frustum.Planes = clipPlanes.Take(4).ToArray();
+            frustum.Vertices = new List<Vector3>();
+            frustum.Planes = clipPlanes.Take(4).ToList();
         }
     }
 }

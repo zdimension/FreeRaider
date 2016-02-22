@@ -272,7 +272,7 @@ namespace UniRaider
     /// <summary>
     /// Audio settings structure.
     /// </summary>
-    public struct AudioSettings
+    public class AudioSettings
     {
         public float MusicVolume { get; set; }
 
@@ -291,7 +291,7 @@ namespace UniRaider
     /// FX manager structure.<br/>
     /// It contains all necessary info to process sample FX (reverb and echo).
     /// </summary>
-    public struct AudioFxManager
+    public class AudioFxManager
     {
         public uint ALFilter;
 
@@ -315,7 +315,7 @@ namespace UniRaider
     /// Effect structure.<br/>
     /// Contains all global effect parameters.
     /// </summary>
-    public struct AudioEffect
+    public class AudioEffect
     {
         #region General sound source parameters
 
@@ -395,7 +395,7 @@ namespace UniRaider
     /// <summary>
     /// Audio emitter (aka SoundSource) structure.
     /// </summary>
-    public struct AudioEmitter
+    public class AudioEmitter
     {
         /// <summary>
         /// Unique emitter index

@@ -7,7 +7,7 @@ using OpenTK;
 
 namespace UniRaider
 {
-    public struct BSPFaceRef
+    public class BSPFaceRef
     {
         public Transform Transform { get; set; }
 

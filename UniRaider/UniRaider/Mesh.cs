@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using BulletSharp;
 using OpenTK;
 using OpenTK.Graphics.ES30;
+using UniRaider.Loader;
 using VertexAttribPointerType = OpenTK.Graphics.OpenGL.VertexAttribPointerType;
 
 namespace UniRaider
@@ -32,13 +33,13 @@ namespace UniRaider
         Jump = 0x04
     }
 
-    public struct TransparentPolygonReference
+    public class TransparentPolygonReference
     {
         public Polygon Polygon;
 
         public VertexArray UsedVertexArray;
 
-        public uint SizeIndex;
+        public uint FirstIndex;
 
         public uint Count;
 
@@ -63,7 +64,7 @@ namespace UniRaider
     /// <summary>
     /// Base mesh, uses everywhere
     /// </summary>
-    public struct BaseMesh
+    public class BaseMesh
     {
         /// <summary>
         /// Mesh's ID
@@ -129,7 +130,20 @@ namespace UniRaider
         public float Radius;
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct MatrixIndex
+        public class MatrixIndex
+        {
+            public sbyte I;
+
+            public sbyte J;
+
+            public MatrixIndexStruct ToStruct()
+            {
+                return new MatrixIndexStruct {I = I, J = J};
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        public struct MatrixIndexStruct
         {
             public sbyte I;
 
@@ -162,7 +176,7 @@ namespace UniRaider
 
         public VertexArray AnimatedVertexArray;
 
-        public void Destructor()
+        ~BaseMesh()
         {
             Clear();
         }
@@ -222,7 +236,7 @@ namespace UniRaider
                 VBOSkinArray = (uint) GL.GenBuffer();
                 GL.BindBuffer(BufferTarget.ArrayBuffer, VBOSkinArray);
                 GL.BufferData(BufferTarget.ArrayBuffer,
-                    (IntPtr) (Marshal.SizeOf(typeof (MatrixIndex)) * MatrixIndices.Count), MatrixIndices.ToArray(),
+                    (IntPtr) (Marshal.SizeOf(typeof (MatrixIndexStruct)) * MatrixIndices.Count), MatrixIndices.Select(x => x.ToStruct()).ToArray(),
                     BufferUsageHint.StaticDraw);
             }
 
@@ -319,11 +333,230 @@ namespace UniRaider
             }
         }
 
-        public void GenFaces();
+        public void GenFaces()
+        {
+            ElementsPerTexture.Resize((int)TexturePageCount);
 
-        public uint AddVertex(Vertex v);
+            /*
+             * Layout of the buffers:
+             *
+             * Normal vertex buffer:
+             * - vertices of polygons in order, skipping only animated.
+             * Animated vertex buffer:
+             * - vertices (without tex coords) of polygons in order, skipping only
+             *   non-animated.
+             * Animated texture buffer:
+             * - tex coords of polygons in order, skipping only non-animated.
+             *   stream, initially empty.
+             *
+             * Normal elements:
+             * - elements for texture[0]
+             * ...
+             * - elements for texture[n]
+             * - elements for alpha
+             * Animated elements:
+             * - animated elements (opaque)
+             * - animated elements (blended)
+             */
 
-        public uint AddAnimatedVertex(Vertex v);
+            // Do a first pass to find the numbers of everything
+            AlphaElements = 0;
+            uint numNormalElements = 0;
+            AnimatedVertices.Clear();
+            AnimatedElementCount = 0;
+            AlphaAnimatedElementCount = 0;
+
+            var transparent = 0;
+            foreach (var p in Polygons.Where(p => !p.IsBroken))
+            {
+                var elementCount = (uint)(p.Vertices.Count - 2) * 3;
+                if (p.DoubleSide) elementCount *= 2;
+
+                if (p.AnimID == 0)
+                {
+                    if (p.BlendMode == BlendingMode.Opaque || p.BlendMode == BlendingMode.Transparent)
+                    {
+                        ElementsPerTexture[p.TexIndex] += elementCount;
+                        numNormalElements += elementCount;
+                    }
+                    else
+                    {
+                        AlphaElements += elementCount;
+                        transparent++;
+                    }
+                }
+                else
+                {
+                    if (p.BlendMode == BlendingMode.Opaque || p.BlendMode == BlendingMode.Transparent)
+                    {
+                        AnimatedElementCount += elementCount;
+                    }
+                    else
+                    {
+                        AlphaAnimatedElementCount += elementCount;
+                        transparent++;
+                    }
+                }
+            }
+
+            Elements.Resize((int)(numNormalElements + AlphaElements));
+            uint elementOffset = 0;
+            var startPerTexture = Enumerable.Repeat((uint)0, (int)TexturePageCount).ToList();
+            for (var i = 0; i < TexturePageCount; i++)
+            {
+                startPerTexture[i] = elementOffset;
+                elementOffset += ElementsPerTexture[i];
+            }
+            var startTransparent = elementOffset;
+
+            AllAnimatedElements.Resize((int)(AnimatedElementCount + AlphaAnimatedElementCount));
+            uint animatedStart = 0;
+            var animatedStartTransparent = AnimatedElementCount;
+
+            TransparentPolygons.Resize(transparent);
+            var transparentPolygonStart = 0;
+
+            foreach (var p in Polygons.Where(p => !p.IsBroken))
+            {
+                var elementCount = (uint)(p.Vertices.Count - 2) * 3;
+                var backwardsStartOffset = elementCount;
+                if (p.DoubleSide) elementCount *= 2;
+
+                if(p.AnimID == 0)
+                {
+                    // Not animated
+                    var texture = p.TexIndex;
+
+                    uint oldStart;
+                    if(p.BlendMode == BlendingMode.Opaque || p.BlendMode == BlendingMode.Transparent)
+                    {
+                        oldStart = startPerTexture[texture];
+                        startPerTexture[texture] += elementCount;
+                    }
+                    else
+                    {
+                        oldStart = startTransparent;
+                        startTransparent += elementCount;
+                        TransparentPolygons[transparentPolygonStart].FirstIndex = oldStart;
+                        TransparentPolygons[transparentPolygonStart].Count = elementCount;
+                        TransparentPolygons[transparentPolygonStart].Polygon = p;
+                        TransparentPolygons[transparentPolygonStart].IsAnimated = false;
+                        transparentPolygonStart++;
+                    }
+                    var backwardsStart = oldStart + backwardsStartOffset;
+
+                    // Render the polygon as a triangle fan. That is obviously correct for
+                    // a triangle and also correct for any quad.
+                    var startElement = AddVertex(p.Vertices[0]);
+                    var previousElement = AddVertex(p.Vertices[1]);
+
+                    for (var j = 2; j < p.Vertices.Count; j++)
+                    {
+                        var thisElement = AddVertex(p.Vertices[j]);
+
+                        var offset1 = (int) oldStart + (j - 2) * 3;
+                        Elements[offset1 + 0] = startElement;
+                        Elements[offset1 + 1] = previousElement;
+                        Elements[offset1 + 2] = thisElement;
+
+                        if(p.DoubleSide)
+                        {
+                            var offset2 = (int)backwardsStart + (j - 2) * 3;
+                            Elements[offset2 + 0] = startElement;
+                            Elements[offset2 + 1] = thisElement;
+                            Elements[offset2 + 2] = previousElement;
+                        }
+
+                        previousElement = thisElement;
+                    }
+                }
+                else
+                {
+                    // Animated
+                    uint oldStart;
+                    if (p.BlendMode == BlendingMode.Opaque || p.BlendMode == BlendingMode.Transparent)
+                    {
+                        oldStart = animatedStart;
+                        animatedStart += elementCount;
+                    }
+                    else
+                    {
+                        oldStart = animatedStartTransparent;
+                        animatedStartTransparent += elementCount;
+                        TransparentPolygons[transparentPolygonStart].FirstIndex = oldStart;
+                        TransparentPolygons[transparentPolygonStart].Count = elementCount;
+                        TransparentPolygons[transparentPolygonStart].Polygon = p;
+                        TransparentPolygons[transparentPolygonStart].IsAnimated = true;
+                        transparentPolygonStart++;
+                    }
+                    var backwardsStart = oldStart + backwardsStartOffset;
+
+                    // Render the polygon as a triangle fan. That is obviously correct for
+                    // a triangle and also correct for any quad.
+                    var startElement = AddAnimatedVertex(p.Vertices[0]);
+                    var previousElement = AddAnimatedVertex(p.Vertices[1]);
+
+                    for (var j = 2; j < p.Vertices.Count; j++)
+                    {
+                        var thisElement = AddAnimatedVertex(p.Vertices[j]);
+
+                        var offset1 = (int)oldStart + (j - 2) * 3;
+                        Elements[offset1 + 0] = startElement;
+                        Elements[offset1 + 1] = previousElement;
+                        Elements[offset1 + 2] = thisElement;
+
+                        if (p.DoubleSide)
+                        {
+                            var offset2 = (int)backwardsStart + (j - 2) * 3;
+                            Elements[offset2 + 0] = startElement;
+                            Elements[offset2 + 1] = thisElement;
+                            Elements[offset2 + 2] = previousElement;
+                        }
+
+                        previousElement = thisElement;
+                    }
+                }
+            }
+
+            // Now same for animated triangles
+        }
+
+        public uint AddVertex(Vertex vertex)
+        {
+            for (var ind = 0; ind < Vertices.Count; ind++)
+            {
+                var v = Vertices[ind];
+                if (v.Position == vertex.Position && v.TexCoord.SequenceEqual(vertex.TexCoord))
+                {
+                    return (uint)ind;
+                }
+            }
+
+            Vertices.Add(new Vertex
+            {
+                Position = vertex.Position,
+                Normal = vertex.Normal,
+                Color = vertex.Color,
+                TexCoord = vertex.TexCoord
+            });
+
+            return (uint)Vertices.Count - 1;
+        }
+
+        public uint AddAnimatedVertex(Vertex v)
+        {
+            // Skip search for equal vertex; tex coords may differ but aren't stored in
+            // animated_vertex_s
+
+            AnimatedVertices.Add(new AnimatedVertex
+            {
+                Position = v.Position,
+                Color = v.Color,
+                Normal = v.Normal
+            });
+
+            return (uint) AnimatedVertices.Count - 1;
+        }
 
         public void PolySortInMesh();
     }
@@ -331,7 +564,7 @@ namespace UniRaider
     /// <summary>
     /// Base sprite structure
     /// </summary>
-    public struct Sprite
+    public class Sprite
     {
         /// <summary>
         /// Object's ID
@@ -363,7 +596,7 @@ namespace UniRaider
     /// <summary>
     /// Structure for all the sprites in a room
     /// </summary>
-    public struct SpriteBuffer
+    public class SpriteBuffer
     {
         /// <summary>
         /// Vertex data for the sprites
@@ -381,7 +614,7 @@ namespace UniRaider
         public List<uint> ElementCountPerTexture;
     }
 
-    public struct Light
+    public class Light
     {
         /// <summary>
         /// World position
@@ -409,7 +642,7 @@ namespace UniRaider
     /// <summary>
     /// Animated sequence. Used globally with animated textures to refer its parameters and frame numbers.
     /// </summary>
-    public struct TexFrame
+    public class TexFrame
     {
         /// <summary>
         /// Length 4
@@ -424,7 +657,7 @@ namespace UniRaider
         public ushort TextureIndex;
     }
 
-    public struct AnimSeq
+    public class AnimSeq
     {
         /// <summary>
         /// UVRotate mode flag.
@@ -502,7 +735,7 @@ namespace UniRaider
     /// <summary>
     /// Room static mesh
     /// </summary>
-    public struct StaticMesh
+    public class StaticMesh
     {
         public uint ObjectID;
 
@@ -676,7 +909,7 @@ namespace UniRaider
     /// <summary>
     /// Base frame of animated skeletal model
     /// </summary>
-    public struct SSBoneFrame
+    public class SSBoneFrame
     {
         /// <summary>
         /// Array of bones
@@ -713,10 +946,64 @@ namespace UniRaider
         /// </summary>
         public bool HasSkin;
 
-        public void FromModel(SkeletalModel model);
+        public void FromModel(SkeletalModel model)
+        {
+            HasSkin = false;
+            BBMin = Vector3.Zero;
+            BBMax = Vector3.Zero;
+            Centre = Vector3.Zero;
+            Position = Vector3.Zero;
+            Animations = new SSAnimation();
+
+            /*Animations.Next = null; TODO: Not needed
+            Animations.OnFrame = null;*/
+            Animations.Model = model;
+            BoneTags.Resize(model.MeshCount);
+
+            var stack = 0;
+            var parents = new List<SSBoneTag>(BoneTags.Count);
+            parents[0] = null;
+            BoneTags[0].Parent = null;
+            for (ushort i = 0; i < BoneTags.Count; i++)
+            {
+                BoneTags[i].Index = i;
+                BoneTags[i].MeshBase = model.MeshTree[i].MeshBase;
+                BoneTags[i].MeshSkin = model.MeshTree[i].MeshSkin;
+                if (BoneTags[i].MeshSkin != null)
+                    HasSkin = true;
+                BoneTags[i].MeshSlot = null;
+                BoneTags[i].BodyPart = model.MeshTree[i].BodyPart;
+
+                BoneTags[i].Offset = model.MeshTree[i].Offset;
+                BoneTags[i].QRotate = new Quaternion(0, 0, 0, 0);
+                BoneTags[i].Transform.SetIdentity();
+                BoneTags[i].FullTransform.SetIdentity();
+
+                if (i > 0)
+                {
+                    BoneTags[i].Parent = BoneTags[i - 1];
+                    if (model.MeshTree[i].Flag.HasFlagUns(0x01)) // POP
+                    {
+                        if(stack > 0)
+                        {
+                            BoneTags[i].Parent = parents[stack];
+                            stack--;
+                        }
+                    }
+                    if(model.MeshTree[i].Flag.HasFlagUns(0x02)) // PUSH
+                    {
+                        if(stack + 1 < (short)model.MeshCount)
+                        {
+                            stack++;
+                            parents[stack] = BoneTags[i].Parent;
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    public struct BoneTag
+    public class BoneTag
     {
         /// <summary>
         /// Bone vector
@@ -732,7 +1019,7 @@ namespace UniRaider
     /// <summary>
     /// Base frame of animated skeletal model
     /// </summary>
-    public struct BoneFrame
+    public class BoneFrame
     {
         /// <summary>
         /// 0x01 - move need, 0x02 - 180 rotate need
@@ -779,13 +1066,32 @@ namespace UniRaider
         /// </summary>
         public float V_Horizontal;
 
-        public static void Copy(BoneFrame dst, BoneFrame src);
+        public static void Copy(BoneFrame dst, BoneFrame src)
+        {
+            dst.BoneTags.Resize(src.BoneTags.Count);
+            dst.Position = src.Position;
+            dst.Centre = src.Centre;
+            dst.BBMax = src.BBMax;
+            dst.BBMin = src.BBMin;
+
+            dst.Command = src.Command;
+            dst.Move = src.Move;
+
+            for (var i = 0; i < dst.BoneTags.Count; i++)
+            {
+                dst.BoneTags[i] = new BoneTag
+                {
+                    QRotate = src.BoneTags[i].QRotate,
+                    Offset = src.BoneTags[i].Offset
+                };
+            }
+        }
     }
 
     /// <summary>
     /// Mesh tree base element structure
     /// </summary>
-    public struct MeshTreeTag
+    public class MeshTreeTag
     {
         /// <summary>
         /// Base mesh - pointer to the first mesh in array
@@ -820,7 +1126,7 @@ namespace UniRaider
     /// <summary>
     /// Animation switching control structure
     /// </summary>
-    public struct AnimDispatch
+    public class AnimDispatch
     {
         /// <summary>
         /// "switch to" animation
@@ -843,7 +1149,7 @@ namespace UniRaider
         public ushort FrameHigh;
     }
 
-    public struct StateChange
+    public class StateChange
     {
         public uint ID;
 
@@ -909,7 +1215,7 @@ namespace UniRaider
     /// <summary>
     /// Skeletal model with animations data
     /// </summary>
-    public struct SkeletalModel
+    public class SkeletalModel
     {
         /// <summary>
         /// ID
@@ -953,27 +1259,208 @@ namespace UniRaider
 
         public List<ushort> CollisionMap;
 
-        public void Clear();
+        public void Clear()
+        {
+            MeshTree.Clear();
+            CollisionMap.Clear();
+            Animations.Clear();
+        }
 
-        public void FillTransparency();
+        public void FillTransparency()
+        {
+            TransparencyFlags = Constants.MESH_FULL_OPAQUE;
+            for (var i = 0; i < MeshCount; i++)
+            {
+                if(MeshTree[i].MeshBase.TransparencyPolygons.Count > 0)
+                {
+                    TransparencyFlags = Constants.MESH_HAS_TRANSPARENCY;
+                    return;
+                }
+            }
+        }
 
-        public void InterpolateFrames();
+        public void InterpolateFrames()
+        {
+            foreach (var anim in Animations)
+            {
+                if (anim.Frames.Count > 1 && anim.OriginalFrameRate > 1) // we can't interpolate one frame or rate < 2!
+                {
+                    var newBoneFrames = new BoneFrame[anim.OriginalFrameRate * (anim.Frames.Count - 1) + 1].ToList();
 
-        public void FillSkinnedMeshMap();
+                    // the first frame does not change
+                    var bfi = 0;
+                    var bf = newBoneFrames[bfi];
+                    bf.BoneTags.Resize(MeshCount);
+                    bf.Position = Vector3.Zero;
+                    bf.Move = Vector3.Zero;
+                    bf.Command = 0x00;
+                    bf.Centre = anim.Frames[0].Centre;
+                    bf.Position = anim.Frames[0].Position;
+                    bf.BBMax = anim.Frames[0].BBMax;
+                    bf.BBMin = anim.Frames[0].BBMin;
+                    for (var k = 0; k < MeshCount; k++)
+                    {
+                        bf.BoneTags[k].Offset = anim.Frames[0].BoneTags[k].Offset;
+                        bf.BoneTags[k].QRotate = anim.Frames[0].BoneTags[k].QRotate;
+                    }
+
+                    bfi++;
+                    bf = newBoneFrames[bfi];
+
+                    for (var j = 1; j < anim.Frames.Count; j++)
+                    {
+                        for (var l = 1; l <= anim.OriginalFrameRate; l++)
+                        {
+                            bf.Position = Vector3.Zero;
+                            bf.Move = Vector3.Zero;
+                            bf.Command = 0x00;
+                            var lerp = (float) l / anim.OriginalFrameRate;
+                            var t = 1 - lerp;
+
+                            bf.BoneTags.Resize(MeshCount);
+
+                            var prev = anim.Frames[j - 1];
+                            var cur = anim.Frames[j];
+
+                            bf.Centre = t * prev.Centre + lerp * cur.Centre;
+
+                            /*
+                            bf.Centre[0] = t * prev.Centre[0] + lerp * cur.Centre[0];
+                            bf.Centre[1] = t * prev.Centre[1] + lerp * cur.Centre[1];
+                            bf.Centre[2] = t * prev.Centre[2] + lerp * cur.Centre[2];
+                            */
+
+                            bf.Position = t * prev.Position + lerp * cur.Position;
+
+                            bf.BBMax = t * prev.BBMax + lerp * cur.BBMax;
+
+                            bf.BBMin = t * prev.BBMin + lerp * cur.BBMax;
+
+                            for (var k = 0; k < MeshCount; k++)
+                            {
+                                bf.BoneTags[k].Offset = prev.BoneTags[k].Offset.Lerp(cur.BoneTags[k].Offset, lerp);
+                                bf.BoneTags[k].QRotate = Quaternion.Slerp(prev.BoneTags[k].QRotate, cur.BoneTags[k].QRotate, lerp);
+                            }
+
+                            bfi++;
+                            bf = newBoneFrames[bfi];
+                        }
+                    }
+
+                    // swap old and new animation bone frames
+                    // free old bone frames
+                    newBoneFrames.MoveTo(anim.Frames);
+                }
+            }
+        }
+
+        public void FillSkinnedMeshMap()
+        {
+            var treeTagI = 0;
+            var treeTag = MeshTree[treeTagI];
+
+            for (var i = 0; i < MeshCount; i++, treeTag = MeshTree[++treeTagI])
+            {
+                if(treeTag.MeshSkin == null)
+                {
+                    return;
+                }
+
+                treeTag.MeshSkin.MatrixIndices.Resize(treeTag.MeshSkin.Vertices.Count);
+                var chI = 0;
+                var ch = treeTag.MeshSkin.MatrixIndices[chI];
+                var vI = 0;
+                var v = treeTag.MeshSkin.Vertices[vI];
+                for (var k = 0;
+                    k < treeTag.MeshSkin.Vertices.Count;
+                    k++, v = treeTag.MeshSkin.Vertices[++vI], ch = treeTag.MeshSkin.MatrixIndices[++chI])
+                {
+                    var rv = StaticFuncs.FindVertexInMesh(treeTag.MeshBase, v.Position);
+                    if(rv != null)
+                    {
+                        ch.I = 0;
+                        ch.J = 0;
+                        v.Position = rv.Position;
+                        v.Normal = rv.Normal;
+                    }
+                    else
+                    {
+                        ch.I = 0;
+                        ch.J = 1;
+                        var tv = v.Position + treeTag.Offset;
+                        var prevTreeTagI = 0;
+                        var prevTreeTag = MeshTree[prevTreeTagI];
+                        for (var l = 0; l < MeshCount; l++, prevTreeTag = MeshTree[++prevTreeTagI])
+                        {
+                            rv = StaticFuncs.FindVertexInMesh(prevTreeTag.MeshBase, tv);
+                            if(rv != null)
+                            {
+                                ch.I = 0;
+                                ch.J = 0;
+                                v.Position = rv.Position - treeTag.Offset;
+                                v.Normal = rv.Normal;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public partial class StaticFuncs
     {
-        public static MeshTreeTag SkeletonClone(MeshTreeTag src, int tagsCount);
+        public static MeshTreeTag[] SkeletonClone(MeshTreeTag[] src, int tagsCount)
+        {
+            var ret = new MeshTreeTag[tagsCount];
 
-        public static void SkeletonCopyMeshes(MeshTreeTag dst, MeshTreeTag src, int tagsCount);
+            for (var i = 0; i < tagsCount; i++)
+            {
+                ret[i] = new MeshTreeTag
+                {
+                    MeshBase = src[i].MeshBase,
+                    MeshSkin = src[i].MeshSkin,
+                    Flag = src[i].Flag,
+                    Offset = src[i].Offset,
+                    ReplaceAnim = src[i].ReplaceAnim,
+                    ReplaceMesh = src[i].ReplaceMesh
+                };
+            }
 
-        public static void SkeletonCopyMeshes2(MeshTreeTag dst, MeshTreeTag src, int tagsCount);
+            return ret;
+        }
+
+        public static void SkeletonCopyMeshes(MeshTreeTag[] dst, MeshTreeTag[] src, int tagsCount)
+        {
+            for (var i = 0; i < tagsCount; i++)
+            {
+                dst[i].MeshBase = src[i].MeshBase;
+            }
+        }
+
+        public static void SkeletonCopyMeshes2(MeshTreeTag[] dst, MeshTreeTag[] src, int tagsCount)
+        {
+            for (var i = 0; i < tagsCount; i++)
+            {
+                dst[i].MeshSkin = src[i].MeshBase;
+            }
+        }
+
+        public static Vertex FindVertexInMesh(BaseMesh mesh, Vector3 v)
+        {
+            return mesh.Vertices.FirstOrDefault(mv => (v - mv.Position).LengthSquared < 4.0f);
+        }
     }
 
     public class CollisionShapeHelper
     {
-        public static CollisionShape CSfromSphere(float radius);
+        public static CollisionShape CSfromSphere(float radius)
+        {
+            if (radius == 0) return null;
+            
+            var ret = new SphereShape(radius);
+            ret.Margin = Constants.COLLISION_MARGIN_RIGIDBODY;
+        }
 
         public static CollisionShape CSfromBBox(Vector3 bbMin, Vector3 bbMax, bool useCompression, bool buildBvh);
 

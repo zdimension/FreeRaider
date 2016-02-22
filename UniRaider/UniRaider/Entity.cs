@@ -108,12 +108,12 @@ namespace UniRaider
         SectorStatus = 0x80
     }
 
-    public struct EntityCollisionNode
+    public class EntityCollisionNode
     {
         public List<CollisionObject> Obj;
     }
 
-    public struct BtEntityData
+    public class BtEntityData
     {
         public bool NoFixAll;
 

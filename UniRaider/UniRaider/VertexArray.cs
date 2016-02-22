@@ -10,7 +10,7 @@ namespace UniRaider
     /// <summary>
     /// Description of a single vertex array attribute.
     /// </summary>
-    public struct VertexArrayAttribute
+    public class VertexArrayAttribute
     {
         /// <summary>
         /// The number of the attribute, used to match it to the shader.

@@ -24,5 +24,11 @@ namespace UniRaider
         {
             return t * x;
         }
+
+        public void SetIdentity()
+        {
+            Basis = Matrix3.Identity;
+            Origin = Vector3.Zero;
+        }
     }
 }

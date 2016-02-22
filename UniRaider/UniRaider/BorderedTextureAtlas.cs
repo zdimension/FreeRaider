@@ -16,14 +16,14 @@ namespace UniRaider
             BottomRight
         }
 
-        public struct FileObjectTexture
+        public class FileObjectTexture
         {
             public uint CanonicalTextureIndex { get; set; }
 
             public CornerLocation[] CornerLocations { get; set; }
         }
 
-        public struct CanonicalObjectTexture
+        public class CanonicalObjectTexture
         {
             public byte Width { get; set; }
 
@@ -75,7 +75,7 @@ namespace UniRaider
             List<Loader.ObjectTexture> objectTextures, 
             List<Loader.SpriteTexture> spriteTextures);
 
-        public struct TextureSizeComparator : IComparer<int>
+        public class TextureSizeComparator : IComparer<int>
         {
             public BorderedTextureAtlas Context { get; set; }
 

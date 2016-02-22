@@ -1,0 +1,2 @@
+﻿
+Dans Mesh.cs, L1078, je fais tout en une seule ligne sur le Vector3 au lieu de faire une ligne par composante comme dans OpenTomb. A verifier.

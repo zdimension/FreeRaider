@@ -83,4 +83,75 @@ namespace UniRaider
             Dot = Normal.Dot(where);
         }
     }
+
+    public class VMath
+    {
+        public static void Vec4_SetTRRotations(ref Quaternion v, Vector3 rot)
+        {
+            var qX = new Quaternion();
+            Helper.Quat_SetRotation(ref qX, Vector3.UnitX, rot.Z * Constants.RadPerDeg);
+
+            var qY = new Quaternion();
+            Helper.Quat_SetRotation(ref qY, Vector3.UnitY, rot.Z * Constants.RadPerDeg);
+
+            var qZ = new Quaternion();
+            Helper.Quat_SetRotation(ref qZ, Vector3.UnitZ, rot.Z * Constants.RadPerDeg);
+
+            v = qZ * qX * qY;
+        }
+
+        public static void Mat4_Translate(Transform mat, Vector3 v)
+        {
+            mat.Origin += mat.Basis.MultiplyByVector(v);
+        }
+
+        public static void Mat4_Translate(Transform mat, float x, float y, float z)
+        {
+            Mat4_Translate(mat, new Vector3(x, y, z));
+        }
+
+        public static void Mat4_Scale(Transform mat, float x, float y, float z)
+        {
+            mat.Basis = mat.Basis.Scaled(new Vector3(x, y, z));
+        }
+
+        public static void Mat4_RotateX(Transform mat, float ang)
+        {
+            var tmp = ang * Constants.RadPerDeg;
+            var sina = (float) Math.Sin(tmp);
+            var cosa = (float) Math.Cos(tmp);
+
+            var m = Matrix3.Transpose(mat.Basis);
+            m.Row1 = mat.Basis.Column1 * cosa + mat.Basis.Column2 * sina;
+            m.Row2 = -mat.Basis.Column1 * sina + mat.Basis.Column2 * cosa;
+
+            mat.Basis = Matrix3.Transpose(m);
+        }
+
+        public static void Mat4_RotateY(Transform mat, float ang)
+        {
+            var tmp = ang * Constants.RadPerDeg;
+            var sina = (float)Math.Sin(tmp);
+            var cosa = (float)Math.Cos(tmp);
+
+            var m = Matrix3.Transpose(mat.Basis);
+            m.Row0 = mat.Basis.Column0 * cosa + mat.Basis.Column2 * sina;
+            m.Row2 = -mat.Basis.Column0 * sina + mat.Basis.Column2 * cosa;
+
+            mat.Basis = Matrix3.Transpose(m);
+        }
+
+        public static void Mat4_RotateZ(Transform mat, float ang)
+        {
+            var tmp = ang * Constants.RadPerDeg;
+            var sina = (float)Math.Sin(tmp);
+            var cosa = (float)Math.Cos(tmp);
+
+            var m = Matrix3.Transpose(mat.Basis);
+            m.Row0 = mat.Basis.Column0 * cosa + mat.Basis.Column1 * sina;
+            m.Row1 = -mat.Basis.Column0 * sina + mat.Basis.Column1 * cosa;
+
+            mat.Basis = Matrix3.Transpose(m);
+        }
+    }
 }

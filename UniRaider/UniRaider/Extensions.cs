@@ -342,6 +342,16 @@ namespace UniRaider
             return (Enum.ToObject(theFlag.GetType(), theField) as Enum).HasFlag(theFlag as Enum);
         }
 
+        public static bool HasFlagUns(this object a, object f)
+        {
+            return ((ulong)a & (ulong)f) == (ulong)f;
+        }
+
+        public static bool HasFlagSig(this object a, object f)
+        {
+            return ((long) a & (long) f) == (long) f;
+        }
+
         public static float Dot(this Vector3 v1, Vector3 v2)
         {
             return Vector3.Dot(v1, v2);
@@ -375,6 +385,20 @@ namespace UniRaider
         public static T Square<T>(this T t)
         {
             return (T) Convert.ChangeType((dynamic) t * (dynamic) t, typeof (T));
+        }
+
+        public static Matrix3 Scaled(this Matrix3 mat, Vector3 s)
+        {
+            return new Matrix3(mat.Row0 * s, mat.Row1 * s, mat.Row2 * s);
+        }
+
+        public static void MoveTo<T>(this List<T> a, List<T> dest)
+        {
+            foreach (var it in a)
+            {
+                a.Remove(it);
+                dest.Add(it);
+            }
         }
     }
 }

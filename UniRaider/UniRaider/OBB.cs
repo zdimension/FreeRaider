@@ -15,7 +15,7 @@ namespace UniRaider
     /// <summary>
     /// Oriented bounding box
     /// </summary>
-    public struct OBB
+    public class OBB
     {
         /// <summary>
         /// Length = 6

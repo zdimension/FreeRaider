@@ -167,12 +167,12 @@ namespace UniRaider
         public const int ActivationMask_XOR = 1;
     }
 
-    public static class Global
+    public partial class Global
     {
         public static EngineContainer LastContainer { get; set; }
     }
 
-    public struct BaseItem
+    public class BaseItem
     {
         public uint ID { get; set; }
 
@@ -187,7 +187,7 @@ namespace UniRaider
         public SSBoneFrame BoneFrame { get; set; }
     }
 
-    public struct RoomBox
+    public class RoomBox
     {
         public int Xmin { get; set; }
 
@@ -453,7 +453,7 @@ namespace UniRaider
         TR_SECTOR_TWEEN_TYPE_2TRIANGLES = 4 // it looks like a butterfly
     }
 
-    public struct SectorTween
+    public class SectorTween
     {
         public Vector3[] FloorCorners { get; set; }
         public SectorTweenType FloorTweenType { get; set; }
@@ -463,7 +463,7 @@ namespace UniRaider
         public SectorTweenType CeilingTweenType { get; set; }
     }
 
-    public struct RoomSprite
+    public class RoomSprite
     {
         public Sprite Sprite { get; set; }
 
@@ -824,14 +824,14 @@ namespace UniRaider
         public void GenMesh(World world, uint roomID, Loader.Level tr);
     }
 
-    public struct FlipInfo
+    public class FlipInfo
     {
         public byte Map { get; set; }
 
         public byte State { get; set; }
     }
 
-    public struct World
+    public class World
     {
         public string Name { get; set; }
 
