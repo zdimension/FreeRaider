@@ -85,13 +85,13 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="ByteColor"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>The <see cref="ByteColor"/></returns>
-        public static ByteColor Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static ByteColor Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             return new ByteColor(
                 br.ReadByte(),
                 br.ReadByte(),
                 br.ReadByte(),
-                ver >= TRVersion.TR2
+                ver >= Engine.TR2
                     ? br.ReadByte()
                     : (byte) 0xFF);
         }
@@ -317,14 +317,14 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Triangle"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Triangle"/></returns>
-        public static Triangle Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static Triangle Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new Triangle
             {
                 Vertices = br.ReadUInt16Array(3),
                 Texture = br.ReadUInt16()
             };
-            if (ver >= TRVersion.TR4) ret.Lighting = br.ReadUInt16();
+            if (ver >= Engine.TR4) ret.Lighting = br.ReadUInt16();
             return ret;
         }
     }
@@ -367,14 +367,14 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="QuadFace"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="QuadFace"/></returns>
-        public static QuadFace Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static QuadFace Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new QuadFace()
             {
                 Vertices = br.ReadUInt16Array(4),
                 Texture = br.ReadUInt16()
             };
-            if (ver >= TRVersion.TR4) ret.Lighting = br.ReadUInt16();
+            if (ver >= Engine.TR4) ret.Lighting = br.ReadUInt16();
             return ret;
         }
     }
@@ -738,12 +738,12 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Light"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Light"/></returns>
-        public static Light Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static Light Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new Light();
-            var t1 = ver < TRVersion.TR2;
-            ret.Position = ver == TRVersion.TR5 ? Vertex.ReadF(br) : Vertex.Read32(br);
-            if (ver < TRVersion.TR3)
+            var t1 = ver < Engine.TR2;
+            ret.Position = ver == Engine.TR5 ? Vertex.ReadF(br) : Vertex.Read32(br);
+            if (ver < Engine.TR3)
             {
                 ret.Intensity1 = t1
                     ? (ushort) ((8191 - br.ReadUInt16()) << 2)
@@ -765,11 +765,11 @@ namespace UniRaider.Loader
 
                 ret.Color = new ByteColor(255, 255, 255);
             }
-            else if (ver > TRVersion.TR3)
+            else if (ver > Engine.TR3)
             {
-                if(ver == TRVersion.TR4)
+                if(ver == Engine.TR4)
                 {
-                    ret.Color = ByteColor.Read(br, TRVersion.TR1);
+                    ret.Color = ByteColor.Read(br, Engine.TR1);
                     ret.lightType = br.ReadByte();
                     ret.Unknown = br.ReadByte();
                     ret.Intensity1 = br.ReadByte();
@@ -1022,10 +1022,10 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="RoomVertex"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="RoomVertex"/></returns>
-        public static RoomVertex Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static RoomVertex Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new RoomVertex();
-            if (ver == TRVersion.TR5)
+            if (ver == Engine.TR5)
             {
                 ret.Vertex = Vertex.ReadF(br);
                 ret.Normal = Vertex.ReadF(br);
@@ -1034,33 +1034,33 @@ namespace UniRaider.Loader
             else
             {
                 ret.Vertex = Vertex.Read16(br);
-                ret.Lighting1 = ver >= TRVersion.TR3 ? br.ReadInt16() : (short) ((8191 - br.ReadInt16()) << 2);
-                if (ver >= TRVersion.TR2)
+                ret.Lighting1 = ver >= Engine.TR3 ? br.ReadInt16() : (short) ((8191 - br.ReadInt16()) << 2);
+                if (ver >= Engine.TR2)
                 {
                     ret.Attributes = (SpecialRenderingEffects) br.ReadUInt16();
-                    ret.Lighting2 = ver >= TRVersion.TR3 ? br.ReadInt16() : (short)((8191 - br.ReadInt16()) << 2);  
+                    ret.Lighting2 = ver >= Engine.TR3 ? br.ReadInt16() : (short)((8191 - br.ReadInt16()) << 2);  
                 }
                 else
                 {
                     ret.Lighting2 = ret.Lighting1;
                 }
                 ret.Normal = Vertex.Zero;
-                if (ver < TRVersion.TR2)
+                if (ver < Engine.TR2)
                     ret.Color = new FloatColor(
                         ret.Lighting1 / 32768.0f,
                         ret.Lighting1 / 32768.0f,
                         ret.Lighting1 / 32768.0f);
-                else if (ver == TRVersion.TR2)
+                else if (ver == Engine.TR2)
                     ret.Color = new FloatColor(
                         ret.Lighting2 / 32768.0f, 
                         ret.Lighting2 / 32768.0f,
                         ret.Lighting2 / 32768.0f);
-                else if (ver == TRVersion.TR3)
+                else if (ver == Engine.TR3)
                     ret.Color = new FloatColor(
                         ((ret.Lighting2 & 0x7C00) >> 10) / 62.0f,
                         ((ret.Lighting2 & 0x03E0) >> 5) / 62.0f, 
                         (ret.Lighting2 & 0x001F) / 62.0f);
-                else if (ver == TRVersion.TR4)
+                else if (ver == Engine.TR4)
                     ret.Color = new FloatColor(
                         ((ret.Lighting2 & 0x7C00) >> 10) / 31.0f,
                         ((ret.Lighting2 & 0x03E0) >> 5) / 31.0f,
@@ -1121,13 +1121,13 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="RoomStaticMesh"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="RoomStaticMesh"/></returns>
-        public static RoomStaticMesh Parse(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static RoomStaticMesh Parse(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var rsm = new RoomStaticMesh();
             rsm.Position = Vertex.Read32(br);
             rsm.Rotation = br.ReadUInt16() / 16384.0f * -90;
             rsm.Intensity1 = br.ReadInt16();
-            rsm.Intensity2 = ver < TRVersion.TR2 ? rsm.Intensity1 : br.ReadInt16();
+            rsm.Intensity2 = ver < Engine.TR2 ? rsm.Intensity1 : br.ReadInt16();
             rsm.ObjectID = br.ReadUInt16();
 
             if (rsm.Intensity1 >= 0)
@@ -1136,7 +1136,7 @@ namespace UniRaider.Loader
             if (rsm.Intensity2 >= 0)
                 rsm.Intensity2 = (short)((8191 - rsm.Intensity2) << 2);
 
-            if(ver < TRVersion.TR3)
+            if(ver < Engine.TR3)
             {
                 var c = rsm.Intensity2 / 16384.0f;
                 rsm.Tint = new FloatColor(c, c, c);
@@ -1310,11 +1310,11 @@ namespace UniRaider.Loader
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Room"/></returns>
         [SuppressMessage("ReSharper", "NotResolvedInText")]
-        public static Room Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static Room Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var r = new Room();
 
-            if (ver == TRVersion.TR5)
+            if (ver == Engine.TR5)
             {
                 if (br.ReadUInt32() != 0x414C4558)
                     throw new FormatException("Room.Read: TR5 'XELA' header not found");
@@ -1500,7 +1500,7 @@ namespace UniRaider.Loader
                     throw new ArgumentException(
                         "Room.Read[TR5]: Found " + separator18.ToString("X8") + ", Expected 0xCDCDCDCD", "separator18");
 
-                r.Lights = br.ReadArray(numLights, () => Light.Read(br, TRVersion.TR5));
+                r.Lights = br.ReadArray(numLights, () => Light.Read(br, Engine.TR5));
 
                 br.BaseStream.Position = pos + 208 + sectorDataOffset;
             }
@@ -1516,9 +1516,9 @@ namespace UniRaider.Loader
                 var numVertices = br.ReadUInt16();
                 r.Vertices = br.ReadArray(numVertices, () => RoomVertex.Read(br, ver));
                 var numRectangles = br.ReadUInt16();
-                r.Rectangles = br.ReadArray(numRectangles, () => QuadFace.Read(br, TRVersion.TR1));
+                r.Rectangles = br.ReadArray(numRectangles, () => QuadFace.Read(br, Engine.TR1));
                 var numTriangles = br.ReadUInt16();
-                r.Triangles = br.ReadArray(numTriangles, () => Triangle.Read(br, TRVersion.TR1));
+                r.Triangles = br.ReadArray(numTriangles, () => Triangle.Read(br, Engine.TR1));
                 var numSprites = br.ReadUInt16();
                 r.Sprites = br.ReadArray(numSprites, () => Sprite.Read(br));
 
@@ -1531,17 +1531,17 @@ namespace UniRaider.Loader
 
                 r.Sectors = br.ReadArray(r.Num_Z_Sectors * r.Num_X_Sectors, () => Sector.Read(br));
 
-                if (ver < TRVersion.TR3)
+                if (ver < Engine.TR3)
                 {
                     r.Intensity1 = (short) ((8191 - br.ReadInt16()) << 2);
-                    r.Intensity2 = ver < TRVersion.TR2 ? r.Intensity1 : (short) ((8191 - br.ReadInt16()) << 2);
+                    r.Intensity2 = ver < Engine.TR2 ? r.Intensity1 : (short) ((8191 - br.ReadInt16()) << 2);
                 }
                 else
                 {
                     r.Intensity1 = br.ReadInt16();
                     r.Intensity2 = br.ReadInt16();
                 }
-                if (ver == TRVersion.TR2)
+                if (ver == Engine.TR2)
                 {
                     r.LightMode = br.ReadInt16();
                 }
@@ -1554,14 +1554,14 @@ namespace UniRaider.Loader
 
                 r.Flags = br.ReadUInt16();
 
-                if (ver == TRVersion.TR1)
+                if (ver == Engine.TR1)
                 {
                     r.ReverbInfo = ReverbInfo.MediumRoom;
 
                     var c = r.Intensity1 / 32767.0f;
                     r.LightColor = new FloatColor(c, c, c);
                 }
-                else if (ver == TRVersion.TR2)
+                else if (ver == Engine.TR2)
                 {
                     r.ReverbInfo =
                         r.Flags.HasFlagEx(RoomFlags.WindBlowPonytail)
@@ -1571,7 +1571,7 @@ namespace UniRaider.Loader
                     var c = r.Intensity1 / 16384.0f;
                     r.LightColor = new FloatColor(c, c, c);
                 }
-                else if (ver == TRVersion.TR3)
+                else if (ver == Engine.TR3)
                 {
                     if (r.Flags.HasFlagEx(RoomFlags.Quicksand))
                     {
@@ -1585,7 +1585,7 @@ namespace UniRaider.Loader
                     var c = r.Intensity1 / 65534.0f;
                     r.LightColor = new FloatColor(c, c, c);
                 }
-                else if (ver == TRVersion.TR4)
+                else if (ver == Engine.TR4)
                 {
                     r.WaterScheme = br.ReadByte();
                     r.ReverbInfo = (ReverbInfo) br.ReadByte();
@@ -1656,7 +1656,7 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Mesh"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Mesh"/></returns>
-        public static Mesh Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static Mesh Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new Mesh();
 
@@ -1674,7 +1674,7 @@ namespace UniRaider.Loader
             ret.TexturedRectangles = br.ReadArray(br.ReadInt16(), () => QuadFace.Read(br, ver));
             ret.TexturedTriangles = br.ReadArray(br.ReadInt16(), () => Triangle.Read(br, ver));
 
-            if(ver < TRVersion.TR4)
+            if(ver < Engine.TR4)
             {
                 ret.ColouredRectangles = br.ReadArray(br.ReadInt16(), () => QuadFace.Read(br, ver));
                 ret.ColouredTriangles = br.ReadArray(br.ReadInt16(), () => Triangle.Read(br, ver));
@@ -1817,7 +1817,7 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Moveable"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Moveable"/></returns>
-        public static Moveable Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static Moveable Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new Moveable
             {
@@ -1829,7 +1829,7 @@ namespace UniRaider.Loader
                 AnimationIndex = br.ReadUInt16()
             };
             
-            if(ver == TRVersion.TR5)
+            if(ver == Engine.TR5)
             {
                 var filler = br.ReadUInt16();
                 if(filler != 0xFFEF)
@@ -1896,7 +1896,7 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Item"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>An <see cref="Item"/></returns>
-        public static Item Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static Item Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new Item();
 
@@ -1906,22 +1906,22 @@ namespace UniRaider.Loader
             ret.Rotation = br.ReadUInt16() / 16384.0f * -90;
             ret.Intensity1 = (short)br.ReadUInt16();
 
-            if (ver < TRVersion.TR3)
+            if (ver < Engine.TR3)
                 if (ret.Intensity1 >= 0)
                     ret.Intensity1 = (short)((8191 - ret.Intensity1) << 2);
 
 
-            if (ver == TRVersion.TR2 || ver == TRVersion.TR3)
+            if (ver == Engine.TR2 || ver == Engine.TR3)
                 ret.Intensity2 = (short) br.ReadUInt16(); // TODO: Cast ushort to short? weird
             else
                 ret.Intensity2 = ret.Intensity1; 
 
-            if(ver == TRVersion.TR2)
+            if(ver == Engine.TR2)
                 if (ret.Intensity2 >= 0)
                     ret.Intensity2 = (short)((8191 - ret.Intensity2) << 2);
 
 
-            if (ver < TRVersion.TR4)
+            if (ver < Engine.TR4)
             {
                 ret.ObjectCodeBit = 0;
             }
@@ -1962,7 +1962,7 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="SpriteTexture"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>An <see cref="SpriteTexture"/></returns>
-        public static SpriteTexture Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static SpriteTexture Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new SpriteTexture();
 
@@ -1977,7 +1977,7 @@ namespace UniRaider.Loader
             var tright = br.ReadInt16();
             var tbottom = br.ReadInt16();
 
-            if(ver < TRVersion.TR4)
+            if(ver < Engine.TR4)
             {
                 ret.X0 = tx;
                 ret.Y0 = ty;
@@ -2113,7 +2113,7 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Animation"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>An <see cref="Animation"/></returns>
-        public static Animation Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static Animation Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new Animation();
 
@@ -2125,7 +2125,7 @@ namespace UniRaider.Loader
             ret.Speed = br.ReadInt32();
             ret.Acceleration = br.ReadInt32();
 
-            if(ver >= TRVersion.TR4)
+            if(ver >= Engine.TR4)
             {
                 ret.SpeedLateral = br.ReadInt32();
                 ret.AccelerationLateral = br.ReadInt32();
@@ -2244,11 +2244,11 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Box"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Box"/></returns>
-        public static Box Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static Box Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new Box();
             
-            if(ver >= TRVersion.TR2)
+            if(ver >= Engine.TR2)
             {
                 ret.Zmin = (uint) (1024 * br.ReadByte()); // todo: opentomb multiplies by -1024
                 ret.Zmax = (uint) (1024 * br.ReadByte());
@@ -2286,11 +2286,11 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Zone"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Zone"/></returns>
-        public static Zone Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static Zone Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new Zone();
 
-            var arrSize = ver < TRVersion.TR2 ? 2 : 4;
+            var arrSize = ver < Engine.TR2 ? 2 : 4;
 
             ret.GroundZonesNormal = br.ReadUInt16Array(arrSize); // todo: OpenTomb inverts the two fields
             ret.FlyZoneNormal = br.ReadUInt16();
@@ -2397,16 +2397,16 @@ namespace UniRaider.Loader
 
         public ushort Characteristics { get; set; }
 
-        public LoopType GetLoopType(TRVersion ver = TRVersion.Unknown)
+        public LoopType GetLoopType(Engine ver = Engine.Unknown)
         {
             switch(Characteristics & 3)
             {
                 case 1:
-                    return ver < TRVersion.TR3 ? LoopType.PingPong : LoopType.Wait;
+                    return ver < Engine.TR3 ? LoopType.PingPong : LoopType.Wait;
                 case 2:
-                    return ver == TRVersion.TR1 ? LoopType.Forward : LoopType.PingPong;
+                    return ver == Engine.TR1 ? LoopType.Forward : LoopType.PingPong;
                 case 3:
-                    if(ver >= TRVersion.TR3) return LoopType.Forward;
+                    if(ver >= Engine.TR3) return LoopType.Forward;
                     break;
             }
             return LoopType.None;
@@ -2436,13 +2436,13 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="SoundDetails"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="SoundDetails"/></returns>
-        public static SoundDetails Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static SoundDetails Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new SoundDetails();
 
             ret.Sample = br.ReadUInt16();
             
-            if(ver < TRVersion.TR3)
+            if(ver < Engine.TR3)
             {
                 ret.Volume = br.ReadUInt16();
                 ret.Chance = br.ReadUInt16();
@@ -2485,7 +2485,7 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="ObjectTextureVertex"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="ObjectTextureVertex"/></returns>
-        public static ObjectTextureVertex Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static ObjectTextureVertex Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new ObjectTextureVertex();
 
@@ -2494,7 +2494,7 @@ namespace UniRaider.Loader
             ret.Ycoordinate = br.ReadSByte();
             ret.Ypixel = br.ReadByte();
 
-            if(ver >= TRVersion.TR4)
+            if(ver >= Engine.TR4)
             {
                 if (ret.Xcoordinate == 0)
                     ret.Xcoordinate = 1;
@@ -2601,14 +2601,14 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="ObjectTexture"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="ObjectTexture"/></returns>
-        public static ObjectTexture Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static ObjectTexture Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new ObjectTexture();
 
             ret.TransparencyFlags = (BlendingMode) br.ReadUInt16();
             ret.TileAndFlag = br.ReadUInt16();
 
-            if (ver >= TRVersion.TR4)
+            if (ver >= Engine.TR4)
             {
                 if ((ret.TileAndFlag & 0x7FFF) > 128)
                     throw new ArgumentOutOfRangeException("tileAndFlag", ret.TileAndFlag,
@@ -2628,7 +2628,7 @@ namespace UniRaider.Loader
 
             ret.Vertices = br.ReadArray(4, () => ObjectTextureVertex.Read(br, ver));
 
-            if(ver >= TRVersion.TR4)
+            if(ver >= Engine.TR4)
             {
                 ret.OriginalU = br.ReadUInt32();
                 ret.OriginalV = br.ReadUInt32();
@@ -2637,7 +2637,7 @@ namespace UniRaider.Loader
                 ret.Height = br.ReadUInt32();
             }
 
-            if(ver == TRVersion.TR5)
+            if(ver == Engine.TR5)
             {
                 var filler = br.ReadUInt16();
 
@@ -2907,7 +2907,7 @@ namespace UniRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Palette"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Palette"/></returns>
-        public static Palette Read(BinaryReader br, TRVersion ver = TRVersion.Unknown)
+        public static Palette Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             return new Palette
             {

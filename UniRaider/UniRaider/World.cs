@@ -837,7 +837,7 @@ namespace UniRaider
 
         public uint ID { get; set; }
 
-        public Loader.TRVersion EngineVersion { get; set; }
+        public Loader.Engine EngineVersion { get; set; }
 
         public List<Room> Rooms { get; set; }
 

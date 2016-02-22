@@ -379,7 +379,7 @@ namespace UniRaider
 
         public static string GetLevelName(string path);
 
-        public static string GetAutoexecName(Loader.TRVersion gameVersion, string postfix = "");
+        public static string GetAutoexecName(Loader.Game gameVersion, string postfix = "");
 
         #endregion
 

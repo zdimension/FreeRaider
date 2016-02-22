@@ -9,7 +9,12 @@ namespace UniRaider.Loader
 {
     public class TR4Level : Level
     {
-        public TR4Level(BinaryReader br, TRVersion ver) : base(br, ver)
+        public TR4Level(BinaryReader br, Engine ver) : base(br, ver)
+        {
+            Load();
+        }
+
+        public TR4Level(BinaryReader br, Game ver) : base(br, ver)
         {
             Load();
         }
@@ -21,10 +26,10 @@ namespace UniRaider.Loader
             if (version != 0x0000002d)
                 throw new ArgumentException("TR2Level.Load: Wrong level version");
 
-            Palette = Palette.Read(reader, TRVersion.TR1);
+            Palette = Palette.Read(reader, Engine.TR1);
 
             /* Palette16 = TODO: */
-            Palette.Read(reader, TRVersion.TR2);
+            Palette.Read(reader, Engine.TR2);
 
             var numTextiles = reader.ReadUInt32();
             var texture8 = reader.ReadArray(numTextiles, () => ByteTexture.Read(reader));
@@ -35,7 +40,7 @@ namespace UniRaider.Loader
                 throw new ArgumentException("TR2Level.Load: Found " + unused.ToString("X8") + ", Expected 0", "unused");
 
             var numRooms = reader.ReadUInt16();
-            Rooms = reader.ReadArray(numRooms, () => Room.Read(reader, TRVersion.TR2));
+            Rooms = reader.ReadArray(numRooms, () => Room.Read(reader, Engine.TR2));
 
             var numFloorData = reader.ReadUInt32();
             FloorData = reader.ReadUInt16Array(numFloorData);
@@ -43,7 +48,7 @@ namespace UniRaider.Loader
             ReadMeshData();
 
             var numAnimations = reader.ReadUInt32();
-            Animations = reader.ReadArray(numAnimations, () => Animation.Read(reader, TRVersion.TR2));
+            Animations = reader.ReadArray(numAnimations, () => Animation.Read(reader, Engine.TR2));
 
             var numStateChanges = reader.ReadUInt32();
             StateChanges = reader.ReadArray(numStateChanges, () => StateChange.Read(reader));
@@ -63,10 +68,10 @@ namespace UniRaider.Loader
             StaticMeshes = reader.ReadArray(numStaticMeshes, () => StaticMesh.Read(reader));
 
             var numObjectTextures = reader.ReadUInt32();
-            ObjectTextures = reader.ReadArray(numObjectTextures, () => ObjectTexture.Read(reader, TRVersion.TR2));
+            ObjectTextures = reader.ReadArray(numObjectTextures, () => ObjectTexture.Read(reader, Engine.TR2));
 
             var numSpriteTextures = reader.ReadUInt32();
-            SpriteTextures = reader.ReadArray(numSpriteTextures, () => SpriteTexture.Read(reader, TRVersion.TR2));
+            SpriteTextures = reader.ReadArray(numSpriteTextures, () => SpriteTexture.Read(reader, Engine.TR2));
 
             var numSpriteSequences = reader.ReadUInt32();
             SpriteSequences = reader.ReadArray(numSpriteSequences, () => SpriteSequence.Read(reader));
@@ -81,18 +86,18 @@ namespace UniRaider.Loader
             SoundSources = reader.ReadArray(numSoundSources, () => SoundSource.Read(reader));
 
             var numBoxes = reader.ReadUInt32();
-            Boxes = reader.ReadArray(numBoxes, () => Box.Read(reader, TRVersion.TR2));
+            Boxes = reader.ReadArray(numBoxes, () => Box.Read(reader, Engine.TR2));
 
             var numOverlaps = reader.ReadUInt32();
             Overlaps = reader.ReadUInt16Array(numOverlaps);
 
-            Zones = reader.ReadArray(numBoxes, () => Zone.Read(reader, TRVersion.TR2));
+            Zones = reader.ReadArray(numBoxes, () => Zone.Read(reader, Engine.TR2));
 
             var numAnimatedTextures = reader.ReadUInt32();
             AnimatedTextures = reader.ReadUInt16Array(numAnimatedTextures);
 
             var numItems = reader.ReadUInt32();
-            Items = reader.ReadArray(numItems, () => Item.Read(reader, TRVersion.TR2));
+            Items = reader.ReadArray(numItems, () => Item.Read(reader, Engine.TR2));
 
             if (!IsDemoOrUb)
                 LightMap = LightMap.Read(reader);
@@ -106,7 +111,7 @@ namespace UniRaider.Loader
             SoundMap = reader.ReadInt16Array(370);
 
             var numSoundDetails = reader.ReadUInt32();
-            SoundDetails = reader.ReadArray(numSoundDetails, () => Loader.SoundDetails.Read(reader, TRVersion.TR2));
+            SoundDetails = reader.ReadArray(numSoundDetails, () => Loader.SoundDetails.Read(reader, Engine.TR2));
 
             var numSampleIndices = reader.ReadUInt32();
             SampleIndices = reader.ReadUInt32Array(numSampleIndices);

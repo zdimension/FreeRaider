@@ -9,15 +9,20 @@ namespace UniRaider.Loader
 {
     public abstract class Level
     {
-        public TRVersion Version { get; }
+        public Engine Version { get; }
 
         protected BinaryReader reader;
 
 
-        protected Level(BinaryReader br, TRVersion ver)
+        protected Level(BinaryReader br, Engine ver)
         {
             Version = ver;
             reader = br;
+        }
+
+        protected Level(BinaryReader br, Game ver)
+            : this(br, Helper.GameToEngine(ver))
+        {
         }
 
         public bool IsDemoOrUb { get; set; }
@@ -151,7 +156,7 @@ namespace UniRaider.Loader
                 Moveables[i] = Moveable.Read(reader, Version);
 
                 // Disable unused skybox polygons
-                if (Version == TRVersion.TR3 && Moveables[i].ObjectID == 355)
+                if (Version == Engine.TR3 && Moveables[i].ObjectID == 355)
                 {
                     var arr = Meshes[MeshIndices[Moveables[i].StartingMesh]].ColouredRectangles;
                     Array.Resize(ref arr, 16);
@@ -202,24 +207,32 @@ namespace UniRaider.Loader
                     Level lvl = null;
                     switch(ver)
                     {
-                        case TRVersion.TR1:
-                        case TRVersion.TR1UnfinishedBusiness:
+                        case Game.TR1:
                             lvl = new TR1Level(br, ver);
                             break;
-                        case TRVersion.TR2:
+                        case Game.TR1Demo:
+                            case Game.TR1UnfinishedBusiness:
+                            lvl = new TR1Level(br, ver);
+                            lvl.IsDemoOrUb = true;
+                            break;
+                        case Game.TR2:
                             lvl = new TR2Level(br, ver);
                             break;
-                        case TRVersion.TR3:
+                        case Game.TR2Demo:
+                            lvl = new TR2Level(br, ver);
+                            lvl.IsDemoOrUb = true;
+                            break;
+                        case Game.TR3:
                             lvl = new TR3Level(br, ver);
                             break;
-                        case TRVersion.TR4:
+                        case Game.TR4:
+                        case Game.TR4Demo:
                             lvl = new TR4Level(br, ver);
                             break;
-                        case TRVersion.TR5:
+                        case Game.TR5:
                             lvl = new TR5Level(br, ver);
                             break;
                     }
-                    lvl.IsDemoOrUb = ver == TRVersion.TR1UnfinishedBusiness;
                     return lvl;
                 }
             }
