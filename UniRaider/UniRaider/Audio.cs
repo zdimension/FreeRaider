@@ -443,7 +443,7 @@ namespace UniRaider
                 AL.Source(sourceIndex, ALSourcef.MinGain, 0.0f);
                 AL.Source(sourceIndex, ALSourcef.MaxGain, 1.0f);
 
-                if(audio_settings.UseEffects)
+                if(Global.AudioSettings.UseEffects)
                 {
                     AL.Source(sourceIndex, ALSourcef.EfxRoomRolloffFactor, 1.0f);
                     AL.Source(sourceIndex, ALSourceb.EfxAuxiliarySendFilterGainAuto, true);
@@ -479,7 +479,7 @@ namespace UniRaider
                     AL.Source(sourceIndex, ALSource3f.Position, 0.0f, 0.0f, 0.0f);
                     AL.Source(sourceIndex, ALSource3f.Velocity, 0.0f, 0.0f, 0.0f);
 
-                    if(audio_settings.UseEffects)
+                    if(Global.AudioSettings.UseEffects)
                     {
                         UnsetFX();
                     }
@@ -489,7 +489,7 @@ namespace UniRaider
                     AL.Source(sourceIndex, ALSourceb.SourceRelative, false);
                     linkEmitter();
 
-                    if (audio_settings.UseEffects)
+                    if (Global.AudioSettings.UseEffects)
                     {
                         SetFX();
                         SetUnderwater();
@@ -550,7 +550,7 @@ namespace UniRaider
             {
                 linkEmitter();
 
-                if(audio_settings.UseEffects && isWater != (Audio.FXManager.WaterState != 0))
+                if(Global.AudioSettings.UseEffects && isWater != (Audio.FXManager.WaterState != 0))
                 {
                     SetUnderwater();
                 }
@@ -571,7 +571,7 @@ namespace UniRaider
         /// <param name="buffer">Buffer</param>
         public void SetBuffer(int buffer)
         {
-            uint bufferID = engine_world.AudioBuffers[buffer];
+            uint bufferID = Global.EngineWorld.AudioBuffers[buffer];
 
             if(AL.IsSource(sourceIndex) && AL.IsBuffer(bufferID))
             {
@@ -636,7 +636,7 @@ namespace UniRaider
             {
                 if (AL.IsSource(sourceIndex))
                 {
-                    AL.Source(sourceIndex, ALSourcef.Gain, value.Clamp(0.0f, 1.0f) * audio_settings.SoundVolume);
+                    AL.Source(sourceIndex, ALSourcef.Gain, value.Clamp(0.0f, 1.0f) * Global.AudioSettings.SoundVolume);
                 }
             }
         }
@@ -818,14 +818,14 @@ namespace UniRaider
             {
                 case TR_AUDIO_EMITTER.Entity:
                     Entity ent = null;
-                    if ((ent = engine_world.GetEntityByID(EmitterID)) != null)
+                    if ((ent = Global.EngineWorld.GetEntityByID(EmitterID)) != null)
                     {
                         Position = ent.Transform.Origin;
                         Velocity = ent.Speed;
                     }
                     return;
                 case TR_AUDIO_EMITTER.SoundSource:
-                    Position = engine_world.AudioEmitters[EmitterID].Position;
+                    Position = Global.EngineWorld.AudioEmitters[EmitterID].Position;
                     return;
             }
         }
@@ -1018,7 +1018,7 @@ namespace UniRaider
 
             currentVolume = fadeIn ? 0.0f : 1.0f;
 
-            if(audio_settings.UseEffects)
+            if(Global.AudioSettings.UseEffects)
             {
                 if(streamType == TR_AUDIO_STREAM_TYPE.Chat)
                 {
@@ -1030,7 +1030,7 @@ namespace UniRaider
                 }
             }
 
-            AL.Source(source, ALSourcef.Gain, currentVolume * audio_settings.MusicVolume);
+            AL.Source(source, ALSourcef.Gain, currentVolume * Global.AudioSettings.MusicVolume);
             AL.SourceQueueBuffers(source, (int)buffersToPlay, buffers);
             AL.SourcePlay(source);
 
@@ -1163,7 +1163,7 @@ namespace UniRaider
 
             if(changeGain) // If any condition which modify track gain was met, call AL gain change.
             {
-                AL.Source(source, ALSourcef.Gain, currentVolume * (1.0f - dampedVolume) * audio_settings.MusicVolume);
+                AL.Source(source, ALSourcef.Gain, currentVolume * (1.0f - dampedVolume) * Global.AudioSettings.MusicVolume);
             }
 
             // Check if any track buffers were already processed.
@@ -1391,19 +1391,19 @@ else
         /// </summary>
         private unsafe bool stream(uint buffer)
         {
-            // TODO: Assert audio_settings.StreamBufferSize >= sf_info.channels - 1
+            // TODO: Assert Global.AudioSettings.StreamBufferSize >= sf_info.channels - 1
             /*
 #ifdef AUDIO_OPENAL_FLOAT
-    std::vector<ALfloat> pcm(audio_settings.stream_buffer_size);
+    std::vector<ALfloat> pcm(Global.AudioSettings.stream_buffer_size);
 #else
-    std::vector<ALshort> pcm(audio_settings.stream_buffer_size);
+    std::vector<ALshort> pcm(Global.AudioSettings.stream_buffer_size);
 #endif
 */
-            var pcm = new float[audio_settings.StreamBufferSize];
+            var pcm = new float[Global.AudioSettings.StreamBufferSize];
             var size = 0;
             while (size < pcm.Length - sfInfo.Channels + 1)
             {
-                var samplesToRead = (audio_settings.StreamBufferSize - size) / sfInfo.Channels * sfInfo.Channels;
+                var samplesToRead = (Global.AudioSettings.StreamBufferSize - size) / sfInfo.Channels * sfInfo.Channels;
                 /*
 #ifdef AUDIO_OPENAL_FLOAT
         const sf_count_t samplesRead = sf_read_float(snd_file, pcm.data() + size, samplesToRead);
@@ -1492,16 +1492,16 @@ else
 
         public static void InitGlobals()
         {
-            audio_settings.MusicVolume = 0.7f;
-            audio_settings.SoundVolume = 0.8f;
-            audio_settings.UseEffects = true;
-            audio_settings.ListenerIsPlayer = false;
-            audio_settings.StreamBufferSize = 32;
+            Global.AudioSettings.MusicVolume = 0.7f;
+            Global.AudioSettings.SoundVolume = 0.8f;
+            Global.AudioSettings.UseEffects = true;
+            Global.AudioSettings.ListenerIsPlayer = false;
+            Global.AudioSettings.StreamBufferSize = 32;
         }
 
         public static void InitFX()
         {
-            if (audio_settings.EffectsInitialized)
+            if (Global.AudioSettings.EffectsInitialized)
                 return;
 
             FXManager = new AudioFxManager();
@@ -1531,23 +1531,23 @@ else
             LoadReverbToFX(TR_AUDIO_FX.Pipe, EffectsExtension.ReverbPresets.PipeLarge.ToEfxEaxReverb());
             LoadReverbToFX(TR_AUDIO_FX.Water, EffectsExtension.ReverbPresets.Underwater.ToEfxEaxReverb());
 
-            audio_settings.EffectsInitialized = true;
+            Global.AudioSettings.EffectsInitialized = true;
         }
 
         public static void Init(uint numSources = Constants.TR_AUDIO_MAX_CHANNELS)
         {
             // FX should be inited first, as source constructor checks for FX slot to be created.
 
-            if(audio_settings.UseEffects) InitFX();
+            if(Global.AudioSettings.UseEffects) InitFX();
 
             // Generate new source array.
 
             numSources -= Constants.TR_AUDIO_STREAM_NUMSOURCES; // Subtract sources reserved for music.
-            engine_world.AudioSources.Resize((int)numSources);
+            Global.EngineWorld.AudioSources.Resize((int)numSources);
 
             // Generate stream tracks array.
 
-            engine_world.StreamTracks.Resize(Constants.TR_AUDIO_STREAM_NUMSOURCES);
+            Global.EngineWorld.StreamTracks.Resize(Constants.TR_AUDIO_STREAM_NUMSOURCES);
 
             // Reset last room type used for assigning reverb.
 
@@ -1561,20 +1561,19 @@ else
 
             DeInitDelay();
 
-            var engine_world = new World();
-            engine_world.AudioSources.Clear();
-            engine_world.StreamTracks.Clear();
-            engine_world.StreamTrackMap.Clear();
+            Global.EngineWorld.AudioSources.Clear();
+            Global.EngineWorld.StreamTracks.Clear();
+            Global.EngineWorld.StreamTrackMap.Clear();
 
             // CRITICAL: You must delete all sources before deleting buffers!
 
-            AL.DeleteBuffers(engine_world.AudioBuffers.ToArray());
-            engine_world.AudioBuffers.Clear();
+            AL.DeleteBuffers(Global.EngineWorld.AudioBuffers.ToArray());
+            Global.EngineWorld.AudioBuffers.Clear();
 
-            engine_world.AudioEffects.Clear();
-            engine_world.AudioMap.Clear();
+            Global.EngineWorld.AudioEffects.Clear();
+            Global.EngineWorld.AudioMap.Clear();
 
-            if(audio_settings.EffectsInitialized)
+            if(Global.AudioSettings.EffectsInitialized)
             {
                 for (var i = 0; i < Constants.TR_AUDIO_MAX_SLOTS; i++)
                 {
@@ -1588,7 +1587,7 @@ else
 
                 EffectsExtension.DeleteFilter(ref FXManager.ALFilter);
                 EffectsExtension.DeleteEffects(FXManager.ALEffect);
-                audio_settings.EffectsInitialized = false;
+                Global.AudioSettings.EffectsInitialized = false;
             }
 
             return true;
@@ -1599,9 +1598,9 @@ else
             UpdateSources();
             UpdateStreams();
 
-            if(audio_settings.ListenerIsPlayer)
+            if(Global.AudioSettings.ListenerIsPlayer)
             {
-                UpdateListenerByEntity(engine_world.Character);
+                UpdateListenerByEntity(Global.EngineWorld.Character);
             }
             else
             {
@@ -1615,9 +1614,9 @@ else
 
         public static int GetFreeSource()
         {
-            for (var i = 0; i < engine_world.AudioSources.Count; i++)
+            for (var i = 0; i < Global.EngineWorld.AudioSources.Count; i++)
             {
-                if (!engine_world.AudioSources[i].IsActive)
+                if (!Global.EngineWorld.AudioSources[i].IsActive)
                     return i;
             }
 
@@ -1631,13 +1630,13 @@ else
             switch (emitterType)
             {
                 case TR_AUDIO_EMITTER.Entity:
-                    var ent = engine_world.GetEntityByID((uint)entityID);
+                    var ent = Global.EngineWorld.GetEntityByID((uint)entityID);
                     if (ent == null) return false;
-                    vec = ent.Transform.GetOrigin();
+                    vec = ent.Transform.Origin;
                     break;
                 case TR_AUDIO_EMITTER.SoundSource:
-                    if ((uint) entityID + 1 > engine_world.AudioEmitters.Count) return false;
-                    vec = engine_world.AudioEmitters[entityID].Position;
+                    if ((uint) entityID + 1 > Global.EngineWorld.AudioEmitters.Count) return false;
+                    vec = Global.EngineWorld.AudioEmitters[entityID].Position;
                     break;
                 case TR_AUDIO_EMITTER.Global:
                     return true;
@@ -1655,9 +1654,9 @@ else
 
         public static int IsEffectPlaying(int effectID = -1, TR_AUDIO_EMITTER emitterType = TR_AUDIO_EMITTER.Unknown, int emitterID = -1)
         {
-            for (var i = 0; i < engine_world.AudioSources.Count; i++)
+            for (var i = 0; i < Global.EngineWorld.AudioSources.Count; i++)
             {
-                var c = engine_world.AudioSources[i];
+                var c = Global.EngineWorld.AudioSources[i];
                 if((effectID == -1 || effectID == c.EffectIndex) &&
                     (emitterType == TR_AUDIO_EMITTER.Unknown || emitterType == c.EmitterType) &&
                     (emitterID == -1 || emitterID == c.EmitterID))
@@ -1680,16 +1679,16 @@ else
 
             // If there are no audio buffers or effect index is wrong, don't process.
 
-            if (engine_world.AudioBuffers.Count == 0 || effectID < 0) return TR_AUDIO_SEND.Ignored;
+            if (Global.EngineWorld.AudioBuffers.Count == 0 || effectID < 0) return TR_AUDIO_SEND.Ignored;
 
             // Remap global engine effect ID to local effect ID.
 
-            if (effectID >= engine_world.AudioMap.Count)
+            if (effectID >= Global.EngineWorld.AudioMap.Count)
             {
                 return TR_AUDIO_SEND.NoSample; // Sound is out of bounds; stop.
             }
 
-            var realID = (int) engine_world.AudioMap[(int) effectID];
+            var realID = (int) Global.EngineWorld.AudioMap[(int) effectID];
 
             // Pre-step 1: if there is no effect associated with this ID, bypass audio send.
 
@@ -1699,7 +1698,7 @@ else
             }
             else
             {
-                effect = engine_world.AudioEffects[realID];
+                effect = Global.EngineWorld.AudioEffects[realID];
             }
 
             // Pre-step 2: check if sound non-looped and chance to play isn't zero,
@@ -1734,7 +1733,7 @@ else
             {
                 if (effect.Loop == LoopType.PingPong)
                 {
-                    engine_world.AudioSources[sourceNumber].Stop();
+                    Global.EngineWorld.AudioSources[sourceNumber].Stop();
                 }
                 else if (effect.Loop != LoopType.None) // Any other looping case (Wait / Loop).
                 {
@@ -1763,7 +1762,7 @@ else
                     bufferIndex = (int) effect.SampleIndex;
                 }
 
-                var source = engine_world.AudioSources[sourceNumber];
+                var source = Global.EngineWorld.AudioSources[sourceNumber];
 
                 source.SetBuffer(bufferIndex);
 
@@ -1810,7 +1809,7 @@ else
 
             if(playingSound != -1)
             {
-                engine_world.AudioSources[playingSound].Stop();
+                Global.EngineWorld.AudioSources[playingSound].Stop();
                 return TR_AUDIO_SEND.Processed;
             }
 
@@ -1822,7 +1821,7 @@ else
         /// </summary>
         public static void PauseAllSources()
         {
-            foreach (var audioSource in engine_world.AudioSources.Where(audioSource => audioSource.IsActive))
+            foreach (var audioSource in Global.EngineWorld.AudioSources.Where(audioSource => audioSource.IsActive))
             {
                 audioSource.Pause();
             }
@@ -1833,7 +1832,7 @@ else
         /// </summary>
         public static void StopAllSources()
         {
-            foreach (var audioSource in engine_world.AudioSources)
+            foreach (var audioSource in Global.EngineWorld.AudioSources)
             {
                 audioSource.Stop();
             }
@@ -1844,7 +1843,7 @@ else
         /// </summary>
         public static void ResumeAllSources()
         {
-            foreach (var audioSource in engine_world.AudioSources.Where(audioSource => audioSource.IsActive))
+            foreach (var audioSource in Global.EngineWorld.AudioSources.Where(audioSource => audioSource.IsActive))
             {
                 audioSource.Play();
             }
@@ -1855,18 +1854,18 @@ else
         /// </summary>
         public static void UpdateSources()
         {
-            if (engine_world.AudioSources.Count == 0) return;
+            if (Global.EngineWorld.AudioSources.Count == 0) return;
 
             var listenerPos = ListenerPosition;
             AL.GetListener(ALListener3f.Position, out listenerPos);
             ListenerPosition = listenerPos;
 
-            for (int i = 0; i < engine_world.AudioEmitters.Count; i++)
+            for (int i = 0; i < Global.EngineWorld.AudioEmitters.Count; i++)
             {
-                Send(engine_world.AudioEmitters[i].SoundIndex, TR_AUDIO_EMITTER.SoundSource, i);
+                Send(Global.EngineWorld.AudioEmitters[i].SoundIndex, TR_AUDIO_EMITTER.SoundSource, i);
             }
             
-            engine_world.AudioSources.ForEach(x => x.Update());
+            Global.EngineWorld.AudioSources.ForEach(x => x.Update());
         }
 
         /// <summary>
@@ -1877,9 +1876,9 @@ else
         public static void UpdateListenerByCamera(Camera cam)
         {
             AL.Listener(ALListenerfv.Orientation, ref cam.ViewDirection, ref cam.UpDirection);
-            AL.Listener(ALListener3f.Position, ref cam.Position);
+            ALExt.Listener(ALListener3f.Position, cam.Position);
 
-            AL.Listener(ALListener3f.Velocity, ref (cam.Position - cam.previousPosition) / (float)engine_frame_time);
+            ALExt.Listener(ALListener3f.Velocity, (cam.Position - cam.previousPosition) / (float)Global.EngineFrameTime);
             cam.previousPosition = cam.Position;
 
             if(cam.currentRoom != null)
@@ -1996,9 +1995,9 @@ else
         /// </summary>
         public static int GetFreeStream()
         {
-            for (var i = 0; i < engine_world.StreamTracks.Count; i++)
+            for (var i = 0; i < Global.EngineWorld.StreamTracks.Count; i++)
             {
-                var c = engine_world.StreamTracks[i];
+                var c = Global.EngineWorld.StreamTracks[i];
 
                 if (!c.IsPlaying && !c.IsActive) return i;
             }
@@ -2011,7 +2010,7 @@ else
         /// </summary>
         public static bool IsTrackPlaying(int trackID = -1)
         {
-            return engine_world.StreamTracks.Any(x => x.IsPlaying && (trackID == -1 || x.IsTrack(trackID)));
+            return Global.EngineWorld.StreamTracks.Any(x => x.IsPlaying && (trackID == -1 || x.IsTrack(trackID)));
         }
 
         /// <summary>
@@ -2020,17 +2019,17 @@ else
         public static bool TrackAlreadyPlayed(uint trackID, sbyte mask = 0)
         {
             if (mask == 0) return false; // No mask, play in any case.
-            if (trackID >= engine_world.StreamTrackMap.Count) return true; // No such track, hence "already" played.
+            if (trackID >= Global.EngineWorld.StreamTrackMap.Count) return true; // No such track, hence "already" played.
 
             mask &= 0x3F; // Clamp mask just in case.
 
-            if(engine_world.StreamTrackMap[(int)trackID] == mask)
+            if(Global.EngineWorld.StreamTrackMap[(int)trackID] == mask)
             {
                 return true; // Immediately return true, if flags are directly equal.
             }
             else
             {
-                var played = engine_world.StreamTrackMap[(int) trackID] & mask;
+                var played = Global.EngineWorld.StreamTrackMap[(int) trackID] & mask;
 
                 if(played == mask)
                 {
@@ -2038,7 +2037,7 @@ else
                 }
                 else
                 {
-                    engine_world.StreamTrackMap[(int) trackID] |= (byte)mask;
+                    Global.EngineWorld.StreamTrackMap[(int) trackID] |= (byte)mask;
                     return false; // Not yet played, set bits and return false.
                 }
             }
@@ -2051,7 +2050,7 @@ else
         {
             UpdateStreamsDamping();
 
-            engine_world.StreamTracks.ForEach(x => x.Update());
+            Global.EngineWorld.StreamTracks.ForEach(x => x.Update());
         }
 
         /// <summary>
@@ -2063,7 +2062,7 @@ else
             // NOT background. So we simply check this condition and set damp activity flag
             // if condition is met.
 
-            StreamTrack.DampActive = engine_world.StreamTracks.Any(x => x.IsPlaying && !x.IsType(TR_AUDIO_STREAM_TYPE.Background));
+            StreamTrack.DampActive = Global.EngineWorld.StreamTracks.Any(x => x.IsPlaying && !x.IsType(TR_AUDIO_STREAM_TYPE.Background));
         }
 
         /// <summary>
@@ -2085,7 +2084,7 @@ else
 
             foreach (
                 var c in
-                    engine_world.StreamTracks.Where(
+                    Global.EngineWorld.StreamTracks.Where(
                         c => c.IsPlaying && (c.IsType(streamType) || streamType == TR_AUDIO_STREAM_TYPE.Unknown)))
             {
                 res = true;
@@ -2104,7 +2103,7 @@ else
 
             foreach (
                 var c in
-                    engine_world.StreamTracks.Where(
+                    Global.EngineWorld.StreamTracks.Where(
                         c => c.IsPlaying && (c.IsType(streamType) || streamType == TR_AUDIO_STREAM_TYPE.Unknown)))
             {
                 res = true;
@@ -2128,7 +2127,7 @@ else
             // Don't even try to do anything with track, if its index is greater than overall amount of
             // soundtracks specified in a stream track map count (which is derived from script).
 
-            if(trackID >= engine_world.StreamTrackMap.Count)
+            if(trackID >= Global.EngineWorld.StreamTrackMap.Count)
             {
                 // TODO: Warning TrackID out of bounds
                 return TR_AUDIO_STREAMPLAY.WrongTrack;
@@ -2192,7 +2191,7 @@ else
 
             // Finally - load our track.
 
-            if(!engine_world.StreamTracks[targetStream].Load(filePath, (int)trackID, streamType, loadMethod))
+            if(!Global.EngineWorld.StreamTracks[targetStream].Load(filePath, (int)trackID, streamType, loadMethod))
             {
                 // TODO: Warning Stream load error
                 return TR_AUDIO_STREAMPLAY.LoadError;
@@ -2200,7 +2199,7 @@ else
 
             // Try to play newly assigned and loaded track.
 
-            if (!engine_world.StreamTracks[targetStream].Play(doFadeIn))
+            if (!Global.EngineWorld.StreamTracks[targetStream].Play(doFadeIn))
             {
                 // TODO: Warning Stream play error
                 return TR_AUDIO_STREAMPLAY.PlayError;

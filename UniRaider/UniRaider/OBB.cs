@@ -148,8 +148,8 @@ namespace UniRaider
                 var ins = true;
                 foreach (var polygon in polys)
                 {
-                    var t = polygon.Plane.Distance(engine_camera.Position);
-                    if (t > 0 && engine_camera.Frustum.IsPolyVisible(polygon, cam))
+                    var t = polygon.Plane.Distance(Global.EngineCamera.Position);
+                    if (t > 0 && Global.EngineCamera.Frustum.IsPolyVisible(polygon, cam))
                     {
                         return true;
                     }

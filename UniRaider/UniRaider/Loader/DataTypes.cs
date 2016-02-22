@@ -12,17 +12,6 @@ using OpenTK.Graphics.OpenGL;
 
 namespace UniRaider.Loader
 {
-    public enum TRVersion
-    {
-        Unknown,
-        TR1,
-        TR1UnfinishedBusiness,
-        TR2,
-        TR3,
-        TR4,
-        TR5
-    }
-
     public class LevelParseException : Exception
     {
         public long Position { get; set; }

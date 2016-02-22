@@ -324,7 +324,7 @@ namespace UniRaider
         {
             if (PortalToRoom >= 0)
             {
-                Room r = engine_world.Rooms[PortalToRoom];
+                Room r = Global.EngineWorld.Rooms[PortalToRoom];
                 var ind_x = (int) ((Position.X - r.Transform.Origin.X) / TR_METERING_SECTORSIZE);
                 var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / TR_METERING_SECTORSIZE);
                 if (ind_x.IsBetween(0, r.SectorsX - 1) && ind_y.IsBetween(0, r.SectorsY - 1))
@@ -339,7 +339,7 @@ namespace UniRaider
         {
             if (PortalToRoom >= 0)
             {
-                Room r = engine_world.Rooms[PortalToRoom];
+                Room r = Global.EngineWorld.Rooms[PortalToRoom];
                 if (OwnerRoom.BaseRoom != null && OwnerRoom.AlternateRoom != null)
                 {
                     r = r.AlternateRoom;
@@ -657,7 +657,7 @@ namespace UniRaider
 
         public void SwapPortals(Room dest)
         {
-            foreach (Room r in engine_world.rooms)
+            foreach (Room r in Global.EngineWorld.rooms)
             {
                 foreach (Portal p in r.Portals)
                 {
@@ -697,7 +697,7 @@ namespace UniRaider
 
         public void BuildOverlappedRoomsList()
         {
-            OverlappedRoomList = engine_world.rooms.Where(x => IsOverlapped(x));
+            OverlappedRoomList = Global.EngineWorld.rooms.Where(x => IsOverlapped(x));
         }
 
         public bool IsJoined(Room r2)

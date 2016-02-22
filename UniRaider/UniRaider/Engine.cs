@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BulletSharp;
+using OpenTK;
 
 namespace UniRaider
 {
@@ -48,31 +49,32 @@ namespace UniRaider
     {
         None = 0,
         Box = 0x0001,
-        BoxBase = 0x0002,               // use single box collision
+        BoxBase = 0x0002, // use single box collision
         Sphere = 0x0003,
-        Trimesh = 0x0004,               // for static objects and room's!
-        TrimeshConvex = 0x0005,         // for dynamic objects
+        Trimesh = 0x0004, // for static objects and room's!
+        TrimeshConvex = 0x0005, // for dynamic objects
     }
 
     public enum COLLISION_TYPE
     {
         None = 0x0000,
-        Static = 0x0001,                // static object - never moved
-        Kinematic = 0x0003,             // doors and other moveable statics
-        Dynamic = 0x0005,               // hellow full physics interaction
-        Actor = 0x0007,                 // actor, enemies, npc, animals
-        Vehicle = 0x0009,               // car, moto, bike
-        Ghost = 0x000B,                 // no fix character position, but works in collision callbacks and interacts with dynamic objects
+        Static = 0x0001, // static object - never moved
+        Kinematic = 0x0003, // doors and other moveable statics
+        Dynamic = 0x0005, // hellow full physics interaction
+        Actor = 0x0007, // actor, enemies, npc, animals
+        Vehicle = 0x0009, // car, moto, bike
+        Ghost = 0x000B,
+        // no fix character position, but works in collision callbacks and interacts with dynamic objects
     }
 
     public enum COLLISION_GROUP
     {
         All = 0x7FFF,
-        Static = 0x0001,         // room mesh, statics
-        Kinematic = 0x0002,         // doors, blocks, static animated entityes
-        Characters = 0x0004,         // lara, enemies, friends, creatures
-        Bullets = 0x0008,         // bullets, rockets, grenades, arrows...
-        Dynamics = 0x0010,         // test balls, warious
+        Static = 0x0001, // room mesh, statics
+        Kinematic = 0x0002, // doors, blocks, static animated entityes
+        Characters = 0x0004, // lara, enemies, friends, creatures
+        Bullets = 0x0008, // bullets, rockets, grenades, arrows...
+        Dynamics = 0x0010, // test balls, warious
     }
 
     public class EngineContainer
@@ -195,5 +197,205 @@ namespace UniRaider
         public static SequentialImpulseConstraintSolver BtEngineSolver;
 
         public static DiscreteDynamicsWorld BtEngineDynamicsWorld;
+    }
+
+    public class BtEngineClosestRayResultCallback : ClosestRayResultCallback
+    {
+        public BtEngineClosestRayResultCallback(EngineContainer cont, bool skipGhost = false)
+            : base(ref Helper.ZeroW, ref Helper.ZeroW)
+        {
+            Container = cont;
+            SkipGhost = skipGhost;
+        }
+
+        public override float AddSingleResult(LocalRayResult rayResult, bool normalInWorldSpace)
+        {
+            var c1 = rayResult.CollisionObject.UserObject as EngineContainer;
+
+            if ((c1 == null && c1 == Container) || (SkipGhost && c1.CollisionType == COLLISION_TYPE.Ghost))
+            {
+                return 1.0f;
+            }
+
+            var r0 = Container?.Room;
+            var r1 = c1?.Room;
+
+            if (r0 == null || r1 == null)
+            {
+                return base.AddSingleResult(rayResult, normalInWorldSpace);
+            }
+
+            if (r0 != null && r1 != null)
+            {
+                if (r0.IsInNearRoomsList(r1))
+                {
+                    return base.AddSingleResult(rayResult, normalInWorldSpace);
+                }
+            }
+
+            return 1.0f;
+        }
+
+        public EngineContainer Container;
+
+        public bool SkipGhost;
+    }
+
+    public class BtEngineClosestConvexResultCallback : ClosestConvexResultCallback
+    {
+        public BtEngineClosestConvexResultCallback(EngineContainer cont, bool skipGhost = false)
+            : base(ref Helper.ZeroW, ref Helper.ZeroW)
+        {
+            Container = cont;
+            SkipGhost = skipGhost;
+        }
+
+        public override float AddSingleResult(LocalConvexResult convexResult, bool normalInWorldSpace)
+        {
+            var r0 = Container?.Room;
+            var c1 = convexResult.HitCollisionObject.UserObject as EngineContainer;
+            var r1 = c1?.Room;
+
+            if ((c1 == null && c1 == Container) || (SkipGhost && c1.CollisionType == COLLISION_TYPE.Ghost))
+            {
+                return 1.0f;
+            }
+
+            if (r0 == null || r1 == null)
+            {
+                return base.AddSingleResult(convexResult, normalInWorldSpace);
+            }
+
+            if (r0 != null && r1 != null)
+            {
+                if (r0.IsInNearRoomsList(r1))
+                {
+                    return base.AddSingleResult(convexResult, normalInWorldSpace);
+                }
+            }
+
+            return 1.0f;
+        }
+
+        public EngineContainer Container;
+
+        public bool SkipGhost;
+    }
+
+    public class Engine
+    {
+        #region Starter and destructor
+
+        public static void Start();
+
+        public static void Destroy();
+
+        public static void Shutdown(int val);
+
+        #endregion
+
+        #region Initializers
+
+        /// <summary>
+        /// Initial init
+        /// </summary>
+        public static void InitPre();
+
+        /// <summary>
+        /// Finalizing init
+        /// </summary>
+        public static void InitPost();
+
+        public static void InitDefaultGlobals();
+
+        public static void InitGL();
+
+        public static void InitSDLControls();
+
+        public static void InitSDLVideo();
+
+        public static void InitSDLImage();
+
+        public static void InitAL();
+
+        public static void InitBullet();
+
+        #endregion
+
+        #region Config parser
+
+        public static void InitConfig(string filename);
+
+        public static void SaveConfig();
+
+        #endregion
+
+        #region Core system routines - display and tick
+
+        public static void Display();
+
+        public static void Frame(float time);
+
+        #endregion
+
+        #region Resize event
+
+        // Nominal values are used e.g. to set the size for the console.
+        // pixel values are used for glViewport. Both will be the same on
+        // normal displays, but on retina displays or similar, pixels will be twice nominal (or more).
+        public static void Resize(int nominalW, int nominalH, int pixelsW, int pixelsH);
+
+        #endregion
+
+        #region Debug functions
+
+        public static void PrimaryMouseDown();
+
+        public static void SecondaryMouseDown();
+
+        public static void ShowDebugInfo();
+
+        public static void DumpRoom(Room r);
+
+        #endregion
+
+        #region PC-specific level loader routines
+
+        public static bool LoadPCLevel(string name);
+
+        #endregion
+
+        #region General level loading routines
+
+        public static bool FileFound(string name, bool write = false);
+
+        public static int GetLevelFormat(string name);
+
+        public static int LoadMap(string name);
+
+        #endregion
+
+        #region String getters
+
+        public static string GetLevelName(string path);
+
+        public static string GetAutoexecName(Loader.TRVersion gameVersion, string postfix = "");
+
+        #endregion
+
+        #region Console command parser
+
+        public static int ExecCmd(string ch);
+
+        #endregion
+
+        #region Bullet global methods
+
+        public static void RoomNearCallback(BroadphasePair collisionPair, CollisionDispatcher dispatcher,
+            DispatcherInfo dispatchInfo);
+
+        public static void InternalTickCallback(DynamicsWorld world, float timeStep);
+
+        #endregion
     }
 }

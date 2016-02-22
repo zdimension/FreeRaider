@@ -69,5 +69,15 @@ namespace UniRaider
             float s = (float)Math.Sin(angle * 0.5) / d;
             quat = new Quaternion(axis * s, (float)Math.Cos(angle * 0.5));
         }
+
+        public static Vector3 ZeroW = Vector3.Zero;
+    }
+
+    public static class ALExt
+    {
+        public static void Listener(ALListener3f param, Vector3 value)
+        {
+            AL.Listener(param, value.X, value.Y, value.Z);
+        }
     }
 }
