@@ -14,150 +14,150 @@ namespace FreeRaider
 {
     public enum FloorDataFunctions : byte
     {
-        TR_FD_FUNC_PORTALSECTOR = 0x01,
-        TR_FD_FUNC_FLOORSLANT = 0x02,
-        TR_FD_FUNC_CEILINGSLANT = 0x03,
-        TR_FD_FUNC_TRIGGER = 0x04,
-        TR_FD_FUNC_DEATH = 0x05,
-        TR_FD_FUNC_CLIMB = 0x06,
-        TR_FD_FUNC_FLOORTRIANGLE_NW = 0x07, //  [_\_]
-        TR_FD_FUNC_FLOORTRIANGLE_NE = 0x08, //  [_/_]
-        TR_FD_FUNC_CEILINGTRIANGLE_NW = 0x09, //  [_/_]
-        TR_FD_FUNC_CEILINGTRIANGLE_NE = 0x0A, //  [_\_]
-        TR_FD_FUNC_FLOORTRIANGLE_NW_PORTAL_SW = 0x0B, //  [P\_]
-        TR_FD_FUNC_FLOORTRIANGLE_NW_PORTAL_NE = 0x0C, //  [_\P]
-        TR_FD_FUNC_FLOORTRIANGLE_NE_PORTAL_SE = 0x0D, //  [_/P]
-        TR_FD_FUNC_FLOORTRIANGLE_NE_PORTAL_NW = 0x0E, //  [P/_]
-        TR_FD_FUNC_CEILINGTRIANGLE_NW_PORTAL_SW = 0x0F, //  [P\_]
-        TR_FD_FUNC_CEILINGTRIANGLE_NW_PORTAL_NE = 0x10, //  [_\P]
-        TR_FD_FUNC_CEILINGTRIANGLE_NE_PORTAL_NW = 0x11, //  [P/_]
-        TR_FD_FUNC_CEILINGTRIANGLE_NE_PORTAL_SE = 0x12, //  [_/P]
-        TR_FD_FUNC_MONKEY = 0x13,
-        TR_FD_FUNC_MINECART_LEFT = 0x14, // In TR3 only. Function changed in TR4+.
-        TR_FD_FUNC_MINECART_RIGHT = 0x15 // In TR3 only. Function changed in TR4+.
+        Portalsector = 0x01,
+        Floorslant = 0x02,
+        Ceilingslant = 0x03,
+        Trigger = 0x04,
+        Death = 0x05,
+        Climb = 0x06,
+        FloortriangleNW = 0x07, //  [_\_]
+        FloortriangleNE = 0x08, //  [_/_]
+        CeilingtriangleNW = 0x09, //  [_/_]
+        CeilingtriangleNE = 0x0a, //  [_\_]
+        FloortriangleNWPortalSW = 0x0b, //  [P\_]
+        FloortriangleNWPortalNE = 0x0c, //  [_\P]
+        FloortriangleNEPortalSE = 0x0d, //  [_/P]
+        FloortriangleNEPortalNW = 0x0e, //  [P/_]
+        CeilingtriangleNWPortalSW = 0x0f, //  [P\_]
+        CeilingtriangleNWPortalNE = 0x10, //  [_\P]
+        CeilingtriangleNEPortalNW = 0x11, //  [P/_]
+        CeilingtriangleNEPortalSE = 0x12, //  [_/P]
+        Monkey = 0x13,
+        MinecartLeft = 0x14, // In TR3 only. Function changed in TR4+.
+        MinecartRight = 0x15 // In TR3 only. Function changed in TR4+.
     }
 
     public enum TriggerTypes : byte
     {
-        TR_FD_TRIGTYPE_TRIGGER = 0x00, // If Lara is in sector, run (any case).
-        TR_FD_TRIGTYPE_PAD = 0x01, // If Lara is in sector, run (land case).
-        TR_FD_TRIGTYPE_SWITCH = 0x02, // If item is activated, run, else stop.
-        TR_FD_TRIGTYPE_KEY = 0x03, // If item is activated, run.
-        TR_FD_TRIGTYPE_PICKUP = 0x04, // If item is picked up, run.
-        TR_FD_TRIGTYPE_HEAVY = 0x05, // If item is in sector, run, else stop.
-        TR_FD_TRIGTYPE_ANTIPAD = 0x06, // If Lara is in sector, stop (land case).
-        TR_FD_TRIGTYPE_COMBAT = 0x07, // If Lara is in combat state, run (any case).
-        TR_FD_TRIGTYPE_DUMMY = 0x08, // If Lara is in sector, run (air case).
-        TR_FD_TRIGTYPE_ANTITRIGGER = 0x09, // TR2-5 only: If Lara is in sector, stop (any case).
-        TR_FD_TRIGTYPE_HEAVYSWITCH = 0x0A, // TR3-5 only: If item is activated by item, run.
-        TR_FD_TRIGTYPE_HEAVYANTITRIGGER = 0x0B, // TR3-5 only: If item is activated by item, stop.
-        TR_FD_TRIGTYPE_MONKEY = 0x0C, // TR3-5 only: If Lara is monkey-swinging, run.
-        TR_FD_TRIGTYPE_SKELETON = 0x0D, // TR5 only: Activated by skeleton only?
-        TR_FD_TRIGTYPE_TIGHTROPE = 0x0E, // TR5 only: If Lara is on tightrope, run.
-        TR_FD_TRIGTYPE_CRAWLDUCK = 0x0F, // TR5 only: If Lara is crawling, run.
-        TR_FD_TRIGTYPE_CLIMB = 0x10 // TR5 only: If Lara is climbing, run.
+        Trigger = 0x00, // If Lara is in sector, run (any case).
+        Pad = 0x01, // If Lara is in sector, run (land case).
+        Switch = 0x02, // If item is activated, run, else stop.
+        Key = 0x03, // If item is activated, run.
+        Pickup = 0x04, // If item is picked up, run.
+        Heavy = 0x05, // If item is in sector, run, else stop.
+        AntiPad = 0x06, // If Lara is in sector, stop (land case).
+        Combat = 0x07, // If Lara is in combat state, run (any case).
+        Dummy = 0x08, // If Lara is in sector, run (air case).
+        AntiTrigger = 0x09, // TR2-5 only: If Lara is in sector, stop (any case).
+        HeavySwitch = 0x0a, // TR3-5 only: If item is activated by item, run.
+        HeavyAntiTrigger = 0x0b, // TR3-5 only: If item is activated by item, stop.
+        Monkey = 0x0c, // TR3-5 only: If Lara is monkey-swinging, run.
+        Skeleton = 0x0d, // TR5 only: Activated by skeleton only?
+        Tightrope = 0x0e, // TR5 only: If Lara is on tightrope, run.
+        CrawlDuck = 0x0f, // TR5 only: If Lara is crawling, run.
+        Climb = 0x10 // TR5 only: If Lara is climbing, run.
     }
 
     public enum TriggerFunctionTypes : byte
     {
-        TR_FD_TRIGFUNC_OBJECT = 0x00,
-        TR_FD_TRIGFUNC_CAMERATARGET = 0x01,
-        TR_FD_TRIGFUNC_UWCURRENT = 0x02,
-        TR_FD_TRIGFUNC_FLIPMAP = 0x03,
-        TR_FD_TRIGFUNC_FLIPON = 0x04,
-        TR_FD_TRIGFUNC_FLIPOFF = 0x05,
-        TR_FD_TRIGFUNC_LOOKAT = 0x06,
-        TR_FD_TRIGFUNC_ENDLEVEL = 0x07,
-        TR_FD_TRIGFUNC_PLAYTRACK = 0x08,
-        TR_FD_TRIGFUNC_FLIPEFFECT = 0x09,
-        TR_FD_TRIGFUNC_SECRET = 0x0A,
-        TR_FD_TRIGFUNC_CLEARBODIES = 0x0B, // Unused in TR4
-        TR_FD_TRIGFUNC_FLYBY = 0x0C,
-        TR_FD_TRIGFUNC_CUTSCENE = 0x0D
+        Object = 0x00,
+        CameraTarget = 0x01,
+        UwCurrent = 0x02,
+        FlipMap = 0x03,
+        FlipOn = 0x04,
+        FlipOff = 0x05,
+        LookAt = 0x06,
+        EndLevel = 0x07,
+        PlayTrack = 0x08,
+        FlipEffect = 0x09,
+        Secret = 0x0a,
+        ClearBodies = 0x0b, // Unused in TR4
+        FlyBy = 0x0c,
+        Cutscene = 0x0d
     }
 
     public enum ActionType : sbyte
     {
-        TR_ACTIONTYPE_NORMAL = 0,
-        TR_ACTIONTYPE_ANTI = 1,
-        TR_ACTIONTYPE_SWITCH = 2,
-        TR_ACTIONBYTE_BYPASS = -1
+        Normal = 0,
+        Anti = 1,
+        Switch = 2,
+        Bypass = -1
     }
 
     public enum Activator : byte
     {
-        TR_ACTIVATOR_NORMAL = 0,
-        TR_ACTIVATOR_SWITCH = 1,
-        TR_ACTIVATOR_KEY = 2,
-        TR_ACTIVATOR_PICKUP = 3
+        Normal = 0,
+        Switch = 1,
+        Key = 2,
+        Pickup = 3
     }
 
     public enum ActivatorType : byte
     {
-        TR_ACTIVATORTYPE_LARA = 0,
-        TR_ACTIVATORTYPE_MISC = 1
+        Lara = 0,
+        Misc = 1
     }
 
     [Flags]
     public enum RoomFlag : ushort
     {
-        TR_ROOM_FLAG_WATER = 0x0001,
-        TR_ROOM_FLAG_QUICKSAND = 0x0002, // Moved from 0x0080 to avoid confusion with NL.
-        TR_ROOM_FLAG_SKYBOX = 0x0008,
-        TR_ROOM_FLAG_UNKNOWN1 = 0x0010,
-        TR_ROOM_FLAG_WIND = 0x0020,
-        TR_ROOM_FLAG_UNKNOWN2 = 0x0040,
+        Water = 0x0001,
+        Quicksand = 0x0002, // Moved from 0x0080 to avoid confusion with NL.
+        Skybox = 0x0008,
+        Unknown1 = 0x0010,
+        Wind = 0x0020,
+        Unknown2 = 0x0040,
 
         //@FIXME: Find what it means!!! Always set by Dxtre3d.
-        TR_ROOM_FLAG_NO_LENSFLARE = 0x0080, // In TR4-5. Was quicksand in TR3.
-        TR_ROOM_FLAG_MIST = 0x0100,
+        NoLensflare = 0x0080, // In TR4-5. Was quicksand in TR3.
+        Mist = 0x0100,
 
         //@FIXME: Unknown meaning in TR1!!!
-        TR_ROOM_FLAG_CAUSTICS = 0x0200,
-        TR_ROOM_FLAG_UNKNOWN3 = 0x0400,
-        TR_ROOM_FLAG_DAMAGE = 0x0800,
+        Caustics = 0x0200,
+        Unknown3 = 0x0400,
+        Damage = 0x0800,
 
         //@FIXME: Is it really damage (D)?
-        TR_ROOM_FLAG_POISON = 0x1000 //@FIXME: Is it really poison (P)?
+        Poison = 0x1000 //@FIXME: Is it really poison (P)?
     }
 
     public enum RoomLightMode : byte
     {
         None = 0x0,
-        TR_ROOM_LIGHTMODE_FLICKER = 0x1
+        Flicker = 0x1
     }
 
     [Flags]
     public enum SectorFlag : uint
     {
-        SECTOR_FLAG_CLIMB_NORTH = 0x00000001, // subfunction 0x01
-        SECTOR_FLAG_CLIMB_EAST = 0x00000002, // subfunction 0x02
-        SECTOR_FLAG_CLIMB_SOUTH = 0x00000004, // subfunction 0x04
-        SECTOR_FLAG_CLIMB_WEST = 0x00000008, // subfunction 0x08
-        SECTOR_FLAG_CLIMB_CEILING = 0x00000010,
-        SECTOR_FLAG_MINECART_LEFT = 0x00000020,
-        SECTOR_FLAG_MINECART_RIGHT = 0x00000040,
-        SECTOR_FLAG_TRIGGERER_MARK = 0x00000080,
-        SECTOR_FLAG_BEETLE_MARK = 0x00000100,
-        SECTOR_FLAG_DEATH = 0x00000200
+        ClimbNorth = 0x00000001, // subfunction 0x01
+        ClimbEast = 0x00000002, // subfunction 0x02
+        ClimbSouth = 0x00000004, // subfunction 0x04
+        ClimbWest = 0x00000008, // subfunction 0x08
+        ClimbCeiling = 0x00000010,
+        MinecartLeft = 0x00000020,
+        MinecartRight = 0x00000040,
+        TriggererMark = 0x00000080,
+        BeetleMark = 0x00000100,
+        Death = 0x00000200
     }
 
     public enum SectorMaterial : byte
     {
-        SECTOR_MATERIAL_MUD = 0,
-        SECTOR_MATERIAL_SNOW = 1,
-        SECTOR_MATERIAL_SAND = 2,
-        SECTOR_MATERIAL_GRAVEL = 3,
-        SECTOR_MATERIAL_ICE = 4,
-        SECTOR_MATERIAL_WATER = 5,
-        SECTOR_MATERIAL_STONE = 6, // Classic one, TR1-2.
-        SECTOR_MATERIAL_WOOD = 7,
-        SECTOR_MATERIAL_METAL = 8,
-        SECTOR_MATERIAL_MARBLE = 9,
-        SECTOR_MATERIAL_GRASS = 10,
-        SECTOR_MATERIAL_CONCRETE = 11,
-        SECTOR_MATERIAL_OLDWOOD = 12,
-        SECTOR_MATERIAL_OLDMETAL = 13
+        Mud = 0,
+        Snow = 1,
+        Sand = 2,
+        Gravel = 3,
+        Ice = 4,
+        Water = 5,
+        Stone = 6, // Classic one, TR1-2.
+        Wood = 7,
+        Metal = 8,
+        Marble = 9,
+        Grass = 10,
+        Concrete = 11,
+        OldWood = 12,
+        OldMetal = 13
     }
 
     public partial class Constants
@@ -230,15 +230,15 @@ namespace FreeRaider
 
         public Vector3[] CeilingCorners { get; set; }
 
-        public byte CeilingDiagonalType { get; set; }
+        public TR_SECTOR_DIAGONAL_TYPE CeilingDiagonalType { get; set; }
 
-        public byte CeilingPenetrationConfig { get; set; }
+        public TR_PENETRATION_CONFIG CeilingPenetrationConfig { get; set; }
 
         public Vector3[] FloorCorners { get; set; }
 
-        public byte FloorDiagonalType { get; set; }
+        public TR_SECTOR_DIAGONAL_TYPE FloorDiagonalType { get; set; }
 
-        public byte FloorPenetrationConfig { get; set; }
+        public TR_PENETRATION_CONFIG FloorPenetrationConfig { get; set; }
 
         public int PortalToRoom { get; set; }
 
@@ -295,8 +295,8 @@ namespace FreeRaider
             if (OwnerRoom.BaseRoom != null)
             {
                 var r = OwnerRoom.BaseRoom;
-                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / TR_METERING_SECTORSIZE);
-                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / TR_METERING_SECTORSIZE);
+                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / Constants.TR_METERING_SECTORSIZE);
+                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / Constants.TR_METERING_SECTORSIZE);
                 if (ind_x.IsBetween(0, r.SectorsX - 1) && ind_y.IsBetween(0, r.SectorsY - 1))
                 {
                     return r.Sectors[ind_x * r.SectorsY + ind_y];
@@ -310,8 +310,8 @@ namespace FreeRaider
             if (OwnerRoom.AlternateRoom != null)
             {
                 var r = OwnerRoom.AlternateRoom;
-                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / TR_METERING_SECTORSIZE);
-                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / TR_METERING_SECTORSIZE);
+                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / Constants.TR_METERING_SECTORSIZE);
+                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / Constants.TR_METERING_SECTORSIZE);
                 if (ind_x.IsBetween(0, r.SectorsX - 1) && ind_y.IsBetween(0, r.SectorsY - 1))
                 {
                     return r.Sectors[ind_x * r.SectorsY + ind_y];
@@ -325,8 +325,8 @@ namespace FreeRaider
             if (PortalToRoom >= 0)
             {
                 Room r = Global.EngineWorld.Rooms[PortalToRoom];
-                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / TR_METERING_SECTORSIZE);
-                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / TR_METERING_SECTORSIZE);
+                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / Constants.TR_METERING_SECTORSIZE);
+                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / Constants.TR_METERING_SECTORSIZE);
                 if (ind_x.IsBetween(0, r.SectorsX - 1) && ind_y.IsBetween(0, r.SectorsY - 1))
                 {
                     return r.Sectors[ind_x * r.SectorsY + ind_y];
@@ -348,8 +348,8 @@ namespace FreeRaider
                 {
                     r = r.BaseRoom;
                 }
-                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / TR_METERING_SECTORSIZE);
-                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / TR_METERING_SECTORSIZE);
+                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / Constants.TR_METERING_SECTORSIZE);
+                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / Constants.TR_METERING_SECTORSIZE);
                 if (ind_x.IsBetween(0, r.SectorsX - 1) && ind_y.IsBetween(0, r.SectorsY - 1))
                 {
                     return r.Sectors[ind_x * r.SectorsY + ind_y];
@@ -446,11 +446,11 @@ namespace FreeRaider
 
     public enum SectorTweenType
     {
-        TR_SECTOR_TWEEN_TYPE_NONE = 0, // Degenerated vertical polygon.
-        TR_SECTOR_TWEEN_TYPE_TRIANGLE_RIGHT = 1, // Triangle pointing right (viewed front).
-        TR_SECTOR_TWEEN_TYPE_TRIANGLE_LEFT = 2, // Triangle pointing left (viewed front).
-        TR_SECTOR_TWEEN_TYPE_QUAD = 3, //
-        TR_SECTOR_TWEEN_TYPE_2TRIANGLES = 4 // it looks like a butterfly
+        None = 0, // Degenerated vertical polygon.
+        TriangleRight = 1, // Triangle pointing right (viewed front).
+        TriangleLeft = 2, // Triangle pointing left (viewed front).
+        Quad = 3, //
+        TwoTriangles = 4 // it looks like a butterfly
     }
 
     public class SectorTween

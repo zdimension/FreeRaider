@@ -183,7 +183,7 @@ namespace FreeRaider
 
         public void Clear()
         {
-            if(VBOVertexArray != 0)
+            if (VBOVertexArray != 0)
             {
                 GL.DeleteBuffer(VBOVertexArray);
                 VBOVertexArray = 0;
@@ -208,7 +208,7 @@ namespace FreeRaider
         /// </summary>
         public void FindBB()
         {
-            if(Vertices.Count > 0)
+            if (Vertices.Count > 0)
             {
                 var vecs = Vertices.Select(x => x.Position);
                 BBMin = new Vector3(vecs.Min(x => x.X), vecs.Min(x => x.Y), vecs.Min(x => x.Z));
@@ -236,7 +236,8 @@ namespace FreeRaider
                 VBOSkinArray = (uint) GL.GenBuffer();
                 GL.BindBuffer(BufferTarget.ArrayBuffer, VBOSkinArray);
                 GL.BufferData(BufferTarget.ArrayBuffer,
-                    (IntPtr) (Marshal.SizeOf(typeof (MatrixIndexStruct)) * MatrixIndices.Count), MatrixIndices.Select(x => x.ToStruct()).ToArray(),
+                    (IntPtr) (Marshal.SizeOf(typeof (MatrixIndexStruct)) * MatrixIndices.Count),
+                    MatrixIndices.Select(x => x.ToStruct()).ToArray(),
                     BufferUsageHint.StaticDraw);
             }
 
@@ -335,7 +336,7 @@ namespace FreeRaider
 
         public void GenFaces()
         {
-            ElementsPerTexture.Resize((int)TexturePageCount);
+            ElementsPerTexture.Resize((int) TexturePageCount);
 
             /*
              * Layout of the buffers:
@@ -369,7 +370,7 @@ namespace FreeRaider
             var transparent = 0;
             foreach (var p in Polygons.Where(p => !p.IsBroken))
             {
-                var elementCount = (uint)(p.Vertices.Count - 2) * 3;
+                var elementCount = (uint) (p.Vertices.Count - 2) * 3;
                 if (p.DoubleSide) elementCount *= 2;
 
                 if (p.AnimID == 0)
@@ -399,9 +400,9 @@ namespace FreeRaider
                 }
             }
 
-            Elements.Resize((int)(numNormalElements + AlphaElements));
+            Elements.Resize((int) (numNormalElements + AlphaElements));
             uint elementOffset = 0;
-            var startPerTexture = Enumerable.Repeat((uint)0, (int)TexturePageCount).ToList();
+            var startPerTexture = Enumerable.Repeat((uint) 0, (int) TexturePageCount).ToList();
             for (var i = 0; i < TexturePageCount; i++)
             {
                 startPerTexture[i] = elementOffset;
@@ -409,7 +410,7 @@ namespace FreeRaider
             }
             var startTransparent = elementOffset;
 
-            AllAnimatedElements.Resize((int)(AnimatedElementCount + AlphaAnimatedElementCount));
+            AllAnimatedElements.Resize((int) (AnimatedElementCount + AlphaAnimatedElementCount));
             uint animatedStart = 0;
             var animatedStartTransparent = AnimatedElementCount;
 
@@ -418,17 +419,17 @@ namespace FreeRaider
 
             foreach (var p in Polygons.Where(p => !p.IsBroken))
             {
-                var elementCount = (uint)(p.Vertices.Count - 2) * 3;
+                var elementCount = (uint) (p.Vertices.Count - 2) * 3;
                 var backwardsStartOffset = elementCount;
                 if (p.DoubleSide) elementCount *= 2;
 
-                if(p.AnimID == 0)
+                if (p.AnimID == 0)
                 {
                     // Not animated
                     var texture = p.TexIndex;
 
                     uint oldStart;
-                    if(p.BlendMode == BlendingMode.Opaque || p.BlendMode == BlendingMode.Transparent)
+                    if (p.BlendMode == BlendingMode.Opaque || p.BlendMode == BlendingMode.Transparent)
                     {
                         oldStart = startPerTexture[texture];
                         startPerTexture[texture] += elementCount;
@@ -459,9 +460,9 @@ namespace FreeRaider
                         Elements[offset1 + 1] = previousElement;
                         Elements[offset1 + 2] = thisElement;
 
-                        if(p.DoubleSide)
+                        if (p.DoubleSide)
                         {
-                            var offset2 = (int)backwardsStart + (j - 2) * 3;
+                            var offset2 = (int) backwardsStart + (j - 2) * 3;
                             Elements[offset2 + 0] = startElement;
                             Elements[offset2 + 1] = thisElement;
                             Elements[offset2 + 2] = previousElement;
@@ -500,14 +501,14 @@ namespace FreeRaider
                     {
                         var thisElement = AddAnimatedVertex(p.Vertices[j]);
 
-                        var offset1 = (int)oldStart + (j - 2) * 3;
+                        var offset1 = (int) oldStart + (j - 2) * 3;
                         Elements[offset1 + 0] = startElement;
                         Elements[offset1 + 1] = previousElement;
                         Elements[offset1 + 2] = thisElement;
 
                         if (p.DoubleSide)
                         {
-                            var offset2 = (int)backwardsStart + (j - 2) * 3;
+                            var offset2 = (int) backwardsStart + (j - 2) * 3;
                             Elements[offset2 + 0] = startElement;
                             Elements[offset2 + 1] = thisElement;
                             Elements[offset2 + 2] = previousElement;
@@ -528,7 +529,7 @@ namespace FreeRaider
                 var v = Vertices[ind];
                 if (v.Position == vertex.Position && v.TexCoord.SequenceEqual(vertex.TexCoord))
                 {
-                    return (uint)ind;
+                    return (uint) ind;
                 }
             }
 
@@ -540,7 +541,7 @@ namespace FreeRaider
                 TexCoord = vertex.TexCoord
             });
 
-            return (uint)Vertices.Count - 1;
+            return (uint) Vertices.Count - 1;
         }
 
         public uint AddAnimatedVertex(Vertex v)
@@ -558,7 +559,23 @@ namespace FreeRaider
             return (uint) AnimatedVertices.Count - 1;
         }
 
-        public void PolySortInMesh();
+        public void PolySortInMesh()
+        {
+            foreach (var p in Polygons)
+            {
+                if(p.AnimID > 0 && p.AnimID <= Global.EngineWorld.AnimSequences.Count)
+                {
+                    var seq = Global.EngineWorld.AnimSequences[p.AnimID - 1];
+                    // set tex coordinates to the first frame for correct texture transform in renderer
+                    Global.EngineWorld.TextureAtlas.
+                }
+
+                if(p.BlendMode != BlendingMode.Opaque && p.BlendMode != BlendingMode.Transparent)
+                {
+                    TransparencyPolygons.Add(p);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -894,7 +911,7 @@ namespace FreeRaider
 
         public float Lerp;
 
-        public event OnFrameHandler OnFrame = delegate {};
+        public event OnFrameHandler OnFrame = delegate { };
 
         public delegate void OnFrameHandler(Character ent, SSAnimation ssAnim, int state);
 
@@ -984,15 +1001,15 @@ namespace FreeRaider
                     BoneTags[i].Parent = BoneTags[i - 1];
                     if (model.MeshTree[i].Flag.HasFlagUns(0x01)) // POP
                     {
-                        if(stack > 0)
+                        if (stack > 0)
                         {
                             BoneTags[i].Parent = parents[stack];
                             stack--;
                         }
                     }
-                    if(model.MeshTree[i].Flag.HasFlagUns(0x02)) // PUSH
+                    if (model.MeshTree[i].Flag.HasFlagUns(0x02)) // PUSH
                     {
-                        if(stack + 1 < (short)model.MeshCount)
+                        if (stack + 1 < (short) model.MeshCount)
                         {
                             stack++;
                             parents[stack] = BoneTags[i].Parent;
@@ -1271,7 +1288,7 @@ namespace FreeRaider
             TransparencyFlags = Constants.MESH_FULL_OPAQUE;
             for (var i = 0; i < MeshCount; i++)
             {
-                if(MeshTree[i].MeshBase.TransparencyPolygons.Count > 0)
+                if (MeshTree[i].MeshBase.TransparencyPolygons.Count > 0)
                 {
                     TransparencyFlags = Constants.MESH_HAS_TRANSPARENCY;
                     return;
@@ -1339,7 +1356,8 @@ namespace FreeRaider
                             for (var k = 0; k < MeshCount; k++)
                             {
                                 bf.BoneTags[k].Offset = prev.BoneTags[k].Offset.Lerp(cur.BoneTags[k].Offset, lerp);
-                                bf.BoneTags[k].QRotate = Quaternion.Slerp(prev.BoneTags[k].QRotate, cur.BoneTags[k].QRotate, lerp);
+                                bf.BoneTags[k].QRotate = Quaternion.Slerp(prev.BoneTags[k].QRotate,
+                                    cur.BoneTags[k].QRotate, lerp);
                             }
 
                             bfi++;
@@ -1361,7 +1379,7 @@ namespace FreeRaider
 
             for (var i = 0; i < MeshCount; i++, treeTag = MeshTree[++treeTagI])
             {
-                if(treeTag.MeshSkin == null)
+                if (treeTag.MeshSkin == null)
                 {
                     return;
                 }
@@ -1376,7 +1394,7 @@ namespace FreeRaider
                     k++, v = treeTag.MeshSkin.Vertices[++vI], ch = treeTag.MeshSkin.MatrixIndices[++chI])
                 {
                     var rv = StaticFuncs.FindVertexInMesh(treeTag.MeshBase, v.Position);
-                    if(rv != null)
+                    if (rv != null)
                     {
                         ch.I = 0;
                         ch.J = 0;
@@ -1393,7 +1411,7 @@ namespace FreeRaider
                         for (var l = 0; l < MeshCount; l++, prevTreeTag = MeshTree[++prevTreeTagI])
                         {
                             rv = StaticFuncs.FindVertexInMesh(prevTreeTag.MeshBase, tv);
-                            if(rv != null)
+                            if (rv != null)
                             {
                                 ch.I = 0;
                                 ch.J = 0;
@@ -1457,7 +1475,7 @@ namespace FreeRaider
         public static CollisionShape CSfromSphere(float radius)
         {
             if (radius == 0) return null;
-            
+
             var ret = new SphereShape(radius);
             ret.Margin = Constants.COLLISION_MARGIN_RIGIDBODY;
 
@@ -1486,7 +1504,7 @@ namespace FreeRaider
                 cnt++;
             }
 
-            if(cnt == 0)
+            if (cnt == 0)
             {
                 trimesh = null;
                 return null;
@@ -1505,7 +1523,7 @@ namespace FreeRaider
             var cnt = 0;
             var trimesh = new TriangleMesh();
             CollisionShape ret;
-         
+
             foreach (var p in mesh.Polygons.Where(p => !p.IsBroken))
             {
                 for (var j = 1; j + 1 < p.Vertices.Count; j++)
@@ -1546,8 +1564,224 @@ namespace FreeRaider
 
             for (var i = 0; i < r.Sectors.Count; i++)
             {
-                if(heightmap[i].FloorPenetrationConfig!= Constants.pene)
+                var hm = heightmap[i];
+                if (hm.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Ghost &&
+                    hm.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall)
+                {
+                    if (hm.FloorDiagonalType == TR_SECTOR_DIAGONAL_TYPE.None ||
+                        hm.FloorDiagonalType == TR_SECTOR_DIAGONAL_TYPE.NorthWest)
+                    {
+                        if (hm.FloorPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalA)
+                        {
+                            trimesh.AddTriangle(
+                                hm.FloorCorners[3],
+                                hm.FloorCorners[2],
+                                hm.FloorCorners[0],
+                                true);
+                            cnt++;
+                        }
+
+                        if (hm.FloorPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalB)
+                        {
+                            trimesh.AddTriangle(
+                                hm.FloorCorners[2],
+                                hm.FloorCorners[1],
+                                hm.FloorCorners[0],
+                                true);
+                            cnt++;
+                        }
+                    }
+                    else
+                    {
+                        if (hm.FloorPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalA)
+                        {
+                            trimesh.AddTriangle(
+                                hm.FloorCorners[3],
+                                hm.FloorCorners[2],
+                                hm.FloorCorners[1],
+                                true);
+                            cnt++;
+                        }
+
+                        if (hm.FloorPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalB)
+                        {
+                            trimesh.AddTriangle(
+                                hm.FloorCorners[3],
+                                hm.FloorCorners[1],
+                                hm.FloorCorners[0],
+                                true);
+                            cnt++;
+                        }
+                    }
+                }
+
+                if (hm.CeilingPenetrationConfig != TR_PENETRATION_CONFIG.Ghost &&
+                    hm.CeilingPenetrationConfig != TR_PENETRATION_CONFIG.Wall)
+                {
+                    if (hm.CeilingDiagonalType == TR_SECTOR_DIAGONAL_TYPE.None ||
+                        hm.CeilingDiagonalType == TR_SECTOR_DIAGONAL_TYPE.NorthWest)
+                    {
+                        if (hm.CeilingPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalA)
+                        {
+                            trimesh.AddTriangle(
+                                hm.FloorCorners[0],
+                                hm.FloorCorners[2],
+                                hm.FloorCorners[3],
+                                true);
+                            cnt++;
+                        }
+
+                        if (hm.CeilingPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalB)
+                        {
+                            trimesh.AddTriangle(
+                                hm.FloorCorners[0],
+                                hm.FloorCorners[1],
+                                hm.FloorCorners[2],
+                                true);
+                            cnt++;
+                        }
+                    }
+                    else
+                    {
+                        if (hm.CeilingPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalA)
+                        {
+                            trimesh.AddTriangle(
+                                hm.FloorCorners[0],
+                                hm.FloorCorners[1],
+                                hm.FloorCorners[3],
+                                true);
+                            cnt++;
+                        }
+
+                        if (hm.CeilingPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalB)
+                        {
+                            trimesh.AddTriangle(
+                                hm.FloorCorners[1],
+                                hm.FloorCorners[2],
+                                hm.FloorCorners[3],
+                                true);
+                            cnt++;
+                        }
+                    }
+                }
             }
+
+            foreach (var tween in tweens)
+            {
+                switch (tween.CeilingTweenType)
+                {
+                    case SectorTweenType.TwoTriangles:
+                        var t = Math.Abs(
+                            (tween.CeilingCorners[2][2] - tween.CeilingCorners[3][2]) /
+                            (tween.CeilingCorners[0][2] - tween.CeilingCorners[1][2]));
+                        t = 1.0f / (1.0f + t);
+                        var o = new Vector3();
+                        Helper.SetInterpolate3(ref o, tween.CeilingCorners[0], tween.CeilingCorners[2], t);
+                        trimesh.AddTriangle(
+                            tween.CeilingCorners[0],
+                            tween.CeilingCorners[1],
+                            o,
+                            true);
+                        trimesh.AddTriangle(
+                            tween.CeilingCorners[3],
+                            tween.CeilingCorners[2],
+                            o,
+                            true);
+                        cnt += 2;
+                        break;
+                    case SectorTweenType.TriangleLeft:
+                        trimesh.AddTriangle(
+                            tween.CeilingCorners[0],
+                            tween.CeilingCorners[1],
+                            tween.CeilingCorners[3],
+                            true);
+                        cnt++;
+                        break;
+                    case SectorTweenType.TriangleRight:
+                        trimesh.AddTriangle(
+                            tween.CeilingCorners[2],
+                            tween.CeilingCorners[1],
+                            tween.CeilingCorners[3],
+                            true);
+                        cnt++;
+                        break;
+                    case SectorTweenType.Quad:
+                        trimesh.AddTriangle(
+                            tween.CeilingCorners[0],
+                            tween.CeilingCorners[1],
+                            tween.CeilingCorners[3],
+                            true);
+                        trimesh.AddTriangle(
+                            tween.CeilingCorners[2],
+                            tween.CeilingCorners[1],
+                            tween.CeilingCorners[3],
+                            true);
+                        cnt += 2;
+                        break;
+                }
+
+                switch (tween.FloorTweenType)
+                {
+                    case SectorTweenType.TwoTriangles:
+                        var t = Math.Abs(
+                            (tween.FloorCorners[2][2] - tween.FloorCorners[3][2]) /
+                            (tween.FloorCorners[0][2] - tween.FloorCorners[1][2]));
+                        t = 1.0f / (1.0f + t);
+                        var o = new Vector3();
+                        Helper.SetInterpolate3(ref o, tween.FloorCorners[0], tween.FloorCorners[2], t);
+                        trimesh.AddTriangle(
+                            tween.FloorCorners[0],
+                            tween.FloorCorners[1],
+                            o,
+                            true);
+                        trimesh.AddTriangle(
+                            tween.FloorCorners[3],
+                            tween.FloorCorners[2],
+                            o,
+                            true);
+                        cnt += 2;
+                        break;
+                    case SectorTweenType.TriangleLeft:
+                        trimesh.AddTriangle(
+                            tween.FloorCorners[0],
+                            tween.FloorCorners[1],
+                            tween.FloorCorners[3],
+                            true);
+                        cnt++;
+                        break;
+                    case SectorTweenType.TriangleRight:
+                        trimesh.AddTriangle(
+                            tween.FloorCorners[2],
+                            tween.FloorCorners[1],
+                            tween.FloorCorners[3],
+                            true);
+                        cnt++;
+                        break;
+                    case SectorTweenType.Quad:
+                        trimesh.AddTriangle(
+                            tween.FloorCorners[0],
+                            tween.FloorCorners[1],
+                            tween.FloorCorners[3],
+                            true);
+                        trimesh.AddTriangle(
+                            tween.FloorCorners[2],
+                            tween.FloorCorners[1],
+                            tween.FloorCorners[3],
+                            true);
+                        cnt += 2;
+                        break;
+                }
+            }
+
+            if(cnt == 0)
+            {
+                trimesh = null;
+                return null;
+            }
+
+            var ret = new BvhTriangleMeshShape(trimesh, useCompression, buildBvh);
+            ret.Margin = Constants.COLLISION_MARGIN_RIGIDBODY;
+            return ret;
         }
     }
 }
