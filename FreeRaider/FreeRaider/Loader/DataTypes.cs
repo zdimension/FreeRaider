@@ -14,7 +14,7 @@ namespace FreeRaider.Loader
 {
     public class LevelParseException : Exception
     {
-        public long Position { get; set; }
+        public long Position;
 
         public LevelParseException(Exception e, long pos = -1) : base("At position: " + (pos == -1 ? "Unknown" : pos.ToString()), e)
         {
@@ -24,7 +24,7 @@ namespace FreeRaider.Loader
 
     public class ScriptParseException : Exception
     {
-        public long Position { get; set; }
+        public long Position;
 
         public ScriptParseException(Exception e, long pos = -1) : base("At position " + (pos == -1 ? "Unknown" : pos.ToString()) + ": " + e.Message, e)
         {
@@ -37,22 +37,22 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Red component
         /// </summary>
-        public byte R { get; set; }
+        public byte R;
 
         /// <summary>
         /// Green component
         /// </summary>
-        public byte G { get; set; }
+        public byte G;
 
         /// <summary>
         /// Blue component
         /// </summary>
-        public byte B { get; set; }
+        public byte B;
 
         /// <summary>
         /// Alpha (transparency) component
         /// </summary>
-        public byte A { get; set; }
+        public byte A;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ByteColor"/> class.
@@ -132,22 +132,22 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Red component
         /// </summary>
-        public float R { get; set; }
+        public float R;
 
         /// <summary>
         /// Green component
         /// </summary>
-        public float G { get; set; }
+        public float G;
 
         /// <summary>
         /// Blue component
         /// </summary>
-        public float B { get; set; }
+        public float B;
 
         /// <summary>
         /// Alpha (transparency) component
         /// </summary>
-        public float A { get; set; }
+        public float A;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FloatColor"/> class.
@@ -215,17 +215,17 @@ namespace FreeRaider.Loader
         /// <summary>
         /// X component
         /// </summary>
-        public float X { get; set; }
+        public float X;
 
         /// <summary>
         /// Y component
         /// </summary>
-        public float Y { get; set; }
+        public float Y;
 
         /// <summary>
         /// Z component
         /// </summary>
-        public float Z { get; set; }
+        public float Z;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Vertex"/> class.
@@ -284,19 +284,19 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Index into Vertices[]
         /// </summary>
-        public ushort[] Vertices { get; set; }
+        public ushort[] Vertices;
 
         /// <summary>
         /// Object-texture index or color index
         /// </summary>
-        public ushort Texture { get; set; }
+        public ushort Texture;
 
         /// <summary>
         /// Transparency flag and strength of the highlight (TR4-5)<br/>
         /// bit0 if set then alpha channel = intensity<br/>
         /// bit1-7 is the strength of the highlight
         /// </summary>
-        public ushort Lighting { get; set; }
+        public ushort Lighting;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Triangle"/> class.
@@ -334,19 +334,19 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Index into Vertices[]
         /// </summary>
-        public ushort[] Vertices { get; set; }
+        public ushort[] Vertices;
 
         /// <summary>
         /// Object-texture index or color index
         /// </summary>
-        public ushort Texture { get; set; }
+        public ushort Texture;
 
         /// <summary>
         /// Transparency flag and strength of the highlight (TR4-5)<br/>
         /// bit0 if set then alpha channel = intensity<br/>
         /// bit1-7 is the strength of the highlight
         /// </summary>
-        public ushort Lighting { get; set; }
+        public ushort Lighting;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="QuadFace"/> class.
@@ -384,7 +384,7 @@ namespace FreeRaider.Loader
         /// <summary>
         /// The pixels
         /// </summary>
-        public byte[][] Pixels { get; set; }
+        public byte[][] Pixels;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ByteTexture"/> class.
@@ -419,7 +419,7 @@ namespace FreeRaider.Loader
         /// <summary>
         /// The pixels
         /// </summary>
-        public ushort[][] Pixels { get; set; }
+        public ushort[][] Pixels;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WordTexture"/> class.
@@ -454,7 +454,7 @@ namespace FreeRaider.Loader
         /// <summary>
         /// The pixels
         /// </summary>
-        public uint[][] Pixels { get; set; }
+        public uint[][] Pixels;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DWordTexture"/> class.
@@ -478,6 +478,7 @@ namespace FreeRaider.Loader
             };
             for (var i = 0; i < 256; i++)
             {
+                ret.Pixels[i] = new uint[256];
                 for (var j = 0; j < 256; j++)
                 {
                     var tmp = br.ReadUInt32();
@@ -493,17 +494,17 @@ namespace FreeRaider.Loader
         /// <summary>
         /// The <see cref="Room"/> this <see cref="Portal"/> leads to
         /// </summary>
-        public ushort AdjoiningRoom { get; set; }
+        public ushort AdjoiningRoom;
 
         /// <summary>
         /// Which way the <see cref="Portal"/> faces
         /// </summary>
-        public Vertex Normal { get; set; }
+        public Vertex Normal;
 
         /// <summary>
         /// The 4 corners of this <see cref="Portal"/>
         /// </summary>
-        public Vertex[] Vertices { get; set; }
+        public Vertex[] Vertices;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Portal"/> class.
@@ -553,32 +554,32 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Index into FloorData[]
         /// </summary>
-        public ushort FD_Index { get; set; }
+        public ushort FD_Index;
 
         /// <summary>
         /// Index into Boxes[]/Zones[] (-1 if none)
         /// </summary>
-        public ushort Box_Index { get; set; }
+        public ushort Box_Index;
 
         /// <summary>
         /// The number of the room below this one (-1 or 255 if none)
         /// </summary>
-        public byte RoomBelow { get; set; }
+        public byte RoomBelow;
 
         /// <summary>
         /// Absolute height of the floor (multiply by 256 for world coordinates)
         /// </summary>
-        public sbyte Floor { get; set; }
+        public sbyte Floor;
 
         /// <summary>
         /// The number of the room above this one (-1 or 255 if none)
         /// </summary>
-        public byte RoomAbove { get; set; }
+        public byte RoomAbove;
 
         /// <summary>
         /// Absolute height of the ceiling (multiply by 256 for world coordinates)
         /// </summary>
-        public sbyte Ceiling { get; set; }
+        public sbyte Ceiling;
 
         /// <summary>
         /// Reads a <see cref="Sector"/>
@@ -634,37 +635,37 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Position of the light (in world coordinates)
         /// </summary>
-        public Vertex Position { get; set; }
+        public Vertex Position;
 
         /// <summary>
         /// Color of the light
         /// </summary>
-        public ByteColor Color { get; set; }
+        public ByteColor Color;
 
         /// <summary>
         /// The calculated intensity
         /// </summary>
-        public float Intensity { get; set; }
+        public float Intensity;
 
         /// <summary>
         /// Light intensity
         /// </summary>
-        public ushort Intensity1 { get; set; }
+        public ushort Intensity1;
 
         /// <summary>
         /// Almost always equal to <see cref="Intensity1"/> [absent from TR1 data files]
         /// </summary>
-        public ushort Intensity2 { get; set; }
+        public ushort Intensity2;
 
         /// <summary>
         /// Falloff value 1
         /// </summary>
-        public uint Fade1 { get; set; }
+        public uint Fade1;
 
         /// <summary>
         /// Falloff value 2 [absent from TR1 data files]
         /// </summary>
-        public uint Fade2 { get; set; }
+        public uint Fade2;
 
         private byte lightType;
 
@@ -680,57 +681,57 @@ namespace FreeRaider.Loader
         /// <summary>
         /// No known effect, seems to always be 255
         /// </summary>
-        public byte Unknown { get; set; }
+        public byte Unknown;
 
         /// <summary>
         /// Used for Spot, Light and Shadow; Hotspot angle cosine or TR units
         /// </summary>
-        public float Hotspot { get; set; }
+        public float Hotspot;
 
         /// <summary>
         /// Used for Spot, Light and Shadow; Falloff angle cosine or TR units
         /// </summary>
-        public float Falloff { get; set; }
+        public float Falloff;
 
         /// <summary>
         /// Length
         /// </summary>
-        public float Length { get; set; }
+        public float Length;
 
         /// <summary>
         /// Cutoff
         /// </summary>
-        public float Cutoff { get; set; }
+        public float Cutoff;
 
         /// <summary>
         /// Used by spot light
         /// </summary>
-        public float RadianInput { get; set; }
+        public float RadianInput;
 
         /// <summary>
         /// Used by spot light
         /// </summary>
-        public float RadianOutput { get; set; }
+        public float RadianOutput;
 
         /// <summary>
         /// Used by spot light
         /// </summary>
-        public float Range { get; set; }
+        public float Range;
 
         /// <summary>
         /// Direction
         /// </summary>
-        public Vertex Direction { get; set; }
+        public Vertex Direction;
 
         /// <summary>
         /// Position of the light (in world coordinates)
         /// </summary>
-        public Vertex Position2 { get; set; }
+        public Vertex Position2;
 
         /// <summary>
         /// Direction
         /// </summary>
-        public Vertex Direction2 { get; set; }
+        public Vertex Direction2;
 
         /// <summary>
         /// Reads a <see cref="Light"/>
@@ -783,9 +784,6 @@ namespace FreeRaider.Loader
                 else
                 {
                     ret.Color = ByteColor.ReadF(br, true);
-                    var separator1 = br.ReadUInt32();
-                    if(separator1 != 0xCDCDCDCD)
-                        throw new ArgumentException("Light.Read[TR5]: Found 0x" + separator1.ToString("X8") + ", Expected 0xCDCDCDCD", "separator1");
                     ret.Intensity = 1;
                     ret.Hotspot = br.ReadSingle();
                     ret.Falloff = br.ReadSingle();
@@ -797,15 +795,17 @@ namespace FreeRaider.Loader
                     ret.Direction2 = Vertex.Read32(br);
                     ret.lightType = br.ReadByte();
 
-                    var sep = br.ReadByte();
-                    if (sep != 0xCD)
-                        throw new ArgumentException("Light.Read[TR5]: Found 0x" + sep.ToString("X2") + ", Expected 0xCD", "separator2");
-                                                                                            
-                    if ((sep = br.ReadByte()) != 0xCD)                                      
-                        throw new ArgumentException("Light.Read[TR5]: Found 0x" + sep.ToString("X2") + ", Expected 0xCD", "separator3");
-                                                                                            
-                    if ((sep = br.ReadByte()) != 0xCD)                                      
-                        throw new ArgumentException("Light.Read[TR5]: Found 0x" + sep.ToString("X2") + ", Expected 0xCD", "separator4");
+                    var separator2 = br.ReadByte();
+                    if (separator2 != 0xCD)
+                        Log.Write("Light.Read[TR5]: separator2: Expected 0xCD, Found 0x" + separator2.ToString("X2"));
+
+                    var separator3 = br.ReadByte();
+                    if (separator3 != 0xCD)
+                        Log.Write("Light.Read[TR5]: separator3: Expected 0xCD, Found 0x" + separator3.ToString("X2"));
+
+                    var separator4 = br.ReadByte();
+                    if (separator4 != 0xCD)
+                        Log.Write("Light.Read[TR5]: separator4: Expected 0xCD, Found 0x" + separator4.ToString("X2"));
                 }
             }
             else
@@ -843,12 +843,12 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Offset into <see cref="Vertex"/> list
         /// </summary>
-        public short Vertex { get; set; }
+        public short Vertex;
 
         /// <summary>
         /// Offset into sprite texture list TODO
         /// </summary>
-        public short Texture { get; set; }
+        public short Texture;
 
         /// <summary>
         /// Reads a <see cref="Sprite"/>
@@ -886,27 +886,27 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Number of vertices in this layer
         /// </summary>
-        public ushort NumVertices { get; set; }
-        public ushort Unknown_l1 { get; set; }
-        public ushort Unknown_l2 { get; set; }
+        public ushort NumVertices;
+        public ushort Unknown_l1;
+        public ushort Unknown_l2;
         /// <summary>
         /// Number of rectangles in this layer
         /// </summary>
-        public ushort NumRectangles { get; set; }
+        public ushort NumRectangles;
         /// <summary>
         /// Number of triangles in this layer
         /// </summary>
-        public ushort NumTriangles { get; set; }
-        public ushort Unknown_l3 { get; set; }
+        public ushort NumTriangles;
+        public ushort Unknown_l3;
 
         /// <summary>
         /// Bounding box of the layer
         /// </summary>
-        public BoundingBox BoundingBox { get; set; }
+        public BoundingBox BoundingBox;
 
-        public uint Unknown_l4 { get; set; }
-        public uint Unknown_l5 { get; set; }
-        public uint Unknown_l6 { get; set; }
+        public uint Unknown_l4;
+        public uint Unknown_l5;
+        public uint Unknown_l6;
 
         /// <summary>
         /// Reads a <see cref="Layer"/>
@@ -924,14 +924,14 @@ namespace FreeRaider.Loader
             ret.Unknown_l3 = br.ReadUInt16();
             var filler = br.ReadUInt16();
             if (filler != 0)
-                throw new ArgumentException("Layer.Read: Found " + filler + ", Expected 0", "filler");
+                Log.Write("Layer.Read: Expected 0, Found " + filler);
             var filler2 = br.ReadUInt16();
             if(filler2 != 0)
-                throw new ArgumentException("Layer.Read: Found " + filler2 + ", Expected 0", "filler2");
+                Log.Write("Layer.Read: Expected 0, Found " + filler2);
             ret.BoundingBox = BoundingBox.Read(br);
             var filler3 = br.ReadUInt32();
             if(filler3 != 0)
-                throw new ArgumentException("Layer.Read: Found " + filler3.ToString("X8") + ", Expected 0", "filler3");
+                Log.Write("Layer.Read: Expected 0, Found 0x" + filler3.ToString("X8"));
             ret.Unknown_l4 = br.ReadUInt32();
             ret.Unknown_l5 = br.ReadUInt32();
             ret.Unknown_l6 = br.ReadUInt32();
@@ -953,12 +953,12 @@ namespace FreeRaider.Loader
         /// <summary>
         /// First point
         /// </summary>
-        public Vertex Point1 { get; set; }
+        public Vertex Point1;
 
         /// <summary>
         /// Second point
         /// </summary>
-        public Vertex Point2 { get; set; }
+        public Vertex Point2;
 
         /// <summary>
         /// Reads a <see cref="BoundingBox"/>
@@ -998,23 +998,23 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Where this <see cref="RoomVertex"/> lies (relative to tr2_room_info::x/z) TODO
         /// </summary>
-        public Vertex Vertex { get; set; }
+        public Vertex Vertex;
 
-        public short Lighting1 { get; set; }
+        public short Lighting1;
 
         /// <summary>
         /// A set of flags for special rendering effects [absent from TR1 data files]
         /// </summary>
-        public SpecialRenderingEffects Attributes { get; set; }
+        public SpecialRenderingEffects Attributes;
 
         /// <summary>
         /// Almost always equal to <see cref="Lighting1"/> [absent from TR1 data files]
         /// </summary>
-        public short Lighting2 { get; set; }
+        public short Lighting2;
 
         // TR5 only
-        public Vertex Normal { get; set; }
-        public FloatColor Color { get; set; }
+        public Vertex Normal;
+        public FloatColor Color;
 
         /// <summary>
         /// Reads a <see cref="RoomVertex"/>
@@ -1088,32 +1088,32 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Position in world coordinates
         /// </summary>
-        public Vertex Position { get; set; }
+        public Vertex Position;
 
         /// <summary>
         /// High two bits (0xC000) indicate steps of 90 degrees (e.g. (Rotation >> 14) * 90)
         /// </summary>
-        public float Rotation { get; set; }
+        public float Rotation;
 
         /// <summary>
         /// Constant lighting; -1 means use mesh lighting
         /// </summary>
-        public short Intensity1 { get; set; }
+        public short Intensity1;
 
         /// <summary>
         /// Like <see cref="Intensity1"/>, and almost always the same value [absent from TR1 data files]
         /// </summary>
-        public short Intensity2 { get; set; }
+        public short Intensity2;
 
         /// <summary>
         /// Determines which StaticMesh item to draw TODO
         /// </summary>
-        public ushort ObjectID { get; set; }
+        public ushort ObjectID;
 
         /// <summary>
         /// Tint, extracted from intensity
         /// </summary>
-        public FloatColor Tint { get; set; }
+        public FloatColor Tint;
 
         /// <summary>
         /// Reads a <see cref="RoomStaticMesh"/>
@@ -1121,7 +1121,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="RoomStaticMesh"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="RoomStaticMesh"/></returns>
-        public static RoomStaticMesh Parse(BinaryReader br, Engine ver = Engine.Unknown)
+        public static RoomStaticMesh Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var rsm = new RoomStaticMesh();
             rsm.Position = Vertex.Read32(br);
@@ -1178,130 +1178,130 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Offset of room (world coordinates)
         /// </summary>
-        public Vertex Offset { get; set; }
+        public Vertex Offset;
 
         /// <summary>
         /// Lowest point in the room
         /// </summary>
-        public float Y_Bottom { get; set; }
+        public float Y_Bottom;
 
         /// <summary>
         /// Highest point in the room
         /// </summary>
-        public float Y_Top { get; set; }
+        public float Y_Top;
 
         /// <summary>
         /// List of layers (TR5)
         /// </summary>
-        public Layer[] Layers { get; set; }
+        public Layer[] Layers;
 
         /// <summary>
         /// List of vertices (relative coordinates)
         /// </summary>
-        public RoomVertex[] Vertices { get; set; }
+        public RoomVertex[] Vertices;
 
         /// <summary>
         /// List of textured rectangles
         /// </summary>
-        public QuadFace[] Rectangles { get; set; }
+        public QuadFace[] Rectangles;
 
         /// <summary>
         /// List of textured triangles
         /// </summary>
-        public Triangle[] Triangles { get; set; }
+        public Triangle[] Triangles;
 
         /// <summary>
         /// List of sprites
         /// </summary>
-        public Sprite[] Sprites { get; set; }
+        public Sprite[] Sprites;
 
         /// <summary>
         /// List of visibility portals
         /// </summary>
-        public Portal[] Portals { get; set; }
+        public Portal[] Portals;
 
         /// <summary>
         /// "Width" of sector list
         /// </summary>
-        public ushort Num_Z_Sectors { get; set; }
+        public ushort Num_Z_Sectors;
 
         /// <summary>
         /// "Height" of sector list
         /// </summary>
-        public ushort Num_X_Sectors { get; set; }
+        public ushort Num_X_Sectors;
 
         /// <summary>
         /// List of sectors [<see cref="Num_Z_Sectors"/> * <see cref="Num_X_Sectors"/>]
         /// </summary>
-        public Sector[] Sectors { get; set; }
+        public Sector[] Sectors;
 
         /// <summary>
         /// This and the next one only affect externally-lit objects
         /// </summary>
-        public short Intensity1 { get; set; }
+        public short Intensity1;
 
         /// <summary>
         /// Almost always the same value as <see cref="Intensity1"/> [absent from TR1 data files]
         /// </summary>
-        public short Intensity2 { get; set; }
+        public short Intensity2;
 
         /// <summary>
         /// 0 is normal; 1 is flickering (?); 2 and 3 are uncertain [present only in TR2]
         /// </summary>
-        public short LightMode { get; set; }
+        public short LightMode;
 
         /// <summary>
         /// List of point lights
         /// </summary>
-        public Light[] Lights { get; set; }
+        public Light[] Lights;
 
         /// <summary>
         /// List of static meshes
         /// </summary>
-        public RoomStaticMesh[] StaticMeshes { get; set; }
+        public RoomStaticMesh[] StaticMeshes;
 
         /// <summary>
         /// ID of the room that this room can alternate with
         /// </summary>
-        public short AlternateRoom { get; set; }
+        public short AlternateRoom;
 
         /// <summary>
         /// ID of the group which is used to switch alternate rooms
         /// </summary>
-        public sbyte AlternateGroup { get; set; }
+        public sbyte AlternateGroup;
 
         /// <summary>
         /// Flags
         /// </summary>
-        public ushort Flags { get; set; }
+        public ushort Flags;
 
         /// <summary>
         /// Water scheme is used with various room options, for example, R and M room flags in TRLE. Also, it specifies lighting scheme, when 0x4000 vertex attribute is set.
         /// </summary>
-        public byte WaterScheme { get; set; }
+        public byte WaterScheme;
 
         /// <summary>
         /// Used in TR3-5 and specifies reverb type
         /// </summary>
-        public ReverbInfo ReverbInfo { get; set; }
+        public ReverbInfo ReverbInfo;
 
         /// <summary>
         /// Present in TR5 only
         /// </summary>
-        public FloatColor LightColor { get; set; }
+        public FloatColor LightColor;
 
-        public float Room_X { get; set; }
-        public float Room_Z { get; set; }
-        public float Room_Y_Bottom { get; set; }
-        public float Room_Y_Top { get; set; }
+        public float Room_X;
+        public float Room_Z;
+        public float Room_Y_Bottom;
+        public float Room_Y_Top;
 
-        public uint Unknown_R1 { get; set; }
-        public uint Unknown_R2 { get; set; }
-        public uint Unknown_R3 { get; set; }
-        public ushort Unknown_R4a { get; set; }
-        public ushort Unknown_R4b { get; set; }
-        public uint Unknown_R5 { get; set; }
-        public uint Unknown_R6 { get; set; }
+        public uint Unknown_R1;
+        public uint Unknown_R2;
+        public uint Unknown_R3;
+        public ushort Unknown_R4a;
+        public ushort Unknown_R4b;
+        public uint Unknown_R5;
+        public uint Unknown_R6;
 
         /// <summary>
         /// Reads a <see cref="Room"/>
@@ -1316,8 +1316,9 @@ namespace FreeRaider.Loader
 
             if (ver == Engine.TR5)
             {
-                if (br.ReadUInt32() != 0x414C4558)
-                    throw new FormatException("Room.Read: TR5 'XELA' header not found");
+                var xela = br.ReadUInt32();
+                if (xela != 0x414C4558)
+                    Log.Write("Room.Read[TR5]: 'XELA' header: Expected 0x414C4558, Found 0x" + xela.ToString("X8"));
 
                 var roomDataSize = br.ReadUInt32();
                 var pos = br.BaseStream.Position;
@@ -1329,16 +1330,14 @@ namespace FreeRaider.Loader
 
                 var separator1 = br.ReadUInt32();
                 if (separator1 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator1.ToString("X8") + ", Expected 0xCDCDCDCD", "separator1");
+                    Log.Write("Room.Read[TR5]: separator1: Expected 0xCDCDCDCD, Found 0x" + separator1.ToString("X8"));
 
                 var portalOffset = br.ReadInt32();
                 var sectorDataOffset = br.ReadUInt32();
 
                 var separator2 = br.ReadUInt32();
                 if (separator2 != 0 && separator2 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator2.ToString("X8") + ", Expected 0xCDCDCDCD", "separator2");
+                    Log.Write("Room.Read[TR5]: separator2: Expected 0xCDCDCDCD, Found 0x" + separator2.ToString("X8"));
 
                 var staticMeshesOffset = br.ReadUInt32();
 
@@ -1354,41 +1353,35 @@ namespace FreeRaider.Loader
 
                 var numLights = br.ReadUInt16();
                 if (numLights > 512)
-                    throw new ArgumentOutOfRangeException("numLights", numLights, "Room.Read[TR5]: numLights > 512");
+                    Log.Write("Room.Read[TR5]: numLights > 512");
 
                 var numStaticMeshes = br.ReadUInt16();
                 if (numStaticMeshes > 512)
-                    throw new ArgumentOutOfRangeException("numStaticMeshes", numStaticMeshes,
-                        "Room.Read[TR5]: numStaticMeshes > 512");
+                    Log.Write("Room.Read[TR5]: numStaticMeshes > 512");
 
                 r.ReverbInfo = (ReverbInfo) br.ReadByte();
-                r.AlternateGroup = br.ReadSByte();
+                r.AlternateGroup = (sbyte)br.ReadByte();
                 r.WaterScheme = (byte) br.ReadUInt16();
 
                 var filler1 = br.ReadUInt32();
                 if (filler1 != 0x00007FFF)
-                    throw new ArgumentException("Room.Read[TR5]: Found " + filler1.ToString("X8") + ", Expected 0x00007FFF",
-                        "filler1");
+                    Log.Write("Room.Read[TR5]: filler1: Expected 0x00007FFF, Found 0x" + filler1.ToString("X8"));
 
                 var filler2 = br.ReadUInt32();
                 if (filler2 != 0x00007FFF)
-                    throw new ArgumentException("Room.Read[TR5]: Found " + filler2.ToString("X8") + ", Expected 0x00007FFF",
-                        "filler2");
+                    Log.Write("Room.Read[TR5]: filler2: Expected 0x00007FFF, Found 0x" + filler2.ToString("X8"));
 
                 var separator4 = br.ReadUInt32();
                 if (separator4 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator4.ToString("X8") + ", Expected 0xCDCDCDCD", "separator4");
+                    Log.Write("Room.Read[TR5]: separator4: Expected 0xCDCDCDCD, Found 0x" + separator4.ToString("X8"));
 
                 var separator5 = br.ReadUInt32();
                 if (separator5 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator5.ToString("X8") + ", Expected 0xCDCDCDCD", "separator5");
+                    Log.Write("Room.Read[TR5]: separator5: Expected 0xCDCDCDCD, Found 0x" + separator5.ToString("X8"));
 
                 var separator6 = br.ReadUInt32();
-                if (separator6 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator6.ToString("X8") + ", Expected 0xCDCDCDCD", "separator6");
+                if (separator6 != 0xFFFFFFFF)
+                    Log.Write("Room.Read[TR5]: separator6: Expected 0xCDCDCDCD, Found 0x" + separator6.ToString("X8"));
 
                 r.AlternateRoom = br.ReadInt16();
 
@@ -1400,8 +1393,7 @@ namespace FreeRaider.Loader
 
                 var separator7 = br.ReadUInt32();
                 if(separator7 != 0 && separator7 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator7.ToString("X8") + ", Expected 0xCDCDCDCD", "separator7");
+                    Log.Write("Room.Read[TR5]: separator7: Expected 0xCDCDCDCD, Found 0x" + separator7.ToString("X8"));
 
                 r.Unknown_R4a = br.ReadUInt16();
                 r.Unknown_R4b = br.ReadUInt16();
@@ -1412,55 +1404,48 @@ namespace FreeRaider.Loader
 
                 var separator8 = br.ReadUInt32();
                 if (separator8 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator8.ToString("X8") + ", Expected 0xCDCDCDCD", "separator8");
+                    Log.Write("Room.Read[TR5]: separator8: Expected 0xCDCDCDCD, Found 0x" + separator8.ToString("X8"));
 
                 var separator9 = br.ReadUInt32();
                 if (separator9 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator9.ToString("X8") + ", Expected 0xCDCDCDCD", "separator9");
+                    Log.Write("Room.Read[TR5]: separator9: Expected 0xCDCDCDCD, Found 0x" + separator9.ToString("X8"));
 
                 var separator10 = br.ReadUInt32();
                 if (separator10 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator10.ToString("X8") + ", Expected 0xCDCDCDCD", "separator10");
+                    Log.Write("Room.Read[TR5]: separator10: Expected 0xCDCDCDCD, Found 0x" + separator10.ToString("X8"));
 
                 var separator11 = br.ReadUInt32();
                 if (separator11 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator11.ToString("X8") + ", Expected 0xCDCDCDCD", "separator11");
+                    Log.Write("Room.Read[TR5]: separator11: Expected 0xCDCDCDCD, Found 0x" + separator11.ToString("X8"));
 
                 var separator12 = br.ReadUInt32();
                 if (separator12 != 0 && separator12 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator12.ToString("X8") + ", Expected 0xCDCDCDCD", "separator12");
+                    Log.Write("Room.Read[TR5]: separator12: Expected 0xCDCDCDCD, Found 0x" + separator12.ToString("X8"));
 
                 var separator13 = br.ReadUInt32();
                 if (separator13 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator13.ToString("X8") + ", Expected 0xCDCDCDCD", "separator13");
+                    Log.Write("Room.Read[TR5]: separator13: Expected 0xCDCDCDCD, Found 0x" + separator13.ToString("X8"));
 
                 var numTriangles = br.ReadUInt32();
                 if (numTriangles == 0xCDCDCDCD) numTriangles = 0;
                 if(numTriangles > 512)
-                    throw new ArgumentOutOfRangeException("numTriangles", numTriangles,
-                        "Room.Read[TR5]: numTriangles > 512");
+                    Log.Write("Room.Read[TR5]: numTriangles > 512");
+                r.Triangles = new Triangle[numTriangles];
 
                 var numRectangles = br.ReadUInt32();
                 if (numRectangles == 0xCDCDCDCD) numRectangles = 0;
                 if (numRectangles > 1024)
-                    throw new ArgumentOutOfRangeException("numRectangles", numRectangles,
-                        "Room.Read[TR5]: numRectangles > 1024");
+                    Log.Write("Room.Read[TR5]: numRectangles > 1024");
+                r.Rectangles = new QuadFace[numRectangles];
 
                 var separator14 = br.ReadUInt32();
                 if (separator14 != 0)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator14.ToString("X8") + ", Expected 0", "separator14");
+                    Log.Write("Room.Read[TR5]: separator14: Expected 0, Found 0x" + separator14.ToString("X8"));
 
                 var lightSize = br.ReadUInt32();
                 var numLights2 = br.ReadUInt32();
                 if(numLights2 != numLights)
-                    throw new ArgumentException("Room.Read[TR5]: Room.numLights2 != Room.numLights", "numLights2");
+                    throw new ArgumentException("Room.Read[TR5]: Room.numLights2 != Room.numLights", nameof(numLights2));
 
                 r.Unknown_R6 = br.ReadUInt32();
                 r.Room_Y_Top = -br.ReadSingle();
@@ -1473,36 +1458,94 @@ namespace FreeRaider.Loader
                 var polyOffset = br.ReadUInt32();
                 var polyOffset2 = br.ReadUInt32();
                 if(polyOffset != polyOffset2)
-                    throw new ArgumentException("Room.Read[TR5]: Room.polyOffset2 != Room.polyOffset", "polyOffset2");
+                    throw new ArgumentException("Room.Read[TR5]: Room.polyOffset2 != Room.polyOffset", nameof(polyOffset2));
 
                 var verticesSize = br.ReadUInt32();
                 if(verticesSize % 28 != 0)
                     throw new ArgumentException(
-                        "Room.Read[TR5]: verticesSize has wrong value: " + verticesSize, "verticesSize");
+                        "Room.Read[TR5]: verticesSize has wrong value: " + verticesSize, nameof(verticesSize));
 
                 var separator15 = br.ReadUInt32();
                 if (separator15 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator15.ToString("X8") + ", Expected 0xCDCDCDCD", "separator15");
+                    Log.Write("Room.Read[TR5]: separator15: Expected 0xCDCDCDCD, Found 0x" + separator15.ToString("X8"));
 
                 var separator16 = br.ReadUInt32();
                 if (separator16 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator16.ToString("X8") + ", Expected 0xCDCDCDCD", "separator16");
+                    Log.Write("Room.Read[TR5]: separator16: Expected 0xCDCDCDCD, Found 0x" + separator16.ToString("X8"));
 
                 var separator17 = br.ReadUInt32();
                 if (separator17 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator17.ToString("X8") + ", Expected 0xCDCDCDCD", "separator17");
+                    Log.Write("Room.Read[TR5]: separator17: Expected 0xCDCDCDCD, Found 0x" + separator17.ToString("X8"));
 
                 var separator18 = br.ReadUInt32();
                 if (separator18 != 0xCDCDCDCD)
-                    throw new ArgumentException(
-                        "Room.Read[TR5]: Found " + separator18.ToString("X8") + ", Expected 0xCDCDCDCD", "separator18");
+                    Log.Write("Room.Read[TR5]: separator18: Expected 0xCDCDCDCD, Found 0x" + separator18.ToString("X8"));
 
                 r.Lights = br.ReadArray(numLights, () => Light.Read(br, Engine.TR5));
 
                 br.BaseStream.Position = pos + 208 + sectorDataOffset;
+
+                r.Sectors = br.ReadArray(r.Num_Z_Sectors * r.Num_X_Sectors, () => Sector.Read(br));
+
+                var numPortals = br.ReadInt16();
+                r.Portals = br.ReadArray(numPortals, () => Portal.Read(br));
+
+                br.BaseStream.Position = pos + 208 + staticMeshesOffset;
+
+                r.StaticMeshes = br.ReadArray(numStaticMeshes, () => RoomStaticMesh.Read(br, Engine.TR4));
+
+                br.BaseStream.Position = pos + 208 + layerOffset;
+
+                r.Layers = br.ReadArray(numLayers, () => Layer.Read(br));
+
+                br.BaseStream.Position = pos + 208 + polyOffset;
+
+                {
+                    ushort vertexIndex = 0;
+                    uint rectangleIndex = 0;
+                    uint triangleIndex = 0;
+
+                    foreach (var layer in r.Layers)
+                    {
+                        for (var j = 0; j < layer.NumRectangles; j++)
+                        {
+                            r.Rectangles[rectangleIndex] = QuadFace.Read(br, Engine.TR4);
+                            r.Rectangles[rectangleIndex].Vertices[0] += vertexIndex;
+                            r.Rectangles[rectangleIndex].Vertices[1] += vertexIndex;
+                            r.Rectangles[rectangleIndex].Vertices[2] += vertexIndex;
+                            r.Rectangles[rectangleIndex].Vertices[3] += vertexIndex;
+                            rectangleIndex++;
+                        }
+
+                        for (var j = 0; j < layer.NumTriangles; j++)
+                        {
+                            r.Triangles[triangleIndex] = Triangle.Read(br, Engine.TR4);
+                            r.Triangles[triangleIndex].Vertices[0] += vertexIndex;
+                            r.Triangles[triangleIndex].Vertices[1] += vertexIndex;
+                            r.Triangles[triangleIndex].Vertices[2] += vertexIndex;
+                            triangleIndex++;
+                        }
+
+                        vertexIndex += layer.NumVertices;
+                    }
+                }
+
+                br.BaseStream.Position = pos + 208 + verticesOffset;
+
+                {
+                    uint vertexIndex = 0;
+                    r.Vertices = new RoomVertex[verticesSize / 28];
+
+                    foreach (var layer in r.Layers)
+                    {
+                        for (var j = 0; j < layer.NumVertices; j++)
+                        {
+                            r.Vertices[vertexIndex++] = RoomVertex.Read(br, Engine.TR5);
+                        }
+                    }
+                }
+
+                br.BaseStream.Position = endPos;
             }
             else
             {
@@ -1548,7 +1591,7 @@ namespace FreeRaider.Loader
 
                 r.Lights = br.ReadArray(br.ReadUInt16(), () => Light.Read(br, ver));
 
-                r.StaticMeshes = br.ReadArray(br.ReadUInt16(), () => RoomStaticMesh.Parse(br, ver));
+                r.StaticMeshes = br.ReadArray(br.ReadUInt16(), () => RoomStaticMesh.Read(br, ver));
 
                 r.AlternateRoom = br.ReadInt16();
 
@@ -1608,47 +1651,47 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Usually close to mesh's centroid
         /// </summary>
-        public Vertex Centre { get; set; }
+        public Vertex Centre;
 
         /// <summary>
         /// Radius of collisional sphere
         /// </summary>
-        public int CollisionSize { get; set; }
+        public int CollisionSize;
 
         /// <summary>
         /// List of vertices
         /// </summary>
-        public Vertex[] Vertices { get; set; }
+        public Vertex[] Vertices;
 
         /// <summary>
         /// List of normals
         /// </summary>
-        public Vertex[] Normals { get; set; }
+        public Vertex[] Normals;
 
         /// <summary>
         /// List of light values
         /// </summary>
-        public short[] Lights { get; set; }
+        public short[] Lights;
 
         /// <summary>
         /// List of textured rectangles
         /// </summary>
-        public QuadFace[] TexturedRectangles { get; set; }
+        public QuadFace[] TexturedRectangles;
 
         /// <summary>
         /// List of textured triangles
         /// </summary>
-        public Triangle[] TexturedTriangles { get; set; }
+        public Triangle[] TexturedTriangles;
 
         /// <summary>
         /// List of coloured rectangles
         /// </summary>
-        public QuadFace[] ColouredRectangles { get; set; }
+        public QuadFace[] ColouredRectangles;
 
         /// <summary>
         /// List of coloured triangles
         /// </summary>
-        public Triangle[] ColouredTriangles { get; set; }
+        public Triangle[] ColouredTriangles;
         
         /// <summary>
         /// Reads a <see cref="Mesh"/>
@@ -1701,21 +1744,21 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Object Identifier (matched in Items[])
         /// </summary>
-        public uint ObjectID { get; set; }
+        public uint ObjectID;
 
         /// <summary>
         /// Mesh (offset into MeshPointers[])
         /// </summary>
-        public ushort Mesh { get; set; }
+        public ushort Mesh;
 
-        public Vertex[] VisibilityBox { get; set; }
+        public Vertex[] VisibilityBox;
 
-        public Vertex[] CollisionBox { get; set; }
+        public Vertex[] CollisionBox;
 
         /// <summary>
         /// Meaning is uncertain, it's usually 2, and is 3 for objects Lara can travel through
         /// </summary>
-        public ushort Flags { get; set; }
+        public ushort Flags;
 
         /// <summary>
         /// Reads a <see cref="StaticMesh"/>
@@ -1762,9 +1805,9 @@ namespace FreeRaider.Loader
         /// Bit 1 (0x0002) indicates "put the parent mesh on the mesh stack"<br/>
         /// Bit 0 (0x0001) indicates "take the top mesh off the mesh stack and use as the parent mesh"
         /// </summary>
-        public uint Flags { get; set; }
+        public uint Flags;
 
-        public Vertex Offset { get; set; }
+        public Vertex Offset;
 
         /// <summary>
         /// Reads a <see cref="MeshTree"/>
@@ -1782,34 +1825,34 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Item Identifier (matched in Items[])
         /// </summary>
-        public uint ObjectID { get; set; }
+        public uint ObjectID;
 
         /// <summary>
         /// Number of meshes in this object
         /// </summary>
-        public ushort NumMeshes { get; set; }
+        public ushort NumMeshes;
 
         /// <summary>
         /// Starting mesh (offset into MeshPointers[])
         /// </summary>
-        public ushort StartingMesh { get; set; }
+        public ushort StartingMesh;
 
         /// <summary>
         /// Offset into MeshTree[]
         /// </summary>
-        public uint MeshTreeIndex { get; set; }
+        public uint MeshTreeIndex;
 
         /// <summary>
         /// Byte offset into Frames[] (divide by 2 for Frames[i])
         /// </summary>
-        public uint FrameOffset { get; set; }
+        public uint FrameOffset;
 
-        public uint FrameIndex { get; set; }
+        public uint FrameIndex;
 
         /// <summary>
         /// Offset into Animations[]
         /// </summary>
-        public ushort AnimationIndex { get; set; }
+        public ushort AnimationIndex;
 
         /// <summary>
         /// Reads a <see cref="Moveable"/>
@@ -1833,7 +1876,7 @@ namespace FreeRaider.Loader
             {
                 var filler = br.ReadUInt16();
                 if(filler != 0xFFEF)
-                    throw new ArgumentException("Moveable.Read[TR5]: Found " + filler.ToString("X4") + ", Expected 0xFFEF", "filler");
+                    Log.Write("Moveable.Read[TR5]: filler: Expected 0xFFEF, Found 0x" + filler.ToString("X4"));
             }
 
             return ret;
@@ -1845,43 +1888,43 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Object Identifier (matched in Moveables[] or SpriteSequences[] as appropriate)
         /// </summary>
-        public short ObjectID { get; set; }
+        public short ObjectID;
 
         /// <summary>
         /// Which room contains this item
         /// </summary>
-        public short Room { get; set; }
+        public short Room;
 
         /// <summary>
         /// Position (in world coordinates)
         /// </summary>
-        public Vertex Position { get; set; }
+        public Vertex Position;
 
         /// <summary>
         /// Rotation -> ((0xc000 >> 14) * 90) degrees
         /// </summary>
-        public float Rotation { get; set; }
+        public float Rotation;
 
         /// <summary>
         /// Constant lighting, -1 means use mesh lighting
         /// </summary>
-        public short Intensity1 { get; set; }
+        public short Intensity1;
 
         /// <summary>
         /// Like Intensity1, and almost always the same value [absent from TR1 data files]
         /// </summary>
-        public short Intensity2 { get; set; }
+        public short Intensity2;
 
         /// <summary>
         /// Object code bit - used for altering entity behavior. Used only in TR4-5
         /// </summary>
-        public short ObjectCodeBit { get; set; }
+        public short ObjectCodeBit;
 
         /// <summary>
         /// 0x0100 indicates "initially invisible"<br/>
         /// 0x3e00 indicates "open" or "activated"
         /// </summary>
-        public ushort Flags { get; set; }
+        public ushort Flags;
 
         public ushort ActivationMash => (ushort)((Flags & 0x3e00) >> 9);
 
@@ -1938,23 +1981,23 @@ namespace FreeRaider.Loader
 
     public struct SpriteTexture
     {
-        public ushort Tile { get; set; }
+        public ushort Tile;
 
-        public short X0 { get; set; }
+        public short X0;
 
-        public short Y0 { get; set; }
+        public short Y0;
 
-        public short X1 { get; set; }
+        public short X1;
 
-        public short Y1 { get; set; }
+        public short Y1;
 
-        public short LeftSide { get; set; }
+        public short LeftSide;
 
-        public short TopSide { get; set; }
+        public short TopSide;
 
-        public short RightSide { get; set; }
+        public short RightSide;
 
-        public short BottomSide { get; set; }
+        public short BottomSide;
 
         /// <summary>
         /// Reads a <see cref="SpriteTexture"/>
@@ -1967,7 +2010,7 @@ namespace FreeRaider.Loader
             var ret = new SpriteTexture();
 
             ret.Tile = br.ReadUInt16();
-
+            
             var tx = br.ReadByte();
             var ty = br.ReadByte();
             var tw = br.ReadUInt16();
@@ -1979,6 +2022,9 @@ namespace FreeRaider.Loader
 
             if(ver < Engine.TR4)
             {
+                if (ret.Tile > 64)
+                    Log.Write("SpriteTexture.Read[" + ver + "]: SpriteTexture.Tile > 64");
+
                 ret.X0 = tx;
                 ret.Y0 = ty;
                 ret.X1 = (short)(tx + tw / 256.0f);
@@ -1991,6 +2037,9 @@ namespace FreeRaider.Loader
             }
             else
             {
+                if (ret.Tile > 128)
+                    Log.Write("SpriteTexture.Read[" + ver + "]: SpriteTexture.Tile > 128");
+
                 ret.X0 = tleft;
                 ret.X1 = tright;
                 ret.Y0 = tbottom;
@@ -2021,17 +2070,17 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Sprite identifier 
         /// </summary>
-        public int SpriteID { get; set; }
+        public int SpriteID;
 
         /// <summary>
         /// Negative of 'how many sprites are in this sequence'
         /// </summary>
-        public short NegativeLength { get; set; }
+        public short NegativeLength;
 
         /// <summary>
         /// Where (in sprite texture list) this sequence starts
         /// </summary>
-        public short Offset { get; set; }
+        public short Offset;
 
         /// <summary>
         /// Reads a <see cref="SpriteSequence"/>
@@ -2054,58 +2103,58 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Byte offset into Frames[] (divide by 2 for Frames[i])
         /// </summary>
-        public uint FrameOffset { get; set; }
+        public uint FrameOffset;
 
         /// <summary>
         /// Engine ticks per frame
         /// </summary>
-        public byte FrameRate { get; set; }
+        public byte FrameRate;
 
         /// <summary>
         /// Number of <see cref="short"/> in Frames[] used by this animation
         /// </summary>
-        public byte FrameSize { get; set; }
+        public byte FrameSize;
 
-        public ushort StateID { get; set; }
+        public ushort StateID;
 
-        public int Speed { get; set; }
+        public int Speed;
 
-        public int Acceleration { get; set; }
+        public int Acceleration;
 
-        public int SpeedLateral { get; set; }
+        public int SpeedLateral;
 
-        public int AccelerationLateral { get; set; }
+        public int AccelerationLateral;
 
         /// <summary>
         /// First frame in this animation
         /// </summary>
-        public ushort FrameStart { get; set; }
+        public ushort FrameStart;
 
         /// <summary>
         /// Last frame in this animation
         /// </summary>
-        public ushort FrameEnd { get; set; }
+        public ushort FrameEnd;
 
-        public ushort NextAnimation { get; set; }
+        public ushort NextAnimation;
 
-        public ushort NextFrame { get; set; }
+        public ushort NextFrame;
 
-        public ushort NumStateChanges { get; set; }
+        public ushort NumStateChanges;
 
         /// <summary>
         /// Offset into StateChanges[]
         /// </summary>
-        public ushort StateChangeOffset { get; set; }
+        public ushort StateChangeOffset;
 
         /// <summary>
         /// How many of them to use
         /// </summary>
-        public ushort NumAnimCommands { get; set; }
+        public ushort NumAnimCommands;
 
         /// <summary>
         /// Offset into AnimCommand[]
         /// </summary>
-        public ushort AnimCommand { get; set; }
+        public ushort AnimCommand;
 
         /// <summary>
         /// Reads a <see cref="Animation"/>
@@ -2147,17 +2196,17 @@ namespace FreeRaider.Loader
 
     public struct StateChange
     {
-        public ushort StateID { get; set; }
+        public ushort StateID;
 
         /// <summary>
         /// Number of ranges (seems to always be 1..5)
         /// </summary>
-        public ushort NumAnimDispatches { get; set; }
+        public ushort NumAnimDispatches;
 
         /// <summary>
         /// Offset into AnimDispatches[]
         /// </summary>
-        public ushort AnimDispatch { get; set; }
+        public ushort AnimDispatch;
 
         /// <summary>
         /// Reads a <see cref="StateChange"/>
@@ -2180,22 +2229,22 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Lowest frame that uses this range
         /// </summary>
-        public short Low { get; set; }
+        public short Low;
 
         /// <summary>
         /// Highest frame that uses this range
         /// </summary>
-        public short High { get; set; }
+        public short High;
 
         /// <summary>
         /// Animation to dispatch to
         /// </summary>
-        public short NextAnimation { get; set; }
+        public short NextAnimation;
 
         /// <summary>
         /// Frame offset to dispatch to
         /// </summary>
-        public short NextFrame { get; set; }
+        public short NextFrame;
 
         /// <summary>
         /// Reads a <see cref="AnimDispatch"/>
@@ -2219,24 +2268,24 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Horizontal dimensions in global units
         /// </summary>
-        public uint Zmin { get; set; }
+        public uint Zmin;
 
-        public uint Zmax { get; set; }
+        public uint Zmax;
 
-        public uint Xmin { get; set; }
+        public uint Xmin;
 
-        public uint Xmax { get; set; }
+        public uint Xmax;
 
         /// <summary>
         /// Height value in global units
         /// </summary>
-        public short TrueFloor { get; set; }
+        public short TrueFloor;
 
         /// <summary>
         /// Index into Overlaps[]<br/>
         /// High bit is sometimes set; this occurs in front of swinging doors and the like
         /// </summary>
-        public short OverlapIndex { get; set; }
+        public short OverlapIndex;
 
         /// <summary>
         /// Reads a <see cref="Box"/>
@@ -2272,13 +2321,13 @@ namespace FreeRaider.Loader
 
     public struct Zone
     {
-        public ushort[] GroundZonesNormal { get; set; }
+        public ushort[] GroundZonesNormal;
 
-        public ushort FlyZoneNormal { get; set; }
+        public ushort FlyZoneNormal;
 
-        public ushort[] GroundZonesAlternate { get; set; }
+        public ushort[] GroundZonesAlternate;
 
-        public ushort FlyZoneAlternate { get; set; }
+        public ushort FlyZoneAlternate;
 
         /// <summary>
         /// Reads a <see cref="Zone"/>
@@ -2306,27 +2355,27 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Absolute X position of sound source (world coordinates)
         /// </summary>
-        public int X { get; set; }
+        public int X;
 
         /// <summary>
         /// Absolute Y position of sound source (world coordinates)
         /// </summary>
-        public int Y { get; set; }
+        public int Y;
 
         /// <summary>
         /// Absolute Z position of sound source (world coordinates)
         /// </summary>
-        public int Z { get; set; }
+        public int Z;
 
         /// <summary>
         /// Internal sound index
         /// </summary>
-        public ushort SoundID { get; set; }
+        public ushort SoundID;
 
         /// <summary>
         /// 0x40, 0x80 or 0xc0
         /// </summary>
-        public ushort Flags { get; set; }
+        public ushort Flags;
 
         /// <summary>
         /// Reads a <see cref="SoundSource"/>
@@ -2373,29 +2422,29 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Index into SampleIndices[]
         /// </summary>
-        public ushort Sample { get; set; }
+        public ushort Sample;
 
         /// <summary>
         /// Global sample volume
         /// </summary>
-        public ushort Volume { get; set; }
+        public ushort Volume;
 
         /// <summary>
         /// Sound range
         /// </summary>
-        public ushort SoundRange { get; set; }
+        public ushort SoundRange;
 
         /// <summary>
         /// Chance to play
         /// </summary>
-        public ushort Chance { get; set; }
+        public ushort Chance;
 
         /// <summary>
         /// Pitch shift
         /// </summary>
-        public short Pitch { get; set; }
+        public short Pitch;
 
-        public ushort Characteristics { get; set; }
+        public ushort Characteristics;
 
         public LoopType GetLoopType(Engine ver = Engine.Unknown)
         {
@@ -2468,16 +2517,16 @@ namespace FreeRaider.Loader
         /// <summary>
         /// 1 if <see cref="Xpixel"/> is the low value, -1 if <see cref="Xpixel"/> is the high value in the object texture
         /// </summary>
-        public sbyte Xcoordinate { get; set; }
+        public sbyte Xcoordinate;
 
-        public byte Xpixel { get; set; }
+        public byte Xpixel;
 
         /// <summary>
         /// 1 if <see cref="Ypixel"/> is the low value, -1 if <see cref="Ypixel"/> is the high value in the object texture
         /// </summary>
-        public sbyte Ycoordinate { get; set; }
+        public sbyte Ycoordinate;
 
-        public byte Ypixel { get; set; }
+        public byte Ypixel;
 
         /// <summary>
         /// Reads a <see cref="ObjectTextureVertex"/>
@@ -2567,33 +2616,33 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Specifies transparency mode (i.e. blending mode) used for face with this texture applied.
         /// </summary>
-        public BlendingMode TransparencyFlags { get; set; }
+        public BlendingMode TransparencyFlags;
 
         /// <summary>
         /// Index into textile list
         /// </summary>
-        public ushort TileAndFlag { get; set; }
+        public ushort TileAndFlag;
 
-        public ushort NewFlags { get; set; }
+        public ushort NewFlags;
 
         /// <summary>
         /// The four corners of the texture
         /// </summary>
-        public ObjectTextureVertex[] Vertices { get; set; }
+        public ObjectTextureVertex[] Vertices;
 
-        public uint OriginalU { get; set; }
+        public uint OriginalU;
 
-        public uint OriginalV { get; set; }
+        public uint OriginalV;
 
         /// <summary>
         /// Actually Width-1
         /// </summary>
-        public uint Width { get; set; }
+        public uint Width;
 
         /// <summary>
         /// Actually Height-1
         /// </summary>
-        public uint Height { get; set; }
+        public uint Height;
 
         /// <summary>
         /// Reads a <see cref="ObjectTexture"/>
@@ -2611,19 +2660,17 @@ namespace FreeRaider.Loader
             if (ver >= Engine.TR4)
             {
                 if ((ret.TileAndFlag & 0x7FFF) > 128)
-                    throw new ArgumentOutOfRangeException("tileAndFlag", ret.TileAndFlag,
-                        "ObjectTexture.Read[" + ver + "]: tileAndFlag > 128");
+                    Log.Write("ObjectTexture.Read[" + ver + "]: TileAndFlag > 128");
 
                 ret.NewFlags = br.ReadUInt16();
             }
             else
             {
                 if (ret.TileAndFlag > 64)
-                    throw new ArgumentOutOfRangeException("tileAndFlag", ret.TileAndFlag,
-                        "ObjectTexture.Read[" + ver + "]: tileAndFlag > 64");
+                    Log.Write("ObjectTexture.Read[" + ver + "]: TileAndFlag > 64");
 
                 if((ret.TileAndFlag & (1 << 15)) != 0)
-                    throw new ArgumentException("ObjectTexture.Read[" + ver + "]: tileAndFlag has top bit set", "tileAndFlag");
+                    Log.Write("ObjectTexture.Read[" + ver + "]: TileAndFlag has top bit set");
             }
 
             ret.Vertices = br.ReadArray(4, () => ObjectTextureVertex.Read(br, ver));
@@ -2642,8 +2689,7 @@ namespace FreeRaider.Loader
                 var filler = br.ReadUInt16();
 
                 if(filler != 0)
-                    throw new ArgumentException(
-                        "ObjectTexture.Read[TR5]: Found " + filler.ToString("X4") + ", Expected 0", "filler");
+                    Log.Write("ObjectTexture.Read[TR5]: filler: Expected 0, Found 0x" + filler.ToString("X4"));
             }
 
             return ret;
@@ -2655,16 +2701,16 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Offsets into ObjectTextures[], in animation order
         /// </summary>
-        public short[] TextureIDs { get; set; }
+        public short[] TextureIDs;
     }
 
     public struct Camera
     {
-        public Vertex Position { get; set; }
+        public Vertex Position;
 
-        public short Room { get; set; }
+        public short Room;
         
-        public ushort Flag { get; set; }
+        public ushort Flag;
         
         /// <summary>
         /// Reads a <see cref="Camera"/>
@@ -2689,52 +2735,52 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Camera position
         /// </summary>
-        public Vertex Position { get; set; }
+        public Vertex Position;
         
         /// <summary>
         /// Camera target
         /// </summary>
-        public Vertex Target { get; set; }
+        public Vertex Target;
 
         /// <summary>
         /// Number of flyby camera “chain” this particular camera belongs to. Maximum amount of flyby sequences in single level is 8
         /// </summary>
-        public byte Sequence { get; set; }
+        public byte Sequence;
 
         /// <summary>
         /// Order of the cameras in this particular sequence. Camera with index 0 will be first one in sequence, index 1 means camera will be second in sequence, and so on.
         /// </summary>
-        public byte Index { get; set; }
+        public byte Index;
 
         /// <summary>
         /// Specifies this camera's field of view.
         /// </summary>
-        public ushort FieldOfView { get; set; }
+        public ushort FieldOfView;
 
         /// <summary>
         /// Specifies the roll factor of this camera. When this parameter is not zero, camera will rotate either left or right along roll axis, creating so-called “dutch angle”.
         /// </summary>
-        public short Roll { get; set; } // TODO: OpenTomb uses ushort instead
+        public short Roll; // TODO: OpenTomb uses ushort instead
 
         /// <summary>
         /// Mainly used to stop camera movement for a given time (in game frames). As this parameter is temporal, it won’t be interpolated between two cameras.
         /// </summary>
-        public ushort Timer { get; set; }
+        public ushort Timer;
 
         /// <summary>
         /// Specifies movement speed for this particular camera.
         /// </summary>
-        public ushort Speed { get; set; }
+        public ushort Speed;
 
         /// <summary>
         /// Array of bit flags specifying different camera options
         /// </summary>
-        public ushort Flags { get; set; }
+        public ushort Flags;
 
         /// <summary>
         /// Should be valid for a given flyby camera, so it will display properly, as well as have the ability to activate heavy triggers.
         /// </summary>
-        public uint RoomID { get; set; }
+        public uint RoomID;
 
         /// <summary>
         /// Reads a <see cref="FlybyCamera"/>
@@ -2768,29 +2814,29 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Object type ID (same meaning as with tr4_entity)
         /// </summary>
-        public ushort TypeID { get; set; }
+        public ushort TypeID;
 
         /// <summary>
         /// Room where AI object is placed
         /// </summary>
-        public ushort Room { get; set; }
+        public ushort Room;
 
         /// <summary>
         /// Coordinates
         /// </summary>
-        public Vertex Position { get; set; }
+        public Vertex Position;
 
         /// <summary>
         /// Same meaning as with tr4_entity
         /// </summary>
-        public short OCB { get; set; }
+        public short OCB;
 
         /// <summary>
         /// Activation mask, bitwise-shifted left by 1
         /// </summary>
-        public ushort Flags { get; set; }
+        public ushort Flags;
 
-        public int Angle { get; set; }
+        public int Angle;
 
         /// <summary>
         /// Reads a <see cref="AIObject"/>
@@ -2819,32 +2865,32 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Rotation about Y axis, +/- 32767 == +/- 180 degrees
         /// </summary>
-        public short RotationY { get; set; }
+        public short RotationY;
 
         /// <summary>
         /// Rotation about Z axis, +/- 32767 == +/- 180 degrees
         /// </summary>
-        public short RotationZ { get; set; }
+        public short RotationZ;
 
         /// <summary>
         /// Seems to work a lot like rotZ; I haven't yet been able to differentiate them
         /// </summary>
-        public short RotationZ2 { get; set; }
+        public short RotationZ2;
 
         /// <summary>
         /// camera position relative to something (target? Lara? room origin?) *NOT IN WORLD COORDINATES
         /// </summary>
-        public Vertex Position { get; set; }
+        public Vertex Position;
 
         /// <summary>
         /// Changing this can cause a runtime error
         /// </summary>
-        public short Unknown { get; set; }
+        public short Unknown;
 
         /// <summary>
         /// Rotation about X axis, +/- 32767 == +/- 180 degrees
         /// </summary>
-        public short RotationX { get; set; }
+        public short RotationX;
 
         /// <summary>
         /// Reads a <see cref="CinematicFrame"/>
@@ -2878,7 +2924,7 @@ namespace FreeRaider.Loader
         /// <summary>
         /// 32 * 256 (8192) byte array, which is apparently for applying light to 8-bit colour, in some documentation called ColourMap.
         /// </summary>
-        public byte[] Map { get; set; }
+        public byte[] Map;
 
         /// <summary>
         /// Reads a <see cref="LightMap"/>
@@ -2899,7 +2945,7 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Palette entries
         /// </summary>
-        public ByteColor[] Colour { get; set; }
+        public ByteColor[] Colour;
 
         /// <summary>
         /// Reads a <see cref="Palette"/>

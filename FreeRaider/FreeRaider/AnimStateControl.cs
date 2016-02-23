@@ -8,9 +8,6 @@ namespace FreeRaider
 {
     public partial class Constants
     {
-        public const int LEFT_LEG = 3;
-        public const int RIGHT_LEG = 6;
-
         public const float PENETRATION_TEST_OFFSET = 48.0f;        ///@TODO: tune it!
         public const float WALK_FORWARD_OFFSET = 96.0f;        ///@FIXME: find real offset
         public const float WALK_BACK_OFFSET = 16.0f;

@@ -402,7 +402,7 @@ namespace FreeRaider
 
             Elements.Resize((int) (numNormalElements + AlphaElements));
             uint elementOffset = 0;
-            var startPerTexture = Enumerable.Repeat((uint) 0, (int) TexturePageCount).ToList();
+            var startPerTexture = Helper.FillArray((uint) 0, (int) TexturePageCount);
             for (var i = 0; i < TexturePageCount; i++)
             {
                 startPerTexture[i] = elementOffset;
@@ -567,7 +567,7 @@ namespace FreeRaider
                 {
                     var seq = Global.EngineWorld.AnimSequences[p.AnimID - 1];
                     // set tex coordinates to the first frame for correct texture transform in renderer
-                    Global.EngineWorld.TextureAtlas.
+                    Global.EngineWorld.TextureAtlas.GetCoordinates(seq.FrameList[0], false, p, 0, seq.UVRotate);
                 }
 
                 if(p.BlendMode != BlendingMode.Opaque && p.BlendMode != BlendingMode.Transparent)

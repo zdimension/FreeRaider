@@ -91,7 +91,7 @@ namespace FreeRaider
         /// <summary>
         /// Result pages
         /// </summary>
-        private uint resultPageWith;
+        private uint resultPageWidth;
 
         private List<uint> resultPageHeights;
 
@@ -171,7 +171,56 @@ namespace FreeRaider
         /// </summary>
         /// <param name="texture">The texture.</param>
         /// <param name="reverse">Whether to reverse the order of texture coordinates on output.</param>
-        public void GetCoordinates(uint texture, bool reverse, Polygon poly, int shift = 0, bool split = false);
+        public void GetCoordinates(uint texture, bool reverse, Polygon poly, int shift = 0, bool split = false)
+        {
+            // TODO: assert poly.Vertices.Count <= 4
+
+            // TODO: assert texture < fileObjectTextures.Count
+            var fileObjectTexture = fileObjectTextures[(int)texture];
+            var canonical = canonicalObjectTextures[(int)fileObjectTexture.CanonicalTextureIndex];
+
+            poly.TexIndex = (ushort) canonical.NewPage;
+            for (var i = 0; i < poly.Vertices.Count; i++)
+            {
+                long xCoord = 0;
+                long yCoord = 0;
+
+                switch(fileObjectTexture.CornerLocations[i])
+                {
+                    case CornerLocation.TopLeft:
+                        xCoord = canonical.NewXWithBorder + borderWidth;
+                        yCoord = canonical.NewYWithBorder + borderWidth - shift;
+
+                        if(split)
+                        {
+                            yCoord += (canonical.Height / 2);
+                        }
+                        break;
+                    case CornerLocation.TopRight:
+                        xCoord = canonical.NewXWithBorder + borderWidth + canonical.Width;
+                        yCoord = canonical.NewYWithBorder + borderWidth - shift;
+
+                        if (split)
+                        {
+                            yCoord += (canonical.Height / 2);
+                        }
+                        break;
+                    case CornerLocation.BottomLeft:
+                        xCoord = canonical.NewXWithBorder + borderWidth;
+                        yCoord = canonical.NewYWithBorder + borderWidth  + canonical.Height - shift;
+                        break;
+                    case CornerLocation.BottomRight:
+                        xCoord = canonical.NewXWithBorder + borderWidth + canonical.Width;
+                        yCoord = canonical.NewYWithBorder + borderWidth + canonical.Height - shift;
+                        break;
+                }
+
+                var index = reverse ? (poly.Vertices.Count - i - 1) : i;
+
+                poly.Vertices[index].TexCoord[0] = (float) xCoord / resultPageWidth;
+                poly.Vertices[index].TexCoord[1] = (float) yCoord / resultPageHeights[(int)canonical.NewPage];
+            }
+        }
 
         /// <summary>
         /// Same as above, but for sprite textures. This always returns four 

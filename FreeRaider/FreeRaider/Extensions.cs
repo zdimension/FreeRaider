@@ -325,7 +325,7 @@ namespace FreeRaider
             if (sz < cur)
                 list.RemoveRange(sz, cur - sz);
             else if (sz > cur)
-                list.AddRange(Enumerable.Repeat(c, sz - cur));
+                list.AddRange(Helper.FillArray(c, sz - cur));
         }
 
         public static Vector3 Rotate(this Vector3 vec, Vector3 wAxis, float angle)
@@ -399,6 +399,14 @@ namespace FreeRaider
                 a.Remove(it);
                 dest.Add(it);
             }
+        }
+
+        public static T[] AddArray<T>(this T[] a, T[] b)
+        {
+            var r = new T[a.Length + b.Length];
+            a.CopyTo(r, 0);
+            b.CopyTo(r, a.Length);
+            return r;
         }
     }
 }

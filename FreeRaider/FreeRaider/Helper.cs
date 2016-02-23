@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using OpenTK;
 using OpenTK.Audio.OpenAL;
 using FreeRaider.Loader;
+using Ionic.Zlib;
 
 namespace FreeRaider
 {
@@ -78,6 +79,39 @@ namespace FreeRaider
             v.X = s * v0.X + rt * v1.X;
             v.Y = s * v0.Y + rt * v1.Y;
             v.Z = s * v0.Z + rt * v1.Z;
+        }
+
+        public static BinaryReader Decompress(byte[] compressed)
+        {
+            var uncompBuffer = ZlibStream.UncompressBuffer(compressed);
+
+            return new BinaryReader(new MemoryStream(uncompBuffer));
+        }
+
+
+        // http://stackoverflow.com/a/22867582/2196124
+        public static T[] FillArray<T>(T val, int count)
+        {
+            var value = new[] { val };
+            var destinationArray = new T[count];
+
+
+            // set the initial array value
+            Array.Copy(value, destinationArray, value.Length);
+
+            int arrayToFillHalfLength = destinationArray.Length / 2;
+            int copyLength;
+
+            for (copyLength = value.Length; copyLength < arrayToFillHalfLength; copyLength <<= 1)
+            {
+                Array.Copy(destinationArray, 0, destinationArray, copyLength, copyLength);
+            }
+
+            Array.Copy(destinationArray, 0, destinationArray, copyLength, destinationArray.Length - copyLength);
+
+
+
+            return destinationArray;
         }
     }
 

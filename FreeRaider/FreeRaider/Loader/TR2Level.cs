@@ -7,6 +7,11 @@ using System.Threading.Tasks;
 
 namespace FreeRaider.Loader
 {
+    public partial class Constants
+    {
+        public const int TR_AUDIO_MAP_SIZE_TR2 = 370;
+    }
+
     public class TR2Level : Level
     {
         public TR2Level(BinaryReader br, Engine ver) : base(br, ver)
@@ -37,7 +42,7 @@ namespace FreeRaider.Loader
 
             var unused = reader.ReadUInt32();
             if(unused != 0)
-                throw new ArgumentException("TR2Level.Load: Found " + unused.ToString("X8") + ", Expected 0", "unused");
+                Log.Write("TR2Level.Load: unused: Expected 0, Found " + unused.ToString("X8"));
 
             var numRooms = reader.ReadUInt16();
             Rooms = reader.ReadArray(numRooms, () => Room.Read(reader, Engine.TR2));
@@ -108,7 +113,7 @@ namespace FreeRaider.Loader
             var numDemoData = reader.ReadUInt16();
             DemoData = reader.ReadBytes(numDemoData);
 
-            SoundMap = reader.ReadInt16Array(370);
+            SoundMap = reader.ReadInt16Array(Constants.TR_AUDIO_MAP_SIZE_TR2);
 
             var numSoundDetails = reader.ReadUInt32();
             SoundDetails = reader.ReadArray(numSoundDetails, () => Loader.SoundDetails.Read(reader, Engine.TR2));
@@ -123,7 +128,7 @@ namespace FreeRaider.Loader
             }
 
             if(!File.Exists(SfxPath))
-                throw new FileNotFoundException("TR2Level.Load: '" + SfxPath + "' not found, no samples loaded");
+                Log.Write("TR2Level.Load: '" + SfxPath + "' not found, no samples loaded");
             else
             {
                 using (var fs = new FileStream(SfxPath, FileMode.Open))
@@ -155,6 +160,11 @@ namespace FreeRaider.Loader
             for(uint i = 0; i < numTextiles; i++)
             {
                 Textures[i] = ConvertTexture(texture16[i]);
+            }
+
+            if (reader.BaseStream.Position < reader.BaseStream.Length)
+            {
+                Log.Write("Error: " + (reader.BaseStream.Length - reader.BaseStream.Position) + " bytes of data after end of level");
             }
         }
     }

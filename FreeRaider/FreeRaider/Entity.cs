@@ -400,8 +400,8 @@ namespace FreeRaider
             camPos[2] += dz;
             return camPos;
         }
-
-        public virtual void UpdatePlatformPreSetup()
+        
+        public virtual void UpdatePlatformPreStep()
         {
         }
 
@@ -416,16 +416,13 @@ namespace FreeRaider
         }
     }
 
-    public class Ghost
+    public partial class StaticFuncs
     {
-        public static int GetPenetrationFixVector(PairCachingGhostObject ghost, AlignedManifoldArray manifoldArray,
-            Vector3 correction);
-    }
+        public static int GhostGetPenetrationFixVector(PairCachingGhostObject ghost, AlignedManifoldArray manifoldArray,
+           Vector3 correction);
 
-    public class Anim
-    {
-        public static StateChange FindStateChangeByAnim(AnimationFrame anim, int stateChangeAnim);
+        public static StateChange Anim_FindStateChangeByAnim(AnimationFrame anim, int stateChangeAnim);
 
-        public static StateChange FindStateChangeByID(AnimationFrame anim, uint id);
+        public static StateChange Anim_FindStateChangeByID(AnimationFrame anim, uint id);
     }
 }

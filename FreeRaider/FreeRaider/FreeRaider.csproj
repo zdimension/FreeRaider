@@ -52,6 +52,10 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="Zlib.Portable, Version=1.11.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Zlib.Portable.1.11.0\lib\portable-net4+sl5+wp8+win8+wpa81+MonoTouch+MonoAndroid\Zlib.Portable.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AnimStateControl.cs" />
@@ -60,11 +64,15 @@
     <Compile Include="BSPTree.cs" />
     <Compile Include="BSPTree2D.cs" />
     <Compile Include="Camera.cs" />
+    <Compile Include="CharacterController.cs" />
+    <Compile Include="Common.cs" />
+    <Compile Include="Console.cs" />
     <Compile Include="Engine.cs" />
     <Compile Include="Entity.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Frustum.cs" />
     <Compile Include="GLUtil.cs" />
+    <Compile Include="GUI.cs" />
     <Compile Include="Helper.cs" />
     <Compile Include="LoaderTests\Loader.cs" />
     <Compile Include="LoaderTests\TR2Level.cs" />
@@ -76,6 +84,7 @@
     <Compile Include="Loader\TR3Level.cs" />
     <Compile Include="Loader\TR4Level.cs" />
     <Compile Include="Loader\TR5Level.cs" />
+    <Compile Include="Log.cs" />
     <Compile Include="Mesh.cs" />
     <Compile Include="OBB.cs" />
     <Compile Include="Polygon.cs" />
