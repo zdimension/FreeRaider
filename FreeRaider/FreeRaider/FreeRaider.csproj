@@ -81,6 +81,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="Frustum.cs" />
     <Compile Include="GLFont.cs" />
+    <Compile Include="GLFontBuffer.cs" />
     <Compile Include="GLUtil.cs" />
     <Compile Include="GUI.cs" />
     <Compile Include="Helper.cs" />
