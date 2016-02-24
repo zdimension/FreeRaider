@@ -14,7 +14,7 @@ namespace FreeRaider
 {
     public partial class Helper
     {
-        public static Loader.Game ParseVersion(BinaryReader br, string fext)
+        public static Game ParseVersion(BinaryReader br, string fext)
         {
             fext = fext.ToUpper();
             var check = br.ReadBytes(4);
@@ -23,31 +23,31 @@ namespace FreeRaider
             {
                 case ".PHD":
                     if (ver == 0x00000020)
-                        return Loader.Game.TR1;
+                        return Game.TR1;
                     break;
                 case ".TUB":
                     if (ver == 0x00000020)
-                        return Loader.Game.TR1UnfinishedBusiness;
+                        return Game.TR1UnfinishedBusiness;
                     break;
                 case ".TR2":
                     if (ver == 0x0000002D)
-                        return Loader.Game.TR2;
+                        return Game.TR2;
                     else if ((check[0] == 0x38 || check[0] == 0x34) &&
                              (check[1] == 0x00) &&
                              (check[2] == 0x18 || check[2] == 0x08) &&
                              (check[3] == 0xFF))
-                        return Loader.Game.TR3;
+                        return Game.TR3;
                     break;
                 case ".TR4":
                     if (ver == 0x00345254 || ver == 0x63345254 || ver == 0xFFFFFFF0)
-                        return Loader.Game.TR4;
+                        return Game.TR4;
                     break;
                 case ".TRC":
                     if (ver == 0x00345254)
-                        return Loader.Game.TR5;
+                        return Game.TR5;
                     break;
             }
-            return Loader.Game.Unknown;
+            return Game.Unknown;
         }
 
         public static Random Random = null;
@@ -112,6 +112,25 @@ namespace FreeRaider
 
 
             return destinationArray;
+        }
+
+        public static void FillArray<T>(T val, T[] destinationArray)
+        {
+            var value = new[] { val };
+
+
+            // set the initial array value
+            Array.Copy(value, destinationArray, value.Length);
+
+            int arrayToFillHalfLength = destinationArray.Length / 2;
+            int copyLength;
+
+            for (copyLength = value.Length; copyLength < arrayToFillHalfLength; copyLength <<= 1)
+            {
+                Array.Copy(destinationArray, 0, destinationArray, copyLength, copyLength);
+            }
+
+            Array.Copy(destinationArray, 0, destinationArray, copyLength, destinationArray.Length - copyLength);
         }
     }
 

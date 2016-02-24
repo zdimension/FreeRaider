@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FreeRaider.Loader;
 
 namespace FreeRaider.Loader
 {
@@ -36,26 +37,26 @@ namespace FreeRaider
 {
     public partial class Helper
     {
-        public static Loader.Engine GameToEngine(Loader.Game game)
+        public static Loader.Engine GameToEngine(Game game)
         {
             {
                 switch (game)
                 {
-                    case Loader.Game.TR1:
-                    case Loader.Game.TR1Demo:
-                    case Loader.Game.TR1UnfinishedBusiness:
+                    case Game.TR1:
+                    case Game.TR1Demo:
+                    case Game.TR1UnfinishedBusiness:
                         return Loader.Engine.TR1;
-                    case Loader.Game.TR2:
-                    case Loader.Game.TR2Demo:
-                    case Loader.Game.TR2Gold:
+                    case Game.TR2:
+                    case Game.TR2Demo:
+                    case Game.TR2Gold:
                         return Loader.Engine.TR2;
-                    case Loader.Game.TR3:
-                    case Loader.Game.TR3Gold:
+                    case Game.TR3:
+                    case Game.TR3Gold:
                         return Loader.Engine.TR3;
-                    case Loader.Game.TR4:
-                    case Loader.Game.TR4Demo:
+                    case Game.TR4:
+                    case Game.TR4Demo:
                         return Loader.Engine.TR4;
-                    case Loader.Game.TR5:
+                    case Game.TR5:
                         return Loader.Engine.TR5;
                     default:
                         return Loader.Engine.Unknown;
