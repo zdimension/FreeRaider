@@ -84,7 +84,7 @@ namespace FreeRaider.Loader
                 {
                     // 262144 = 256*256*4
                     if (uncompSize / 262144 > 2)
-                        Log.Write("TR4Level.Load: NumMiscTextiles > 2");
+                        Cerr.Write("TR4Level.Load: NumMiscTextiles > 2");
 
                     Array.Resize(ref Textures, numTextiles);
 
@@ -113,7 +113,7 @@ namespace FreeRaider.Loader
 
             var unused = reader.ReadUInt32();
             if (unused != 0)
-                Log.Write("TR4Level.Load: unused: Expected 0, Found " + unused.ToString("X8"));
+                Cerr.Write("TR4Level.Load: unused: Expected 0, Found " + unused.ToString("X8"));
 
             var numRooms = reader.ReadUInt16();
             Rooms = reader.ReadArray(numRooms, () => Room.Read(reader, Engine.TR4));
@@ -225,7 +225,7 @@ namespace FreeRaider.Loader
 
             if (reader.BaseStream.Position < reader.BaseStream.Length)
             {
-                Log.Write("Error: " + (reader.BaseStream.Length - reader.BaseStream.Position) +
+                Cerr.Write("Error: " + (reader.BaseStream.Length - reader.BaseStream.Position) +
                                     " bytes of data after end of level");
             }
         }

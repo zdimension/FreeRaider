@@ -33,6 +33,18 @@ namespace FreeRaider
         // that are created dynamically may have variable string sizes.
 
         public const int LineDefaultSize = 128;
+
+        // Offscreen divider specifies how far item notifier will be placed from
+        // the final slide position. Usually it's enough to be 1/8 of the screen
+        // width, but if you want to increase or decrease notifier size, you must
+        // change this value properly.
+
+        public const float GUI_NOTIFIER_OFFSCREEN_DIVIDER = 8.0f;
+
+        // Notifier show time is a time notifier stays on screen (excluding slide
+        // effect). Maybe it's better to move it to script later.
+
+        public const float GUI_NOTIFIER_SHOWTIME = 2.0f;
     }
 
     // Anchoring is needed to link specific GUI element to specific screen position,
@@ -756,5 +768,197 @@ namespace FreeRaider
         /// Max. / actual value ratio
         /// </summary>
         private float baseRatio;
+    }
+
+    public class GUIItemNotifier
+    {
+        public GUIItemNotifier();
+
+        public void Start(int item, float time);
+
+        public void Reset();
+
+        public void Animate();
+
+        public void Draw();
+
+        public void SetPos(float x, float y);
+
+        public void SetRot(float x, float y);
+
+        public void SetSize(float size);
+
+        public void SetRotateTime(float time);
+
+
+        private bool active;
+
+        private int item;
+
+        private float absPosY;
+
+        private float absPosX;
+
+        private float posY;
+
+        private float startPosX;
+
+        private float endPosX;
+
+        private float currPosX;
+
+        private float rotX;
+
+        private float rotY;
+
+        private float currRotX;
+
+        private float currRotY;
+
+        private float size;
+
+        private float showTime;
+
+        private float currTime;
+
+        private float rotateTime;
+    }
+
+    public class Gui
+    {
+        public static void InitFontManager();
+
+        public static void Init();
+
+        public static void Destroy();
+
+        public static void InitBars();
+
+        public static void InitFaders();
+
+        public static void InitNotifier();
+
+        public static void InitTempLines();
+
+        public static void FillCrosshairBuffer();
+
+        public static void AddLine(TextLine line);
+
+        public static void DeleteLine(TextLine line);
+
+        public static void MoveLive(TextLine line);
+
+        public static void RenderStringLine(TextLine line);
+
+        public static void RenderStrings();
+
+        /// <summary>
+        /// Draws text using a <see cref="FontType.Secondary"/>.
+        /// </summary>
+        public static TextLine OutTextXY(float x, float y, string fmt);
+
+        /// <summary>
+        /// Helper method to setup OpenGL state for console drawing.
+        /// </summary>
+        public static void SwitchGLMode(char isGui);
+
+
+
+        /**
+         * Draws wireframe of this frustum.
+         *
+         * Expected state:
+         *  - Vertex array is enabled, color, tex coord, normal disabled
+         *  - No vertex buffer object is bound
+         *  - Texturing is disabled
+         *  - Alpha test is disabled
+         *  - Blending is enabled
+         *  - Lighting is disabled
+         * Ignored state:
+         *  - Currently bound texture.
+         *  - Currently bound element buffer.
+         *  - Depth test enabled (disables it, then restores)
+         *  - Vertex pointer (changes it)
+         *  - Matrices (changes them, restores)
+         *  - Line width (changes it, then restores)
+         *  - Current color (changes it)
+         * Changed state:
+         *  - Current position will be arbitrary.
+         *  - Vertex pointer will be arbitray.
+         *  - Current color will be arbitray (set by console)
+         *  - Blend mode will be SRC_ALPHA, ONE_MINUS_SRC_ALPHA (set by console)
+         */
+        public static void Render();
+
+        /**
+         *  Draw simple rectangle.
+         *  Only state it changes is the blend mode, according to blendMode value.
+         */
+        public static void DrawRect(
+            float x, float y, 
+            float width, float height, 
+            float[] colorUpperLeft, float[] colorUpperRight, 
+            float[] colorLowerLeft, float[] colorLowerRight,
+            BlendingMode blendMode,
+            uint texture = 0);
+
+        /**
+         *  Fader functions.
+         */
+        public static bool FadeStart(FaderType fader, FaderDir fadeDirection);
+
+        public static bool FadeStop(FaderType fader);
+
+        public static bool FadeAssignPic(FaderType fader, string picName);
+
+        public static FaderStatus FadeCheck(FaderType fader);
+
+        public static void FadeSetup(
+            FaderType fader,
+            uint alpha, uint r, uint g, uint b,
+            BlendingMode blendingMode,
+            ushort fadeInSpeed,
+            ushort fadeOutSpeed);
+
+        /**
+         * Item notifier functions.
+         */
+        public static void NotifierStart(int item);
+
+        public static void NotifierStop();
+
+        /**
+         * General GUI drawing routines.
+         */
+        public static void DrawCrosshair();
+
+        public static void DrawFaders();
+
+        public static void DrawBars();
+
+        public static void DrawLoadScreen(int value);
+
+        public static void DrawInventory();
+
+        public static void DrawNotifier();
+
+        /**
+         * General GUI update routines.
+         */
+        public static void Update();
+
+        public static void Resize();
+
+        /**
+         * Inventory rendering / manipulation functions
+         */
+        public static void Item_Frame(SSBoneFrame bf, float time);
+
+        public static void RenderItem(SSBoneFrame bf, float size, Transform mvMatrix);
+    }
+
+    public partial class Global
+    {
+        public static FontManager FontManager;
     }
 }

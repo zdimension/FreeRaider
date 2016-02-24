@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FreeRaider
 {
-    public class Log
+    public class Cerr
     {
         public static void Write(string str)
         {

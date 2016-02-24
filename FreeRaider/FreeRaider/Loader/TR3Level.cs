@@ -45,7 +45,7 @@ namespace FreeRaider.Loader
 
             var unused = reader.ReadUInt32();
             if (unused != 0)
-                Log.Write("TR3Level.Load: unused: Expected 0, Found " + unused.ToString("X8"));
+                Cerr.Write("TR3Level.Load: unused: Expected 0, Found " + unused.ToString("X8"));
 
             var numRooms = reader.ReadUInt16();
             Rooms = reader.ReadArray(numRooms, () => Room.Read(reader, Engine.TR3));
@@ -127,7 +127,7 @@ namespace FreeRaider.Loader
             }
 
             if (!File.Exists(SfxPath))
-                Log.Write("TR3Level.Load: '" + SfxPath + "' not found, no samples loaded");
+                Cerr.Write("TR3Level.Load: '" + SfxPath + "' not found, no samples loaded");
             else
             {
                 using (var fs = new FileStream(SfxPath, FileMode.Open))
@@ -163,7 +163,7 @@ namespace FreeRaider.Loader
 
             if (reader.BaseStream.Position < reader.BaseStream.Length)
             {
-                Log.Write("Error: " + (reader.BaseStream.Length - reader.BaseStream.Position) + " bytes of data after end of level");
+                Cerr.Write("Error: " + (reader.BaseStream.Length - reader.BaseStream.Position) + " bytes of data after end of level");
             }
         }
     }

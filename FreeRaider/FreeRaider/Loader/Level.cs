@@ -199,7 +199,7 @@ namespace FreeRaider.Loader
 
         public static Level CreateLoader(string fileName)
         {
-            Log.Write("Loading level '" + fileName + "'");
+            Cerr.Write("Loading level '" + fileName + "'");
             using (var fs = new FileStream(fileName, FileMode.Open))
             {
                 using (var br = new BinaryReader(fs))

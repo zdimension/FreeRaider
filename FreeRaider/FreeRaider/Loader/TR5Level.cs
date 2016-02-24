@@ -81,7 +81,7 @@ namespace FreeRaider.Loader
                 // 262144 = Width * Height * Depth
                 //        =  256  *  256   *  4
                 if (uncompSize / 262144 > 3)
-                    Log.Write("TR5Level.Load: NumMiscTextiles > 3");
+                    Cerr.Write("TR5Level.Load: NumMiscTextiles > 3");
 
                 var compBuffer = reader.ReadBytes((int) compSize);
 
@@ -98,7 +98,7 @@ namespace FreeRaider.Loader
             for (var i = 0; i < flags.Length; i++)
             {
                 if (flags[i] != 0)
-                    Log.Write("TR5Level.Load: flags[" + (i + 1) + "]: Expected 0, Found 0x" + flags[i].ToString("X8"));
+                    Cerr.Write("TR5Level.Load: flags[" + (i + 1) + "]: Expected 0, Found 0x" + flags[i].ToString("X8"));
             }
 
             var levelDataSize1 = reader.ReadUInt32();
@@ -106,7 +106,7 @@ namespace FreeRaider.Loader
 
             var unused = reader.ReadUInt32();
             if(unused != 0)
-                Log.Write("TR5Level.Load: unused: Expected 0, Found " + unused.ToString("X8"));
+                Cerr.Write("TR5Level.Load: unused: Expected 0, Found " + unused.ToString("X8"));
 
             var numRooms = reader.ReadUInt32();
             Rooms = reader.ReadArray(numRooms, () => Room.Read(reader, Engine.TR5));
@@ -220,7 +220,7 @@ namespace FreeRaider.Loader
 
             if (reader.BaseStream.Position < reader.BaseStream.Length)
             {
-                Log.Write("Error: " + (reader.BaseStream.Length - reader.BaseStream.Position) +
+                Cerr.Write("Error: " + (reader.BaseStream.Length - reader.BaseStream.Position) +
                                     " bytes of data after end of level");
             }
         }

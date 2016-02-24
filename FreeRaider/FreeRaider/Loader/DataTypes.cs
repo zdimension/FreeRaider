@@ -797,15 +797,15 @@ namespace FreeRaider.Loader
 
                     var separator2 = br.ReadByte();
                     if (separator2 != 0xCD)
-                        Log.Write("Light.Read[TR5]: separator2: Expected 0xCD, Found 0x" + separator2.ToString("X2"));
+                        Cerr.Write("Light.Read[TR5]: separator2: Expected 0xCD, Found 0x" + separator2.ToString("X2"));
 
                     var separator3 = br.ReadByte();
                     if (separator3 != 0xCD)
-                        Log.Write("Light.Read[TR5]: separator3: Expected 0xCD, Found 0x" + separator3.ToString("X2"));
+                        Cerr.Write("Light.Read[TR5]: separator3: Expected 0xCD, Found 0x" + separator3.ToString("X2"));
 
                     var separator4 = br.ReadByte();
                     if (separator4 != 0xCD)
-                        Log.Write("Light.Read[TR5]: separator4: Expected 0xCD, Found 0x" + separator4.ToString("X2"));
+                        Cerr.Write("Light.Read[TR5]: separator4: Expected 0xCD, Found 0x" + separator4.ToString("X2"));
                 }
             }
             else
@@ -924,14 +924,14 @@ namespace FreeRaider.Loader
             ret.Unknown_l3 = br.ReadUInt16();
             var filler = br.ReadUInt16();
             if (filler != 0)
-                Log.Write("Layer.Read: Expected 0, Found " + filler);
+                Cerr.Write("Layer.Read: Expected 0, Found " + filler);
             var filler2 = br.ReadUInt16();
             if(filler2 != 0)
-                Log.Write("Layer.Read: Expected 0, Found " + filler2);
+                Cerr.Write("Layer.Read: Expected 0, Found " + filler2);
             ret.BoundingBox = BoundingBox.Read(br);
             var filler3 = br.ReadUInt32();
             if(filler3 != 0)
-                Log.Write("Layer.Read: Expected 0, Found 0x" + filler3.ToString("X8"));
+                Cerr.Write("Layer.Read: Expected 0, Found 0x" + filler3.ToString("X8"));
             ret.Unknown_l4 = br.ReadUInt32();
             ret.Unknown_l5 = br.ReadUInt32();
             ret.Unknown_l6 = br.ReadUInt32();
@@ -1318,7 +1318,7 @@ namespace FreeRaider.Loader
             {
                 var xela = br.ReadUInt32();
                 if (xela != 0x414C4558)
-                    Log.Write("Room.Read[TR5]: 'XELA' header: Expected 0x414C4558, Found 0x" + xela.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: 'XELA' header: Expected 0x414C4558, Found 0x" + xela.ToString("X8"));
 
                 var roomDataSize = br.ReadUInt32();
                 var pos = br.BaseStream.Position;
@@ -1330,14 +1330,14 @@ namespace FreeRaider.Loader
 
                 var separator1 = br.ReadUInt32();
                 if (separator1 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator1: Expected 0xCDCDCDCD, Found 0x" + separator1.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator1: Expected 0xCDCDCDCD, Found 0x" + separator1.ToString("X8"));
 
                 var portalOffset = br.ReadInt32();
                 var sectorDataOffset = br.ReadUInt32();
 
                 var separator2 = br.ReadUInt32();
                 if (separator2 != 0 && separator2 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator2: Expected 0xCDCDCDCD, Found 0x" + separator2.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator2: Expected 0xCDCDCDCD, Found 0x" + separator2.ToString("X8"));
 
                 var staticMeshesOffset = br.ReadUInt32();
 
@@ -1353,11 +1353,11 @@ namespace FreeRaider.Loader
 
                 var numLights = br.ReadUInt16();
                 if (numLights > 512)
-                    Log.Write("Room.Read[TR5]: numLights > 512");
+                    Cerr.Write("Room.Read[TR5]: numLights > 512");
 
                 var numStaticMeshes = br.ReadUInt16();
                 if (numStaticMeshes > 512)
-                    Log.Write("Room.Read[TR5]: numStaticMeshes > 512");
+                    Cerr.Write("Room.Read[TR5]: numStaticMeshes > 512");
 
                 r.ReverbInfo = (ReverbInfo) br.ReadByte();
                 r.AlternateGroup = (sbyte)br.ReadByte();
@@ -1365,23 +1365,23 @@ namespace FreeRaider.Loader
 
                 var filler1 = br.ReadUInt32();
                 if (filler1 != 0x00007FFF)
-                    Log.Write("Room.Read[TR5]: filler1: Expected 0x00007FFF, Found 0x" + filler1.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: filler1: Expected 0x00007FFF, Found 0x" + filler1.ToString("X8"));
 
                 var filler2 = br.ReadUInt32();
                 if (filler2 != 0x00007FFF)
-                    Log.Write("Room.Read[TR5]: filler2: Expected 0x00007FFF, Found 0x" + filler2.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: filler2: Expected 0x00007FFF, Found 0x" + filler2.ToString("X8"));
 
                 var separator4 = br.ReadUInt32();
                 if (separator4 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator4: Expected 0xCDCDCDCD, Found 0x" + separator4.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator4: Expected 0xCDCDCDCD, Found 0x" + separator4.ToString("X8"));
 
                 var separator5 = br.ReadUInt32();
                 if (separator5 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator5: Expected 0xCDCDCDCD, Found 0x" + separator5.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator5: Expected 0xCDCDCDCD, Found 0x" + separator5.ToString("X8"));
 
                 var separator6 = br.ReadUInt32();
                 if (separator6 != 0xFFFFFFFF)
-                    Log.Write("Room.Read[TR5]: separator6: Expected 0xCDCDCDCD, Found 0x" + separator6.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator6: Expected 0xCDCDCDCD, Found 0x" + separator6.ToString("X8"));
 
                 r.AlternateRoom = br.ReadInt16();
 
@@ -1393,7 +1393,7 @@ namespace FreeRaider.Loader
 
                 var separator7 = br.ReadUInt32();
                 if(separator7 != 0 && separator7 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator7: Expected 0xCDCDCDCD, Found 0x" + separator7.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator7: Expected 0xCDCDCDCD, Found 0x" + separator7.ToString("X8"));
 
                 r.Unknown_R4a = br.ReadUInt16();
                 r.Unknown_R4b = br.ReadUInt16();
@@ -1404,43 +1404,43 @@ namespace FreeRaider.Loader
 
                 var separator8 = br.ReadUInt32();
                 if (separator8 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator8: Expected 0xCDCDCDCD, Found 0x" + separator8.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator8: Expected 0xCDCDCDCD, Found 0x" + separator8.ToString("X8"));
 
                 var separator9 = br.ReadUInt32();
                 if (separator9 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator9: Expected 0xCDCDCDCD, Found 0x" + separator9.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator9: Expected 0xCDCDCDCD, Found 0x" + separator9.ToString("X8"));
 
                 var separator10 = br.ReadUInt32();
                 if (separator10 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator10: Expected 0xCDCDCDCD, Found 0x" + separator10.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator10: Expected 0xCDCDCDCD, Found 0x" + separator10.ToString("X8"));
 
                 var separator11 = br.ReadUInt32();
                 if (separator11 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator11: Expected 0xCDCDCDCD, Found 0x" + separator11.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator11: Expected 0xCDCDCDCD, Found 0x" + separator11.ToString("X8"));
 
                 var separator12 = br.ReadUInt32();
                 if (separator12 != 0 && separator12 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator12: Expected 0xCDCDCDCD, Found 0x" + separator12.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator12: Expected 0xCDCDCDCD, Found 0x" + separator12.ToString("X8"));
 
                 var separator13 = br.ReadUInt32();
                 if (separator13 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator13: Expected 0xCDCDCDCD, Found 0x" + separator13.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator13: Expected 0xCDCDCDCD, Found 0x" + separator13.ToString("X8"));
 
                 var numTriangles = br.ReadUInt32();
                 if (numTriangles == 0xCDCDCDCD) numTriangles = 0;
                 if(numTriangles > 512)
-                    Log.Write("Room.Read[TR5]: numTriangles > 512");
+                    Cerr.Write("Room.Read[TR5]: numTriangles > 512");
                 r.Triangles = new Triangle[numTriangles];
 
                 var numRectangles = br.ReadUInt32();
                 if (numRectangles == 0xCDCDCDCD) numRectangles = 0;
                 if (numRectangles > 1024)
-                    Log.Write("Room.Read[TR5]: numRectangles > 1024");
+                    Cerr.Write("Room.Read[TR5]: numRectangles > 1024");
                 r.Rectangles = new QuadFace[numRectangles];
 
                 var separator14 = br.ReadUInt32();
                 if (separator14 != 0)
-                    Log.Write("Room.Read[TR5]: separator14: Expected 0, Found 0x" + separator14.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator14: Expected 0, Found 0x" + separator14.ToString("X8"));
 
                 var lightSize = br.ReadUInt32();
                 var numLights2 = br.ReadUInt32();
@@ -1467,19 +1467,19 @@ namespace FreeRaider.Loader
 
                 var separator15 = br.ReadUInt32();
                 if (separator15 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator15: Expected 0xCDCDCDCD, Found 0x" + separator15.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator15: Expected 0xCDCDCDCD, Found 0x" + separator15.ToString("X8"));
 
                 var separator16 = br.ReadUInt32();
                 if (separator16 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator16: Expected 0xCDCDCDCD, Found 0x" + separator16.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator16: Expected 0xCDCDCDCD, Found 0x" + separator16.ToString("X8"));
 
                 var separator17 = br.ReadUInt32();
                 if (separator17 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator17: Expected 0xCDCDCDCD, Found 0x" + separator17.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator17: Expected 0xCDCDCDCD, Found 0x" + separator17.ToString("X8"));
 
                 var separator18 = br.ReadUInt32();
                 if (separator18 != 0xCDCDCDCD)
-                    Log.Write("Room.Read[TR5]: separator18: Expected 0xCDCDCDCD, Found 0x" + separator18.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator18: Expected 0xCDCDCDCD, Found 0x" + separator18.ToString("X8"));
 
                 r.Lights = br.ReadArray(numLights, () => Light.Read(br, Engine.TR5));
 
@@ -1876,7 +1876,7 @@ namespace FreeRaider.Loader
             {
                 var filler = br.ReadUInt16();
                 if(filler != 0xFFEF)
-                    Log.Write("Moveable.Read[TR5]: filler: Expected 0xFFEF, Found 0x" + filler.ToString("X4"));
+                    Cerr.Write("Moveable.Read[TR5]: filler: Expected 0xFFEF, Found 0x" + filler.ToString("X4"));
             }
 
             return ret;
@@ -2023,7 +2023,7 @@ namespace FreeRaider.Loader
             if(ver < Engine.TR4)
             {
                 if (ret.Tile > 64)
-                    Log.Write("SpriteTexture.Read[" + ver + "]: SpriteTexture.Tile > 64");
+                    Cerr.Write("SpriteTexture.Read[" + ver + "]: SpriteTexture.Tile > 64");
 
                 ret.X0 = tx;
                 ret.Y0 = ty;
@@ -2038,7 +2038,7 @@ namespace FreeRaider.Loader
             else
             {
                 if (ret.Tile > 128)
-                    Log.Write("SpriteTexture.Read[" + ver + "]: SpriteTexture.Tile > 128");
+                    Cerr.Write("SpriteTexture.Read[" + ver + "]: SpriteTexture.Tile > 128");
 
                 ret.X0 = tleft;
                 ret.X1 = tright;
@@ -2660,17 +2660,17 @@ namespace FreeRaider.Loader
             if (ver >= Engine.TR4)
             {
                 if ((ret.TileAndFlag & 0x7FFF) > 128)
-                    Log.Write("ObjectTexture.Read[" + ver + "]: TileAndFlag > 128");
+                    Cerr.Write("ObjectTexture.Read[" + ver + "]: TileAndFlag > 128");
 
                 ret.NewFlags = br.ReadUInt16();
             }
             else
             {
                 if (ret.TileAndFlag > 64)
-                    Log.Write("ObjectTexture.Read[" + ver + "]: TileAndFlag > 64");
+                    Cerr.Write("ObjectTexture.Read[" + ver + "]: TileAndFlag > 64");
 
                 if((ret.TileAndFlag & (1 << 15)) != 0)
-                    Log.Write("ObjectTexture.Read[" + ver + "]: TileAndFlag has top bit set");
+                    Cerr.Write("ObjectTexture.Read[" + ver + "]: TileAndFlag has top bit set");
             }
 
             ret.Vertices = br.ReadArray(4, () => ObjectTextureVertex.Read(br, ver));
@@ -2689,7 +2689,7 @@ namespace FreeRaider.Loader
                 var filler = br.ReadUInt16();
 
                 if(filler != 0)
-                    Log.Write("ObjectTexture.Read[TR5]: filler: Expected 0, Found 0x" + filler.ToString("X4"));
+                    Cerr.Write("ObjectTexture.Read[TR5]: filler: Expected 0, Found 0x" + filler.ToString("X4"));
             }
 
             return ret;

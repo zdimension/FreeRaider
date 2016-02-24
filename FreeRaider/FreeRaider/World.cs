@@ -169,7 +169,7 @@ namespace FreeRaider
 
     public partial class Global
     {
-        public static EngineContainer LastContainer { get; set; }
+        public static EngineContainer LastContainer;
     }
 
     public class BaseItem

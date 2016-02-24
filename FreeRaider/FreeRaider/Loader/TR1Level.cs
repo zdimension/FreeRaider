@@ -39,7 +39,7 @@ namespace FreeRaider.Loader
 
             var unused = reader.ReadUInt32();
             if (unused != 0)
-                Log.Write("TR1Level.Load: unused: Expected 0, Found " + unused.ToString("X8"));
+                Cerr.Write("TR1Level.Load: unused: Expected 0, Found " + unused.ToString("X8"));
 
             var numRooms = reader.ReadUInt16();
             Rooms = reader.ReadArray(numRooms, () => Room.Read(reader, Engine.TR1));
@@ -166,7 +166,7 @@ namespace FreeRaider.Loader
 
             if(reader.BaseStream.Position < reader.BaseStream.Length)
             {
-                Log.Write("Error: " + (reader.BaseStream.Length - reader.BaseStream.Position) + " bytes of data after end of level");
+                Cerr.Write("Error: " + (reader.BaseStream.Length - reader.BaseStream.Position) + " bytes of data after end of level");
             }
         }
     }

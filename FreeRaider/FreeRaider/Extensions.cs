@@ -205,7 +205,37 @@ namespace FreeRaider
             return new Vector3(f / v.X, f / v.Y, f / v.Z);
         }
 
-        public static bool IsBetween(this float f, float a, float b, bool inclusive = true, bool reorder = true)
+        public static bool IsBetween<T>(this T f, T a, T b, bool inclusive = true, bool reorder = true)
+            where T : IComparable<T>
+        {
+            var c = a;
+            var d = b;
+            if (reorder)
+            {
+                c = GenericMin(a, b);
+                d = GenericMax(a, b);
+            }
+            var fc = f.CompareTo(c);
+            var fd = f.CompareTo(d);
+            if (inclusive) return fc >= 0 && fd <= 0;
+            return fc == 1 & fd == -1;
+        }
+
+        public static T GenericMin<T>(T a, T b)
+            where T : IComparable<T>
+        {
+            var c = a.CompareTo(b);
+            return c == 1 ? b : a;
+        }
+
+        public static T GenericMax<T>(T a, T b)
+            where T : IComparable<T>
+        {
+            var c = a.CompareTo(b);
+            return c == -1 ? b : a;
+        }
+
+     /*   public static bool IsBetween(this float f, float a, float b, bool inclusive = true, bool reorder = true)
         {
             return ((double) f).IsBetween(a, b, inclusive, reorder);
         }
@@ -226,7 +256,7 @@ namespace FreeRaider
             }
             if (inclusive) return f >= c && f <= d;
             return f > c & f < d;
-        }
+        }*/
 
         public static bool IsBetween(this Vector3 v, Vector3 a, Vector3 b, bool inclusive = true, bool reorder = true)
         {
@@ -322,6 +352,7 @@ namespace FreeRaider
         public static void Resize<T>(this List<T> list, int sz, T c = default(T))
         {
             var cur = list.Count;
+            if (sz == cur) return;
             if (sz < cur)
                 list.RemoveRange(sz, cur - sz);
             else if (sz > cur)
