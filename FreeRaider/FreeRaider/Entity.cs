@@ -314,7 +314,7 @@ namespace FreeRaider
 
         public int GetAnimDispatchCase(uint id);
 
-        public static void GetNextFrame(SSBoneFrame bf, float time, StateChange stc, short frame, short anim,
+        public static void GetNextFrame(SSBoneFrame bf, float time, StateChange stc, out short frame, out short anim,
             ushort animFlags);
 
         /// <summary>

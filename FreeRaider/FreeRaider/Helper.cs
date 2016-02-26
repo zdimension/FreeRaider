@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using OpenTK;
 using OpenTK.Audio.OpenAL;
 using FreeRaider.Loader;
@@ -131,6 +133,51 @@ namespace FreeRaider
             }
 
             Array.Copy(destinationArray, 0, destinationArray, copyLength, destinationArray.Length - copyLength);
+        }
+
+        [STAThread]
+        public static string GetClipboardText()
+        {
+            if (IsRunningOnMono)
+            {
+                /*var fullExePath = new FileInfo(Assembly.GetExecutingAssembly().Location);
+                var gtkAss = Assembly.LoadFile(Path.Combine(fullExePath.DirectoryName, "GtkClipboard.dll"));
+                var assMethod = gtkAss.GetTypes()[0].GetMethod("GetGtkText");
+                txtClipboard.Text = assMethod.Invoke(null, new object[] { }) as string;*/
+                try
+                {
+                    return Clipboard.GetText();
+                }
+                catch
+                {
+                    return "";
+                }
+            }
+            else {
+                return Clipboard.GetText();
+            }
+        }
+
+        private static bool IsRunningOnMono => (Type.GetType("Mono.Runtime") != null);
+
+        public static MethodInfo GetMethodInfo(Delegate d)
+        {
+            return d.Method;
+        }
+
+        public static T CreateInstance<T>(params object[] args)
+        {
+            return (T) System.Activator.CreateInstance(typeof (T), args);
+        }
+
+        public static unsafe float[] GetArrayFromPointer(float* ptr, int count)
+        {
+            var ret = new float[count];
+            for (var i = 0; i < count; i++)
+            {
+                ret[i] = ptr[i];
+            }
+            return ret;
         }
     }
 

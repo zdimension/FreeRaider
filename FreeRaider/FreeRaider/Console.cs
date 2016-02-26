@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Text;
 using System.Threading.Tasks;
+using FreeRaider.Loader;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Input;
 
 namespace FreeRaider
 {
@@ -77,7 +78,7 @@ namespace FreeRaider
         /// <summary>
         /// Cursor visibility flag
         /// </summary>
-        private sbyte showCursor;
+        private bool showCursor;
 
         /// <summary>
         /// Ready-to-use flag
@@ -110,8 +111,6 @@ namespace FreeRaider
 
         public static ConsoleInfo Instance => new ConsoleInfo();
 
-        ~ConsoleInfo();
-
         public void InitFonts()
         {
             font = Global.FontManager.GetFont(FontType.Console);
@@ -137,7 +136,7 @@ namespace FreeRaider
             inited = false;
             spacing = interval;
             // font.FontSize has absolute size (after scaling)
-            LineHeight = (1 + spacing) * font.FontSize;
+            LineHeight = (short)((1 + spacing) * font.FontSize);
             cursorX = 8 + 1;
             CursorY = Math.Min((short)(Global.ScreenInfo.H - LineHeight * visibleLines), (short)8);
             inited = true;
@@ -164,36 +163,255 @@ namespace FreeRaider
             var n = 0;
             foreach (var line in lines)
             {
-                var col = Global.FontManager.GetFontStyle(line.StyleID).RealColor;
                 y += LineHeight;
-                font.GLFontColour = col;
-                
+                font.GLFontColor = Global.FontManager.GetFontStyle(line.StyleID).RealColor;
+                GLF.RenderStr(font, x, y, line.Text);
+                n++;
+                if (n >= visibleLines)
+                    break;
+            }
+            font.GLFontColor = Global.FontManager.GetFontStyle(FontStyle.ConsoleInfo).RealColor;
+            GLF.RenderStr(font, x, CursorY + LineHeight, editingLine);
+        }
+
+        public void DrawBackground()
+        {
+            // draw console background to see the text
+            Gui.DrawRect(0, CursorY + LineHeight - 8, Global.ScreenInfo.W, Global.ScreenInfo.H, backgroundColor,
+                backgroundColor, backgroundColor, backgroundColor, BlendingMode.Screen);
+
+            // draw finalise line
+            var white = new[] {1, 1, 1, 0.7f};
+            Gui.DrawRect(0, CursorY + LineHeight - 8, Global.ScreenInfo.W, 2, white, white, white, white, BlendingMode.Screen);
+        }
+
+        public void DrawCursor()
+        {
+            if(BlinkPeriod != 0)
+            {
+                blinkTime += Global.EngineFrameTime;
+                if(blinkTime > BlinkPeriod)
+                {
+                    blinkTime = 0;
+                    showCursor = !showCursor;
+                }
+            }
+
+            if(showCursor)
+            {
+                var white = new[] { 1, 1, 1, 0.7f };
+                Gui.DrawRect(cursorX, CursorY + LineHeight * 0.9f, 1, LineHeight * 0.8f, white, white, white, white, BlendingMode.Screen);
             }
         }
 
-        public void DrawBackground();
+        public void Filter(string text)
+        {
+            foreach (var c in text)
+            {
+                Edit(c);
+            }
+        }
 
-        public void DrawCursor();
+        public void Edit(int key, int mod = -1)
+        {
+            if (key == '`' || key == '\\' || !inited)
+            {
+                return;
+            }
 
-        public void Filter(string text);
+            if (key == '\n')
+            {
+                AddLog(editingLine);
+                AddLine("> " + editingLine, FontStyle.ConsoleInfo);
+                Engine.ExecCmd(editingLine);
+                editingLine = "";
+                cursorPos = 0;
+                cursorX = 8 + 1;
+                return;
+            }
 
-        public void Edit(int key, int mod = -1);
+            blinkTime = 0;
+            showCursor = true;
 
-        public void CalcCursorPosition();
+            var oldLength = Helper.UTF8StrLen(editingLine);
+            var k = (Key) key;
+            switch (k)
+            {
+                case Key.Up:
+                case Key.Down:
+                    if (historyLines.Count == 0) break;
+                    Audio.Send(Global.EngineLua.GetGlobalSound(TR_AUDIO_SOUND_GLOBALID.MenuPage));
+                    if (k == Key.Up && historyPos < historyLines.Count)
+                        historyPos++;
+                    else if (k == Key.Down && historyPos > 0)
+                        historyPos--;
+                    editingLine = historyPos > 0 ? historyLines[historyPos - 1] : "";
+                    cursorPos = (short) Helper.UTF8StrLen(editingLine);
+                    break;
+                case Key.Left:
+                    if (cursorPos > 0)
+                        cursorPos--;
+                    break;
+                case Key.Right:
+                    if (cursorPos < oldLength)
+                        cursorPos++;
+                    break;
+                case Key.Home:
+                    cursorPos = 0;
+                    break;
+                case Key.End:
+                    cursorPos = (short) oldLength;
+                    break;
+                case Key.BackSpace:
+                    if (cursorPos > 0)
+                    {
+                        editingLine = editingLine.Remove(cursorPos - 1, 1);
+                        cursorPos--;
+                    }
+                    break;
+                case Key.Delete:
+                    if (cursorPos < oldLength)
+                    {
+                        editingLine = editingLine.Remove(cursorPos, 1);
+                    }
+                    break;
+                case Key.Tab:
+                    var needle = editingLine.Substring(0, cursorPos);
+                    // find auto-completion terms, case-insensitive
+                    var found = CompletionItems.Where(x => x.StartsWithLowercase(needle)).ToList();
+                    if (found.Count == 0)
+                    {
+                        // no completion, do nothing
+                    }
+                    else if (found.Count == 1)
+                    {
+                        // if we have only one term found, use it!
+                        var completion = found[0];
+                        editingLine = editingLine.Remove(0, completion.Length);
+                        editingLine = editingLine.Insert(0, completion);
+                        cursorPos = (short) completion.Length;
+                    }
+                    else
+                    {
+                        // else we must find the common completion string
+                        for (var i = 0; i < found.Count; i++)
+                        {
+                            // cut off the needle part
+                            found[i] = found[i].Remove(0, needle.Length);
+                        }
+                        // now find a common start
+                        var common = found[0];
+                        for (var i = 1; common.Length != 0 && i < found.Count; i++)
+                        {
+                            // cut off from the end that's not common with current
+                            for (var j = 0; j < Math.Min(common.Length, found[i].Length); j++)
+                            {
+                                if (char.ToLower(common[j]) != char.ToLower(found[i][j]))
+                                {
+                                    common = common.Remove(j);
+                                    break;
+                                }
+                            }
+                        }
+                        if (common.Length == 0)
+                        {
+                            // nothing common, print possible completions
+                            AddLine("Possible completions:", FontStyle.ConsoleInfo);
+                            foreach (var term in found)
+                            {
+                                AddLine("* " + needle + term, FontStyle.ConsoleInfo);
+                            }
+                        }
+                        else
+                        {
+                            editingLine = editingLine.Insert(cursorPos, common);
+                            cursorPos += (short) common.Length;
+                        }
+                    }
+                    break;
+                default:
+                    if (k == Key.V && mod > 0 && mod.HasFlagSig((int) KeyModifiers.Control))
+                    {
+                        var clipboard = Helper.GetClipboardText();
+                        if(!string.IsNullOrWhiteSpace(clipboard))
+                        {
+                            var textLength = Helper.UTF8StrLen(clipboard);
+                            if(oldLength < LineSize - textLength)
+                            {
+                                editingLine = editingLine.Insert(cursorPos, clipboard);
+                                cursorPos += (short)textLength;
+                            }
+                        }
+                    }
+                    else if(mod < 0 && oldLength < LineSize - 1 && k >= Key.Space)
+                    {
+                        editingLine = editingLine.Insert(cursorPos, ((char) key).ToString());
+                        cursorPos++;
+                    }
+                    break;
+            }
 
-        public void AddLog(string text);
+            CalcCursorPosition();
+        }
 
-        public void AddLine(string text, FontStyle style);
+        public void CalcCursorPosition()
+        {
+            if(font != null)
+            {
+                cursorX = (short)(8 + 1 + GLF.GetStringLen(font, editingLine, cursorPos));
+            }
+        }
 
-        public void AddText(string text, FontStyle style);
+        public void AddLog(string text)
+        {
+            if(inited && !string.IsNullOrWhiteSpace(text))
+            {
+                historyLines.Insert(0, text);
+                if(historyLines.Count > BufferSize)
+                    historyLines.Resize(BufferSize);
+                historyPos = 0;
+            }
+        }
 
-        public void Printf(string fmt);
+        public void AddLine(string text, FontStyle style)
+        {
+            if(inited && !string.IsNullOrWhiteSpace(text))
+            {
+                Console.WriteLine("CON: " + text);
+                lines.Insert(0, new Line(text, style));
+                historyPos = 0;
+            }
+        }
 
-        public void Warning(int warnStringIndex);
+        public void AddText(string text, FontStyle style)
+        {
+            foreach (var ln in text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                AddLine(ln, style);
+            }
+        }
 
-        public void Notify(int notifyStringIndex);
+        public void Printf(string fmt, params object[] args)
+        {
+            AddLine(string.Format(fmt, args), FontStyle.ConsoleNotify);
+        }
 
-        public void Clean();
+        public void Warning(int warnStringIndex, params object[] args)
+        {
+            var fmt = Global.EngineLua.GetSysNotify(warnStringIndex, 256);
+            AddLine(string.Format(fmt, args), FontStyle.ConsoleWarning);
+        }
+
+        public void Notify(int notifyStringIndex, params object[] args)
+        {
+            var fmt = Global.EngineLua.GetSysNotify(notifyStringIndex, 256);
+            AddLine(string.Format(fmt, args), FontStyle.ConsoleNotify);
+        }
+
+        public void Clean()
+        {
+            lines.Clear();
+        }
 
         /// <summary>
         /// Visibility flag
@@ -257,5 +475,13 @@ namespace FreeRaider
         }
 
         public List<string> CompletionItems { get; set; }
+    }
+
+    public partial class Extensions
+    {
+        public static bool StartsWithLowercase(this string haystack, string needle)
+        {
+            return haystack.StartsWith(needle, StringComparison.InvariantCultureIgnoreCase);
+        }
     }
 }

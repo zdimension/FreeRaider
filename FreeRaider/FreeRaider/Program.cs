@@ -14,7 +14,7 @@ namespace FreeRaider
             Helper.Random = new Random();
 
             var lvl = Level.CreateLoader(args[0]);
-
+            
             Console.ReadLine();
         }
     }

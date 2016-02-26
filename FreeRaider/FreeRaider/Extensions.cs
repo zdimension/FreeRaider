@@ -439,5 +439,34 @@ namespace FreeRaider
             b.CopyTo(r, a.Length);
             return r;
         }
+
+        public static Matrix4 MultiplyByTransform(this Matrix4 m, Transform t)
+        {
+            return m * (Matrix4) t;
+        }
+
+        public static float[] GetOpenGLSubMatrix(this Matrix3 m)
+        {
+            return new[]
+            {
+                m.Row0.X,
+                m.Row1.X,
+                m.Row2.X,
+                0,
+                m.Row0.Y,
+                m.Row1.Y,
+                m.Row2.Y,
+                0,
+                m.Row0.Z,
+                m.Row1.Z,
+                m.Row2.Z,
+                0
+            };
+        }
+
+        public static string Left(this string input, int length)
+        {
+            return (input.Length < length) ? input : input.Substring(0, length);
+        }
     }
 }

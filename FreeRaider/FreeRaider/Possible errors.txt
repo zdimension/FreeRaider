@@ -1,4 +1,9 @@
 ﻿
-Dans Mesh.cs, L1078, je fais tout en une seule ligne sur le Vector3 au lieu de faire une ligne par composante comme dans OpenTomb. A verifie
+Dans Mesh.cs, L1078, je fais tout en une seule ligne sur le Vector3 au lieu de faire une ligne par composante comme dans OpenTomb. A vérifier.
 
 Dans GLFont.cs, L212, j'utilise GL.TexParameter alors que OpenTomb utilise glTexParameterI.
+
+Dans GLFont.cs, L221 et quelques autres fois OpenTK a inversé format et internalFormat dans les paramètres de TexImage2D, du coup
+je cast manuellement.
+
+Dans Helper.cs, L173, j'incrémente direct le pointeur au lieu de faire sizeof(T)*i qui n'est peut-être pas nécessaire. A vérifier.
