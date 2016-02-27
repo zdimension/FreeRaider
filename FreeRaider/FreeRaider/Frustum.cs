@@ -333,9 +333,8 @@ namespace FreeRaider
 
         public bool IsOBBVisible(OBB obb, Camera cam)
         {
-            var ins = false;
-            var p = obb.Polygons;
-            for (int i = 0; i < 6; i++, p++)
+            var ins = true;
+            foreach (var p in obb.Polygons)
             {
                 var t = p.Plane.Distance(cam.Position);
                 if(t > 0.0 && IsPolyVisible(p, cam))

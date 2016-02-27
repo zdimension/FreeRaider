@@ -164,6 +164,22 @@ namespace FreeRaider
 
                 resultPageWidth = (uint)Math.Min(maxTextureEdgeLength, Helper.NextPowerOf2((uint) (Math.Sqrt(areaSum) * Constants.Sqrt2)));
             }
+            else
+            {
+                resultPageWidth = Helper.NextPowerOf2((uint)maxTextureEdgeLength);
+            }
+
+            foreach (var tex in objectTextures)
+            {
+                addObjectTexture(tex);
+            }
+
+            foreach (var tex in spriteTextures)
+            {
+                addSpriteTexture(tex);
+            }
+
+            layOutTextures();
         }
 
         ~BorderedTextureAtlas();

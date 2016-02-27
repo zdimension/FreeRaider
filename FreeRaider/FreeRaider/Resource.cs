@@ -90,13 +90,103 @@ namespace FreeRaider
 
         public static void Res_GenVBOs(World world);
 
-        public static uint Res_Sector_BiggestCorner(uint v1, uint v2, uint v3, uint v4);
+        public static uint Res_Sector_BiggestCorner(ref uint v1, ref uint v2, uint v3, uint v4)
+        {
+            v1 = v1 > v2 ? v1 : v2;
+            v2 = v3 > v4 ? v3 : v4;
+            return v1 > v2 ? v1 : v2;
+        }
 
-        public static void Res_Sector_SetTweenFloorConfig(SectorTween tween);
+        public static void Res_Sector_SetTweenFloorConfig(SectorTween tween)
+        {
+            if (tween.FloorCorners[0][2] > tween.FloorCorners[1][2])
+            {
+                var temp = tween.FloorCorners[0][2];
+                tween.FloorCorners[0][2] = tween.FloorCorners[1][2];
+                tween.FloorCorners[1][2] = temp;
 
-        public static void Res_Sector_SetTweenCeilingConfig(SectorTween tween);
+                temp = tween.FloorCorners[2][2];
+                tween.FloorCorners[2][2] = tween.FloorCorners[3][2];
+                tween.FloorCorners[3][2] = temp;
+            }
 
-        public static int Res_Sector_IsWall(RoomSector ws, RoomSector ns);
+            if (tween.FloorCorners[3][2] > tween.FloorCorners[2][2])
+            {
+                tween.FloorTweenType = SectorTweenType.TwoTriangles;
+            }
+            else if ((tween.FloorCorners[0][2] != tween.FloorCorners[1][2]) &&
+                     (tween.FloorCorners[2][2] != tween.FloorCorners[3][2]))
+            {
+                tween.FloorTweenType = SectorTweenType.Quad;
+            }
+            else if (tween.FloorCorners[0][2] != tween.FloorCorners[1][2])
+            {
+                tween.FloorTweenType = SectorTweenType.TriangleLeft;
+            }
+            else if (tween.FloorCorners[2][2] != tween.FloorCorners[3][2])
+            {
+                tween.FloorTweenType = SectorTweenType.TriangleRight;
+            }
+            else
+            {
+                tween.FloorTweenType = SectorTweenType.None;
+            }
+        }
+
+        public static void Res_Sector_SetTweenCeilingConfig(SectorTween tween)
+        {
+            if (tween.CeilingCorners[0][2] > tween.CeilingCorners[1][2])
+            {
+                var temp = tween.CeilingCorners[0][2];
+                tween.CeilingCorners[0][2] = tween.CeilingCorners[1][2];
+                tween.CeilingCorners[1][2] = temp;
+
+                temp = tween.CeilingCorners[2][2];
+                tween.CeilingCorners[2][2] = tween.CeilingCorners[3][2];
+                tween.CeilingCorners[3][2] = temp;
+            }
+
+            if (tween.CeilingCorners[3][2] > tween.CeilingCorners[2][2])
+            {
+                tween.CeilingTweenType = SectorTweenType.TwoTriangles;
+            }
+            else if ((tween.CeilingCorners[0][2] != tween.CeilingCorners[1][2]) &&
+                     (tween.CeilingCorners[2][2] != tween.CeilingCorners[3][2]))
+            {
+                tween.CeilingTweenType = SectorTweenType.Quad;
+            }
+            else if (tween.CeilingCorners[0][2] != tween.CeilingCorners[1][2])
+            {
+                tween.CeilingTweenType = SectorTweenType.TriangleLeft;
+            }
+            else if (tween.CeilingCorners[2][2] != tween.CeilingCorners[3][2])
+            {
+                tween.CeilingTweenType = SectorTweenType.TriangleRight;
+            }
+            else
+            {
+                tween.CeilingTweenType = SectorTweenType.None;
+            }
+        }
+
+        public static int Res_Sector_IsWall(RoomSector ws, RoomSector ns)
+        {
+            if(ws.PortalToRoom < 0 && ns.PortalToRoom < 0 && ws.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Wall)
+            {
+                return 1;
+            }
+
+            if(ns.PortalToRoom < 0 && ns.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall && ws.PortalToRoom >= 0)
+            {
+                ws = ws.CheckPortalPointer();
+                if(ws.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Wall || !ns.IsTwoSidePortal(ws))
+                {
+                    return 1;
+                }
+            }
+
+            return 0;
+        }
 
         public static void Res_Sector_FixHeights(RoomSector sector);
 
@@ -112,7 +202,11 @@ namespace FreeRaider
 
         public static void Res_CreateEntityFunc(Script.ScriptEngine lua, string func_name, int entity_id);
 
-        public static void Res_GenEntityFunctions(Dictionary<uint, Entity> entities);
+        public static void Res_GenEntityFunctions(Dictionary<uint, Entity> entities)
+        {
+            foreach(var pair in entities)
+                Res_SetEntityFunction(pair.Value);
+        }
 
         // Assign pickup functions to previously created base items.
 
@@ -127,7 +221,25 @@ namespace FreeRaider
         // Check if entity index was already processed (needed to remove dublicated activation calls).
         // If entity is not processed, add its index into lookup table.
 
-        public static bool Res_IsEntityProcessed(ushort lookup_table, ushort entity_index);
+        public static bool Res_IsEntityProcessed(int[] lookup_table, ushort entity_index)
+        {
+            // Fool-proof check for entity existence. Fixes LOTS of stray non-existent
+            // entity #256 occurences in original games (primarily TR4-5).
+
+            if (Global.EngineWorld.GetEntityByID(entity_index) == null) return true;
+
+            var currTableIndex = 0;
+
+            while(lookup_table[currTableIndex] != -1)
+            {
+                if(lookup_table[currTableIndex] == entity_index) return true;
+                if (currTableIndex + 1 == lookup_table.Length) break;
+                currTableIndex++;
+            }
+
+            lookup_table[currTableIndex] = entity_index;
+            return false;
+        }
 
         // Open autoexec.
 

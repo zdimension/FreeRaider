@@ -393,19 +393,19 @@ namespace FreeRaider
 
         public void Printf(string fmt, params object[] args)
         {
-            AddLine(string.Format(fmt, args), FontStyle.ConsoleNotify);
+            AddLine(Helper.Format(fmt, args), FontStyle.ConsoleNotify);
         }
 
         public void Warning(int warnStringIndex, params object[] args)
         {
             var fmt = Global.EngineLua.GetSysNotify(warnStringIndex, 256);
-            AddLine(string.Format(fmt, args), FontStyle.ConsoleWarning);
+            AddLine(Helper.Format(fmt, args), FontStyle.ConsoleWarning);
         }
 
         public void Notify(int notifyStringIndex, params object[] args)
         {
             var fmt = Global.EngineLua.GetSysNotify(notifyStringIndex, 256);
-            AddLine(string.Format(fmt, args), FontStyle.ConsoleNotify);
+            AddLine(Helper.Format(fmt, args), FontStyle.ConsoleNotify);
         }
 
         public void Clean()

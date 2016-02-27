@@ -17,7 +17,7 @@ namespace FreeRaider
 
         public static int CheckOpenGLErrorDetailed(string file, int line)
         {
-            for (;;)
+            while(true)
             {
                 var glErr = GL.GetError();
                 if(glErr == ErrorCode.NoError)
@@ -25,69 +25,89 @@ namespace FreeRaider
                     return 0;
                 }
 
-                // TODO: Log all the stuff
-                /*
-                switch(glErr)
-                {
-                    case GL_INVALID_VALUE:
-                        Sys_DebugLog(GL_LOG_FILENAME, "glError: GL_INVALID_VALUE in %s:%d", file, line);
-                        return 1;
-
-                    case GL_INVALID_ENUM:
-                        Sys_DebugLog(GL_LOG_FILENAME, "glError: GL_INVALID_ENUM in %s:%d", file, line);
-                        return 1;
-
-                    case GL_INVALID_OPERATION:
-                        Sys_DebugLog(GL_LOG_FILENAME, "glError: GL_INVALID_OPERATION in %s:%d", file, line);
-                        return 1;
-
-                    case GL_STACK_OVERFLOW:
-                        Sys_DebugLog(GL_LOG_FILENAME, "glError: GL_STACK_OVERFLOW in %s:%d", file, line);
-                        return 1;
-
-                    case GL_STACK_UNDERFLOW:
-                        Sys_DebugLog(GL_LOG_FILENAME, "glError: GL_STACK_UNDERFLOW in %s:%d", file, line);
-                        return 1;
-
-                    case GL_OUT_OF_MEMORY:
-                        Sys_DebugLog(GL_LOG_FILENAME, "glError: GL_OUT_OF_MEMORY in %s:%d", file, line);
-                        return 1;
-
-                        /* GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT_ARB
-                           GL_LOSE_CONTEXT_ON_RESET_ARB
-                           GL_GUILTY_CONTEXT_RESET_ARB
-                           GL_INNOCENT_CONTEXT_RESET_ARB
-                           GL_UNKNOWN_CONTEXT_RESET_ARB
-                           GL_RESET_NOTIFICATION_STRATEGY_ARB
-                           GL_NO_RESET_NOTIFICATION_ARB* /
-
-                        default:
-                        Sys_DebugLog(GL_LOG_FILENAME, "glError: uncnown error = 0x%X in %s:%d", file, line, glErr);
-                        return 1;
-                };
-                */
-
+                Sys.DebugLog(Constants.GL_LOG_FILENAME, "OpenGL Error: {0} (0x{0:X4}}) in {1}:{2}", glErr, file, line);
                 return 1;
+
+                /*switch(glErr)
+                {
+                    case ErrorCode.InvalidValue:
+                        Sys.DebugLog(Constants.LOG_FILENAME, "OpenGL Error: Invalid Value in {0}:{1}", file, line);
+                        return 1;
+
+                    case ErrorCode.InvalidEnum:
+                        Sys.DebugLog(Constants.LOG_FILENAME, "OpenGL Error: Invalid Enum in {0}:{1}", file, line);
+                        return 1;
+
+                    case ErrorCode.InvalidFramebufferOperation:
+                        Sys.DebugLog(Constants.LOG_FILENAME, "OpenGL Error: Invalid Operation in {0}:{1}", file, line);
+                        return 1;
+
+                    case ErrorCode.StackOverflow:
+                        Sys.DebugLog(Constants.LOG_FILENAME, "OpenGL Error: Stack Overflow in {0}:{1}", file, line);
+                        return 1;
+
+                    case ErrorCode.StackUnderflow:
+                        Sys.DebugLog(Constants.LOG_FILENAME, "OpenGL Error: Stack Underflow in {0}:{1}", file, line);
+                        return 1;
+
+                    case ErrorCode.OutOfMemory:
+                        Sys.DebugLog(Constants.LOG_FILENAME, "OpenGL Error: Out of Memory in {0}:{1}", file, line);
+                        return 1;
+
+                    default:
+                        Sys.DebugLog(Constants.LOG_FILENAME, "OpenGL Error: '{2}' = 0x{2:X2} in {0}:{1}", file, line, glErr);
+                        return 1;
+                }*/
             }
         }
 
-        public static void PrintShaderInfoLog(int obj);
+        public static void PrintShaderInfoLog(int obj)
+        {
+            var isProgram = GL.IsProgram(obj);
+            var isShader = GL.IsShader(obj);
+
+            if (!(isProgram ^ isShader))
+            {
+                Sys.DebugLog(Constants.GL_LOG_FILENAME, "Object {0} is neither a shader nor a program", obj);
+                return;
+            }
+
+            CheckOpenGLError(); // check for OpenGL errors
+
+            var infoLog = isProgram ? GL.GetProgramInfoLog(obj) : GL.GetShaderInfoLog(obj);
+            if (!string.IsNullOrWhiteSpace(infoLog))
+            {
+                Sys.DebugLog(Constants.GL_LOG_FILENAME, "GL InfoLog[{0}]:", infoLog.Length);
+                Sys.DebugLog(Constants.GL_LOG_FILENAME, infoLog);
+            }
+        }
 
         public static bool LoadShaderFromBuff(int shaderObj, string source)
         {
             var compileStatus = 0;
             GL.ShaderSource(shaderObj, source);
-            // TODO: Log all the stuff
+            Sys.DebugLog(Constants.GL_LOG_FILENAME, "Source loaded");
             GL.CompileShader(shaderObj);
+            Sys.DebugLog(Constants.GL_LOG_FILENAME, "Trying to compile");
             // check for OpenGL errors
             if(CheckOpenGLError() != 0)
             {
+                Sys.DebugLog(Constants.GL_LOG_FILENAME, "Compilation failed");
                 return false;
             }
             GL.GetShader(shaderObj, ShaderParameter.CompileStatus, out compileStatus);
             PrintShaderInfoLog(shaderObj);
 
-            return compileStatus != 0;
+            if (compileStatus == 0)
+            {
+                Sys.DebugLog(Constants.GL_LOG_FILENAME, "Compilation failed");
+                return false;
+            }
+            else
+            {
+                Sys.DebugLog(Constants.GL_LOG_FILENAME, "Compilation succeeded");
+                return true;
+            }
         }
 
         public static bool LoadShaderFromFile(int shaderObj, string fileName, string additionalDefines)
@@ -116,13 +136,22 @@ namespace FreeRaider
                 return false;
             }
 
-            // TODO: Log all the stuff
+            Sys.DebugLog(Constants.GL_LOG_FILENAME, "Source loaded");
             GL.CompileShader(shaderObj);
-            // check for OpenGL errors
+            Sys.DebugLog(Constants.GL_LOG_FILENAME, "Trying to compile");
             GL.GetShader(shaderObj, ShaderParameter.CompileStatus, out compileStatus);
             PrintShaderInfoLog(shaderObj);
 
-            return compileStatus != 0;
+            if(compileStatus != 1)
+            {
+                Sys.DebugLog(Constants.GL_LOG_FILENAME, "Compilation failed");
+                return false;
+            }
+            else
+            {
+                Sys.DebugLog(Constants.GL_LOG_FILENAME, "Compilation succeeded");
+                return true;
+            }
         }
     }
 }

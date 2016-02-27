@@ -2242,7 +2242,7 @@ namespace FreeRaider
                 var l = Global.GuiTempLines[Global.TempLinesUsed];
                 l.FontID = FontType.Secondary;
                 l.StyleID = FontStyle.Generic;
-                l.Text = string.Format(fmt, args);
+                l.Text = Helper.Format(fmt, args);
                 l.Next = null;
                 l.Previous = null;
                 Global.TempLinesUsed++;

@@ -61,7 +61,7 @@ namespace FreeRaider
     {
         public static void Printf(string fmt, params object[] args)
         {
-            Console.Error.WriteLine(fmt, string.Format(fmt, args));
+            Console.Error.WriteLine(Helper.Format(fmt, args));
         }
 
         public static void Init()
@@ -108,13 +108,13 @@ namespace FreeRaider
 
         public static void Error(string error, params object[] args)
         {
-            DebugLog(Constants.LOG_FILENAME, "System error: {0}", string.Format(error, args));
+            DebugLog(Constants.LOG_FILENAME, "System error: {0}", error, args);
             Engine.Shutdown(1);
         }
 
         public static void Warn(string warning, params object[] args)
         {
-            DebugLog(Constants.LOG_FILENAME, "Warning: {0}", string.Format(warning, args));
+            DebugLog(Constants.LOG_FILENAME, "Warning: {0}", warning, args);
         }
 
         public static void DebugLog(string file, string fmt, params object[] args)
@@ -132,7 +132,7 @@ namespace FreeRaider
             }
             using (var sw = new StreamWriter(fp))
             {
-                sw.WriteLine(fmt, args);
+                sw.WriteLine(Helper.Format(fmt, args));
             }
             fp.Close();
         }

@@ -109,8 +109,10 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Ragdoll.cs" />
+    <Compile Include="Render.cs" />
     <Compile Include="Resource.cs" />
     <Compile Include="ShaderDescription.cs" />
+    <Compile Include="ShaderManager.cs" />
     <Compile Include="Strings.cs" />
     <Compile Include="System.cs" />
     <Compile Include="Transform.cs" />

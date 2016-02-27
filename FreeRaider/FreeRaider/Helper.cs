@@ -135,6 +135,11 @@ namespace FreeRaider
             Array.Copy(destinationArray, 0, destinationArray, copyLength, destinationArray.Length - copyLength);
         }
 
+        public static T[] RepeatValue<T>(int count, Func<T> value)
+        {
+            return Enumerable.Range(0, count).Select(x => value()).ToArray();
+        }
+
         [STAThread]
         public static string GetClipboardText()
         {
@@ -223,7 +228,17 @@ namespace FreeRaider
             }
         }
 
-        
+        public static string Format(string format, params object[] args)
+        {
+            return string.Format(format, args);
+        }
+
+        public static void Swap<T>(ref T a, ref T b)
+        {
+            var temp = a;
+            a = b;
+            b = temp;
+        }
     }
 
     public static class ALExt

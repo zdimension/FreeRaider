@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -507,6 +508,26 @@ namespace FreeRaider
                 default:
                     throw new IndexOutOfRangeException();
             }
+        }
+
+        public static void Swap(this Array arr, int a, int b)
+        {
+            var temp = arr.GetValue(a);
+            var _b = arr.GetValue(b);
+            arr.SetValue(_b, a);
+            arr.SetValue(temp, b);
+        }
+
+        public static void Swap<T>(this List<T> arr, int a, int b)
+        {
+            var temp = arr[a];
+            arr[a] = arr[b];
+            arr[a] = temp;
+        }
+
+        public static double ElapsedMicroseconds(this Stopwatch sw)
+        {
+            return sw.ElapsedTicks * 1000000.0f / Stopwatch.Frequency;
         }
     }
 }
