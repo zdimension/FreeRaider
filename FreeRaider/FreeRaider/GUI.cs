@@ -1706,7 +1706,7 @@ namespace FreeRaider
 
             if(rotateTime != 0)
             {
-                currRotX += Global.EngineFrameTime * rotateTime % 360.0f;
+                currRotX += (Global.EngineFrameTime * rotateTime).WrapAngle();
             }
 
             if(currTime != 0)
@@ -2280,7 +2280,7 @@ namespace FreeRaider
             }
             else
             {
-                Global.GuiProjectionMatrix = Global.EngineCamera.glProjMat;
+                Global.GuiProjectionMatrix = Global.EngineCamera.GLProjMat;
             }
         }
 
@@ -2582,7 +2582,7 @@ namespace FreeRaider
         public static void DrawInventory()
         {
             Global.MainInventoryManager.Frame(Global.EngineFrameTime);
-            if(Global.MainInventoryManager.CurrentState == InventoryState.Disabled)
+            if(Global.MainInventoryManager.CurrentState == InventoryManager.InventoryState.Disabled)
             {
                 return;
             }

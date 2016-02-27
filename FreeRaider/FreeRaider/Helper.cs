@@ -222,6 +222,8 @@ namespace FreeRaider
                 destinationArray[i + destinationIndex] = arr[i];
             }
         }
+
+        
     }
 
     public static class ALExt
@@ -237,5 +239,7 @@ namespace FreeRaider
         public const float PI = (float) Math.PI;
 
         public const float HalfPI = (float) (Math.PI / 2.0);
+
+        public const float Sqrt2 = 1.41421356237f;
     }
 }

@@ -30,17 +30,9 @@ namespace FreeRaider
 
         public Vector3 Normal;
 
-        /// <summary>
-        /// [Length 4]
-        /// </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public float[] Color;
+        public float[] Color = new float[4];
 
-        /// <summary>
-        /// [Length 2]
-        /// </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-        public float[] TexCoord;
+        public float[] TexCoord = new float[2];
 
         public VertexStruct ToStruct()
         {
@@ -63,14 +55,10 @@ namespace FreeRaider
 
         public Vector3 Normal;
 
-        /// <summary>
-        /// [Length 4]
-        /// </summary>
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public float[] Color;
 
-        /// <summary>
-        /// [Length 2]
-        /// </summary>
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
         public float[] TexCoord;
     }
 
@@ -79,7 +67,7 @@ namespace FreeRaider
         /// <summary>
         /// Vertices data [Length 4]
         /// </summary>
-        public List<Vertex> Vertices { get; set; } 
+        public List<Vertex> Vertices { get; set; }
 
         /// <summary>
         /// Texture index

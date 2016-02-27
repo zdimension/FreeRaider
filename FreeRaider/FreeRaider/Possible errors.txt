@@ -9,3 +9,5 @@ je cast manuellement.
 Dans Helper.cs, L173, j'incrémente direct le pointeur au lieu de faire sizeof(T)*i qui n'est peut-être pas nécessaire. A vérifier.
 
 Dans Hair.cs, L246, je modifie Joints[currJoint] alors que OpenTomb modifie Joints[i] (i E [0; Elements.Count] / for)
+
+Dans BorderedTextureAtlas.cs, L165, j'utilise Constants.Sqrt2 au lieu de 1.41 (précision) ; ça marchera p't'être pas.

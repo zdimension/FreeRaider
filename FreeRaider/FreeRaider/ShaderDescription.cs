@@ -23,7 +23,7 @@ namespace FreeRaider
         {
             Shader = GL.CreateShader(type);
             if (!GLUtil.LoadShaderFromFile(Shader, filename, additionalDefines))
-                abort();
+                Environment.FailFast("Error while loading shader '" + filename + "'");
         }
 
         ~ShaderStage()

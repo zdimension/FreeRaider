@@ -797,7 +797,21 @@ namespace FreeRaider
         /// </summary>
         public uint SampleCount { get; set; }
 
-        public static int IsEffectPlaying(int effectID, int entityType, int entityID);
+        public static int IsEffectPlaying(int effectID, int entityType, int entityID)
+        {
+            for (var i = 0; i < Global.EngineWorld.AudioSources.Count; i++)
+            {
+                var audioSource = Global.EngineWorld.AudioSources[i];
+                if ((entityType == -1 || audioSource.EmitterType == (TR_AUDIO_EMITTER) entityType) &&
+                    (entityID == -1 || audioSource.EmitterID == entityID) &&
+                    (effectID == -1 || audioSource.EffectIndex == effectID))
+                {
+                    if (audioSource.IsPlaying) return i;
+                }
+            }
+
+            return -1;
+        }
 
         /// <summary>
         /// Marker to define if sample is in underwater state or not.
@@ -818,7 +832,7 @@ namespace FreeRaider
             {
                 case TR_AUDIO_EMITTER.Entity:
                     Entity ent = null;
-                    if ((ent = Global.EngineWorld.GetEntityByID(EmitterID)) != null)
+                    if ((ent = Global.EngineWorld.GetEntityByID((uint)EmitterID)) != null)
                     {
                         Position = ent.Transform.Origin;
                         Velocity = ent.Speed;
@@ -913,7 +927,7 @@ namespace FreeRaider
 
                 currentTrack = -1;
                 currentVolume = 0.0f;
-                dampedVolumes = 0.0f;
+                dampedVolume = 0.0f;
                 IsActive = false;
                 ending = false;
                 streamType = TR_AUDIO_STREAM_TYPE.OneShot;
@@ -1604,7 +1618,7 @@ else
             }
             else
             {
-                UpdateListenerByCamera(renderer.camera());
+                UpdateListenerByCamera(Global.Renderer.camera());
             }
         }
 
@@ -2215,7 +2229,16 @@ else
         /// <summary>
         /// AL-specific error handler
         /// </summary>
-        public static bool LogALError(int errorMarker = 0);
+        public static bool LogALError(int errorMarker = 0)
+        {
+            var err = AL.GetError();
+            if(err != ALError.NoError)
+            {
+                Sys.DebugLog(Constants.LOG_FILENAME, $"OpenAL error: {AL.GetErrorString(err)} / {errorMarker}");
+                return true;
+            }
+            return false;
+        }
 
         /// <summary>
         /// <see cref="SndFile"/>-specified error handler

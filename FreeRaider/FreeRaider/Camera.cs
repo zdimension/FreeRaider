@@ -25,88 +25,93 @@ namespace FreeRaider
         /// <summary>
         /// Camera view direction
         /// </summary>
-        public Vector3 ViewDirection = new Vector3(0.0f, 0.0f, 1.0f);
+        public Vector3 ViewDirection { get; private set; } = new Vector3(0.0f, 0.0f, 1.0f);
 
         /// <summary>
         /// Up vector
         /// </summary>
-        public Vector3 UpDirection = new Vector3(0.0f, 1.0f, 0.0f);
+        public Vector3 UpDirection { get; private set; } = new Vector3(0.0f, 1.0f, 0.0f);
 
         /// <summary>
         /// Strafe vector
         /// </summary>
-        public Vector3 RightDirection = new Vector3(1.0f, 0.0f, 0.0f);
+        public Vector3 RightDirection { get; private set; } = new Vector3(1.0f, 0.0f, 0.0f);
 
-        public Vector3 previousPosition = new Vector3(0.0f, 0.0f, 0.0f);
-        public Vector3 angle;
+        public Vector3 PreviousPosition = new Vector3(0.0f, 0.0f, 0.0f);
+        public Vector3 Angle;
 
-        public Matrix4 glViewMat = new Matrix4();
-        public Matrix4 glProjMat = new Matrix4();
-        public Matrix4 glViewProjMat = new Matrix4();
+        public Matrix4 GLViewMat = new Matrix4();
+        public Matrix4 GLProjMat = new Matrix4();
+        public Matrix4 GLViewProjMat = new Matrix4();
 
-        public Plane[] clipPlanes = new Plane[4]; // frustum side clip planes
-        public Frustum frustum; // camera frustum structure
+        public Plane[] ClipPlanes = new Plane[4]; // frustum side clip planes
+        public Frustum Frustum; // camera frustum structure
 
-        public float distNear = 1;
-        public float distFar = 65536;
+        public float DistNear = 1;
+        public float DistFar = 65536;
 
-        public float fov = 75;
-        public float aspect = 1;
-        public float f;
-        public float height;
-        public float width;
+        public float Fov = 75;
+        public float Aspect = 1;
+        public float F;
+        public float Height;
+        public float Width;
 
-        public float shakeValue = 0;
-        public float shakeTime = 0;
+        public float ShakeValue = 0;
+        public float ShakeTime = 0;
 
-        public TR_CAM_TARG targetDir = TR_CAM_TARG.Front;
-        public Room currentRoom = null;
+        public TR_CAM_TARG TargetDir = TR_CAM_TARG.Front;
+        public Room CurrentRoom = null;
 
         public void Apply()
         {
-            glProjMat = new Matrix4(
-                f / aspect, 0, 0, 0,
-                0, f, 0, 0,
-                0, 0, (distNear + distFar) / (distNear - distFar), -1,
-                0, 0, 2 * distNear * distFar / (distNear - distFar), 0
+            GLProjMat = new Matrix4(
+                F / Aspect, 0, 0, 0,
+                0, F, 0, 0,
+                0, 0, (DistNear + DistFar) / (DistNear - DistFar), -1,
+                0, 0, 2 * DistNear * DistFar / (DistNear - DistFar), 0
                 );
 
-            glViewMat = new Matrix4();
-            glViewMat[0, 0] = RightDirection[0];
-            glViewMat[1, 0] = RightDirection[1];
-            glViewMat[2, 0] = RightDirection[2];
+            GLViewMat = new Matrix4
+            {
+                [0, 0] = RightDirection[0],
+                [1, 0] = RightDirection[1],
+                [2, 0] = RightDirection[2],
 
-            glViewMat[0, 1] = UpDirection[0];
-            glViewMat[1, 1] = UpDirection[1];
-            glViewMat[2, 1] = UpDirection[2];
+                [0, 1] = UpDirection[0],
+                [1, 1] = UpDirection[1],
+                [2, 1] = UpDirection[2],
 
-            glViewMat[0, 2] = -ViewDirection[0];
-            glViewMat[1, 2] = -ViewDirection[1];
-            glViewMat[2, 2] = -ViewDirection[2];
+                [0, 2] = -ViewDirection[0],
+                [1, 2] = -ViewDirection[1],
+                [2, 2] = -ViewDirection[2]
 
-            glViewMat[3, 0] =
-                -(glViewMat[0, 0] * Position[0] + glViewMat[1, 0] * Position[1] + glViewMat[2, 0] * Position[2]);
-            glViewMat[3, 1] =
-                -(glViewMat[0, 1] * Position[0] + glViewMat[1, 1] * Position[1] + glViewMat[2, 1] * Position[2]);
-            glViewMat[3, 2] =
-                -(glViewMat[0, 2] * Position[0] + glViewMat[1, 2] * Position[1] + glViewMat[2, 2] * Position[2]);
+            };
 
-            glViewMat[0, 3] = 0;
-            glViewMat[1, 3] = 0;
-            glViewMat[2, 3] = 0;
-            glViewMat[3, 3] = 1;
 
-            glViewProjMat = glProjMat * glViewMat;
+
+            GLViewMat[3, 0] =
+                -(GLViewMat[0, 0] * Position[0] + GLViewMat[1, 0] * Position[1] + GLViewMat[2, 0] * Position[2]);
+            GLViewMat[3, 1] =
+                -(GLViewMat[0, 1] * Position[0] + GLViewMat[1, 1] * Position[1] + GLViewMat[2, 1] * Position[2]);
+            GLViewMat[3, 2] =
+                -(GLViewMat[0, 2] * Position[0] + GLViewMat[1, 2] * Position[1] + GLViewMat[2, 2] * Position[2]);
+
+            GLViewMat[0, 3] = 0;
+            GLViewMat[1, 3] = 0;
+            GLViewMat[2, 3] = 0;
+            GLViewMat[3, 3] = 1;
+
+            GLViewProjMat = GLProjMat * GLViewMat;
         }
 
         public void SetFovAspect(float fov, float aspect)
         {
-            this.fov = fov;
-            this.aspect = aspect;
-            f = (float)Math.Tan(fov * Constants.RadPerDeg / 2);
-            height = 2.0f * distNear * f;
-            width = height * aspect;
-            f = 1.0f / f;
+            this.Fov = fov;
+            this.Aspect = aspect;
+            F = (float)Math.Tan(fov * Constants.RadPerDeg / 2);
+            Height = 2.0f * DistNear * F;
+            Width = Height * aspect;
+            F = 1.0f / F;
         }
 
         public void MoveAlong(float dist)
@@ -126,13 +131,13 @@ namespace FreeRaider
 
         public void Shake(float power, float time)
         {
-            shakeValue = power;
-            shakeTime = time;
+            ShakeValue = power;
+            ShakeTime = time;
         }
 
         public void DeltaRotation(Vector3 angles)
         {
-            angle += angles;
+            Angle += angles;
 
             // Roll
             UpDirection = UpDirection.Rotate(ViewDirection, angles.Z);
@@ -147,7 +152,7 @@ namespace FreeRaider
 
         public void SetRotation(Vector3 angles)
         {
-            angle = angles;
+            Angle = angles;
 
             UpDirection = new Vector3(0, 0, 1);
 
@@ -163,47 +168,47 @@ namespace FreeRaider
 
         public void RecalcClipPlanes()
         {
-            var nearViewPoint = ViewDirection * distNear;
+            var nearViewPoint = ViewDirection * DistNear;
 
-            frustum.Normal.Assign(ViewDirection, Position); // Main clipping plane (we don't draw things beyond us).
+            Frustum.Normal.Assign(ViewDirection, Position); // Main clipping plane (we don't draw things beyond us).
 
             // Lower clipping plane vector
-            var LU = nearViewPoint - height / 2.0f * UpDirection;
-            clipPlanes[2].Assign(RightDirection, LU, Position);
+            var LU = nearViewPoint - Height / 2.0f * UpDirection;
+            ClipPlanes[2].Assign(RightDirection, LU, Position);
 
             // Upper clipping plane vector
-            LU = nearViewPoint + height / 2.0f * UpDirection;
-            clipPlanes[2].Assign(RightDirection, LU, Position);
+            LU = nearViewPoint + Height / 2.0f * UpDirection;
+            ClipPlanes[2].Assign(RightDirection, LU, Position);
 
             // Left clipping plane vector
-            LU = nearViewPoint - width / 2.0f * RightDirection;
-            clipPlanes[2].Assign(UpDirection, LU, Position);
+            LU = nearViewPoint - Width / 2.0f * RightDirection;
+            ClipPlanes[2].Assign(UpDirection, LU, Position);
 
             // Right clipping plane vector
-            LU = nearViewPoint + width / 2.0f * RightDirection;
-            clipPlanes[2].Assign(UpDirection, LU, Position);
+            LU = nearViewPoint + Width / 2.0f * RightDirection;
+            ClipPlanes[2].Assign(UpDirection, LU, Position);
 
-            var worldNearViewPoint = Position + ViewDirection * distNear;
+            var worldNearViewPoint = Position + ViewDirection * DistNear;
 
             // Ensure that normals point outside
             for (var i = 0; i < 4; i++)
             {
-                if (clipPlanes[i].Distance(worldNearViewPoint) < 0.0)
-                    clipPlanes[i].MirrorNormal();
+                if (ClipPlanes[i].Distance(worldNearViewPoint) < 0.0)
+                    ClipPlanes[i].MirrorNormal();
             }
 
-            Assert.That(frustum.Vertices.Any());
-            frustum.Vertices[0] = Position + ViewDirection;
+            Assert.That(Frustum.Vertices.Any());
+            Frustum.Vertices[0] = Position + ViewDirection;
         }
 
         public Camera()
         {
-            f = 1.0f / (float) Math.Tan(fov * Constants.RadPerDeg / 2);
-            height = 2.0f * distNear / f;
-            width = height * aspect;
+            F = 1.0f / (float) Math.Tan(Fov * Constants.RadPerDeg / 2);
+            Height = 2.0f * DistNear / F;
+            Width = Height * Aspect;
 
-            frustum.Vertices = new List<Vector3>();
-            frustum.Planes = clipPlanes.Take(4).ToList();
+            Frustum.Vertices = new List<Vector3>();
+            Frustum.Planes = ClipPlanes.Take(4).ToList();
         }
     }
 }

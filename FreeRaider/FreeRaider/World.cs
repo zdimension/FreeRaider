@@ -14,24 +14,24 @@ namespace FreeRaider
 {
     public enum FloorDataFunctions : byte
     {
-        Portalsector = 0x01,
-        Floorslant = 0x02,
-        Ceilingslant = 0x03,
+        PortalSector = 0x01,
+        FloorSlant = 0x02,
+        CeilingSlant = 0x03,
         Trigger = 0x04,
         Death = 0x05,
         Climb = 0x06,
-        FloortriangleNW = 0x07, //  [_\_]
-        FloortriangleNE = 0x08, //  [_/_]
-        CeilingtriangleNW = 0x09, //  [_/_]
-        CeilingtriangleNE = 0x0a, //  [_\_]
-        FloortriangleNWPortalSW = 0x0b, //  [P\_]
-        FloortriangleNWPortalNE = 0x0c, //  [_\P]
-        FloortriangleNEPortalSE = 0x0d, //  [_/P]
-        FloortriangleNEPortalNW = 0x0e, //  [P/_]
-        CeilingtriangleNWPortalSW = 0x0f, //  [P\_]
-        CeilingtriangleNWPortalNE = 0x10, //  [_\P]
-        CeilingtriangleNEPortalNW = 0x11, //  [P/_]
-        CeilingtriangleNEPortalSE = 0x12, //  [_/P]
+        FloorTriangleNW = 0x07, //  [_\_]
+        FloorTriangleNE = 0x08, //  [_/_]
+        CeilingTriangleNW = 0x09, //  [_/_]
+        CeilingTriangleNE = 0x0a, //  [_\_]
+        FloorTriangleNWPortalSW = 0x0b, //  [P\_]
+        FloorTriangleNWPortalNE = 0x0c, //  [_\P]
+        FloorTriangleNEPortalSE = 0x0d, //  [_/P]
+        FloorTriangleNEPortalNW = 0x0e, //  [P/_]
+        CeilingTriangleNWPortalSW = 0x0f, //  [P\_]
+        CeilingTriangleNWPortalNE = 0x10, //  [_\P]
+        CeilingTriangleNEPortalNW = 0x11, //  [P/_]
+        CeilingTriangleNEPortalSE = 0x12, //  [_/P]
         Monkey = 0x13,
         MinecartLeft = 0x14, // In TR3 only. Function changed in TR4+.
         MinecartRight = 0x15 // In TR3 only. Function changed in TR4+.

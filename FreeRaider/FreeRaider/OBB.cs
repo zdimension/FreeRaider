@@ -177,7 +177,152 @@ namespace FreeRaider
         public static int OBB_Test(Entity e1, Entity e2, float overlap = Constants.DEFAULT_OBB_TEST_OVERLAP)
         {
             // translation, in parent frame
+            var v = e2.OBB.Centre - e1.OBB.Centre;
+            // translation, in A's frame
+            var T = e1.Transform.Basis.MultiplyByVector(v);
 
+            var a = e1.OBB.Extent * overlap;
+            var b = e2.OBB.Extent * overlap;
+
+            // B's basis with respect to A's local frame
+            var R = new[] {new float[3], new float[3], new float[3]};
+            float ra, rb, t;
+
+            // calculate rotation matrix
+            for (var i = 0; i < 3; i++)
+            {
+                for (var k = 0; k < 3; k++)
+                {
+                    var e1b = e1.Transform.Basis.GetColumn(i);
+                    var e2b = e2.Transform.Basis.GetColumn(k);
+                    R[i][k] = e1b.Dot(e2b);
+                }
+            }
+
+            /*ALGORITHM: Use the separating axis test for all 15 potential
+            separating axes. If a separating axis could not be found, the two
+            boxes overlap. */
+
+            // A's basis vectors
+            for(var i = 0; i < 3; i++)
+            {
+                ra = a[i];
+                rb = b[0] * Math.Abs(R[i][0]) + b[1] * Math.Abs(R[i][1]) + b[2] * Math.Abs(R[i][2]);
+                t = Math.Abs(T[i]);
+
+                if(t > ra + rb)
+                {
+                    return 0;
+                }
+            }
+
+            // B's basis vectors
+            for(var k = 0; k < 3; k++)
+            {
+                ra = a[0] * Math.Abs(R[0][k]) + a[1] * Math.Abs(R[1][k]) + a[2] * Math.Abs(R[2][k]);
+                rb = b[k];
+                t = Math.Abs(T[0] * R[0][k] + T[1] * R[1][k] + T[2] * R[2][k]);
+
+                if(t > ra + rb)
+                {
+                    return 0;
+                }
+            }
+
+            // 9 cross products
+            // L = A0 x B0
+            ra = a[1] * Math.Abs(R[2][0]) + a[2] * Math.Abs(R[1][0]);
+            rb = b[1] * Math.Abs(R[0][2]) + b[2] * Math.Abs(R[0][1]);
+            t = Math.Abs(T[2] * R[1][0] - T[1] * R[2][0]);
+
+            if(t > ra + rb)
+            {
+                return 0;
+            }
+
+            // L = A0 x B1
+            ra = a[1] * Math.Abs(R[2][1]) + a[2] * Math.Abs(R[1][1]);
+            rb = b[0] * Math.Abs(R[0][2]) + b[2] * Math.Abs(R[0][0]);
+            t = Math.Abs(T[2] * R[1][1] - T[1] * R[2][1]);
+
+            if (t > ra + rb)
+            {
+                return 0;
+            }
+
+            // L = A0 x B2
+            ra = a[1] * Math.Abs(R[2][2]) + a[2] * Math.Abs(R[1][2]);
+            rb = b[0] * Math.Abs(R[0][1]) + b[1] * Math.Abs(R[0][0]);
+            t = Math.Abs(T[2] * R[1][2] - T[1] * R[2][2]);
+
+            if (t > ra + rb)
+            {
+                return 0;
+            }
+
+            // L = A1 x B0
+            ra = a[0] * Math.Abs(R[2][0]) + a[2] * Math.Abs(R[0][0]);
+            rb = b[1] * Math.Abs(R[1][2]) + b[2] * Math.Abs(R[1][1]);
+            t = Math.Abs(T[0] * R[2][0] - T[2] * R[0][0]);
+
+            if (t > ra + rb)
+            {
+                return 0;
+            }
+
+            // L = A1 x B1
+            ra = a[0] * Math.Abs(R[2][1]) + a[2] * Math.Abs(R[0][1]);
+            rb = b[0] * Math.Abs(R[1][2]) + b[2] * Math.Abs(R[1][0]);
+            t = Math.Abs(T[0] * R[2][1] - T[2] * R[0][1]);
+
+            if (t > ra + rb)
+            {
+                return 0;
+            }
+
+            // L = A1 x B2
+            ra = a[0] * Math.Abs(R[2][2]) + a[2] * Math.Abs(R[0][2]);
+            rb = b[0] * Math.Abs(R[1][1]) + b[1] * Math.Abs(R[1][0]);
+            t = Math.Abs(T[0] * R[2][2] - T[2] * R[0][2]);
+
+            if (t > ra + rb)
+            {
+                return 0;
+            }
+
+            // L = A2 x B0
+            ra = a[0] * Math.Abs(R[1][0]) + a[1] * Math.Abs(R[0][0]);
+            rb = b[1] * Math.Abs(R[2][2]) + b[2] * Math.Abs(R[2][1]);
+            t = Math.Abs(T[1] * R[0][0] - T[0] * R[1][0]);
+
+            if (t > ra + rb)
+            {
+                return 0;
+            }
+
+            // L = A2 x B1
+            ra = a[0] * Math.Abs(R[1][1]) + a[1] * Math.Abs(R[0][1]);
+            rb = b[0] * Math.Abs(R[2][2]) + b[2] * Math.Abs(R[2][0]);
+            t = Math.Abs(T[1] * R[0][1] - T[0] * R[1][1]);
+
+            if (t > ra + rb)
+            {
+                return 0;
+            }
+
+            // L = A2 x B2
+            ra = a[0] * Math.Abs(R[1][2]) + a[1] * Math.Abs(R[0][2]);
+            rb = b[0] * Math.Abs(R[2][1]) + b[1] * Math.Abs(R[2][0]);
+            t = Math.Abs(T[1] * R[0][2] - T[0] * R[1][2]);
+
+            if (t > ra + rb)
+            {
+                return 0;
+            }
+
+            // no separating axis found,
+            // the two boxes overlap
+            return 1;
         }
     }
 }

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FreeRaider.Loader;
+using OpenTK.Graphics.OpenGL;
 
 namespace FreeRaider
 {
@@ -116,6 +118,7 @@ namespace FreeRaider
                 var canonical = canonicalObjectTextures[sortedIndices[texture]];
 
                 // Try to find space in an existing page.
+                ERROR
             }
         }
 
@@ -142,7 +145,26 @@ namespace FreeRaider
             bool conserveMemory,
             List<Loader.DWordTexture> pages,
             List<Loader.ObjectTexture> objectTextures, 
-            List<Loader.SpriteTexture> spriteTextures);
+            List<Loader.SpriteTexture> spriteTextures)
+        {
+            borderWidth = border;
+            resultPageWidth = 0;
+            resultPageHeights = new List<uint>();
+            originalPages = pages.ToList();
+            fileObjectTextures = new List<FileObjectTexture>();
+            canonicalTexturesForSpriteTextures = new List<uint>();
+            canonicalObjectTextures = new List<CanonicalObjectTexture>();
+
+            var maxTextureEdgeLength = Math.Min(GL.GetInteger(GetPName.MaxTextureSize), 4096);
+
+            if (conserveMemory)
+            {
+                long areaSum = objectTextures.Sum(t => t.Width * t.Height) +
+                               spriteTextures.Sum(t => Math.Abs((t.X1 - t.X0) * (t.Y1 - t.Y0)));
+
+                resultPageWidth = (uint)Math.Min(maxTextureEdgeLength, Helper.NextPowerOf2((uint) (Math.Sqrt(areaSum) * Constants.Sqrt2)));
+            }
+        }
 
         ~BorderedTextureAtlas();
 

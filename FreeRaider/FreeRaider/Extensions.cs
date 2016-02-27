@@ -486,5 +486,27 @@ namespace FreeRaider
             Array.Copy(arr, result, arr.Length);
             return result;
         }
+
+        public static float WrapAngle(this float value)
+        {
+            var i = (int)(value / 360.0f);
+            i = value < 0.0f ? i - 1 : i;
+            return value - 360.0f * i;
+        }
+
+        public static Vector3 GetColumn(this Matrix3 mat, int column)
+        {
+            switch (column)
+            {
+                case 0:
+                    return mat.Column0;
+                case 1:
+                    return mat.Column1;
+                case 2:
+                    return mat.Column2;
+                default:
+                    throw new IndexOutOfRangeException();
+            }
+        }
     }
 }
