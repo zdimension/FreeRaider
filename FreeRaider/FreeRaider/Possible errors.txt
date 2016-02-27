@@ -7,3 +7,5 @@ Dans GLFont.cs, L221 et quelques autres fois OpenTK a inversé format et interna
 je cast manuellement.
 
 Dans Helper.cs, L173, j'incrémente direct le pointeur au lieu de faire sizeof(T)*i qui n'est peut-être pas nécessaire. A vérifier.
+
+Dans Hair.cs, L246, je modifie Joints[currJoint] alors que OpenTomb modifie Joints[i] (i E [0; Elements.Count] / for)

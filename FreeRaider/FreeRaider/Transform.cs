@@ -9,9 +9,9 @@ namespace FreeRaider
 {
     public class Transform
     {
-        public Matrix3 Basis { get; set; }
+        public Matrix3 Basis;
 
-        public Vector3 Origin { get; set; }
+        public Vector3 Origin;
 
         public Quaternion Rotation => Basis.ExtractRotation();
 

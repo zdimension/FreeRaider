@@ -79,35 +79,35 @@ namespace FreeRaider
         /// <summary>
         /// Polygons data
         /// </summary>
-        public List<Polygon> Polygons;
+        public List<Polygon> Polygons = new List<Polygon>();
 
         /// <summary>
         /// Transparency mesh's polygons list
         /// </summary>
-        public List<Polygon> TransparencyPolygons;
+        public List<Polygon> TransparencyPolygons = new List<Polygon>();
 
         /// <summary>
         /// Face without structure wrapping
         /// </summary>
         public uint TexturePageCount;
 
-        public List<uint> ElementsPerTexture;
+        public List<uint> ElementsPerTexture = new List<uint>();
 
-        public List<uint> Elements;
+        public List<uint> Elements = new List<uint>();
 
         public uint AlphaElements;
 
-        public List<Vertex> Vertices;
+        public List<Vertex> Vertices = new List<Vertex>();
 
         public uint AnimatedElementCount;
 
         public uint AlphaAnimatedElementCount;
 
-        public List<uint> AllAnimatedElements;
+        public List<uint> AllAnimatedElements = new List<uint>();
 
-        public List<AnimatedVertex> AnimatedVertices;
+        public List<AnimatedVertex> AnimatedVertices = new List<AnimatedVertex>();
 
-        public List<TransparentPolygonReference> TransparentPolygons;
+        public List<TransparentPolygonReference> TransparentPolygons = new List<TransparentPolygonReference>();
 
         /// <summary>
         /// Geometry centre of mesh
@@ -148,12 +148,17 @@ namespace FreeRaider
             public sbyte I;
 
             public sbyte J;
+
+            public MatrixIndex ToClass()
+            {
+                return new MatrixIndex {I = I, J = J};
+            }
         }
 
         /// <summary>
         /// Vertices map for skin mesh
         /// </summary>
-        public List<MatrixIndex> MatrixIndices;
+        public List<MatrixIndex> MatrixIndices = new List<MatrixIndex>();
 
         public uint VBOVertexArray;
 
@@ -1517,7 +1522,7 @@ namespace FreeRaider
             return ret;
         }
 
-        public static CollisionShape CSfromMesh(ref BaseMesh mesh, bool useCompression, bool buildBvh,
+        public static CollisionShape CSfromMesh(BaseMesh mesh, bool useCompression, bool buildBvh,
             bool isStatic = true)
         {
             var cnt = 0;

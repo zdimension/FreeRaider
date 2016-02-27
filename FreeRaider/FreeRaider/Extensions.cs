@@ -359,6 +359,17 @@ namespace FreeRaider
                 list.AddRange(Helper.FillArray(c, sz - cur));
         }
 
+        public static void Resize<T>(this List<T> list, int sz, Func<T> value)
+        {
+            var cur = list.Count;
+            if (sz == cur) return;
+            if (sz < cur)
+                list.RemoveRange(sz, cur - sz);
+            else if (sz > cur)
+                list.AddRange(Enumerable.Range(0, sz - cur).Select(x => value()));
+        }
+
+
         public static Vector3 Rotate(this Vector3 vec, Vector3 wAxis, float angle)
         {
             var o = wAxis * wAxis.Dot(vec);
@@ -467,6 +478,13 @@ namespace FreeRaider
         public static string Left(this string input, int length)
         {
             return (input.Length < length) ? input : input.Substring(0, length);
+        }
+
+        public static T[] CloneArr<T>(this T[] arr)
+        {
+            var result = new T[arr.Length];
+            Array.Copy(arr, result, arr.Length);
+            return result;
         }
     }
 }

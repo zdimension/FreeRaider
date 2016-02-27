@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AnimStateControl.cs" />
+    <Compile Include="Assert.cs" />
     <Compile Include="Audio.cs" />
     <Compile Include="BorderedTextureAtlas.cs" />
     <Compile Include="BSPTree.cs" />
@@ -85,6 +86,7 @@
     <Compile Include="GLFontBuffer.cs" />
     <Compile Include="GLUtil.cs" />
     <Compile Include="GUI.cs" />
+    <Compile Include="Hair.cs" />
     <Compile Include="Helper.cs" />
     <Compile Include="LoaderTests\Loader.cs" />
     <Compile Include="LoaderTests\TR2Level.cs" />

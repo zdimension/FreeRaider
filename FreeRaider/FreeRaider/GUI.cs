@@ -4,11 +4,13 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading.Tasks;
 using FreeRaider.Loader;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using SharpFont;
 using PixelFormat = OpenTK.Graphics.OpenGL.PixelFormat;
 
 namespace FreeRaider
@@ -203,15 +205,56 @@ namespace FreeRaider
 
     public class FontManager
     {
-        public FontManager();
+        public FontManager()
+        {
+            fontLibrary = new Library();
 
-        ~FontManager();
+            fadeValue = 0.0f;
+            fadeDirection = true;
+        }
 
-        public bool AddFont(FontType index, uint size, string path);
+        ~FontManager()
+        {
+            // must be freed before releasing the library
+            styles.Clear();
+            fonts.Clear();
+            fontLibrary.Dispose();
+            fontLibrary = null;
+        }
 
-        public bool RemoveFont(FontType index);
+        public bool AddFont(FontType index, uint size, string path)
+        {
+            if (!((float) size).IsBetween(Constants.MinFontSize, Constants.MaxFontSize))
+            {
+                return false;
+            }
 
-        public FontTexture GetFont(FontType index);
+            var desiredFont = getFontAddress(index);
+
+            if(desiredFont == null)
+            {
+                if(fonts.Count >= Constants.MaxFonts)
+                {
+                    return false;
+                }
+
+                fonts.Insert(0, new Font {Size = (ushort) size, Index = index});
+            }
+
+            desiredFont.GLFont = GLF.CreateFont(fontLibrary, path, (ushort) size);
+
+            return true;
+        }
+
+        public bool RemoveFont(FontType index)
+        {
+            return fonts.RemoveAll(x => x.Index == index) != 0;
+        }
+
+        public FontTexture GetFont(FontType index)
+        {
+            return fonts.FirstOrDefault(x => x.Index == index)?.GLFont;
+        }
 
         public bool AddFontStyle(
             FontStyle index,
@@ -219,11 +262,41 @@ namespace FreeRaider
             bool shadow, bool fading,
             bool rect, float rectBorder,
             float[] rectColor,
-            bool hide);
+            bool hide)
+        {
+            var desiredStyle = GetFontStyle(index);
 
-        public bool RemoveFontStyle(FontStyle index);
+            if (desiredStyle == null)
+            {
+                if (styles.Count >= (int) FontStyle.Sentinel)
+                {
+                    return false;
+                }
 
-        public FontStyleData GetFontStyle(FontStyle index);
+                styles.Insert(0, new FontStyleData {Index = index});
+            }
+
+            desiredStyle.RectBorder = rectBorder;
+            desiredStyle.RectColor = rectColor.ToArray();
+            desiredStyle.Color = color.ToArray();
+            desiredStyle.RealColor = desiredStyle.Color.ToArray();
+            desiredStyle.Fading = fading;
+            desiredStyle.Shadowed = shadow;
+            desiredStyle.Rect = rect;
+            desiredStyle.Hidden = hide;
+
+            return true;
+        }
+
+        public bool RemoveFontStyle(FontStyle index)
+        {
+            return styles.RemoveAll(x => x.Index == index) != 0;
+        }
+
+        public FontStyleData GetFontStyle(FontStyle index)
+        {
+            return styles.FirstOrDefault(x => x.Index == index);
+        }
 
         public uint FontCount => (uint) fonts.Count;
 
@@ -232,14 +305,58 @@ namespace FreeRaider
         /// <summary>
         /// Do fading routine here, etc. Put into GUI.Update, maybe
         /// </summary>
-        public void Update();
+        public void Update()
+        {
+            if(fadeDirection)
+            {
+                fadeValue += Global.EngineFrameTime * Constants.FontFadeSpeed;
+
+                if(fadeValue >= 1.0f)
+                {
+                    fadeValue = 1.0f;
+                    fadeDirection = false;
+                }
+            }
+            else
+            {
+                fadeValue -= Global.EngineFrameTime * Constants.FontFadeSpeed;
+
+                if(fadeValue <= Constants.FontFadeMin)
+                {
+                    fadeValue = Constants.FontFadeMin;
+                    fadeDirection = true;
+                }
+            }
+
+            foreach (var currentStyle in styles)
+            {
+                if(currentStyle.Fading)
+                {
+                    for (var i = 0; i < 3; i++)
+                        currentStyle.RealColor[i] = currentStyle.Color[i] * fadeValue;
+                }
+                else
+                {
+                    currentStyle.RealColor = currentStyle.Color.ToArray();
+                }
+            }
+        }
 
         /// <summary>
         /// Resize fonts on window resize event
         /// </summary>
-        public void Resize();
+        public void Resize()
+        {
+            foreach (var currentFont in fonts)
+            {
+                GLF.Resize(currentFont.GLFont, (ushort)(currentFont.Size * Global.ScreenInfo.ScaleFactor));
+            }
+        }
 
-        private Font getFontAddress(FontType index);
+        private Font getFontAddress(FontType index)
+        {
+            return fonts.FirstOrDefault(x => x.Index == index);
+        }
 
         /// <summary>
         /// Multiplier used with font RGB values to animate fade
@@ -255,7 +372,7 @@ namespace FreeRaider
         /// <summary>
         /// GLF font library unit
         /// </summary>
-        private FTLibrary fontLibrary;
+        private Library fontLibrary;
     }
 
     public class TextLine
@@ -289,7 +406,7 @@ namespace FreeRaider
 
     public class Rect
     {
-        public float[] Rect = new float[4];
+        public float[] Rectangle = new float[4];
 
         public float[] AbsRect = new float[4];
 
@@ -656,7 +773,10 @@ namespace FreeRaider
                     bottomRightColor = clr;
                     break;
                 default:
-                    topLeftColor = topRightColor = bottomLeftColor = bottomLeftColor = clr;
+                    topLeftColor = clr.ToArray();
+                    topRightColor = clr.ToArray();
+                    bottomLeftColor = clr.ToArray();
+                    bottomRightColor = clr.ToArray();
                     break;
             }
         }
@@ -707,8 +827,8 @@ namespace FreeRaider
                 // Edit the texture object's image data using the information SDL_Surface gives us
                 var data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadOnly,
                     System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, data.Width, data.Height, 0,
-                    PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, colorDepth, data.Width, data.Height, 0,
+                    textureFormat, PixelType.UnsignedByte, data.Scan0);
                 bmp.UnlockBits(data);
             }
             catch (Exception ex)
@@ -899,28 +1019,381 @@ namespace FreeRaider
         /// <summary>
         /// Bar constructor
         /// </summary>
-        public ProgressBar();
+        public ProgressBar()
+        {
+            // Set up some defaults.
+            Visible = false;
+            Alternate = false;
+            Invert = false;
+            Vertical = false;
+            Forced = false;
+
+            // Initialize parameters.
+            // By default, bar is initialized with TR5-like health bar properties.
+            SetPosition(HorizontalAnchor.Left, 20, VerticalAnchor.Top, 20);
+            SetSize(250, 25, 3);
+            SetColor(BarColorType.BaseMain, 255, 50, 50, 150);
+            SetColor(BarColorType.BaseFade, 100, 255, 50, 150);
+            SetColor(BarColorType.AltMain, 255, 180, 0, 220);
+            SetColor(BarColorType.AltFade, 255, 255, 0, 220);
+            SetColor(BarColorType.BackMain, 0, 0, 0, 160);
+            SetColor(BarColorType.BackFade, 60, 60, 60, 130);
+            SetColor(BarColorType.BorderMain, 200, 200, 200, 50);
+            SetColor(BarColorType.BorderFade, 80, 80, 80, 100);
+            SetValues(1000, 300);
+            SetBlink(300);
+            SetExtrude(true, 100);
+            SetAutoshow(true, 5000, true, 1000);
+        }
 
         /// <summary>
         /// Main show bar procedure
         /// </summary>
-        public void Show(float value);
+        public void Show(float value)
+        {
+            // Initial value limiters (to prevent bar overflow).
+            value = value.Clamp(0, maxValue);
 
-        public void Resize();
+            // Enable blink mode, if value is gone below warning value.
+            blink = value <= warnValue;
 
-        public void SetColor(BarColorType colType, byte r, byte g, byte b, byte alpha);
+            if(autoShow)
+            {
+                // 0. If bar drawing was forced, then show a bar without additional
+                //    autoshow delay set. This condition has to be overwritten by
+                //    any other conditions, that's why it is set first.
+                if(Forced)
+                {
+                    Visible = true;
+                    Forced = false;
+                }
+                else
+                {
+                    Visible = false;
+                }
 
-        public void SetSize(float width, float height, float borderSize);
+                // 1. If bar value gone less than warning value, we show it
+                //    in any case, bypassing all other conditions.
+                if (value <= warnValue)
+                    Visible = true;
 
-        public void SetPosition(HorizontalAnchor anchorX, float offsetX, VerticalAnchor anchorY, float offsetY);
+                // 2. Check if bar's value changed,
+                //    and if so, start showing it automatically for a given delay time.
+                if(lastValue != value)
+                {
+                    lastValue = value;
+                    Visible = true;
+                    autoShowCount = autoShowDelay;
+                }
 
-        public void SetValues(float maxValue, float warnValue);
+                // 3. If autoshow time is up, then we hide bar,
+                //    otherwise decrease delay counter.
+                if(autoShowCount > 0)
+                {
+                    Visible = true;
+                    autoShowCount -= Global.EngineFrameTime;
 
-        public void SetBlink(int interval);
+                    if(autoShowCount <= 0)
+                    {
+                        autoShowCount = 0;
+                        Visible = false;
+                    }
+                }
+            }
 
-        public void SetExtrude(bool enabled, byte depth);
+            if(autoShowFade)
+            {
+                if(Visible)
+                {
+                    // If visibility flag is on, and bar is not yet fully visible, gradually
+                    // increase fade counter, until it's 1 (i. e. fully opaque).
+                    if(autoShowFadeCount < 1)
+                    {
+                        autoShowFadeCount = Math.Min(autoShowFadeCount + Global.EngineFrameTime * autoShowFadeDelay, 1);
+                    }
+                }
+                else
+                {
+                    // If visibility flag is off and bar is still on-screen, gradually decrease
+                    // fade counter, else simply don't draw anything and exit.
+                    if(autoShowFadeCount == 0)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        autoShowFadeCount = Math.Max(autoShowFadeCount - Global.EngineFrameTime * autoShowFadeDelay, 0);
+                    }
+                }
 
-        public void SetAutoshow(bool enabled, int delay, bool fade, int fadeDelay);
+                // Multiply all layers' alpha by current fade counter.
+                baseMainColor[3] = baseMainColor[4] * autoShowFadeCount;
+                baseFadeColor[3] = baseFadeColor[4] * autoShowFadeCount;
+                altMainColor[3] = altMainColor[4] * autoShowFadeCount;
+                altFadeColor[3] = altFadeColor[4] * autoShowFadeCount;
+                backMainColor[3] = backMainColor[4] * autoShowFadeCount;
+                backFadeColor[3] = backFadeColor[4] * autoShowFadeCount;
+                borderMainColor[3] = borderMainColor[4] * autoShowFadeCount;
+                borderFadeColor[3] = borderFadeColor[4] * autoShowFadeCount;
+                extrudeDepth[3] = extrudeDepth[4] * autoShowFadeCount;
+            }
+            else
+            {
+                if (!Visible) return; // Obviously, quit, if bar is not visible.
+            }
+
+            // Draw border rect.
+            // Border rect should be rendered first, as it lies beneath actual bar,
+            // and additionally, we need to show it in any case, even if bar is in
+            // warning state (blinking).
+            Gui.DrawRect(x, y, width + (borderWidth * 2), height + (borderHeight * 2),
+                borderMainColor, borderMainColor, borderFadeColor, borderFadeColor,
+                BlendingMode.Opaque);
+
+            // We check if bar is in a warning state. If it is, we blink it continously.
+            if(blink)
+            {
+                blinkCount -= Global.EngineFrameTime;
+                if(blinkCount > blinkInterval)
+                {
+                    value = 0; // Force zero value, which results in empty bar.
+                }
+                else if(blinkCount <= 0)
+                {
+                    blinkCount = blinkInterval * 2;
+                }
+            }
+
+            // If bar value is zero, just render background overlay and immediately exit.
+            // It is needed in case bar is used as a simple UI box to bypass unnecessary calculations.
+            if(value == 0)
+            {
+                // Draw full-sized background rect (instead of base bar rect)
+                Gui.DrawRect(x + borderWidth, y + borderHeight, width, height,
+                    backMainColor, Vertical ? backFadeColor : backMainColor,
+                    Vertical ? backMainColor : backFadeColor, backFadeColor,
+                    BlendingMode.Opaque);
+                return;
+            }
+
+            // Calculate base bar width, according to current value and range unit.
+            baseSize = rangeUnit * value;
+            baseRatio = value / maxValue;
+
+            float rectAnchor; // Anchor to stick base bar rect, according to Invert flag.
+            var rectFirstColor = new float[4]; // Used to recalculate gradient, according to current value.
+            var rectSecondColor = new float[4];
+
+            // If invert decrease direction style flag is set, we position bar in a way
+            // that it seems like it's decreasing to another side, and also swap main / fade colours.
+            var arr = Invert ? rectSecondColor : rectFirstColor;
+            Array.Copy(Alternate ? altMainColor : baseMainColor, arr, 4);
+            // Main-fade gradient is recalculated according to current / maximum value ratio.
+            for (var i = 0; i < 4; i++)
+                arr[i] = Alternate
+                    ? baseRatio * altFadeColor[i] + (1 - baseRatio) * altMainColor[i]
+                    : baseRatio * baseFadeColor[i] + (1 - baseRatio) * baseMainColor[i];
+
+            // We need to reset Alternate flag each frame, cause behaviour is immediate.
+            Alternate = false;
+
+            // If vertical style flag is set, we draw bar base top-bottom, else we draw it left-right.
+            if(Vertical)
+            {
+                rectAnchor = (Invert ? y + height - baseSize : y) + borderHeight;
+
+                // Draw actual bar base.
+                Gui.DrawRect(
+                    x + borderWidth, rectAnchor,
+                    width, baseSize,
+                    rectFirstColor, rectFirstColor,
+                    rectSecondColor, rectSecondColor,
+                    BlendingMode.Opaque);
+
+                // Draw background rect.
+                Gui.DrawRect(x + borderWidth,
+                    Invert ? y + borderHeight : rectAnchor + baseSize,
+                    width, height - baseSize,
+                    backMainColor, backFadeColor,
+                    backMainColor, backFadeColor,
+                    BlendingMode.Opaque);
+
+                if (extrude) // Draw extrude overlay, if flag is set.
+                {
+                    var transparentColor = new float[] {0, 0, 0, 0}; // Used to set counter-shade to transparent.
+
+                    Gui.DrawRect(
+                        x + borderWidth, rectAnchor,
+                        width / 2, baseSize,
+                        extrudeDepth, transparentColor,
+                        extrudeDepth, transparentColor,
+                        BlendingMode.Opaque);
+                    Gui.DrawRect(
+                        x + borderWidth + width / 2, rectAnchor,
+                        width / 2, baseSize,
+                        transparentColor, extrudeDepth,
+                        transparentColor, extrudeDepth,
+                        BlendingMode.Opaque);
+                }
+            }
+            else
+            {
+                rectAnchor = (Invert ? x + width - baseSize : x) + borderWidth;
+
+                // Draw actual bar base.
+                Gui.DrawRect(
+                    rectAnchor, y + borderHeight,
+                    baseSize, height,
+                    rectSecondColor, rectFirstColor,
+                    rectSecondColor, rectFirstColor,
+                    BlendingMode.Opaque);
+
+                // Draw background rect.
+                Gui.DrawRect(Invert ? x + borderWidth : rectAnchor + baseSize,
+                    y + borderHeight,
+                    width - baseSize, height,
+                    backMainColor, backMainColor,
+                    backFadeColor, backFadeColor,
+                    BlendingMode.Opaque);
+
+                if (extrude) // Draw extrude overlay, if flag is set.
+                {
+                    var transparentColor = new float[] { 0, 0, 0, 0 }; // Used to set counter-shade to transparent.
+
+                    Gui.DrawRect(
+                        rectAnchor, y + borderHeight,
+                       baseSize, height / 2,
+                        transparentColor, transparentColor,
+                        extrudeDepth, extrudeDepth,
+                        BlendingMode.Opaque);
+                    Gui.DrawRect(
+                        rectAnchor, y + borderHeight + height / 2,
+                        baseSize, height / 2,
+                        extrudeDepth, extrudeDepth,
+                        transparentColor, transparentColor,
+                        BlendingMode.Opaque);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Should be called every time resize event occurs.
+        /// </summary>
+        public void Resize()
+        {
+            recalculateSize();
+            recalculatePosition();
+        }
+
+        public void SetColor(BarColorType colType, byte r, byte g, byte b, byte alpha)
+        {
+            var maxColValue = 255.0f;
+
+            float[] arr = null;
+
+            switch (colType)
+            {
+                case BarColorType.BaseMain:
+                    arr = baseMainColor;
+                    break;
+                case BarColorType.BaseFade:
+                    arr = baseFadeColor;
+                    break;
+                case BarColorType.AltMain:
+                    arr = altMainColor;
+                    break;
+                case BarColorType.AltFade:
+                    arr = altFadeColor;
+                    break;
+                case BarColorType.BackMain:
+                    arr = backMainColor;
+                    break;
+                case BarColorType.BackFade:
+                    arr = backFadeColor;
+                    break;
+                case BarColorType.BorderMain:
+                    arr = borderMainColor;
+                    break;
+                case BarColorType.BorderFade:
+                    arr = borderFadeColor;
+                    break;
+                default:
+                    return;
+            }
+            arr[0] = r / maxColValue;
+            arr[1] = g / maxColValue;
+            arr[2] = b / maxColValue;
+            arr[3] = alpha / maxColValue;
+            arr[4] = arr[3];
+        }
+
+        public void SetSize(float width, float height, float borderSize)
+        {
+            // Absolute values are needed to recalculate actual bar size according to resolution.
+            absWidth = width;
+            absHeight = height;
+            absBorderSize = borderSize;
+
+            recalculateSize();
+        }
+
+        public void SetPosition(HorizontalAnchor anchorX, float offsetX, VerticalAnchor anchorY, float offsetY)
+        {
+            this.anchorX = anchorX;
+            this.anchorY = anchorY;
+            absXoffset = offsetX;
+            absYoffset = offsetY;
+
+            recalculatePosition();
+        }
+
+        /// <summary>
+        /// Set maximum and warning state values.
+        /// </summary>
+        public void SetValues(float maxValue, float warnValue)
+        {
+            this.maxValue = maxValue;
+            this.warnValue = warnValue;
+
+            recalculateSize(); // We need to recalculate size, because max. value is changed.
+        }
+
+        /// <summary>
+        /// Set warning state blinking interval.
+        /// </summary>
+        public void SetBlink(int interval)
+        {
+            blinkInterval = interval / 1000.0f;
+            blinkCount = interval / 1000.0f; // Also reset blink counter.
+        }
+
+        /// <summary>
+        /// Set extrude overlay effect parameters.
+        /// </summary>
+        /// <param name="enabled"></param>
+        /// <param name="depth"></param>
+        public void SetExtrude(bool enabled, byte depth)
+        {
+            extrude = enabled;
+            extrudeDepth = new float[5]; // Set all colors to 0.
+            extrudeDepth[3] = depth / 255.0f; // We need only alpha transparency.
+            extrudeDepth[4] = extrudeDepth[3];
+        }
+
+        /// <summary>
+        /// Set autoshow and fade parameters.
+        /// </summary>
+        public void SetAutoshow(bool enabled, int delay, bool fade, int fadeDelay)
+        {
+            autoShow = enabled;
+
+            autoShowDelay = delay / 1000.0f;
+            autoShowCount = delay / 1000.0f;
+
+            autoShowFade = false;
+            autoShowFadeDelay = 1000.0f / fadeDelay;
+            autoShowFadeCount = 0;
+        }
 
         /// <summary>
         /// Forced flag is set when bar is strictly drawn
@@ -949,14 +1422,57 @@ namespace FreeRaider
 
 
         /// <summary>
-        /// Recalculate size
+        /// Recalculate size, according to viewport resolution.
         /// </summary>
-        private void recalculateSize();
+        private void recalculateSize()
+        {
+            width = absWidth * Global.ScreenInfo.ScaleFactor;
+            height = absHeight * Global.ScreenInfo.ScaleFactor;
+
+            borderWidth = absBorderSize * Global.ScreenInfo.ScaleFactor;
+            borderHeight = absBorderSize * Global.ScreenInfo.ScaleFactor;
+
+            // Calculate range unit, according to maximum bar value set up.
+            // If bar alignment is set to horizontal, calculate it from bar width.
+            // If bar is vertical, then calculate it from height.
+
+            rangeUnit = (Vertical ? height : width) / maxValue;
+        }
 
         /// <summary>
-        /// Recalculate position
+        /// Recalculate position, according to viewport resolution.
         /// </summary>
-        private void recalculatePosition();
+        private void recalculatePosition()
+        {
+            switch (anchorX)
+            {
+                case HorizontalAnchor.Left:
+                    x = (absXoffset + absBorderSize) * Global.ScreenInfo.ScaleFactor;
+                    break;
+                case HorizontalAnchor.Center:
+                    x = (Global.ScreenInfo.W - (absWidth + absBorderSize * 2) * Global.ScreenInfo.ScaleFactor) / 2 +
+                        absXoffset * Global.ScreenInfo.ScaleFactor;
+                    break;
+                case HorizontalAnchor.Right:
+                    x = Global.ScreenInfo.W -
+                        (absXoffset + absWidth + absBorderSize * 2) * Global.ScreenInfo.ScaleFactor;
+                    break;
+            }
+
+            switch (anchorY)
+            {
+                case VerticalAnchor.Top:
+                    y = Global.ScreenInfo.H - (absYoffset + absHeight + absBorderSize * 2) * Global.ScreenInfo.ScaleFactor;
+                    break;
+                case VerticalAnchor.Center:
+                    y = (Global.ScreenInfo.H - (absHeight + absBorderSize * 2) * Global.ScreenInfo.Hunit) / 2 +
+                        absYoffset * Global.ScreenInfo.ScaleFactor;
+                    break;
+                case VerticalAnchor.Bottom:
+                    y = (absYoffset + absBorderSize) * Global.ScreenInfo.ScaleFactor;
+                    break;
+            }
+        }
 
         /// <summary>
         /// Horizontal position
@@ -1151,23 +1667,121 @@ namespace FreeRaider
 
     public class GuiItemNotifier
     {
-        public GuiItemNotifier();
+        public GuiItemNotifier()
+        {
+            SetPos(850, 850);
+            SetRot(0, 0);
+            SetSize(1.0f);
+            SetRotateTime(1000.0f);
 
-        public void Start(int item, float time);
+            item = 0;
+            active = false;
+        }
 
-        public void Reset();
+        public void Start(int item, float time)
+        {
+            Reset();
 
-        public void Animate();
+            item = this.item;
+            showTime = time;
+            active = true;
+        }
 
-        public void Draw();
+        public void Reset()
+        {
+            active = false;
+            currTime = 0.0f;
+            currRotX = 0.0f;
+            currRotY = 0.0f;
 
-        public void SetPos(float x, float y);
+            endPosX = Global.ScreenInfo.W / Constants.ScreenMeteringResolution * absPosX;
+            posY = Global.ScreenInfo.H / Constants.ScreenMeteringResolution * absPosY;
+            currPosX = Global.ScreenInfo.W + Global.ScreenInfo.W / Constants.GUI_NOTIFIER_OFFSCREEN_DIVIDER * size;
+            startPosX = currPosX; // Equalize current and start positions.
+        }
 
-        public void SetRot(float x, float y);
+        public void Animate()
+        {
+            if (!active) return;
 
-        public void SetSize(float size);
+            if(rotateTime != 0)
+            {
+                currRotX += Global.EngineFrameTime * rotateTime % 360.0f;
+            }
 
-        public void SetRotateTime(float time);
+            if(currTime != 0)
+            {
+                var step = Math.Max(0.5f, (currPosX - endPosX) * Global.EngineFrameTime * 4.0f);
+
+                currPosX = Math.Max(endPosX, currPosX - step);
+
+                if (currPosX == endPosX)
+                    currTime += Global.EngineFrameTime;
+            }
+            else if(currTime < showTime)
+            {
+                currTime += Global.EngineFrameTime;
+            }
+            else
+            {
+                var step = Math.Max(0.5f, (currPosX - endPosX) * Global.EngineFrameTime * 4.0f);
+
+                currPosX = Math.Min(startPosX, currPosX + step);
+
+                if (currPosX == startPosX)
+                    Reset();
+            }
+        }
+
+        public void Draw()
+        {
+            if (!active) return;
+
+            var item = Global.EngineWorld.GetBaseItemByID((uint)this.item);
+            if (item == null) return;
+
+            var anim = item.BoneFrame.Animations.CurrentAnimation;
+            var frame = item.BoneFrame.Animations.CurrentFrame;
+            var time = item.BoneFrame.Animations.FrameTime;
+
+            item.BoneFrame.Animations.CurrentAnimation = 0;
+            item.BoneFrame.Animations.CurrentFrame = 0;
+            item.BoneFrame.Animations.FrameTime = 0.0f;
+
+            Gui.Item_Frame(item.BoneFrame, 0.0f);
+            var matrix = new Transform();
+            matrix.SetIdentity();
+            VMath.Mat4_Translate(matrix, currPosX, posY, -2048.0f);
+            VMath.Mat4_RotateY(matrix, currRotX + rotX);
+            VMath.Mat4_RotateX(matrix, currRotY + rotY);
+            Gui.RenderItem(item.BoneFrame, size, matrix);
+
+            item.BoneFrame.Animations.CurrentAnimation = anim;
+            item.BoneFrame.Animations.CurrentFrame = frame;
+            item.BoneFrame.Animations.FrameTime = time;
+        }
+
+        public void SetPos(float x, float y)
+        {
+            absPosX = x;
+            absPosY = 1000.0f - y;
+        }
+
+        public void SetRot(float x, float y)
+        {
+            rotX = x;
+            rotY = y;
+        }
+
+        public void SetSize(float size)
+        {
+            this.size = size;
+        }
+
+        public void SetRotateTime(float time)
+        {
+            rotateTime = 1000.0f / time * 360.0f;
+        }
 
 
         private bool active;
@@ -1579,7 +2193,7 @@ namespace FreeRaider
                     realY + Constants.FontShadowVerticalShift, line.Text);
             }
 
-            glFont.GLFontColor = style.RealColor;
+            glFont.GLFontColor = style.RealColor.ToArray();
             GLF.RenderStr(glFont, realX, realY, line.Text);
         }
 
@@ -1890,12 +2504,12 @@ namespace FreeRaider
          */
         public static void NotifierStart(int item)
         {
-            Notifier.Start(item, Constants.GUI_NOTIFIER_SHOWTIME);
+            Global.Notifier.Start(item, Constants.GUI_NOTIFIER_SHOWTIME);
         }
 
         public static void NotifierStop()
         {
-            Notifier.Reset();
+            Global.Notifier.Reset();
         }
 
         /**
@@ -1932,13 +2546,13 @@ namespace FreeRaider
                 if (Global.EngineWorld.Character.WeaponCurrentState > WeaponState.HideToReady)
                     Global.Bar[BarType.Health].Forced = true;
 
-                if (Global.EngineWorld.Character.GetParam(Constants.PARAM_POISON) > 0.0f)
+                if (Global.EngineWorld.Character.GetParam(CharParameters.Poison) > 0.0f)
                     Global.Bar[BarType.Health].Alternate = true;
 
-                Global.Bar[BarType.Air].Show(Global.EngineWorld.Character.GetParam(Constants.PARAM_AIR));
-                Global.Bar[BarType.Stamina].Show(Global.EngineWorld.Character.GetParam(Constants.PARAM_STAMINA));
-                Global.Bar[BarType.Health].Show(Global.EngineWorld.Character.GetParam(Constants.PARAM_HEALTH));
-                Global.Bar[BarType.Warmth].Show(Global.EngineWorld.Character.GetParam(Constants.PARAM_WARMTH));
+                Global.Bar[BarType.Air].Show(Global.EngineWorld.Character.GetParam(CharParameters.Air));
+                Global.Bar[BarType.Stamina].Show(Global.EngineWorld.Character.GetParam(CharParameters.Stamina));
+                Global.Bar[BarType.Health].Show(Global.EngineWorld.Character.GetParam(CharParameters.Health));
+                Global.Bar[BarType.Warmth].Show(Global.EngineWorld.Character.GetParam(CharParameters.Warmth));
             }
         }
 
@@ -2002,8 +2616,8 @@ namespace FreeRaider
 
         public static void DrawNotifier()
         {
-            Notifier.Draw();
-            Notifier.Animate();
+            Global.Notifier.Draw();
+            Global.Notifier.Animate();
         }
 
         /**

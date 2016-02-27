@@ -68,7 +68,7 @@ namespace FreeRaider
         public static void Quat_SetRotation(ref Quaternion quat, Vector3 axis, float angle)
         {
             float d = axis.Length;
-            // TODO: Assert d != 0
+            Assert.That(d != 0);
             float s = (float)Math.Sin(angle * 0.5) / d;
             quat = new Quaternion(axis * s, (float)Math.Cos(angle * 0.5));
         }
@@ -179,6 +179,49 @@ namespace FreeRaider
             }
             return ret;
         }
+
+        public static void SetValue(ref Matrix3 mat, float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22)
+        {
+            mat.Row0 = new Vector3(m00, m01, m02);
+            mat.Row1 = new Vector3(m10, m11, m12);
+            mat.Row2 = new Vector3(m20, m21, m22);
+        }
+
+        public static void SetEulerZYX(ref Matrix3 mat, float eulerX, float eulerY, float eulerZ)
+        {
+            var ci = (float) Math.Cos(eulerX);
+            var cj = (float) Math.Cos(eulerY);
+            var ch = (float) Math.Cos(eulerZ);
+            var si = (float) Math.Sin(eulerX);
+            var sj = (float) Math.Sin(eulerY);
+            var sh = (float) Math.Sin(eulerZ);
+            var cc = ci * ch;
+            var cs = ci * sh;
+            var sc = si * ch;
+            var ss = si * sh;
+
+            SetValue(ref mat, 
+                cj * ch, sj * sc - cs, sj * cc + ss,
+                cj * sh, sj * ss + cc, sj * cs - sc,
+                -sj, cj * si, cj * ci);
+        }
+
+        public static void ListCopy<T>(List<T> sourceArray, List<T> destinationArray,
+            int length)
+        {
+            ListCopy(sourceArray, 0, destinationArray, 0, length);
+        }
+
+        public static void ListCopy<T>(List<T> sourceArray, int sourceIndex, List<T> destinationArray,
+            int destinationIndex, int length)
+        {
+            var arr = new T[length];
+            Array.Copy(sourceArray.ToArray(), sourceIndex, arr, 0, length);
+            for (var i = 0; i < length; i++)
+            {
+                destinationArray[i + destinationIndex] = arr[i];
+            }
+        }
     }
 
     public static class ALExt
@@ -187,5 +230,12 @@ namespace FreeRaider
         {
             AL.Listener(param, value.X, value.Y, value.Z);
         }
+    }
+
+    public partial class Constants
+    {
+        public const float PI = (float) Math.PI;
+
+        public const float HalfPI = (float) (Math.PI / 2.0);
     }
 }

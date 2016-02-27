@@ -192,7 +192,7 @@ namespace FreeRaider
                     clipPlanes[i].MirrorNormal();
             }
 
-            // TODO: Assert !frustum.vertices.empty()
+            Assert.That(frustum.Vertices.Any());
             frustum.Vertices[0] = Position + ViewDirection;
         }
 

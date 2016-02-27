@@ -572,15 +572,15 @@ namespace FreeRaider
 
         public void UpdateParams();
 
-        public float GetParam(int parameter);
+        public float GetParam(CharParameters parameter);
 
-        public int SetParam(int parameter, float value);
+        public int SetParam(CharParameters parameter, float value);
 
-        public int ChangeParam(int parameter, float value);
+        public int ChangeParam(CharParameters parameter, float value);
 
-        public int SetParamMaximum(int parameter, float maxValue);
+        public int SetParamMaximum(CharParameters parameter, float maxValue);
 
-        public int SetWeaponModel(int weaponModel, int armed);
+        public int SetWeaponModel(CharParameters weaponModel, int armed);
     }
 
     public partial class StaticFuncs

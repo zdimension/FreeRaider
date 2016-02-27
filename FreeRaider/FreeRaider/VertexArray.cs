@@ -70,15 +70,15 @@ namespace FreeRaider
         {
             vertexArrayObject = GL.GenVertexArray();
 
-            // TODO: assert vertexArrayObject != 0 -> Incorrect OpenGL function setup
+            Assert.That(vertexArrayObject != 0, "Incorrect OpenGL function setup");
             GL.BindVertexArray(vertexArrayObject);
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, elementVBO);
 
             foreach (var cur in attributes)
             {
-                // TODO: assert cur.VBO != 0
-                // TODO: assert cur.Stride != 0
+                Assert.That(cur.VBO != 0);
+                Assert.That(cur.Stride != 0);
 
                 GL.BindBuffer(BufferTarget.ArrayBuffer, cur.VBO);
                 GL.EnableVertexAttribArray(cur.Index);

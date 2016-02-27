@@ -157,9 +157,9 @@ namespace FreeRaider
         /// <param name="reverse">Whether to reverse the order of texture coordinates on output.</param>
         public void GetCoordinates(uint texture, bool reverse, Polygon poly, int shift = 0, bool split = false)
         {
-            // TODO: assert poly.Vertices.Count <= 4
+            Assert.That(poly.Vertices.Count <= 4);
 
-            // TODO: assert texture < fileObjectTextures.Count
+            Assert.That(texture < fileObjectTextures.Count);
             var fileObjectTexture = fileObjectTextures[(int)texture];
             var canonical = canonicalObjectTextures[(int)fileObjectTexture.CanonicalTextureIndex];
 
