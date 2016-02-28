@@ -1270,7 +1270,7 @@ namespace FreeRaider
         /// <summary>
         /// Animations data
         /// </summary>
-        public List<AnimationFrame> Animations;
+        public List<AnimationFrame> Animations = Helper.FillArray((AnimationFrame) null, (int) TR_ANIMATION.LastIndex).ToList();
 
         /// <summary>
         /// Number of model meshes
@@ -1288,7 +1288,7 @@ namespace FreeRaider
         {
             MeshTree.Clear();
             CollisionMap.Clear();
-            Animations.Clear();
+            Animations = Helper.FillArray((AnimationFrame)null, (int)TR_ANIMATION.LastIndex).ToList();
         }
 
         public void FillTransparency()

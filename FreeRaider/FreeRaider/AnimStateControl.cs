@@ -564,7 +564,9 @@ namespace FreeRaider
         LaraValveTurn = 470,
         LaraCrowbarUseOnWall2 = 471,
         LaraLootChest = 472,
-        LaraLadderToCrouch = 473
+        LaraLadderToCrouch = 473,
+
+        LastIndex
     }
 
     public enum TR_STATE : short
@@ -1203,6 +1205,63 @@ namespace FreeRaider
                                     ent.Bt.NoFixAll = true;
                                     ssAnim.OnFrame += ent_set_on_floor_after_climb;
                                     break;
+                                }
+                            }
+
+                            globalOffset.Z += 0.5f * Constants.DEFAULT_CLIMB_UP_HEIGHT;
+                            climb = ent.CheckClimbability(globalOffset, nextFc, Constants.DEFAULT_CLIMB_UP_HEIGHT);
+                            if (climb.EdgeHit &&
+                               climb.NextZSpace >= ent.Height - Constants.LARA_HANG_VERTICAL_EPSILON &&
+                               pos.Z + ent.MaxStepUpHeight < nextFc.FloorPoint.Z &&
+                               pos.Z + 2944.0f >= nextFc.FloorPoint.Z)
+                            {
+                                if(pos.Z + 1920.0f >= nextFc.FloorPoint.Z)
+                                {
+                                    // MAGIC: Vertical speed override is based on ledge height - thanks to T4Larson!
+                                    ssAnim.Model.Animations[(int) TR_ANIMATION.LaraStayToGrab].Frames[
+                                        ssAnim.Model.Animations[(int) TR_ANIMATION.LaraStayToGrab].Frames.Count - 1]
+                                        .V_Vertical = -3 - (int) Math.Sqrt(-9600 - 12 * -(nextFc.FloorPoint.Z - pos.Z));
+                                    ssAnim.NextState = TR_STATE.LaraJumpUp;
+                                    break;
+                                }
+                            }
+
+                            climb = ent.CheckWallsClimbability();
+                            if(climb.WallHit != ClimbType.None)
+                            {
+                                ssAnim.NextState = TR_STATE.LaraJumpUp;
+                                break;
+                            }
+                        }
+                    }
+                    else if (cmd.Move[0] == -1)
+                    {
+                        move = ent.Transform.Basis.Column1 * -Constants.PENETRATION_TEST_OFFSET;
+                        if (ent.CheckNextPenetration(move) == 0 || ent.Response.HorizontalCollide == 0x00)
+                        {
+                            if (cmd.Shift)
+                            {
+                                globalOffset = ent.Transform.Basis.Column1 * -Constants.WALK_BACK_OFFSET;
+                                globalOffset.Z += ent.Bf.BBMax.Z;
+                                globalOffset += pos;
+                                Character.GetHeightInfo(globalOffset, nextFc);
+                                if(nextFc.FloorHit && nextFc.FloorPoint.Z > pos.Z - ent.MaxStepUpHeight && nextFc.FloorPoint.Z <= pos.Z + ent.MaxStepUpHeight)
+                                {
+                                    ent.DirFlag = ENT_MOVE.MoveBackward;
+                                    ssAnim.NextState = TR_STATE.LaraWalkBack;
+                                }
+                            }
+                            else
+                            {
+                                ent.DirFlag = ENT_MOVE.MoveBackward;
+                                if ((currFc.Water || currFc.Quicksand != QuicksandPosition.None) && currFc.FloorHit &&
+                                    currFc.TransitionLevel - currFc.FloorPoint.Z > ent.WadeDepth)
+                                {
+                                    ssAnim.NextState = TR_STATE.LaraWalkBack;
+                                }
+                                else
+                                {
+                                    ssAnim.NextState = TR_STATE.LaraRunBack;
                                 }
                             }
                         }
