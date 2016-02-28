@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using FreeRaider.Loader;
+using NLua;
 
 namespace FreeRaider.TestApp
 {
@@ -7,11 +9,23 @@ namespace FreeRaider.TestApp
     {
         static void Main(string[] args)
         {
-            
+            var state = new Lua();
+            state.DoString(@"
+    function ScriptFunc (val1, val2)
+        if val1 > val2 then
+            return val1 + 1
+        else
+            return val2 - 1
+        end
+    end
+    ");
+            var scriptFunc = state["ScriptFunc"] as LuaFunction;
+            var res = (scriptFunc.Call(3, 5).First());
+            Console.WriteLine(res + " " + res.GetType().Name);
 
             // multiple tests
 
-            var tr1_1 = Level.CreateLoader("tr1\\LEVEL2.PHD");
+            /*var tr1_1 = Level.CreateLoader("tr1\\LEVEL2.PHD");
             var tr1_2 = Level.CreateLoader("tr1\\LEVEL4.PHD");
             var tr1_3 = Level.CreateLoader("tr1\\LEVEL7A.PHD");           
 
@@ -30,7 +44,7 @@ namespace FreeRaider.TestApp
             Console.SetBufferSize(Console.BufferWidth, 10000);
             var tr5_1 = Level.CreateLoader("tr5\\Andrea3.trc");
             var tr5_2 = Level.CreateLoader("tr5\\joby4.trc");
-            var tr5_3 = Level.CreateLoader("tr5\\rich3.trc");
+            var tr5_3 = Level.CreateLoader("tr5\\rich3.trc");*/
 
 
             Console.ReadLine();

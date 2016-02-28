@@ -18,3 +18,5 @@ Dans Render.cs, L1500, je passe le float[] alors que OpenTomb le convertit d'abo
 
 Dans Render.cs, L1434, j'utilise une méthode pour avoir les Ticks depuis le démarrage du jeu alors que OpenTomb utilise SDL_GetTicks donc 
 pas sûr que ça marche
+
+Dans AnimStateControl.cs, L979, nextFc.Cb = ent.RayCb mais après je modif certaines props de nextFc.Cb qui modif donc ent.RayCb

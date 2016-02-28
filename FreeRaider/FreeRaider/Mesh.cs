@@ -883,9 +883,9 @@ namespace FreeRaider
 
     public class SSAnimation
     {
-        public short LastState;
+        public TR_STATE LastState;
 
-        public short NextState;
+        public TR_STATE NextState;
 
         public short LastAnimation;
 
@@ -900,7 +900,7 @@ namespace FreeRaider
         /// <summary>
         /// Additional animation control param
         /// </summary>
-        public ushort AnimFlags;
+        public AnimControlFlags AnimFlags;
 
         /// <summary>
         /// One frame change period
@@ -916,7 +916,12 @@ namespace FreeRaider
 
         public event OnFrameHandler OnFrame = delegate { };
 
-        public delegate void OnFrameHandler(Character ent, SSAnimation ssAnim, int state);
+        public delegate void OnFrameHandler(Character ent, SSAnimation ssAnim, ENTITY_ANIM state);
+
+        public void ClearOnFrame()
+        {
+            OnFrame = null;
+        }
 
         /// <summary>
         /// Base model

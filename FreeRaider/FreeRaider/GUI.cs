@@ -2677,7 +2677,7 @@ namespace FreeRaider
             bf.Animations.Lerp = 0;
             stc = StaticFuncs.Anim_FindStateChangeByID(bf.Animations.Model.Animations[bf.Animations.CurrentAnimation],
                 (uint) bf.Animations.NextState);
-            Entity.GetNextFrame(bf, time, stc, out frame, out anim, 0x00);
+            Entity.GetNextFrame(bf, time, stc, out frame, out anim, AnimControlFlags.NormalControl);
             if(anim != bf.Animations.CurrentAnimation)
             {
                 bf.Animations.LastAnimation = bf.Animations.CurrentAnimation;
@@ -2700,7 +2700,7 @@ namespace FreeRaider
             dt = bf.Animations.FrameTime - t * bf.Animations.Period;
             bf.Animations.FrameTime = frame * bf.Animations.Period + dt;
             bf.Animations.Lerp = dt / bf.Animations.Period;
-            Entity.GetNextFrame(bf, bf.Animations.Period, stc, out bf.Animations.NextFrame, out bf.Animations.NextAnimation, 0x00);
+            Entity.GetNextFrame(bf, bf.Animations.Period, stc, out bf.Animations.NextFrame, out bf.Animations.NextAnimation, AnimControlFlags.NormalControl);
             Entity.UpdateCurrentBoneFrame(bf, null);
         }
 
