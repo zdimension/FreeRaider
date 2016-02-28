@@ -11,7 +11,7 @@ namespace FreeRaider.Game
         [STAThread]
         public static void Main(string[] args)
         {
-            using (var game = new GameWindow())
+            /*using (var game = new GameWindow())
             {
                 game.Load += (sender, e) => 
                 {
@@ -48,7 +48,15 @@ namespace FreeRaider.Game
                     game.SwapBuffers();
                 };
                 game.Run(60.0);
-            }
+            }*/
+            var c = 10.0f;
+            var v = new Vector3(2, 3, 4);
+            var v1 = new Vector3(v.X - c / 2.0f, v.Y - c / 2.0f, v.Z - c / 2.0f);
+            var v2 = v - new Vector3(c / 2.0f);
+            Console.WriteLine(v);
+            Console.WriteLine(v1);
+            Console.WriteLine(v2);
+            Console.ReadLine();
         }
     }
 }

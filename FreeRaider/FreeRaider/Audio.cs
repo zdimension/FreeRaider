@@ -1,18 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.Configuration;
-using System.Net.Http.Headers;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
+using FreeRaider.Loader;
 using LibSndFile;
 using OpenTK;
 using OpenTK.Audio.OpenAL;
-using FreeRaider.Loader;
 
 namespace FreeRaider
 {
@@ -166,7 +159,7 @@ namespace FreeRaider
     /// <summary>
     /// Possible types of errors returned by Audio_Send / Audio_Kill functions.
     /// </summary>
-    public enum TR_AUDIO_SEND : int
+    public enum TR_AUDIO_SEND
     {
         NoSample = -2,
         NoChannel = -1,
@@ -177,7 +170,7 @@ namespace FreeRaider
     /// <summary>
     /// Define some common samples across ALL TR versions.
     /// </summary>
-    public enum TR_AUDIO_SOUND : int
+    public enum TR_AUDIO_SOUND
     {
         No = 2,
         Sliding = 3,
@@ -247,7 +240,7 @@ namespace FreeRaider
     /// However, all stream types could be interrupted by next pending track
     /// with same type.
     /// </summary>
-    public enum TR_AUDIO_STREAM_TYPE : int
+    public enum TR_AUDIO_STREAM_TYPE
     {
         Unknown = -1,
         Background, // BGM tracks.
@@ -339,7 +332,7 @@ namespace FreeRaider
         /// </summary>
         public float Chance { get; set; }
 
-        public Loader.LoopType Loop { get; set; }
+        public LoopType Loop { get; set; }
 
         /// <summary>
         /// Similar to flag 0x200000 (P) in native TRs.
@@ -821,7 +814,7 @@ namespace FreeRaider
         /// <summary>
         /// Source index. Should be unique for each source.
         /// </summary>
-        private uint sourceIndex = 0;
+        private uint sourceIndex;
 
         /// <summary>
         /// Link source to parent emitter
@@ -1291,7 +1284,7 @@ namespace FreeRaider
         /// <summary>
         /// Global flag for damping BGM tracks
         /// </summary>
-        public static bool DampActive { get; set; } = false;
+        public static bool DampActive { get; set; }
 
         /// <summary>
         /// Track loading

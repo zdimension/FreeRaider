@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using OpenTK;
 using FreeRaider.Loader;
+using OpenTK;
 
 namespace FreeRaider
 {
@@ -87,7 +84,7 @@ namespace FreeRaider
         /// <summary>
         /// Transparency information
         /// </summary>
-        public Loader.BlendingMode BlendMode { get; set; }
+        public BlendingMode BlendMode { get; set; }
 
         /// <summary>
         /// Double side flag

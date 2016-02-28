@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using FreeRaider.Loader;
 using OpenTK.Graphics.OpenGL;
 
@@ -84,7 +82,7 @@ namespace FreeRaider
         /// <summary>
         /// Original data
         /// </summary>
-        private List<Loader.DWordTexture> originalPages;
+        private List<DWordTexture> originalPages;
 
         /// <summary>
         /// Object textures in the file.
@@ -126,13 +124,13 @@ namespace FreeRaider
         /// Adds an object texture to the list.
         /// </summary>
         /// <param name="texture"></param>
-        private void addObjectTexture(Loader.ObjectTexture texture);
+        private void addObjectTexture(ObjectTexture texture);
 
         /// <summary>
         /// Adds a sprite texture to the list.
         /// </summary>
         /// <param name="texture"></param>
-        private void addSpriteTexture(Loader.SpriteTexture texture);
+        private void addSpriteTexture(SpriteTexture texture);
 
         /// <summary>
         /// Create a new Bordered texture atlas with the specified border width
@@ -143,9 +141,9 @@ namespace FreeRaider
         public BorderedTextureAtlas(
             int border, 
             bool conserveMemory,
-            List<Loader.DWordTexture> pages,
-            List<Loader.ObjectTexture> objectTextures, 
-            List<Loader.SpriteTexture> spriteTextures)
+            List<DWordTexture> pages,
+            List<ObjectTexture> objectTextures, 
+            List<SpriteTexture> spriteTextures)
         {
             borderWidth = border;
             resultPageWidth = 0;

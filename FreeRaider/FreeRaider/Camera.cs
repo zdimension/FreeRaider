@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OpenTK;
 
 namespace FreeRaider
@@ -40,9 +38,9 @@ namespace FreeRaider
         public Vector3 PreviousPosition = new Vector3(0.0f, 0.0f, 0.0f);
         public Vector3 Angle;
 
-        public Matrix4 GLViewMat = new Matrix4();
-        public Matrix4 GLProjMat = new Matrix4();
-        public Matrix4 GLViewProjMat = new Matrix4();
+        public Matrix4 GLViewMat;
+        public Matrix4 GLProjMat;
+        public Matrix4 GLViewProjMat;
 
         public Plane[] ClipPlanes = new Plane[4]; // frustum side clip planes
         public Frustum Frustum; // camera frustum structure
@@ -56,8 +54,8 @@ namespace FreeRaider
         public float Height;
         public float Width;
 
-        public float ShakeValue = 0;
-        public float ShakeTime = 0;
+        public float ShakeValue;
+        public float ShakeTime;
 
         public TR_CAM_TARG TargetDir = TR_CAM_TARG.Front;
         public Room CurrentRoom = null;
@@ -106,8 +104,8 @@ namespace FreeRaider
 
         public void SetFovAspect(float fov, float aspect)
         {
-            this.Fov = fov;
-            this.Aspect = aspect;
+            Fov = fov;
+            Aspect = aspect;
             F = (float)Math.Tan(fov * Constants.RadPerDeg / 2);
             Height = 2.0f * DistNear * F;
             Width = Height * aspect;

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using FreeRaider.Loader;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
@@ -46,11 +44,11 @@ namespace FreeRaider
         /// <summary>
         /// Texture font renderer
         /// </summary>
-        private FontTexture font = null;
+        private FontTexture font;
 
         private float[] backgroundColor = new float[4];
 
-        private int historyPos = 0;
+        private int historyPos;
 
         private List<string> historyLines;
         
@@ -83,7 +81,7 @@ namespace FreeRaider
         /// <summary>
         /// Ready-to-use flag
         /// </summary>
-        private bool inited = false;
+        private bool inited;
 
         private string editingLine;
 

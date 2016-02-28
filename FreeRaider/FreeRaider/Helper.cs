@@ -4,13 +4,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using OpenTK;
-using OpenTK.Audio.OpenAL;
 using FreeRaider.Loader;
 using Ionic.Zlib;
+using OpenTK;
+using OpenTK.Audio.OpenAL;
+using OpenTK.Graphics.OpenGL;
 
 namespace FreeRaider
 {
@@ -20,7 +19,7 @@ namespace FreeRaider
         {
             fext = fext.ToUpper();
             var check = br.ReadBytes(4);
-            var ver = check[0] | (uint)(check[1] << 8) | (uint)(check[2] << 16) | (uint)(check[3] << 24);
+            var ver = check[0] | (uint) (check[1] << 8) | (uint) (check[2] << 16) | (uint) (check[3] << 24);
             switch (fext)
             {
                 case ".PHD":
@@ -69,8 +68,8 @@ namespace FreeRaider
         {
             float d = axis.Length;
             Assert.That(d != 0);
-            float s = (float)Math.Sin(angle * 0.5) / d;
-            quat = new Quaternion(axis * s, (float)Math.Cos(angle * 0.5));
+            float s = (float) Math.Sin(angle * 0.5) / d;
+            quat = new Quaternion(axis * s, (float) Math.Cos(angle * 0.5));
         }
 
         public static Vector3 ZeroW = Vector3.Zero;
@@ -94,7 +93,7 @@ namespace FreeRaider
         // http://stackoverflow.com/a/22867582/2196124
         public static T[] FillArray<T>(T val, int count)
         {
-            var value = new[] { val };
+            var value = new[] {val};
             var destinationArray = new T[count];
 
 
@@ -118,7 +117,7 @@ namespace FreeRaider
 
         public static void FillArray<T>(T val, T[] destinationArray)
         {
-            var value = new[] { val };
+            var value = new[] {val};
 
 
             // set the initial array value
@@ -158,7 +157,8 @@ namespace FreeRaider
                     return "";
                 }
             }
-            else {
+            else
+            {
                 return Clipboard.GetText();
             }
         }
@@ -185,7 +185,8 @@ namespace FreeRaider
             return ret;
         }
 
-        public static void SetValue(ref Matrix3 mat, float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22)
+        public static void SetValue(ref Matrix3 mat, float m00, float m01, float m02, float m10, float m11, float m12,
+            float m20, float m21, float m22)
         {
             mat.Row0 = new Vector3(m00, m01, m02);
             mat.Row1 = new Vector3(m10, m11, m12);
@@ -205,10 +206,38 @@ namespace FreeRaider
             var sc = si * ch;
             var ss = si * sh;
 
-            SetValue(ref mat, 
+            SetValue(ref mat,
                 cj * ch, sj * sc - cs, sj * cc + ss,
                 cj * sh, sj * ss + cc, sj * cs - sc,
                 -sj, cj * si, cj * ci);
+        }
+
+        public static void SetRotation(ref Matrix3 mat, Quaternion q)
+        {
+            var d = q.LengthSquared;
+            Assert.That(d != 0.0f);
+            var s = 2.0f / d;
+
+            var xs = q.X * s;
+            var ys = q.Y * s;
+            var zs = q.Z * s;
+
+            var wx = q.W * xs;
+            var wy = q.W * ys;
+            var wz = q.W * zs;
+
+            var xx = q.X * xs;
+            var xy = q.X * ys;
+            var xz = q.X * zs;
+
+            var yy = q.Y * ys;
+            var yz = q.Y * zs;
+            var zz = q.Z * zs;
+
+            SetValue(ref mat,
+                1.0f - (yy + zz), xy - wz, xz + wy,
+                xy + wz, 1.0f - (xx + zz), yz - wx,
+                xz - wy, yz + wx, 1.0f - (xx + yy));
         }
 
         public static void ListCopy<T>(List<T> sourceArray, List<T> destinationArray,
@@ -228,6 +257,23 @@ namespace FreeRaider
             }
         }
 
+        public static unsafe void PointerCopy(float* src, float* dst, int length)
+        {
+            for (var i = 0; i < length; i++)
+            {
+                dst[i] = src[i];
+            }
+        }
+
+        public static unsafe void PointerCopy(float* src, int sourceIndex, float* dst, int destinationIndex, int length)
+        {
+            for (var i = 0; i < length; i++)
+            {
+                dst[i + destinationIndex] = src[i + sourceIndex];
+            }
+        }
+
+
         public static string Format(string format, params object[] args)
         {
             return string.Format(format, args);
@@ -238,6 +284,27 @@ namespace FreeRaider
             var temp = a;
             a = b;
             b = temp;
+        }
+
+        public static Matrix4 Mat4_Diagonal(Quaternion q)
+        {
+            return Mat4_Diagonal(q.X, q.Y, q.Z, q.W);
+        }
+
+        public static Matrix4 Mat4_Diagonal(float x, float y, float z, float w)
+        {
+            return new Matrix4(
+                x, 0, 0, 0,
+                0, y, 0, 0,
+                0, 0, z, 0,
+                0, 0, 0, w);
+        }
+
+        public static uint GenBufferU()
+        {
+            uint ret;
+            GL.GenBuffers(1, out ret);
+            return ret;
         }
     }
 

@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using BulletSharp;
-using OpenTK;
+using FreeRaider.Loader;
 
 namespace FreeRaider
 {
@@ -32,7 +28,7 @@ namespace FreeRaider
         PC = 0,
         PSX = 1,
         DC = 2,
-        OPENTOMB = 3, // Maybe some day...
+        OPENTOMB = 3 // Maybe some day...
     }
 
     public enum OBJECT_TYPE : ushort
@@ -42,7 +38,7 @@ namespace FreeRaider
         RoomBase = 0x0002,
         Entity = 0x0003,
         Hair = 0x0004,
-        BulletMisc = 0x7FFF,
+        BulletMisc = 0x7FFF
     }
 
     public enum COLLISION_SHAPE
@@ -52,7 +48,7 @@ namespace FreeRaider
         BoxBase = 0x0002, // use single box collision
         Sphere = 0x0003,
         Trimesh = 0x0004, // for static objects and room's!
-        TrimeshConvex = 0x0005, // for dynamic objects
+        TrimeshConvex = 0x0005 // for dynamic objects
     }
 
     public enum COLLISION_TYPE
@@ -63,7 +59,7 @@ namespace FreeRaider
         Dynamic = 0x0005, // hellow full physics interaction
         Actor = 0x0007, // actor, enemies, npc, animals
         Vehicle = 0x0009, // car, moto, bike
-        Ghost = 0x000B,
+        Ghost = 0x000B
         // no fix character position, but works in collision callbacks and interacts with dynamic objects
     }
 
@@ -74,7 +70,7 @@ namespace FreeRaider
         Kinematic = 0x0002, // doors, blocks, static animated entityes
         Characters = 0x0004, // lara, enemies, friends, creatures
         Bullets = 0x0008, // bullets, rockets, grenades, arrows...
-        Dynamics = 0x0010, // test balls, warious
+        Dynamics = 0x0010 // test balls, warious
     }
 
     public class EngineContainer
@@ -379,7 +375,7 @@ namespace FreeRaider
 
         public static string GetLevelName(string path);
 
-        public static string GetAutoexecName(Loader.Game gameVersion, string postfix = "");
+        public static string GetAutoexecName(Game gameVersion, string postfix = "");
 
         #endregion
 

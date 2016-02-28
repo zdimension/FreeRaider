@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace FreeRaider
 {
@@ -55,7 +52,7 @@ namespace FreeRaider
 
         Secret1 = 120,
         Secret2 = 121,
-        Secret3 = 122,
+        Secret3 = 122
     }
 
     public enum MenuItemType

@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL;
 using SharpFont;
-using Encoding = SharpFont.Encoding;
 
 namespace FreeRaider
 {
@@ -37,9 +32,9 @@ namespace FreeRaider
 
     public class FontTexture
     {
-        public SharpFont.Library FTLibrary;
+        public Library FTLibrary;
 
-        public SharpFont.Face FTFace = null;
+        public Face FTFace;
 
         public ushort FontSize;
 
@@ -47,7 +42,7 @@ namespace FreeRaider
 
         public ushort GLRealTexIndexesCount;
 
-        public uint[] GLTexIndexes = null;
+        public uint[] GLTexIndexes;
 
         public int GLMaxTexWidth;
 

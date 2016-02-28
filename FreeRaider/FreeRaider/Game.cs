@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace FreeRaider
+﻿namespace FreeRaider
 {
     public partial class Constants
     {

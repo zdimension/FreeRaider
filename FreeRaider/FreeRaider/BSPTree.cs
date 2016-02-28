@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using OpenTK;
+﻿using System.Collections.Generic;
 
 namespace FreeRaider
 {
@@ -35,6 +30,8 @@ namespace FreeRaider
 
     public class DynamicBSP
     {
+        private BSPNode _root = new BSPNode();
+
         private void addPolygon(ref BSPNode root, BSPFaceRef face, Polygon transformed)
         {
             if(root == null) root = new BSPNode();
@@ -83,7 +80,7 @@ namespace FreeRaider
             }
         }
 
-        public void AddNewPolygonList(List<TransparentPolygonReference> p, ref Transform transform, Frustum frustum, Camera cam)
+        public void AddNewPolygonList(List<TransparentPolygonReference> p, Transform transform, Frustum frustum, Camera cam)
         {
             foreach (var pp in p)
             {
@@ -92,11 +89,18 @@ namespace FreeRaider
                 transformed.Transform(pp.Polygon, transform);
                 transformed.DoubleSide = pp.Polygon.DoubleSide;
 
-                //if(frustum)
+                if(frustum.IsPolyVisible(transformed, cam))
+                {
+                    addPolygon(ref _root, new BSPFaceRef(transform, pp), transformed);
+                }
             }
         }
 
-        public BSPNode Root { get; private set; } = new BSPNode();
+        public BSPNode Root
+        {
+            get { return _root; }
+            private set { _root = value; }
+        }
 
         public void Reset()
         {

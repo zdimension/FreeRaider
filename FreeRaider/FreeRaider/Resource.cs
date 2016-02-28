@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using FreeRaider.Loader;
 using OpenTK;
 
 namespace FreeRaider
@@ -43,7 +40,7 @@ namespace FreeRaider
         DoorVerticalA = 1, // TR3-5 triangulated door.
         DoorVerticalB = 2, // TR3-5 triangulated door.
         Wall = 3, // wall (0x81 == TR_METERING_WALLHEIGHT)
-        Ghost = 4, // no collision.
+        Ghost = 4 // no collision.
     }
 
     /// <summary>
@@ -243,41 +240,41 @@ namespace FreeRaider
 
         // Open autoexec.
 
-        public static void Res_AutoexecOpen(Loader.Game engine_version);
+        public static void Res_AutoexecOpen(Game engine_version);
 
         // Functions generating native OpenTomb structs from legacy TR structs.
 
-        public static void TR_GenWorld(World world, Loader.Level tr);
+        public static void TR_GenWorld(World world, Level tr);
 
-        public static void TR_GenMeshes(World world, Loader.Level tr);
+        public static void TR_GenMeshes(World world, Level tr);
 
-        public static void TR_GenMesh(World world, int mesh_index, BaseMesh mesh, Loader.Level tr);
+        public static void TR_GenMesh(World world, int mesh_index, BaseMesh mesh, Level tr);
 
-        public static void TR_GenSkeletalModels(World world, Loader.Level tr);
+        public static void TR_GenSkeletalModels(World world, Level tr);
 
-        public static void TR_GenSkeletalModel(int model_id, SkeletalModel model, Loader.Level tr);
+        public static void TR_GenSkeletalModel(int model_id, SkeletalModel model, Level tr);
 
-        public static void TR_GenEntities(World world, Loader.Level tr);
+        public static void TR_GenEntities(World world, Level tr);
 
-        public static void TR_GenSprites(World world, Loader.Level tr);
+        public static void TR_GenSprites(World world, Level tr);
 
-        public static void TR_GenTextures(World world, Loader.Level tr);
+        public static void TR_GenTextures(World world, Level tr);
 
-        public static void TR_GenAnimCommands(World world, Loader.Level tr);
+        public static void TR_GenAnimCommands(World world, Level tr);
 
-        public static void TR_GenAnimTextures(World world, Loader.Level tr);
+        public static void TR_GenAnimTextures(World world, Level tr);
 
-        public static void TR_GenRooms(World world, Loader.Level tr);
+        public static void TR_GenRooms(World world, Level tr);
 
-        public static void TR_GenRoom(int room_index, Room room, World world, Loader.Level tr);
+        public static void TR_GenRoom(int room_index, Room room, World world, Level tr);
 
-        public static void TR_GenRoomProperties(World world, Loader.Level tr);
+        public static void TR_GenRoomProperties(World world, Level tr);
 
-        public static void TR_GenBoxes(World world, Loader.Level tr);
+        public static void TR_GenBoxes(World world, Level tr);
 
-        public static void TR_GenCameras(World world, Loader.Level tr);
+        public static void TR_GenCameras(World world, Level tr);
 
-        public static void TR_GenSamples(World world, Loader.Level tr);
+        public static void TR_GenSamples(World world, Level tr);
 
         // Helper functions to convert legacy TR structs to native OpenTomb structs.
 
@@ -286,26 +283,26 @@ namespace FreeRaider
         /// <summary>
         /// v[] of length 4
         /// </summary>
-        public static void TR_color_to_arr(float[] v, Loader.FloatColor tr_c);
+        public static void TR_color_to_arr(float[] v, FloatColor tr_c);
 
         // Functions for getting various parameters from legacy TR structs.
 
-        public static void TR_GetBFrameBB_Pos(Loader.Level tr, int frame_offset, BoneFrame bone_frame);
+        public static void TR_GetBFrameBB_Pos(Level tr, int frame_offset, BoneFrame bone_frame);
 
-        public static int TR_GetNumAnimationsForMoveable(Loader.Level tr, int moveable_ind);
+        public static int TR_GetNumAnimationsForMoveable(Level tr, int moveable_ind);
 
-        public static int TR_GetNumFramesForAnimation(Loader.Level tr, int animation_ind);
+        public static int TR_GetNumFramesForAnimation(Level tr, int animation_ind);
 
-        public static long TR_GetOriginalAnimationFrameOffset(uint offset, uint anim, Loader.Level tr);
+        public static long TR_GetOriginalAnimationFrameOffset(uint offset, uint anim, Level tr);
 
         // Main functions which are used to translate legacy TR floor data
         // to native OpenTomb structs.
 
-        public static int TR_Sector_TranslateFloorData(RoomSector sector, Loader.Level tr);
+        public static int TR_Sector_TranslateFloorData(RoomSector sector, Level tr);
 
-        public static void TR_Sector_Calculate(World world, Loader.Level tr, long room_index);
+        public static void TR_Sector_Calculate(World world, Level tr, long room_index);
 
-        public static void tr_setupRoomVertices(World world, Loader.Level tr, Loader.Room tr_room, BaseMesh mesh,
+        public static void tr_setupRoomVertices(World world, Level tr, Loader.Room tr_room, BaseMesh mesh,
             int numCorners, ushort vertices, ushort masked_texture, Polygon p);
 
         public static void tr_copyNormals(Polygon polygon, BaseMesh mesh, ushort mesh_vertex_indices);

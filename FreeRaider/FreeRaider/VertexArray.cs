@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using OpenTK.Graphics.OpenGL;
+﻿using OpenTK.Graphics.OpenGL;
 
 namespace FreeRaider
 {
@@ -64,7 +59,7 @@ namespace FreeRaider
 
     public class VertexArray
     {
-        private int vertexArrayObject = 0;
+        private int vertexArrayObject;
 
         public VertexArray(uint elementVBO, VertexArrayAttribute[] attributes)
         {

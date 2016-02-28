@@ -11,3 +11,10 @@ Dans Helper.cs, L173, j'incrémente direct le pointeur au lieu de faire sizeof(T
 Dans Hair.cs, L246, je modifie Joints[currJoint] alors que OpenTomb modifie Joints[i] (i E [0; Elements.Count] / for)
 
 Dans BorderedTextureAtlas.cs, L165, j'utilise Constants.Sqrt2 au lieu de 1.41 (précision) ; ça marchera p't'être pas.
+
+Dans Render.cs, L166, je fais (IntPtr)Marshal.SizeOf(buffer) au lieu de (IntPtr)(buffer.Count * Marshal.SizeOf(buffer[0]))
+
+Dans Render.cs, L1500, je passe le float[] alors que OpenTomb le convertit d'abord en float*
+
+Dans Render.cs, L1434, j'utilise une méthode pour avoir les Ticks depuis le démarrage du jeu alors que OpenTomb utilise SDL_GetTicks donc 
+pas sûr que ça marche

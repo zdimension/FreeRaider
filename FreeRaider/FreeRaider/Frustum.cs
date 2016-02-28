@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Authentication.ExtendedProtection;
-using System.Text;
-using System.Threading.Tasks;
 using OpenTK;
 
 namespace FreeRaider
@@ -25,10 +22,10 @@ namespace FreeRaider
         /// </summary>
         public Plane Normal { get; set; }
 
-        public int ParentsCount { get; set; } = 0;
+        public int ParentsCount { get; set; }
 
 
-        public Frustum Parent { get; set; } = null;
+        public Frustum Parent { get; set; }
 
         public bool HasParent(Frustum parent)
         {
@@ -145,7 +142,7 @@ namespace FreeRaider
             return false;
         }
 
-        public bool IsAABBVisible(ref Vector3 bbMin, ref Vector3 bbMax, ref Camera cam)
+        public bool IsAABBVisible(Vector3 bbMin, Vector3 bbMax, Camera cam)
         {
             var poly = new Polygon();
             poly.Vertices = new List<Vertex>(4);
@@ -350,7 +347,7 @@ namespace FreeRaider
             return ins;
         }
 
-        public static Frustum PortalFrustumIntersect(ref Portal portal, Frustum emitter, Render render)
+        public static Frustum PortalFrustumIntersect(Portal portal, Frustum emitter, Render render)
         {
             if (portal.DestRoom == null)
                 return null;
@@ -366,7 +363,7 @@ namespace FreeRaider
             bool inFace = false;
             foreach (var v in portal.Vertices)
             {
-                if (!inDist && render.Camera.Frustum.Normal.Distance(v) < render.Camera.DistanceFar)
+                if (!inDist && render.Camera.Frustum.Normal.Distance(v) < render.Camera.DistFar)
                     inDist = true;
                 if (!inFace && emitter.Normal.Distance(v) > 0.0)
                     inFace = true;
@@ -416,7 +413,7 @@ namespace FreeRaider
             Parent = null;
         }
 
-        public void GenClipPlanes(ref Camera cam)
+        public void GenClipPlanes(Camera cam)
         {
             if (Vertices.Count == 0)
                 return;

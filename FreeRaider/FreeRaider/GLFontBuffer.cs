@@ -1,19 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using OpenTK.Graphics.OpenGL;
 
 namespace FreeRaider
 {
     public partial class Global
     {
-        public static uint FontBufferVBO = 0;
+        public static uint FontBufferVBO;
 
         public static VertexArray FontBufferVAO;
 
-        public static int CurrentSize = 0;
+        public static int CurrentSize;
     }
 
     public class FontBuffer
@@ -25,7 +22,7 @@ namespace FreeRaider
                 return;
             }
 
-            Global.FontBufferVBO = (uint) GL.GenBuffer();
+            Global.FontBufferVBO = Helper.GenBufferU();
 
             Global.FontBufferVAO = new VertexArray(0, new []
             {

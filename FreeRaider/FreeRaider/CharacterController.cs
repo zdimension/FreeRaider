@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using BulletSharp;
 using OpenTK;
 
@@ -59,7 +56,7 @@ namespace FreeRaider
         Hands3 = LeftHand3 | RightHand3,
 
         Hands = Hands1 | Hands2 | Hands3,
-        Legs = Legs1 | Legs2 | Legs3,
+        Legs = Legs1 | Legs2 | Legs3
     }
 
     public partial class Constants
@@ -293,7 +290,7 @@ namespace FreeRaider
 
     public class CharacterResponse
     {
-        public bool Killed = false;
+        public bool Killed;
 
         public sbyte VerticalCollide = 0;
 

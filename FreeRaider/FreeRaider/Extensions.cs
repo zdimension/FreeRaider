@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using BulletSharp;
 using LibSndFile;
 using OpenTK;
 using OpenTK.Audio.OpenAL;
+using OpenTK.Graphics;
 
 namespace FreeRaider
 {
@@ -528,6 +527,77 @@ namespace FreeRaider
         public static double ElapsedMicroseconds(this Stopwatch sw)
         {
             return sw.ElapsedTicks * 1000000.0f / Stopwatch.Frequency;
+        }
+
+        public static Quaternion GetRotation(this Matrix3 mat)
+        {
+            var trace = mat.Row0.X + mat.Row1.Y + mat.Row2.Z;
+
+            var temp = new float[4];
+
+            if(trace > 0.0f)
+            {
+                var s = (float)Math.Sqrt(trace + 1.0f);
+                temp[3] = s * 0.5f;
+                s = 0.5f / s;
+
+                temp[0] = (mat.Row2.Y - mat.Row1.Z) * s;
+                temp[1] = (mat.Row0.Z - mat.Row2.X) * s;
+                temp[2] = (mat.Row1.X - mat.Row0.Y) * s;
+            }
+            else
+            {
+                var i = mat.Row0.X < mat.Row1.Y
+                    ? (mat.Row1.Y < mat.Row2.Z ? 2 : 1)
+                    : (mat.Row0.X < mat.Row2.Z ? 2 : 0);
+                var j = (i + 1) % 3;
+                var k = (i + 2) % 3;
+
+                var s = (float) Math.Sqrt(mat[i, i] - mat[j, j] - mat[k, k] + 1.0f);
+                temp[i] = s * 0.5f;
+                s = 0.5f / s;
+
+                temp[3] = (mat[k, j] - mat[j, k]) * s;
+                temp[j] = (mat[j, i] + mat[i, j]) * s;
+                temp[k] = (mat[k, i] + mat[i, k]) * s;
+            }
+            return new Quaternion(temp[0], temp[1], temp[2], temp[3]);
+        }
+
+        public static Matrix4 GetWorldTransform(this RigidBody body)
+        {
+            var ret = new Matrix4();
+            body.GetWorldTransform(out ret);
+            return ret;
+        }
+
+        public static float[] ToArray(this Vector3 v)
+        {
+            return new[] { v.X, v.Y, v.Z };
+        }
+
+        public static float[] ToArray(this Quaternion q)
+        {
+            return new[] { q.X, q.Y, q.Z, q.W };
+        }
+
+        public static float[] ToArray3(this Color4 c)
+        {
+            return new[] {c.R, c.G, c.B};
+        }
+
+        public static Quaternion MultiplyByQuaternion(this Matrix4 mat, Quaternion vec)
+        {
+            return new Quaternion(
+                vec.X * mat.Row0.X + vec.Y * mat.Row1.X + vec.Z * mat.Row2.X + vec.W * mat.Row3.X,
+                vec.X * mat.Row0.Y + vec.Y * mat.Row1.Y + vec.Z * mat.Row2.Y + vec.W * mat.Row3.Y,
+                vec.X * mat.Row0.Z + vec.Y * mat.Row1.Z + vec.Z * mat.Row2.Z + vec.W * mat.Row3.Z,
+                vec.X * mat.Row0.W + vec.Y * mat.Row1.W + vec.Z * mat.Row2.W + vec.W * mat.Row3.W);
+        }
+
+        public static Quaternion ToQuat(this Vector3 vec, float w = 1.0f)
+        {
+            return new Quaternion(vec, w);
         }
     }
 }

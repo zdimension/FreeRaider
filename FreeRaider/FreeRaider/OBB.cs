@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OpenTK;
 
 namespace FreeRaider
@@ -64,7 +61,7 @@ namespace FreeRaider
             }
         }
 
-        public void Rebuild(ref Vector3 bbMin, ref Vector3 bbMax)
+        public void Rebuild(Vector3 bbMin, Vector3 bbMax)
         {
             Extent = (bbMax - bbMin) / 2;
             BaseCentre = (bbMin + bbMax) / 2;

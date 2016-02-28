@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing.Design;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using BulletSharp;
 using OpenTK;
-using FreeRaider.Loader;
 
 namespace FreeRaider
 {
@@ -75,7 +70,7 @@ namespace FreeRaider
         Collision = 0x00000004,
         Stand = 0x00000008,
         Hit = 0x00000010,
-        RoomCollision = 0x00000020,
+        RoomCollision = 0x00000020
     }
 
     public enum Substance

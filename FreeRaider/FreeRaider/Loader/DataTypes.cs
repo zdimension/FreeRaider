@@ -4,11 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
-using OpenTK.Graphics.OpenGL;
 
 namespace FreeRaider.Loader
 {
@@ -235,9 +230,9 @@ namespace FreeRaider.Loader
         /// <param name="z">Z component</param>
         public Vertex(float x, float y, float z)
         {
-            this.X = x;
-            this.Y = y;
-            this.Z = z;
+            X = x;
+            Y = y;
+            Z = z;
         }
 
         /// <summary>
@@ -369,7 +364,7 @@ namespace FreeRaider.Loader
         /// <returns>A <see cref="QuadFace"/></returns>
         public static QuadFace Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
-            var ret = new QuadFace()
+            var ret = new QuadFace
             {
                 Vertices = br.ReadUInt16Array(4),
                 Texture = br.ReadUInt16()
@@ -437,7 +432,7 @@ namespace FreeRaider.Loader
         /// <returns>A <see cref="WordTexture"/></returns>
         public static WordTexture Read(BinaryReader br)
         {
-            var ret = new WordTexture()
+            var ret = new WordTexture
             {
                 Pixels = new ushort[256][]
             };
@@ -472,7 +467,7 @@ namespace FreeRaider.Loader
         /// <returns>A <see cref="DWordTexture"/></returns>
         public static DWordTexture Read(BinaryReader br)
         {
-            var ret = new DWordTexture()
+            var ret = new DWordTexture
             {
                 Pixels = new uint[256][]
             };

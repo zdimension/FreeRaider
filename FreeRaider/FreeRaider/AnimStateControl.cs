@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FreeRaider
 {
@@ -561,7 +557,7 @@ namespace FreeRaider
         LaraValveTurn = 470,
         LaraCrowbarUseOnWall2 = 471,
         LaraLootChest = 472,
-        LaraLadderToCrouch = 473,
+        LaraLadderToCrouch = 473
     }
 
     public enum TR_STATE
@@ -718,7 +714,7 @@ namespace FreeRaider
         Kill = 4,
         PlaySound = 5,
         PlayEffect = 6,
-        Interact = 7,
+        Interact = 7
     }
 
     /// <summary>
@@ -775,7 +771,7 @@ namespace FreeRaider
         GetWaterSkin = 43,
         RemoveWaterSkin = 44,
         LaraLocationPad = 45,
-        KillAllEnemies = 46,
+        KillAllEnemies = 46
     }
 
     public class AnimStateControl

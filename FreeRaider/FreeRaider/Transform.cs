@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OpenTK;
 
 namespace FreeRaider
@@ -13,7 +9,11 @@ namespace FreeRaider
 
         public Vector3 Origin;
 
-        public Quaternion Rotation => Basis.ExtractRotation();
+        public Quaternion Rotation
+        {
+            get { return Basis.GetRotation(); }
+            set { Helper.SetRotation(ref Basis, value); }
+        }
 
         public static Vector3 operator * (Transform t, Vector3 x)
         {

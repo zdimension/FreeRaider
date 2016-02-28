@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using BulletSharp;
+using FreeRaider.Loader;
 using OpenTK;
 using OpenTK.Graphics.ES30;
-using FreeRaider.Loader;
 using VertexAttribPointerType = OpenTK.Graphics.OpenGL.VertexAttribPointerType;
 
 namespace FreeRaider
@@ -658,7 +656,7 @@ namespace FreeRaider
 
         public float Falloff;
 
-        public Loader.LightType LightType;
+        public LightType LightType;
     }
 
     /// <summary>

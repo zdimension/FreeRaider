@@ -1,14 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
 using BulletSharp;
+using FreeRaider.Loader;
 using OpenTK;
-using OpenTK.Audio;
-using OpenTK.Audio.OpenAL;
 
 namespace FreeRaider
 {
@@ -392,8 +387,8 @@ namespace FreeRaider
             if (s2 == null) return false;
             if (this == s2) return true;
 
-            if (Ceiling != s2.Ceiling || CeilingPenetrationConfig == TR_PENETRATION_CONFIG_WALL
-                || s2.CeilingPenetrationConfig == TR_PENETRATION_CONFIG_WALL
+            if (Ceiling != s2.Ceiling || CeilingPenetrationConfig == TR_PENETRATION_CONFIG.Wall
+                || s2.CeilingPenetrationConfig == TR_PENETRATION_CONFIG.Wall
                 || !ignoreDoors && (SectorAbove != null || s2.SectorAbove != null))
                 return false;
 
@@ -410,8 +405,8 @@ namespace FreeRaider
             if (s2 == null) return false;
             if (this == s2) return true;
 
-            if (Floor != s2.Floor || FloorPenetrationConfig == TR_PENETRATION_CONFIG_WALL
-                || s2.FloorPenetrationConfig == TR_PENETRATION_CONFIG_WALL
+            if (Floor != s2.Floor || FloorPenetrationConfig ==  TR_PENETRATION_CONFIG.Wall
+                || s2.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Wall
                 || !ignoreDoors && (SectorBelow != null || s2.SectorBelow != null))
                 return false;
 
@@ -590,7 +585,7 @@ namespace FreeRaider
 
             foreach (var sm in StaticMesh)
             {
-                if (sm.Body != null)
+                if (sm.BtBody != null)
                 {
                     // TODO: World.cpp, L822
                 }
@@ -610,7 +605,7 @@ namespace FreeRaider
 
             foreach (var sm in StaticMesh)
             {
-                if (sm.Body != null)
+                if (sm.BtBody != null)
                 {
                     // TODO: World.cpp, L857
                 }
@@ -623,7 +618,7 @@ namespace FreeRaider
         {
             if (AlternateRoom != null && Active)
             {
-                renderer.cleanList();
+                Global.Renderer.CleanList();
                 Disable();
                 AlternateRoom.Disable();
                 SwapPortals(AlternateRoom);
@@ -636,7 +631,7 @@ namespace FreeRaider
         {
             if (BaseRoom != null && Active)
             {
-                renderer.cleanList();
+                Global.Renderer.CleanList();
                 Disable();
                 BaseRoom.Disable();
                 SwapPortals(BaseRoom);
@@ -657,7 +652,7 @@ namespace FreeRaider
 
         public void SwapPortals(Room dest)
         {
-            foreach (Room r in Global.EngineWorld.rooms)
+            foreach (Room r in Global.EngineWorld.Rooms)
             {
                 foreach (Portal p in r.Portals)
                 {
@@ -697,7 +692,7 @@ namespace FreeRaider
 
         public void BuildOverlappedRoomsList()
         {
-            OverlappedRoomList = Global.EngineWorld.rooms.Where(x => IsOverlapped(x));
+            OverlappedRoomList = Global.EngineWorld.Rooms.Where(IsOverlapped).ToList();
         }
 
         public bool IsJoined(Room r2)
@@ -733,14 +728,14 @@ namespace FreeRaider
 
             if (StaticMesh.Count > 0)
             {
-                /*foreach(var sm in StaticMesh)
+                foreach(var sm in StaticMesh)
                 {
                     RigidBody body = null;
                     if((body = sm.Body) != null)
                     {
                         if(body.MotionState.)
                     }
-                }*/
+                }
                 StaticMesh.Clear();
             }
 
@@ -755,10 +750,10 @@ namespace FreeRaider
 
         public void AddEntity(Entity entity)
         {
-            if (Containers.Any(x => x == entity.m_self)) return;
+            if (Containers.Any(x => x == entity.Self)) return;
 
-            entity.m_self.room = this;
-            Containers.Insert(0, entity.m_self);
+            entity.Self.Room = this;
+            Containers.Insert(0, entity.Self);
         }
 
         public bool RemoveEntity(Entity entity)
@@ -766,7 +761,7 @@ namespace FreeRaider
             if (entity == null || Containers.Count == 0)
                 return false;
 
-            return Containers.Remove(entity.m_self);
+            return Containers.Remove(entity.Self);
         }
 
         public void AddToNearRoomsList(Room r)
@@ -821,7 +816,9 @@ namespace FreeRaider
             return ret;
         }
 
-        public void GenMesh(World world, uint roomID, Loader.Level tr);
+        public void GenMesh(World world, uint roomID, Level tr);
+
+        public static Room FindPosCogerrence(Vector3 newPos, Room room);
     }
 
     public class FlipInfo
@@ -919,7 +916,13 @@ namespace FreeRaider
 
         public void UpdateAnimTextures();
 
-        public void CalculateWaterTint();
+        public unsafe void CalculateWaterTint(float[] tint, bool fixedColour)
+        {
+            fixed(float* ptr = tint)
+                CalculateWaterTint(ptr, fixedColour);
+        }
+
+        public unsafe void CalculateWaterTint(float* tint, bool fixedColour);
 
         public void AddEntity(Entity entity);
 
@@ -944,7 +947,7 @@ namespace FreeRaider
             Textures = new List<uint>();
             EntityTree = new Dictionary<uint, Entity>();
             ItemsTree = new Dictionary<uint, BaseItem>();
-            Character = new Character();
+            Character = new Character(0);
 
             AudioSources = new List<AudioSource>();
             AudioBuffers = new List<uint>();

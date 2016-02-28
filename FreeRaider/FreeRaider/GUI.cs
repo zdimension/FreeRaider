@@ -4,9 +4,6 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
-using System.Threading.Tasks;
 using FreeRaider.Loader;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
@@ -1831,7 +1828,7 @@ namespace FreeRaider
             InitNotifier();
             InitTempLines();
 
-            Global.CrosshairBuffer = (uint)GL.GenBuffer();
+            Global.CrosshairBuffer = Helper.GenBufferU();
             FillCrosshairBuffer();
 
             //Global.MainInventoryMenu = new GuiInventoryMenu();
@@ -2361,13 +2358,13 @@ namespace FreeRaider
 
             if (Global.RectanglePositionBuffer == 0)
             {
-                Global.RectanglePositionBuffer = (uint) GL.GenBuffer();
+                Global.RectanglePositionBuffer = Helper.GenBufferU();
                 GL.BindBuffer(BufferTarget.ArrayBuffer, Global.RectanglePositionBuffer);
                 var rectCoords = new[] {0, 0, 1, 0, 1, 1, 0, 1};
                 GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) Marshal.SizeOf(rectCoords), rectCoords,
                     BufferUsageHint.StaticDraw);
 
-                Global.RectangleColorBuffer = (uint) GL.GenBuffer();
+                Global.RectangleColorBuffer = Helper.GenBufferU();
                 var attribs = new[]
                 {
                     new VertexArrayAttribute((int) GuiShaderDescription.VertexAttribs.Position, 2,
@@ -2375,7 +2372,7 @@ namespace FreeRaider
                         Marshal.SizeOf(new float[2]), 0),
                     new VertexArrayAttribute((int) GuiShaderDescription.VertexAttribs.Color, 4,
                         VertexAttribPointerType.Float, false, Global.RectangleColorBuffer, Marshal.SizeOf(new float[4]),
-                        0),
+                        0)
                 };
                 Global.RectangleArray = new VertexArray(0, attribs);
             }
@@ -2752,11 +2749,11 @@ namespace FreeRaider
     {
         public static FontManager FontManager;
 
-        public static TextLine GuiBaseLines = null;
+        public static TextLine GuiBaseLines;
 
         public static TextLine[] GuiTempLines = new TextLine[Constants.MaxTempLines];
 
-        public static ushort TempLinesUsed = 0;
+        public static ushort TempLinesUsed;
 
         public static GuiItemNotifier Notifier;
 
@@ -2768,12 +2765,12 @@ namespace FreeRaider
 
         public static VertexArray CrosshairArray;
 
-        public static Matrix4 GuiProjectionMatrix = new Matrix4();
+        public static Matrix4 GuiProjectionMatrix;
 
-        public static uint RectanglePositionBuffer = 0;
+        public static uint RectanglePositionBuffer;
 
-        public static uint RectangleColorBuffer = 0;
+        public static uint RectangleColorBuffer;
 
-        public static VertexArray RectangleArray = null;
+        public static VertexArray RectangleArray;
     }
 }
