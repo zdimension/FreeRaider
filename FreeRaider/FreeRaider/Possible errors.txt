@@ -20,3 +20,6 @@ Dans Render.cs, L1434, j'utilise une méthode pour avoir les Ticks depuis le dé
 pas sûr que ça marche
 
 Dans AnimStateControl.cs, L979, nextFc.Cb = ent.RayCb mais après je modif certaines props de nextFc.Cb qui modif donc ent.RayCb
+
+Dans AnimStateControl.cs, L1380, pour saut RIGHT -> JumpLeft et LEFT -> JumpRight, pas forcément voulu -> à vérifier
+"" aussi L1443 et L1470

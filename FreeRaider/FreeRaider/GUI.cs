@@ -2669,20 +2669,21 @@ namespace FreeRaider
         /// <param name="bf">Extended bone frame of the item</param>
         public static void Item_Frame(SSBoneFrame bf, float time)
         {
-            short frame, anim;
+            short frame;
+            TR_ANIMATION anim;
             long t;
             float dt;
             StateChange stc;
 
             bf.Animations.Lerp = 0;
-            stc = StaticFuncs.Anim_FindStateChangeByID(bf.Animations.Model.Animations[bf.Animations.CurrentAnimation],
+            stc = StaticFuncs.Anim_FindStateChangeByID(bf.Animations.Model.Animations[(int)bf.Animations.CurrentAnimation],
                 (uint) bf.Animations.NextState);
             Entity.GetNextFrame(bf, time, stc, out frame, out anim, AnimControlFlags.NormalControl);
             if(anim != bf.Animations.CurrentAnimation)
             {
                 bf.Animations.LastAnimation = bf.Animations.CurrentAnimation;
                 stc =
-                    StaticFuncs.Anim_FindStateChangeByID(bf.Animations.Model.Animations[bf.Animations.CurrentAnimation],
+                    StaticFuncs.Anim_FindStateChangeByID(bf.Animations.Model.Animations[(int)bf.Animations.CurrentAnimation],
                         (uint) bf.Animations.NextState);
             }
             else if(frame != bf.Animations.CurrentFrame)

@@ -112,7 +112,7 @@ namespace FreeRaider
     {
         public bool NoFixAll;
 
-        public uint NoFixBodyParts;
+        public BODY_PART NoFixBodyParts;
 
         /// <summary>
         /// Like Bullet character controller for penetration resolving.
@@ -309,7 +309,7 @@ namespace FreeRaider
 
         public int GetAnimDispatchCase(uint id);
 
-        public static void GetNextFrame(SSBoneFrame bf, float time, StateChange stc, out short frame, out short anim,
+        public static void GetNextFrame(SSBoneFrame bf, float time, StateChange stc, out short frame, out TR_ANIMATION anim,
             AnimControlFlags animFlags);
 
         /// <summary>
@@ -336,7 +336,7 @@ namespace FreeRaider
 
         public void ProcessSector();
 
-        public void SetAnimation(int animation, int frame = 0, int anotherModel = -1);
+        public void SetAnimation(TR_ANIMATION animation, int frame = 0, int anotherModel = -1);
 
         public void MoveForward(float dist);
 

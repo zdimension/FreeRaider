@@ -7,18 +7,31 @@ namespace FreeRaider
 {
     public partial class Constants
     {
-        public const float PENETRATION_TEST_OFFSET = 48.0f;        ///@TODO: tune it!
-        public const float WALK_FORWARD_OFFSET = 96.0f;        ///@FIXME: find real offset
+        public const float PENETRATION_TEST_OFFSET = 48.0f;
+
+        ///@TODO: tune it!
+        public const float WALK_FORWARD_OFFSET = 96.0f;
+
+        ///@FIXME: find real offset
         public const float WALK_BACK_OFFSET = 16.0f;
-        public const float WALK_FORWARD_STEP_UP = 256.0f;       // by bone frame bb
-        public const float RUN_FORWARD_OFFSET = 128.0f;       ///@FIXME: find real offset
-        public const float RUN_FORWARD_STEP_UP = 320.0f;       // by bone frame bb
+
+        public const float WALK_FORWARD_STEP_UP = 256.0f; // by bone frame bb
+        public const float RUN_FORWARD_OFFSET = 128.0f;
+
+        ///@FIXME: find real offset
+        public const float RUN_FORWARD_STEP_UP = 320.0f; // by bone frame bb
+
         public const float CRAWL_FORWARD_OFFSET = 256.0f;
         public const float LARA_HANG_WALL_DISTANCE = 128.0f - 24.0f;
         public const float LARA_HANG_VERTICAL_EPSILON = 64.0f;
-        public const float LARA_HANG_VERTICAL_OFFSET = 12.0f;        // in original is 0, in real life hands are little more higher than edge
-        public const float LARA_TRY_HANG_WALL_OFFSET = 72.0f;        // It works more stable than 32 or 128
-        public const float LARA_HANG_SENSOR_Z = 800.0f;       // It works more stable than 1024 (after collision critical fix, of course)
+
+        public const float LARA_HANG_VERTICAL_OFFSET = 12.0f;
+        // in original is 0, in real life hands are little more higher than edge
+
+        public const float LARA_TRY_HANG_WALL_OFFSET = 72.0f; // It works more stable than 32 or 128
+
+        public const float LARA_HANG_SENSOR_Z = 800.0f;
+        // It works more stable than 1024 (after collision critical fix, of course)
 
         public const bool OSCILLATE_HANG_USE = false;
     }
@@ -32,6 +45,7 @@ namespace FreeRaider
     {
         NormalControl = 0,
         LoopLastFrame = 1,
+
         /// <summary>
         /// Animation will be locked once and for all.
         /// </summary>
@@ -70,15 +84,15 @@ namespace FreeRaider
         LaraRunToStayLeft = 8,
         LaraRunToWalkLeft = 9,
         LaraRunToStayRight = 10,
-        LaraStaySolid = 11,                          // intermediate animation used to reset flags and states.
-        LaraTurnRightSlow = 12,                     // used once before the fast one if all weapon are in holsters
-        LaraTurnLeftSlow = 13,                      // used once before the fast one if all weapon are in holsters
-        LaraLandingForwardBoth = 14,                // original landing animation in the tr1 betas... but removed
-        LaraLandingForwardBothContinue = 15,       // original landing animation in the tr1 betas... but removed
-        LaraJumpingForwardRight = 16,               // ok
-        LaraStartFlyForwardRight = 17,             // ok
-        LaraJumpingForwardLeft = 18,                // ok
-        LaraStartFlyForwardLeft = 19,              // ok
+        LaraStaySolid = 11, // intermediate animation used to reset flags and states.
+        LaraTurnRightSlow = 12, // used once before the fast one if all weapon are in holsters
+        LaraTurnLeftSlow = 13, // used once before the fast one if all weapon are in holsters
+        LaraLandingForwardBoth = 14, // original landing animation in the tr1 betas... but removed
+        LaraLandingForwardBothContinue = 15, // original landing animation in the tr1 betas... but removed
+        LaraJumpingForwardRight = 16, // ok
+        LaraStartFlyForwardRight = 17, // ok
+        LaraJumpingForwardLeft = 18, // ok
+        LaraStartFlyForwardLeft = 19, // ok
         LaraWalkForwardBegin = 20,
         LaraWalkForwardBeginContinue = 21,
         LaraStartFreeFall = 22,
@@ -96,22 +110,23 @@ namespace FreeRaider
         LaraFreeFallForward = 34,
         LaraFreeFallMiddle = 35,
         LaraFreeFallLongNoHurt = 36,
-        LaraHangToRelease = 37,                     // was meant to play when lara is hanging at a ledge and the player releases the action key
+        LaraHangToRelease = 37,
+        // was meant to play when lara is hanging at a ledge and the player releases the action key
         LaraStopWalkBackRight = 38,
         LaraStopWalkBackLeft = 39,
         LaraWalkBack = 40,
         LaraStartWalkBack = 41,
         LaraClimb3click = 42,
-        LaraUnknown2 = 43,                           // was meant to be used like the = 52,  but finally it got removed
+        LaraUnknown2 = 43, // was meant to be used like the = 52,  but finally it got removed
         LaraRotateRight = 44,
-        LaraJumpingForwardToFreefall = 45,         // used after the forward jump if she keeps falling
+        LaraJumpingForwardToFreefall = 45, // used after the forward jump if she keeps falling
         LaraFlyForwardTryToHang = 46,
-        LaraRollAlternate = 47,                      // unused
-        LaraRollEndAlternate = 48,                  // unused
+        LaraRollAlternate = 47, // unused
+        LaraRollEndAlternate = 48, // unused
         LaraFreeFallNoHurt = 49,
         LaraClimb2click = 50,
         LaraClimb2clickEnd = 51,
-        LaraClimb2clickEndRunning = 52,            // used if the player keeps pressing the up cursor key
+        LaraClimb2clickEndRunning = 52, // used if the player keeps pressing the up cursor key
 
         LaraWallSmashLeft = 53,
         LaraWallSmashRight = 54,
@@ -154,17 +169,18 @@ namespace FreeRaider
         LaraRunBackBegin = 88,
         LaraRunBack = 89,
         LaraRunBackEnd = 90,
-        LaraTryHangVerticalBegin = 91,               // native bug: glitchy intermediate animation.
+        LaraTryHangVerticalBegin = 91, // native bug: glitchy intermediate animation.
         LaraLandingFromRun = 92,
         LaraFreeFallBack = 93,
         LaraFlyForwardTryHang = 94,
         LaraTryHangSolid = 95,
-        LaraHangIdle = 96,                             // main climbing animation... triggers
+        LaraHangIdle = 96, // main climbing animation... triggers
         LaraClimbOn = 97,
         LaraFreeFallToLong = 98,
-        LaraFallCrouchingLanding = 99,                // unused
+        LaraFallCrouchingLanding = 99, // unused
         LaraFreeFallToSideLanding = 100,
-        LaraFreeFallToSideLandingAlternate = 101, // maybe it was used at the beginning of a forward jump when the player presses action? maybe it was used like this with the original beta anim = 73, 
+        LaraFreeFallToSideLandingAlternate = 101,
+        // maybe it was used at the beginning of a forward jump when the player presses action? maybe it was used like this with the original beta anim = 73, 
         LaraClimbOnEnd = 102,
         LaraStayIdle = 103,
         LaraStartSlideBackward = 104,
@@ -177,13 +193,13 @@ namespace FreeRaider
 
         LaraClimbOutOfWater = 111,
         LaraFreeFallToUnderwater = 112,
-        LaraOnwaterDiveAlternate = 113,               // this one is not used
+        LaraOnwaterDiveAlternate = 113, // this one is not used
         LaraUnderwaterToOnwater = 114,
         LaraOnwaterDive = 115,
         LaraOnwaterSwimForward = 116,
         LaraOnwaterSwimForwardToIdle = 117,
         LaraOnwaterIdleToSwim = 118,
-        LaraFreeFallToUnderwaterAlternate = 119,    // this one is used
+        LaraFreeFallToUnderwaterAlternate = 119, // this one is used
         LaraStartObjectMoving = 120,
         LaraStopObjectMoving = 121,
         LaraObjectPull = 122,
@@ -295,7 +311,7 @@ namespace FreeRaider
         LaraTr345ZiplineFall = 216,
         LaraTr345StandToCrouch = 217,
 
-        LaraSlideForwardToRun = 246,       // slide to run!
+        LaraSlideForwardToRun = 246, // slide to run!
 
         LaraJumpForwardBeginToGrab = 248,
         LaraJumpForwardEndToGrab = 249,
@@ -306,17 +322,17 @@ namespace FreeRaider
         LaraRunToSprintRight = 225,
         LaraSprint = 223,
         LaraSprintSlideStandRight = 226,
-        LaraSprintSlideStandRightBeta = 227,      // beta sprint-slide stand
+        LaraSprintSlideStandRightBeta = 227, // beta sprint-slide stand
         LaraSprintSlideStandLeft = 228,
-        LaraSprintSlideStandLeftBeta = 229,       // beta sprint-slide stand
+        LaraSprintSlideStandLeftBeta = 229, // beta sprint-slide stand
         LaraSprintToRollLeft = 230,
-        LaraSprintToRollLeftBeta = 231,           // beta sprint roll
+        LaraSprintToRollLeftBeta = 231, // beta sprint roll
         LaraSprintRollLeftToRun = 232,
         LaraSprintToRollRight = 308,
         LaraSprintRollRightToRun = 309,
-        LaraSprintToRollAlternateBegin = 240,      // not used natively
-        LaraSprintToRollAlternateContinue = 241,   // not used natively
-        LaraSprintToRollAlternateEnd = 242,        // not used natively
+        LaraSprintToRollAlternateBegin = 240, // not used natively
+        LaraSprintToRollAlternateContinue = 241, // not used natively
+        LaraSprintToRollAlternateEnd = 242, // not used natively
         LaraSprintToRunLeft = 243,
         LaraSprintToRunRight = 244,
         LaraSprintToCrouchLeft = 310,
@@ -334,7 +350,7 @@ namespace FreeRaider
         LaraMonkeyStrafeLeftEnd = 254,
         LaraMonkeyStrafeRight = 255,
         LaraMonkeyStrafeRightEnd = 256,
-        LaraMonkeyTurnAround = 257,                  // use titak's animation from trep patch
+        LaraMonkeyTurnAround = 257, // use titak's animation from trep patch
         LaraMonkeyTurnLeft = 271,
         LaraMonkeyTurnRight = 272,
         LaraMonkeyTurnLeftEarlyEnd = 283,
@@ -342,14 +358,14 @@ namespace FreeRaider
         LaraMonkeyTurnRightEarlyEnd = 285,
         LaraMonkeyTurnRightLateEnd = 286,
 
-        LaraCrouchRollForwardBegin = 218,      // not used natively
-        LaraCrouchRollForwardBeginAlternate = 247,     // not used
-        LaraCrouchRollForwardContinue = 219,   // not used natively
-        LaraCrouchRollForwardEnd = 220,        // not used natively
+        LaraCrouchRollForwardBegin = 218, // not used natively
+        LaraCrouchRollForwardBeginAlternate = 247, // not used
+        LaraCrouchRollForwardContinue = 219, // not used natively
+        LaraCrouchRollForwardEnd = 220, // not used natively
         LaraCrouchToStand = 221,
         LaraCrouchIdle = 222,
         LaraCrouchPrepare = 245,
-        LaraCrouchIdleSmash = 265,              // not used natively
+        LaraCrouchIdleSmash = 265, // not used natively
         LaraCrouchToCrawlBegin = 258,
         LaraCrouchToCrawlContinue = 273,
         LaraCrouchToCrawlEnd = 264,
@@ -382,7 +398,7 @@ namespace FreeRaider
 
         LaraCrouchPickup = 291,
         LaraCrouchPickupFlare = 312,
-        LaraCrawlPickup = 292,            // not natively used - make it work
+        LaraCrawlPickup = 292, // not natively used - make it work
 
         LaraCrouchSmashForward = 293,
         LaraCrouchSmashBackward = 294,
@@ -466,36 +482,37 @@ namespace FreeRaider
         LaraTrainDeath = 372,
 
         LaraMonkeyToRopeEnd = 373,
-        LaraRopeIdle = 374,               // review all rope animations!
+        LaraRopeIdle = 374, // review all rope animations!
         LaraRopeDownBegin = 375,
         LaraRopeUp = 376,
-        LaraRopeIdleToSwingSoft = 377,                   // unused
-        LaraRopeGrabToFall = 378,                         // unused
+        LaraRopeIdleToSwingSoft = 377, // unused
+        LaraRopeGrabToFall = 378, // unused
         LaraRopeJumpToGrab = 379,
-        LaraRopeIdleToBackflip = 380,                     // unused
-        LaraRopeSwingToFallSemifront = 381,              // unused
-        LaraRopeSwingToFallMiddle = 382,                 // unused
-        LaraRopeSwingToFallBack = 383,                   // unused
+        LaraRopeIdleToBackflip = 380, // unused
+        LaraRopeSwingToFallSemifront = 381, // unused
+        LaraRopeSwingToFallMiddle = 382, // unused
+        LaraRopeSwingToFallBack = 383, // unused
 
-        LaraRopeIdleToSwingSemimiddle = 388,             // unused
-        LaraRopeIdleToSwingHalfmiddle = 389,             // unused
-        LaraRopeSwingToFallFront = 390,                  // unused
-        LaraRopeGrabToFallAlternate = 391,               // unused
+        LaraRopeIdleToSwingSemimiddle = 388, // unused
+        LaraRopeIdleToSwingHalfmiddle = 389, // unused
+        LaraRopeSwingToFallFront = 390, // unused
+        LaraRopeGrabToFallAlternate = 391, // unused
 
-        LaraRopeSwingForwardSemihard = 394,               // the only one used!
-        LaraRopeLadderToHandsDownAlternate = 395,       // unused, make it work? (used in the tr4 demo if i'm right?) (then you will need to remove all the stateid changes related to the rope animations)
-        LaraRopeSwingBackContinue = 396,                  // unused
-        LaraRopeSwingBackEnd = 397,                       // unused
-        LaraRopeSwingBackBegin = 398,                     // unused
-        LaraRopeSwingForwardSoft = 399,                   // unused
+        LaraRopeSwingForwardSemihard = 394, // the only one used!
+        LaraRopeLadderToHandsDownAlternate = 395,
+        // unused, make it work? (used in the tr4 demo if i'm right?) (then you will need to remove all the stateid changes related to the rope animations)
+        LaraRopeSwingBackContinue = 396, // unused
+        LaraRopeSwingBackEnd = 397, // unused
+        LaraRopeSwingBackBegin = 398, // unused
+        LaraRopeSwingForwardSoft = 399, // unused
 
-        LaraRopeSwingForwardHard = 404,                    // not found... uhh, unused
-        LaraRopeChangeRope = 405,                           // unused
-        LaraRopeSwingToTryHangFront2 = 406,              // not sure it's used?
-        LaraRopeSwingToTryHangMiddle = 407,              // not sure it's used?
-        LaraRopeSwingBlock = 408,                           // unused
-        LaraRopeSwingToTryHangSemimiddle = 409,          // not sure it's used?
-        LaraRopeSwingToTryHangFront3 = 410,              // not sure it's used?
+        LaraRopeSwingForwardHard = 404, // not found... uhh, unused
+        LaraRopeChangeRope = 405, // unused
+        LaraRopeSwingToTryHangFront2 = 406, // not sure it's used?
+        LaraRopeSwingToTryHangMiddle = 407, // not sure it's used?
+        LaraRopeSwingBlock = 408, // unused
+        LaraRopeSwingToTryHangSemimiddle = 409, // not sure it's used?
+        LaraRopeSwingToTryHangFront3 = 410, // not sure it's used?
 
         LaraDoubledoorsPush = 412,
         LaraBigButtonPush = 413,
@@ -519,12 +536,12 @@ namespace FreeRaider
         LaraTorchLight5 = 431,
         LaraDetonatorUse = 432,
 
-        LaraCorrectPositionFront = 433,            // unused
-        LaraCorrectPositionLeft = 434,             // unused
-        LaraCorrectPositionRight = 435,            // unused
+        LaraCorrectPositionFront = 433, // unused
+        LaraCorrectPositionLeft = 434, // unused
+        LaraCorrectPositionRight = 435, // unused
 
-        LaraCrowbarUseOnFloorFail = 436,         // unused
-        LaraTr4DeathMagicTr5UseKeycard = 437,   // unused?
+        LaraCrowbarUseOnFloorFail = 436, // unused
+        LaraTr4DeathMagicTr5UseKeycard = 437, // unused?
         LaraDeathBlowup = 438,
         LaraPickupSarcophagus = 439,
         LaraDrag = 440,
@@ -576,7 +593,7 @@ namespace FreeRaider
         LaraRunForward = 1,
         LaraStop = 2,
         LaraJumpForward = 3,
-        LaraPose = 4,                 // derived from leaked tomb.map
+        LaraPose = 4, // derived from leaked tomb.map
         LaraRunBack = 5,
         LaraTurnRightSlow = 6,
         LaraTurnLeftSlow = 7,
@@ -622,8 +639,8 @@ namespace FreeRaider
         LaraOnwaterBack = 47,
         LaraOnwaterLeft = 48,
         LaraOnwaterRight = 49,
-        LaraUseMidas = 50,           //  derived from leaked tomb.map
-        LaraDieMidas = 51,           //  derived from leaked tomb.map
+        LaraUseMidas = 50, //  derived from leaked tomb.map
+        LaraDieMidas = 51, //  derived from leaked tomb.map
         LaraSwandiveBegin = 52,
         LaraSwandiveEnd = 53,
         LaraHandstand = 54,
@@ -749,7 +766,7 @@ namespace FreeRaider
         ActivateKey = 6,
         EnableEarthQuakes = 7,
         GetCrowbar = 8,
-        CurtainFX = 9,   // effect 9 is empty in tr4.
+        CurtainFX = 9, // effect 9 is empty in tr4.
         PlaySound_TimerField = 10,
         PlayExplosionSound = 11,
         DisableGuns = 12,
@@ -761,18 +778,18 @@ namespace FreeRaider
         MeshSwap1 = 18,
         MeshSwap2 = 19,
         MeshSwap3 = 20,
-        Inv_On = 21,  // effect 21 is unknown at offset 4376f0.
-        Inv_Off = 22,  // effect 22 is unknown at offset 437700.
+        Inv_On = 21, // effect 21 is unknown at offset 4376f0.
+        Inv_Off = 22, // effect 22 is unknown at offset 437700.
         HideObject = 23,
         ShowObject = 24,
-        StatueFX = 25,  // effect 25 is empty in tr4.
+        StatueFX = 25, // effect 25 is empty in tr4.
         ResetHair = 26,
-        BoilerFX = 27,  // effect 27 is empty in tr4.
+        BoilerFX = 27, // effect 27 is empty in tr4.
         SetFogColour = 28,
-        GhostTrap = 29,  // effect 29 is unknown at offset 4372f0
+        GhostTrap = 29, // effect 29 is unknown at offset 4372f0
         LaraLocation = 30,
         ClearScarabs = 31,
-        PlayStepSound = 32,  // also called footprint_fx in tr4 source code.
+        PlayStepSound = 32, // also called footprint_fx in tr4 source code.
 
         // Effects 33 - 42 are assigned to FLIP_MAP0-FLIP_MAP9 in TR4 source code,
         // but are empty in TR4 binaries.
@@ -787,12 +804,12 @@ namespace FreeRaider
     {
         private static void ent_stop_traverse(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            if(state == ENTITY_ANIM.NewAnim)
+            if (state == ENTITY_ANIM.NewAnim)
             {
                 var v = ent.TraversedObject.Transform.Origin;
-                var i = (int)(v.X / Constants.TR_METERING_SECTORSIZE);
+                var i = (int) (v.X / Constants.TR_METERING_SECTORSIZE);
                 v.X = i * Constants.TR_METERING_SECTORSIZE + 512.0f;
-                i = (int)(v.Y / Constants.TR_METERING_SECTORSIZE);
+                i = (int) (v.Y / Constants.TR_METERING_SECTORSIZE);
                 v.Y = i * Constants.TR_METERING_SECTORSIZE + 512.0f;
                 ent.TraversedObject.UpdateRigidBody(true);
                 ent.TraversedObject = null;
@@ -802,7 +819,7 @@ namespace FreeRaider
 
         private static void ent_set_on_floor(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            if(state == ENTITY_ANIM.NewAnim)
+            if (state == ENTITY_ANIM.NewAnim)
             {
                 ent.MoveType = MoveType.OnFloor;
                 ent.Transform.Origin.Z = ent.HeightInfo.FloorPoint.Z;
@@ -813,7 +830,7 @@ namespace FreeRaider
 
         private static void ent_set_turn_fast(Entity ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            if(state == ENTITY_ANIM.NewAnim)
+            if (state == ENTITY_ANIM.NewAnim)
             {
                 ent.Bf.Animations.NextState = TR_STATE.LaraTurnFast;
                 ssAnim.ClearOnFrame();
@@ -822,12 +839,12 @@ namespace FreeRaider
 
         private static void ent_set_on_floor_after_climb(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            var af = ssAnim.Model.Animations[ssAnim.CurrentAnimation];
+            var af = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation];
 
-            if(ssAnim.CurrentFrame >= af.Frames.Count - 1)
+            if (ssAnim.CurrentFrame >= af.Frames.Count - 1)
             {
-                var move = ent.Transform * ent.Bf.BoneTags[0].FullTransform.Origin; 
-                ent.SetAnimation((int)af.NextAnim.ID, af.NextFrame);
+                var move = ent.Transform * ent.Bf.BoneTags[0].FullTransform.Origin;
+                ent.SetAnimation(af.NextAnim.ID, af.NextFrame);
                 var p = ent.Transform * ent.Bf.BoneTags[0].FullTransform.Origin;
                 move -= p; // TODO: WTF???
                 ent.Transform.Origin += move;
@@ -842,7 +859,7 @@ namespace FreeRaider
 
         private static void ent_set_underwater(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            if(state == ENTITY_ANIM.NewAnim)
+            if (state == ENTITY_ANIM.NewAnim)
             {
                 ent.MoveType = MoveType.Underwater;
                 ssAnim.ClearOnFrame();
@@ -851,7 +868,7 @@ namespace FreeRaider
 
         private static void ent_set_free_falling(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            if(state == ENTITY_ANIM.NewAnim)
+            if (state == ENTITY_ANIM.NewAnim)
             {
                 ent.MoveType = MoveType.FreeFalling;
                 ssAnim.ClearOnFrame();
@@ -860,7 +877,7 @@ namespace FreeRaider
 
         private static void ent_set_cmd_slide(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            if(state == ENTITY_ANIM.NewAnim)
+            if (state == ENTITY_ANIM.NewAnim)
             {
                 ent.Response.Slide = SlideType.Back;
                 ssAnim.ClearOnFrame();
@@ -869,7 +886,7 @@ namespace FreeRaider
 
         private static void ent_correct_diving_angle(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            if(state == ENTITY_ANIM.NewAnim)
+            if (state == ENTITY_ANIM.NewAnim)
             {
                 ent.Angles.Y = -45.0f;
                 ent.UpdateTransform();
@@ -879,7 +896,7 @@ namespace FreeRaider
 
         private static void ent_to_on_water(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            if(state == ENTITY_ANIM.NewAnim)
+            if (state == ENTITY_ANIM.NewAnim)
             {
                 ent.Transform.Origin.Z = ent.HeightInfo.TransitionLevel;
                 ent.GhostUpdate();
@@ -890,7 +907,7 @@ namespace FreeRaider
 
         private static void ent_climb_out_of_water(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            if(state == ENTITY_ANIM.NewAnim)
+            if (state == ENTITY_ANIM.NewAnim)
             {
                 var v = ent.Climb.Point;
                 ent.Transform.Origin = v + ent.Transform.Basis.Column1 * 48.0f;
@@ -902,7 +919,7 @@ namespace FreeRaider
 
         private static void ent_to_edge_climb(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            if(state == ENTITY_ANIM.NewAnim)
+            if (state == ENTITY_ANIM.NewAnim)
             {
                 var v = ent.Climb.Point;
                 ent.Transform.Origin.X = v.X - ent.Transform.Basis.Column1.X * ent.Bf.BBMax.Y;
@@ -915,7 +932,7 @@ namespace FreeRaider
 
         private static void ent_to_monkey_swing(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            if(state == ENTITY_ANIM.NewAnim)
+            if (state == ENTITY_ANIM.NewAnim)
             {
                 ent.MoveType = MoveType.Monkeyswing;
                 ent.Transform.Origin.Z = ent.HeightInfo.CeilingPoint.Z - ent.Bf.BBMax.Z;
@@ -926,7 +943,7 @@ namespace FreeRaider
 
         private static void ent_to_tightrope(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            if(state == ENTITY_ANIM.NewAnim)
+            if (state == ENTITY_ANIM.NewAnim)
             {
                 ent.MoveType = MoveType.Climbing;
                 ent.GhostUpdate();
@@ -936,7 +953,7 @@ namespace FreeRaider
 
         private static void ent_from_tightrope(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            if(state == ENTITY_ANIM.NewAnim)
+            if (state == ENTITY_ANIM.NewAnim)
             {
                 ent.MoveType = MoveType.OnFloor;
                 ent.GhostUpdate();
@@ -946,17 +963,17 @@ namespace FreeRaider
 
         private static void ent_crawl_to_climb(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
         {
-            if(state == ENTITY_ANIM.NewAnim)
+            if (state == ENTITY_ANIM.NewAnim)
             {
                 var cmd = ent.Command;
 
-                if(cmd.Action)
+                if (cmd.Action)
                 {
-                    ent.SetAnimation((int)TR_ANIMATION.LaraHangIdle, -1);
+                    ent.SetAnimation(TR_ANIMATION.LaraHangIdle, -1);
                 }
                 else
                 {
-                    ent.SetAnimation((int)TR_ANIMATION.LaraStartFreeFall, 0);
+                    ent.SetAnimation(TR_ANIMATION.LaraStartFreeFall, 0);
                     ent.MoveType = MoveType.FreeFalling;
                     ent.DirFlag = ENT_MOVE.MoveBackward;
                 }
@@ -994,9 +1011,10 @@ namespace FreeRaider
             var lowVerticalSpace = currFc.FloorHit && currFc.CeilingHit &&
                                    currFc.CeilingPoint.Z - currFc.FloorPoint.Z <
                                    ent.Height - Constants.LARA_HANG_VERTICAL_EPSILON;
-            var lastFrame = ssAnim.Model.Animations[ssAnim.CurrentAnimation].Frames.Count <= ssAnim.CurrentFrame + 1;
+            var lastFrame = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count <=
+                            ssAnim.CurrentFrame + 1;
 
-            if(resp.Killed) // Stop any music, if Lara is dead.
+            if (resp.Killed) // Stop any music, if Lara is dead.
             {
                 Audio.EndStreams(TR_AUDIO_STREAM_TYPE.OneShot);
                 Audio.EndStreams(TR_AUDIO_STREAM_TYPE.Chat);
@@ -1004,21 +1022,22 @@ namespace FreeRaider
 
             var nextStep = StepType.Horizontal;
 
-            switch(ssAnim.LastState)
+            switch (ssAnim.LastState)
             {
-                #region Normal land animations
+                    #region Normal land animations
+
                 case TR_STATE.LaraStop:
                     // Reset directional flag only on intermediate animation!
-                    
-                if(ssAnim.CurrentAnimation == (int)TR_ANIMATION.LaraStaySolid)
+
+                    if (ssAnim.CurrentAnimation == TR_ANIMATION.LaraStaySolid)
                     {
                         ent.DirFlag = ENT_MOVE.Stay;
                     }
 
-                if(ent.MoveType == MoveType.OnFloor)
-                {
-                    ent.Bt.NoFixBodyParts = (uint)(BODY_PART.Hands | BODY_PART.Legs);
-                }
+                    if (ent.MoveType == MoveType.OnFloor)
+                    {
+                        ent.Bt.NoFixBodyParts = BODY_PART.Hands | BODY_PART.Legs;
+                    }
 
                     cmd.Rotation.X = 0;
                     cmd.Crouch |= lowVerticalSpace;
@@ -1027,75 +1046,76 @@ namespace FreeRaider
                     if ((climb.CanHang &&
                          climb.NextZSpace >= ent.Height - Constants.LARA_HANG_VERTICAL_EPSILON &&
                          ent.MoveType == MoveType.Climbing) ||
-                        ssAnim.CurrentAnimation == (int) TR_ANIMATION.LaraStaySolid)
+                        ssAnim.CurrentAnimation == TR_ANIMATION.LaraStaySolid)
                     {
                         ent.MoveType = MoveType.OnFloor;
                     }
 
-                    if(ent.MoveType == MoveType.OnFloor)
+                    if (ent.MoveType == MoveType.OnFloor)
                     {
-                        ent.Bt.NoFixBodyParts = (uint) (BODY_PART.Legs2 | BODY_PART.Legs3);
+                        ent.Bt.NoFixBodyParts = BODY_PART.Legs2 | BODY_PART.Legs3;
                     }
 
-                    if(ent.MoveType == MoveType.FreeFalling)
+                    if (ent.MoveType == MoveType.FreeFalling)
                     {
-                        ent.SetAnimation((int)TR_ANIMATION.LaraStartFreeFall, 0);
+                        ent.SetAnimation(TR_ANIMATION.LaraStartFreeFall, 0);
                         ent.DirFlag = ENT_MOVE.Stay;
                     }
-                    else if(resp.Killed)
+                    else if (resp.Killed)
                     {
                         ssAnim.NextState = TR_STATE.LaraDeath;
                     }
-                    else if(resp.Slide == SlideType.Front)
+                    else if (resp.Slide == SlideType.Front)
                     {
                         Audio.Send((uint) TR_AUDIO_SOUND.Landing, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
 
-                        if(cmd.Jump)
+                        if (cmd.Jump)
                         {
                             ent.DirFlag = ENT_MOVE.MoveForward;
-                            ent.SetAnimation((int)TR_ANIMATION.LaraJumpForwardBegin, 0);
+                            ent.SetAnimation(TR_ANIMATION.LaraJumpForwardBegin, 0);
                         }
                         else
                         {
-                            ent.SetAnimation((int)TR_ANIMATION.LaraSlideForward, 0);
+                            ent.SetAnimation(TR_ANIMATION.LaraSlideForward, 0);
                         }
                     }
-                    else if(resp.Slide == SlideType.Back)
+                    else if (resp.Slide == SlideType.Back)
                     {
                         if (cmd.Jump)
                         {
                             ent.DirFlag = ENT_MOVE.MoveBackward;
-                            ent.SetAnimation((int)TR_ANIMATION.LaraJumpBackBegin, 0);
-                            Audio.Send((uint)TR_AUDIO_SOUND.Landing, TR_AUDIO_EMITTER.Entity, (int)ent.ID);
+                            ent.SetAnimation(TR_ANIMATION.LaraJumpBackBegin, 0);
+                            Audio.Send((uint) TR_AUDIO_SOUND.Landing, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
                         }
                         else
                         {
-                            ent.SetAnimation((int)TR_ANIMATION.LaraStartSlideBackward, 0);
+                            ent.SetAnimation(TR_ANIMATION.LaraStartSlideBackward, 0);
                         }
                     }
-                    else if(cmd.Jump)
+                    else if (cmd.Jump)
                     {
-                        if(currFc.Quicksand == QuicksandPosition.None)
+                        if (currFc.Quicksand == QuicksandPosition.None)
                             ssAnim.NextState = TR_STATE.LaraJumpPrepare; // Jump sideways
                     }
-                    else if(cmd.Roll)
+                    else if (cmd.Roll)
                     {
-                        if(currFc.Quicksand == QuicksandPosition.None && ssAnim.CurrentAnimation != (int)TR_ANIMATION.LaraClimb2click)
+                        if (currFc.Quicksand == QuicksandPosition.None &&
+                            ssAnim.CurrentAnimation != TR_ANIMATION.LaraClimb2click)
                         {
                             ent.DirFlag = ENT_MOVE.MoveForward;
-                            ent.SetAnimation((int)TR_ANIMATION.LaraRollBegin, 0);
+                            ent.SetAnimation(TR_ANIMATION.LaraRollBegin, 0);
                         }
                     }
-                    else if(cmd.Crouch)
+                    else if (cmd.Crouch)
                     {
-                        if(currFc.Quicksand == QuicksandPosition.None)
+                        if (currFc.Quicksand == QuicksandPosition.None)
                             ssAnim.NextState = TR_STATE.LaraCrouchIdle;
                     }
-                    else if(cmd.Action && ent.FindTraverse() != 0)
+                    else if (cmd.Action && ent.FindTraverse() != 0)
                     {
                         ssAnim.NextState = TR_STATE.LaraPushableGrab;
                         var c1 = ent.Transform.Basis.Column1;
-                        if(c1.X > 0.9f)
+                        if (c1.X > 0.9f)
                         {
                             t = -ent.TraversedObject.Bf.BBMin.X + 72.0f;
                         }
@@ -1168,13 +1188,14 @@ namespace FreeRaider
                             }
                         }
 
-                        if(cmd.Action &&
-                            new[] {
+                        if (cmd.Action &&
+                            new[]
+                            {
                                 TR_ANIMATION.LaraStayIdle,
-                                TR_ANIMATION.LaraStaySolid, 
-                                TR_ANIMATION.LaraWallSmashLeft, 
+                                TR_ANIMATION.LaraStaySolid,
+                                TR_ANIMATION.LaraWallSmashLeft,
                                 TR_ANIMATION.LaraWallSmashRight
-                            }.Contains((TR_ANIMATION)ssAnim.CurrentAnimation))
+                            }.Contains(ssAnim.CurrentAnimation))
                         {
                             t = ent.ForwardSize + Constants.LARA_TRY_HANG_WALL_OFFSET;
                             globalOffset = ent.Transform.Basis.Column1 * t;
@@ -1186,22 +1207,22 @@ namespace FreeRaider
                                 pos.Z + 2944.0f >= nextFc.FloorPoint.Z &&
                                 nextFc.FloorNormale.Z >= ent.CriticalSlantZComponent)
                             {
-                                if(pos.Z + 640.0f >= nextFc.FloorPoint.Z)
+                                if (pos.Z + 640.0f >= nextFc.FloorPoint.Z)
                                 {
                                     ent.Angles.X = climb.EdgeZAngle;
                                     pos.Z = nextFc.FloorPoint.Z - 512.0f;
                                     climb.Point = nextFc.FloorPoint;
-                                    ent.SetAnimation((int)TR_ANIMATION.LaraClimb2click, 0);
+                                    ent.SetAnimation(TR_ANIMATION.LaraClimb2click, 0);
                                     ent.Bt.NoFixAll = true;
                                     ssAnim.OnFrame += ent_set_on_floor_after_climb;
                                     break;
                                 }
-                                else if(pos.Z + 896.0f >= nextFc.FloorPoint.Z)
+                                else if (pos.Z + 896.0f >= nextFc.FloorPoint.Z)
                                 {
                                     ent.Angles.X = climb.EdgeZAngle;
                                     pos.Z = nextFc.FloorPoint.Z - 768.0f;
                                     climb.Point = nextFc.FloorPoint;
-                                    ent.SetAnimation((int)TR_ANIMATION.LaraClimb3click, 0);
+                                    ent.SetAnimation(TR_ANIMATION.LaraClimb3click, 0);
                                     ent.Bt.NoFixAll = true;
                                     ssAnim.OnFrame += ent_set_on_floor_after_climb;
                                     break;
@@ -1211,11 +1232,11 @@ namespace FreeRaider
                             globalOffset.Z += 0.5f * Constants.DEFAULT_CLIMB_UP_HEIGHT;
                             climb = ent.CheckClimbability(globalOffset, nextFc, Constants.DEFAULT_CLIMB_UP_HEIGHT);
                             if (climb.EdgeHit &&
-                               climb.NextZSpace >= ent.Height - Constants.LARA_HANG_VERTICAL_EPSILON &&
-                               pos.Z + ent.MaxStepUpHeight < nextFc.FloorPoint.Z &&
-                               pos.Z + 2944.0f >= nextFc.FloorPoint.Z)
+                                climb.NextZSpace >= ent.Height - Constants.LARA_HANG_VERTICAL_EPSILON &&
+                                pos.Z + ent.MaxStepUpHeight < nextFc.FloorPoint.Z &&
+                                pos.Z + 2944.0f >= nextFc.FloorPoint.Z)
                             {
-                                if(pos.Z + 1920.0f >= nextFc.FloorPoint.Z)
+                                if (pos.Z + 1920.0f >= nextFc.FloorPoint.Z)
                                 {
                                     // MAGIC: Vertical speed override is based on ledge height - thanks to T4Larson!
                                     ssAnim.Model.Animations[(int) TR_ANIMATION.LaraStayToGrab].Frames[
@@ -1227,7 +1248,7 @@ namespace FreeRaider
                             }
 
                             climb = ent.CheckWallsClimbability();
-                            if(climb.WallHit != ClimbType.None)
+                            if (climb.WallHit != ClimbType.None)
                             {
                                 ssAnim.NextState = TR_STATE.LaraJumpUp;
                                 break;
@@ -1245,7 +1266,8 @@ namespace FreeRaider
                                 globalOffset.Z += ent.Bf.BBMax.Z;
                                 globalOffset += pos;
                                 Character.GetHeightInfo(globalOffset, nextFc);
-                                if(nextFc.FloorHit && nextFc.FloorPoint.Z > pos.Z - ent.MaxStepUpHeight && nextFc.FloorPoint.Z <= pos.Z + ent.MaxStepUpHeight)
+                                if (nextFc.FloorHit && nextFc.FloorPoint.Z > pos.Z - ent.MaxStepUpHeight &&
+                                    nextFc.FloorPoint.Z <= pos.Z + ent.MaxStepUpHeight)
                                 {
                                     ent.DirFlag = ENT_MOVE.MoveBackward;
                                     ssAnim.NextState = TR_STATE.LaraWalkBack;
@@ -1266,10 +1288,371 @@ namespace FreeRaider
                             }
                         }
                     }
+                    else if (cmd.Move[1] == 1)
+                    {
+                        if (cmd.Shift)
+                        {
+                            move = ent.Transform.Basis.Column0 * Constants.PENETRATION_TEST_OFFSET;
+                            if (ent.CheckNextPenetration(move) == 0 || ent.Response.HorizontalCollide == 0x00)
+                            {
+                                globalOffset = ent.Transform.Basis.Column0 * Constants.RUN_FORWARD_OFFSET;
+                                globalOffset.Z += ent.Bf.BBMax.Z;
+                                if (resp.HorizontalCollide == 0 &&
+                                    ent.CheckNextStep(globalOffset, nextFc).IsLittleStep())
+                                {
+                                    cmd.Rotation.X = 0.0f;
+                                    ent.DirFlag = ENT_MOVE.MoveRight;
+                                    ssAnim.NextState = TR_STATE.LaraWalkRight;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            ssAnim.NextState = TR_STATE.LaraTurnRightSlow;
+                        }
+                    }
+                    else if (cmd.Move[1] == -1)
+                    {
+                        if (cmd.Shift)
+                        {
+                            move = ent.Transform.Basis.Column0 * -Constants.PENETRATION_TEST_OFFSET;
+                            if (ent.CheckNextPenetration(move) == 0 || ent.Response.HorizontalCollide == 0x00)
+                            {
+                                globalOffset = ent.Transform.Basis.Column0 * -Constants.RUN_FORWARD_OFFSET;
+                                globalOffset.Z += ent.Bf.BBMax.Z;
+                                if (resp.HorizontalCollide == 0 &&
+                                    ent.CheckNextStep(globalOffset, nextFc).IsLittleStep())
+                                {
+                                    cmd.Rotation.X = 0.0f;
+                                    ent.DirFlag = ENT_MOVE.MoveLeft;
+                                    ssAnim.NextState = TR_STATE.LaraWalkLeft;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            ssAnim.NextState = TR_STATE.LaraTurnLeftSlow;
+                        }
+                    }
+                    break;
+                case TR_STATE.LaraJumpPrepare:
+                    ent.Bt.NoFixBodyParts = BODY_PART.Legs | BODY_PART.Hands | BODY_PART.Head;
+                    cmd.Rotation.X = 0;
+                    ent.Lean(cmd, 0.0f);
+
+                    if (resp.Slide == SlideType.Back)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraJumpBackBegin, 0);
+                        cmd.Move[0] = -1;
+                    }
+                    else if (resp.Slide == SlideType.Front)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraJumpForwardBegin, 0);
+                        cmd.Move[0] = 1;
+                    }
+                    if ((currFc.Water || currFc.Quicksand != QuicksandPosition.None) && currFc.FloorHit &&
+                        currFc.TransitionLevel - currFc.FloorPoint.Z > ent.WadeDepth)
+                    {
+                        // Stay, directional jumps are not allowed whilst in wade depth
+                    }
+                    else if (cmd.Move[0] == 1)
+                    {
+                        ent.DirFlag = ENT_MOVE.MoveForward;
+                        move = ent.Transform.Basis.Column1 * Constants.PENETRATION_TEST_OFFSET;
+                        if (ent.CheckNextPenetration(move) == 0)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraJumpForward;
+                        }
+                    }
+                    else if (cmd.Move[0] == -1)
+                    {
+                        ent.DirFlag = ENT_MOVE.MoveBackward;
+                        move = ent.Transform.Basis.Column1 * -Constants.PENETRATION_TEST_OFFSET;
+                        if (ent.CheckNextPenetration(move) == 0)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraJumpBack;
+                        }
+                    }
+                    else if (cmd.Move[1] == 1)
+                    {
+                        ent.DirFlag = ENT_MOVE.MoveRight;
+                        move = ent.Transform.Basis.Column0 * Constants.PENETRATION_TEST_OFFSET;
+                        if (ent.CheckNextPenetration(move) == 0)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraJumpLeft;
+                        }
+                    }
+                    else if (cmd.Move[1] == -1)
+                    {
+                        ent.DirFlag = ENT_MOVE.MoveLeft;
+                        move = ent.Transform.Basis.Column0 * -Constants.PENETRATION_TEST_OFFSET;
+                        if (ent.CheckNextPenetration(move) == 0)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraJumpRight;
+                        }
+                    }
+                    break;
+                case TR_STATE.LaraJumpBack:
+                    ent.Bt.NoFixBodyParts = BODY_PART.Legs | BODY_PART.Hands | BODY_PART.Head;
+                    cmd.Rotation.X = 0.0f;
+
+                    if (resp.VerticalCollide.HasFlagSig(0x01) || ent.MoveType == MoveType.OnFloor)
+                    {
+                        if (currFc.Quicksand == QuicksandPosition.None)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraStop;
+                        }
+                        else
+                        {
+                            ent.SetAnimation(TR_ANIMATION.LaraStayIdle, 0);
+                        }
+                    }
+                    else if (resp.HorizontalCollide.HasFlagSig(0x01))
+                    {
+                        Controls.JoyRumble(200.0f, 200);
+                        ent.SetAnimation(TR_ANIMATION.LaraSmashJump, 0);
+                        ent.DirFlag = ENT_MOVE.MoveForward;
+                        ent.UpdateCurrentSpeed(true);
+                    }
+                    else if (ent.MoveType == MoveType.Underwater || ent.Speed.Z <= -Constants.FREE_FALL_SPEED_2)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraFreefall;
+                    }
+                    else if (cmd.Roll)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraJumpRoll;
+                    }
+                    break;
+                case TR_STATE.LaraJumpLeft:
+                    ent.Bt.NoFixBodyParts = BODY_PART.Legs | BODY_PART.Hands | BODY_PART.Head;
+                    cmd.Rotation.X = 0.0f;
+
+                    if (resp.VerticalCollide.HasFlagSig(0x01) || ent.MoveType == MoveType.OnFloor)
+                    {
+                        if (currFc.Quicksand == QuicksandPosition.None)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraStop;
+                        }
+                        else
+                        {
+                            ent.SetAnimation(TR_ANIMATION.LaraStayIdle, 0);
+                        }
+                    }
+                    else if (resp.HorizontalCollide.HasFlagSig(0x01))
+                    {
+                        Controls.JoyRumble(200.0f, 200);
+                        ent.SetAnimation(TR_ANIMATION.LaraSmashJump, 0);
+                        ent.DirFlag = ENT_MOVE.MoveRight;
+                        ent.UpdateCurrentSpeed(true);
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraFreefall;
+                    }
+                    break;
+                case TR_STATE.LaraJumpRight:
+                    ent.Bt.NoFixBodyParts = BODY_PART.Legs | BODY_PART.Hands | BODY_PART.Head;
+                    cmd.Rotation.X = 0.0f;
+
+                    if (resp.VerticalCollide.HasFlagSig(0x01) || ent.MoveType == MoveType.OnFloor)
+                    {
+                        if (currFc.Quicksand == QuicksandPosition.None)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraStop;
+                        }
+                        else
+                        {
+                            ent.SetAnimation(TR_ANIMATION.LaraStayIdle, 0);
+                        }
+                    }
+                    else if (resp.HorizontalCollide.HasFlagSig(0x01))
+                    {
+                        Controls.JoyRumble(200.0f, 200);
+                        ent.SetAnimation(TR_ANIMATION.LaraSmashJump, 0);
+                        ent.DirFlag = ENT_MOVE.MoveLeft;
+                        ent.UpdateCurrentSpeed(true);
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraFreefall;
+                    }
+                    break;
+                case TR_STATE.LaraRunBack:
+                    ent.DirFlag = ENT_MOVE.MoveBackward;
+
+                    if (ent.MoveType == MoveType.FreeFalling)
+                    {
+                        ent.DirFlag = ENT_MOVE.MoveForward;
+                        ent.SetAnimation(TR_ANIMATION.LaraFreeFallBack, 0);
+                    }
+                    else if (resp.HorizontalCollide.HasFlagSig(0x01))
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraClimb2clickEnd, 0);
+                    }
+                    break;
+                case TR_STATE.LaraTurnLeftSlow:
+                case TR_STATE.LaraTurnRightSlow:
+                    cmd.Rotation.X *= 0.7f;
+                    ent.DirFlag = ENT_MOVE.Stay;
+                    ent.Lean(cmd, 0.0f);
+                    ent.Bt.NoFixBodyParts = BODY_PART.Legs2 | BODY_PART.Legs3;
+
+                    if (cmd.Move[0] == 1)
+                    {
+                        var substanceState = ent.GetSubstanceState();
+                        if (substanceState == Substance.None || substanceState == Substance.WaterShallow)
+                        {
+                            ssAnim.NextState = cmd.Shift ? TR_STATE.LaraWalkForward : TR_STATE.LaraRunForward;
+                        }
+                        else
+                        {
+                            ssAnim.NextState = TR_STATE.LaraWadeForward;
+                        }
+                        ent.DirFlag = ENT_MOVE.MoveForward;
+                    }
+                    else if ((ssAnim.LastState == TR_STATE.LaraTurnLeftSlow && cmd.Move[1] == -1) ||
+                             (ssAnim.LastState == TR_STATE.LaraTurnRightSlow && cmd.Move[1] == 1))
+                    {
+                        var substanceState = ent.GetSubstanceState();
+                        if (lastFrame &&
+                            substanceState.NotEqual(Substance.WaterWade, Substance.QuicksandConsumed,
+                                Substance.QuicksandShallow))
+                        {
+                            ssAnim.NextState = TR_STATE.LaraTurnFast;
+                        }
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraStop;
+                    }
+                    break;
+                case TR_STATE.LaraTurnFast:
+                    ent.DirFlag = ENT_MOVE.Stay;
+                    ent.Bt.NoFixBodyParts = BODY_PART.Legs2 | BODY_PART.Legs3;
+                    ent.Lean(cmd, 0.0f);
+
+                    if (ent.MoveType == MoveType.FreeFalling)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraStartFreeFall, 0);
+                    }
+                    else if (cmd.Move[0] == 1 && !cmd.Jump && !cmd.Crouch)
+                    {
+                        ssAnim.NextState = cmd.Shift ? TR_STATE.LaraWalkForward : TR_STATE.LaraRunForward;
+                        ent.DirFlag = ENT_MOVE.MoveForward;
+                    }
+                    else if (cmd.Move[1] == 0)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraStop;
+                    }
+                    break;
 
                     #endregion
 
                     #region Run and walk animations
+
+                case TR_STATE.LaraRunForward:
+                    globalOffset = ent.Transform.Basis.Column1 * Constants.RUN_FORWARD_OFFSET;
+                    globalOffset.Z += ent.Bf.BBMax.Z;
+                    nextStep = ent.CheckNextStep(globalOffset, nextFc);
+                    ent.DirFlag = ENT_MOVE.MoveForward;
+                    cmd.Crouch |= lowVerticalSpace;
+
+                    if (ent.MoveType == MoveType.OnFloor)
+                        ent.Bt.NoFixBodyParts = BODY_PART.Hands | BODY_PART.Legs;
+
+                    ent.Lean(cmd, 6.0f);
+
+                    if (ent.MoveType == MoveType.FreeFalling)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraFreeFallForward, 0);
+                    }
+                    else if (resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraDeath;
+                    }
+                    else if (resp.Slide == SlideType.Front)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraSlideForward, 0);
+                    }
+                    else if (resp.Slide == SlideType.Back)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraStartSlideBackward, 0);
+                        ent.DirFlag = ENT_MOVE.MoveBackward;
+                    }
+                    else if (ent.HasStopSlant(nextFc))
+                    {
+                        ent.DirFlag = ENT_MOVE.Stay;
+                        ent.SetAnimation(TR_ANIMATION.LaraStayIdle, 0);
+                    }
+                    else if (cmd.Crouch)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraCrouchIdle;
+                    }
+                    else if (cmd.Move[0] == 1 && !cmd.Crouch && nextFc.FloorNormale.Z >= ent.CriticalSlantZComponent &&
+                             nextStep == StepType.UpBig)
+                    {
+                        ent.DirFlag = ENT_MOVE.Stay;
+                        i = ent.GetAnimDispatchCase(2); // Select correct anim dispatch.
+                        ent.SetAnimation(i == 0 ? TR_ANIMATION.LaraRunUpStepRight : TR_ANIMATION.LaraRunUpStepLeft,
+                            0);
+                        pos.Z = nextFc.FloorPoint.Z;
+                        ent.DirFlag = ENT_MOVE.MoveForward;
+                    }
+                    else if (resp.HorizontalCollide.HasFlagSig(0x01))
+                    {
+                        globalOffset = ent.Transform.Basis.Column1 * Constants.RUN_FORWARD_OFFSET;
+                        globalOffset.Z += 1024.0f;
+                        if (ssAnim.CurrentAnimation == TR_ANIMATION.LaraStayToRun)
+                        {
+                            ent.SetAnimation(TR_ANIMATION.LaraStayIdle, 0);
+                        }
+                        else
+                        {
+                            Controls.JoyRumble(200.0f, 200);
+
+                            if (cmd.Move[0] == 1)
+                            {
+                                i = ent.GetAnimDispatchCase(2);
+                                ent.SetAnimation(
+                                    i == 1 ? TR_ANIMATION.LaraWallSmashLeft : TR_ANIMATION.LaraWallSmashRight, 0);
+                            }
+                            else
+                            {
+                                ent.SetAnimation(TR_ANIMATION.LaraStaySolid, 0);
+                            }
+                        }
+                        ent.UpdateCurrentSpeed(false);
+                    }
+                    else if (cmd.Move[0] == 1)
+                    {
+                        if ((currFc.Water || currFc.Quicksand != QuicksandPosition.None) && currFc.FloorHit &&
+                            currFc.TransitionLevel - currFc.FloorPoint.Z > ent.WadeDepth)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraWadeForward;
+                        }
+                        else if(cmd.Shift)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraWalkForward;
+                        }
+                        else if(cmd.Jump && ssAnim.LastAnimation != TR_ANIMATION.LaraStayToRun)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraJumpForward;
+                        }
+                        else if(cmd.Roll)
+                        {
+                            ent.DirFlag = ENT_MOVE.MoveForward;
+                            ent.SetAnimation(TR_ANIMATION.LaraRollBegin, 0);
+                        }
+                        else if(cmd.Sprint)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraSprint;
+                        }
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraStop;
+                    }
+                    break;
 
                     #endregion
 

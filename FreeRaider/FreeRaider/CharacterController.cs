@@ -27,6 +27,7 @@ namespace FreeRaider
            3  |__| |__|  6
     --------------------------*/
 
+    [Flags]
     public enum BODY_PART : uint
     {
         BodyLow = 0x00000001, // 0

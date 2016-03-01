@@ -223,7 +223,7 @@ namespace FreeRaider
 
         public void GenVBO(Render renderer)
         {
-            if (new[] {VBOIndexArray, VBOVertexArray, VBOSkinArray}.Contains((uint) 0))
+            if (((uint)0).IsAnyOf(VBOIndexArray, VBOVertexArray, VBOSkinArray))
                 return;
 
             // now, begin VBO filling!
@@ -887,11 +887,11 @@ namespace FreeRaider
 
         public TR_STATE NextState;
 
-        public short LastAnimation;
+        public TR_ANIMATION LastAnimation;
 
-        public short CurrentAnimation;
+        public TR_ANIMATION CurrentAnimation;
 
-        public short NextAnimation;
+        public TR_ANIMATION NextAnimation;
 
         public short CurrentFrame;
 
@@ -1186,7 +1186,7 @@ namespace FreeRaider
     /// </summary>
     public class AnimationFrame
     {
-        public uint ID;
+        public TR_ANIMATION ID;
 
         public byte OriginalFrameRate;
 

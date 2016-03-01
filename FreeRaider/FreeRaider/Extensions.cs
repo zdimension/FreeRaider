@@ -599,5 +599,15 @@ namespace FreeRaider
         {
             return new Quaternion(vec, w);
         }
+
+        public static bool NotEqual<T>(this T val, params T[] vals)
+        {
+            return vals.All(x => !val.Equals(x) || !x.Equals(val));
+        }
+
+        public static bool IsAnyOf<T>(this T val, params T[] vals)
+        {
+            return vals.Any(x => val.Equals(x) || x.Equals(val));
+        }
     }
 }

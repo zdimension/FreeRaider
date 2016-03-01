@@ -25,7 +25,7 @@ namespace FreeRaider.Loader
         {
             var version = reader.ReadUInt32();
 
-            if (!new[] {0xFF080038, 0xFF180038, 0xFF180034}.Contains(version))
+            if (version.NotEqual(0xFF080038, 0xFF180038, 0xFF180034))
                 throw new ArgumentException("TR3Level.Load: Wrong level version");
 
             Palette = Palette.Read(reader, Engine.TR1);
