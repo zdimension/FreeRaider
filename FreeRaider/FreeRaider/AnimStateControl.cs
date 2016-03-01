@@ -1653,6 +1653,78 @@ namespace FreeRaider
                         ssAnim.NextState = TR_STATE.LaraStop;
                     }
                     break;
+                    case TR_STATE.LaraSprint:
+                    globalOffset = ent.Transform.Basis.Column1 * Constants.RUN_FORWARD_OFFSET;
+                    ent.Lean(cmd, 12.0f);
+                    globalOffset.Z += ent.Bf.BBMax.Z;
+                    nextStep = ent.CheckNextStep(globalOffset, nextFc);
+                    cmd.Crouch |= lowVerticalSpace;
+
+                    if(ent.MoveType == MoveType.OnFloor)
+                    {
+                        ent.Bt.NoFixBodyParts = BODY_PART.Legs;
+                    }
+
+                    if(ent.GetParam(CharParameters.Stamina) == 0)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraRunForward;
+                    }
+                    else if(ent.MoveType == MoveType.FreeFalling)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraFreeFallForward, 0);
+                    }
+                    else if(resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraRunForward; // Normal run then die
+                    }
+                    else if(resp.Slide == SlideType.Front)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraSlideForward, 0);
+                    }
+                    else if(resp.Slide == SlideType.Back)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraStartSlideBackward, 0);
+                    }
+                    else if(nextFc.FloorNormale.Z < ent.CriticalSlantZComponent && nextStep > StepType.Horizontal)
+                    {
+                        ent.CurrentSpeed = 0.0f;
+                        ent.SetAnimation(TR_ANIMATION.LaraStayIdle, 0);
+                    }
+                    else if(nextFc.FloorNormale.Z >= ent.CriticalSlantZComponent && nextStep == StepType.UpBig)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraRunForward; // Interrupt sprint
+                    }
+                    else if(resp.HorizontalCollide.HasFlagSig(0x01))
+                    {
+                        Controls.JoyRumble(200.0f, 200);
+                        ent.SetAnimation(ent.GetAnimDispatchCase(2) == 1 ? TR_ANIMATION.LaraWallSmashLeft : TR_ANIMATION.LaraWallSmashRight, 0);
+                        ent.UpdateCurrentSpeed(false);
+                    }
+                    else if(!cmd.Sprint)
+                    {
+                        ssAnim.NextState = cmd.Move[0] == 1 ? TR_STATE.LaraRunForward : TR_STATE.LaraStop;
+                    }
+                    else
+                    {
+                        if(cmd.Jump)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraSprintRoll;
+                        }
+                        else if(cmd.Roll)
+                        {
+                            ent.DirFlag = ENT_MOVE.MoveForward;
+                            ent.SetAnimation(TR_ANIMATION.LaraRollBegin);
+                        }
+                        else if(cmd.Crouch)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraCrouchIdle;
+                        }
+                        else if(cmd.Move[0] == 0)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraStop;
+                        }
+                    }
+                    break;
 
                     #endregion
 
