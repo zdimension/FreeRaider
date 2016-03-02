@@ -1630,20 +1630,20 @@ namespace FreeRaider
                         {
                             ssAnim.NextState = TR_STATE.LaraWadeForward;
                         }
-                        else if(cmd.Shift)
+                        else if (cmd.Shift)
                         {
                             ssAnim.NextState = TR_STATE.LaraWalkForward;
                         }
-                        else if(cmd.Jump && ssAnim.LastAnimation != TR_ANIMATION.LaraStayToRun)
+                        else if (cmd.Jump && ssAnim.LastAnimation != TR_ANIMATION.LaraStayToRun)
                         {
                             ssAnim.NextState = TR_STATE.LaraJumpForward;
                         }
-                        else if(cmd.Roll)
+                        else if (cmd.Roll)
                         {
                             ent.DirFlag = ENT_MOVE.MoveForward;
                             ent.SetAnimation(TR_ANIMATION.LaraRollBegin, 0);
                         }
-                        else if(cmd.Sprint)
+                        else if (cmd.Sprint)
                         {
                             ssAnim.NextState = TR_STATE.LaraSprint;
                         }
@@ -1653,82 +1653,400 @@ namespace FreeRaider
                         ssAnim.NextState = TR_STATE.LaraStop;
                     }
                     break;
-                    case TR_STATE.LaraSprint:
+                case TR_STATE.LaraSprint:
                     globalOffset = ent.Transform.Basis.Column1 * Constants.RUN_FORWARD_OFFSET;
                     ent.Lean(cmd, 12.0f);
                     globalOffset.Z += ent.Bf.BBMax.Z;
                     nextStep = ent.CheckNextStep(globalOffset, nextFc);
                     cmd.Crouch |= lowVerticalSpace;
 
-                    if(ent.MoveType == MoveType.OnFloor)
+                    if (ent.MoveType == MoveType.OnFloor)
                     {
                         ent.Bt.NoFixBodyParts = BODY_PART.Legs;
                     }
 
-                    if(ent.GetParam(CharParameters.Stamina) == 0)
+                    if (ent.GetParam(CharParameters.Stamina) == 0)
                     {
                         ssAnim.NextState = TR_STATE.LaraRunForward;
                     }
-                    else if(ent.MoveType == MoveType.FreeFalling)
+                    else if (ent.MoveType == MoveType.FreeFalling)
                     {
                         ent.SetAnimation(TR_ANIMATION.LaraFreeFallForward, 0);
                     }
-                    else if(resp.Killed)
+                    else if (resp.Killed)
                     {
                         ssAnim.NextState = TR_STATE.LaraRunForward; // Normal run then die
                     }
-                    else if(resp.Slide == SlideType.Front)
+                    else if (resp.Slide == SlideType.Front)
                     {
                         ent.SetAnimation(TR_ANIMATION.LaraSlideForward, 0);
                     }
-                    else if(resp.Slide == SlideType.Back)
+                    else if (resp.Slide == SlideType.Back)
                     {
                         ent.SetAnimation(TR_ANIMATION.LaraStartSlideBackward, 0);
                     }
-                    else if(nextFc.FloorNormale.Z < ent.CriticalSlantZComponent && nextStep > StepType.Horizontal)
+                    else if (nextFc.FloorNormale.Z < ent.CriticalSlantZComponent && nextStep > StepType.Horizontal)
                     {
                         ent.CurrentSpeed = 0.0f;
                         ent.SetAnimation(TR_ANIMATION.LaraStayIdle, 0);
                     }
-                    else if(nextFc.FloorNormale.Z >= ent.CriticalSlantZComponent && nextStep == StepType.UpBig)
+                    else if (nextFc.FloorNormale.Z >= ent.CriticalSlantZComponent && nextStep == StepType.UpBig)
                     {
                         ssAnim.NextState = TR_STATE.LaraRunForward; // Interrupt sprint
                     }
-                    else if(resp.HorizontalCollide.HasFlagSig(0x01))
+                    else if (resp.HorizontalCollide.HasFlagSig(0x01))
                     {
                         Controls.JoyRumble(200.0f, 200);
-                        ent.SetAnimation(ent.GetAnimDispatchCase(2) == 1 ? TR_ANIMATION.LaraWallSmashLeft : TR_ANIMATION.LaraWallSmashRight, 0);
+                        ent.SetAnimation(
+                            ent.GetAnimDispatchCase(2) == 1
+                                ? TR_ANIMATION.LaraWallSmashLeft
+                                : TR_ANIMATION.LaraWallSmashRight, 0);
                         ent.UpdateCurrentSpeed(false);
                     }
-                    else if(!cmd.Sprint)
+                    else if (!cmd.Sprint)
                     {
                         ssAnim.NextState = cmd.Move[0] == 1 ? TR_STATE.LaraRunForward : TR_STATE.LaraStop;
                     }
                     else
                     {
-                        if(cmd.Jump)
+                        if (cmd.Jump)
                         {
                             ssAnim.NextState = TR_STATE.LaraSprintRoll;
                         }
-                        else if(cmd.Roll)
+                        else if (cmd.Roll)
                         {
                             ent.DirFlag = ENT_MOVE.MoveForward;
                             ent.SetAnimation(TR_ANIMATION.LaraRollBegin);
                         }
-                        else if(cmd.Crouch)
+                        else if (cmd.Crouch)
                         {
                             ssAnim.NextState = TR_STATE.LaraCrouchIdle;
                         }
-                        else if(cmd.Move[0] == 0)
+                        else if (cmd.Move[0] == 0)
                         {
                             ssAnim.NextState = TR_STATE.LaraStop;
                         }
+                    }
+                    break;
+                case TR_STATE.LaraWalkForward:
+                    cmd.Rotation.X *= 0.4f;
+                    ent.Lean(cmd, 0.0f);
+
+                    globalOffset = ent.Transform.Basis.Column1 * Constants.WALK_FORWARD_OFFSET;
+                    globalOffset.Z += ent.Bf.BBMax.Z;
+                    nextStep = ent.CheckNextStep(globalOffset, nextFc);
+                    ent.DirFlag = ENT_MOVE.MoveForward;
+
+                    if (ent.MoveType == MoveType.OnFloor)
+                    {
+                        ent.Bt.NoFixBodyParts = BODY_PART.Legs;
+                    }
+
+                    if (ent.MoveType == MoveType.FreeFalling)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraStartFreeFall, 0);
+                    }
+                    else if (resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraStop;
+                    }
+                    else if (nextFc.FloorNormale.Z >= ent.CriticalSlantZComponent &&
+                             nextStep.IsAnyOf(StepType.UpBig, StepType.DownBig))
+                    {
+                        // Climb up or down
+
+                        ent.DirFlag = ENT_MOVE.Stay;
+                        i = ent.GetAnimDispatchCase(2);
+                        if (nextStep == StepType.DownBig)
+                        {
+                            ent.SetAnimation(i == 1 ? TR_ANIMATION.LaraWalkDownRight : TR_ANIMATION.LaraWalkDownLeft, 0);
+                            climb.Point = nextFc.FloorPoint;
+                        }
+                        else
+                        {
+                            ent.SetAnimation(
+                                i == 1 ? TR_ANIMATION.LaraWalkUpStepRight : TR_ANIMATION.LaraWalkUpStepLeft, 0);
+                        }
+
+                        pos = nextFc.FloorPoint;
+                        ent.MoveType = MoveType.OnFloor;
+                        ent.DirFlag = ENT_MOVE.MoveForward;
+                    }
+                    else if (resp.HorizontalCollide.HasFlagSig(0x01) || !nextStep.IsWalkableStep() || lowVerticalSpace)
+                    {
+                        // Too high!
+
+                        ent.DirFlag = ENT_MOVE.Stay;
+                        ent.SetAnimation(TR_ANIMATION.LaraStayIdle, 0);
+                    }
+                    else if (cmd.Move[0] != 1)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraStop;
+                    }
+                    else if ((currFc.Water || currFc.Quicksand != QuicksandPosition.None) && currFc.FloorHit &&
+                             currFc.TransitionLevel - currFc.FloorPoint.Z > ent.WadeDepth)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraWadeForward;
+                    }
+                    else if (cmd.Move[0] == 1 && !cmd.Crouch && !cmd.Shift)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraRunForward;
+                    }
+                    break;
+                case TR_STATE.LaraWadeForward:
+                    cmd.Rotation.X *= 0.4f;
+                    ent.DirFlag = ENT_MOVE.MoveForward;
+
+                    if (ent.HeightInfo.Quicksand != QuicksandPosition.None)
+                    {
+                        ent.CurrentSpeed = Math.Min(ent.CurrentSpeed, Constants.MAX_SPEED_QUICKSAND);
+                    }
+
+                    if (cmd.Move[0] == 1)
+                    {
+                        move = ent.Transform.Basis.Column1 * Constants.PENETRATION_TEST_OFFSET;
+                        ent.CheckNextPenetration(move);
+                    }
+
+                    if (resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraStop;
+                    }
+
+                    if (!currFc.FloorHit || ent.MoveType == MoveType.FreeFalling)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraStartFreeFall, 0);
+                    }
+                    else if (currFc.Water)
+                    {
+                        var tlfp = currFc.TransitionLevel - currFc.FloorPoint.Z;
+                        if (tlfp <= ent.WadeDepth)
+                        {
+                            // Run / walk
+                            if (cmd.Move[0] == 1 && resp.HorizontalCollide == 0)
+                            {
+                                ssAnim.NextState = TR_STATE.LaraRunForward;
+                            }
+                            else
+                            {
+                                ssAnim.NextState = TR_STATE.LaraStop;
+                            }
+                        }
+                        else if (tlfp > ent.Height - ent.SwimDepth)
+                        {
+                            // Swim
+                            if (tlfp > ent.Height + ent.MaxStepUpHeight)
+                            {
+                                ent.SetAnimation(TR_ANIMATION.LaraStartFreeFall, 0); // swim underwater
+                            }
+                            else
+                            {
+                                ent.SetAnimation(TR_ANIMATION.LaraOnwaterIdle, 0);
+                                ent.MoveType = MoveType.OnWater;
+                                pos.Z = currFc.TransitionLevel;
+                            }
+                        }
+                        else if (tlfp > ent.WadeDepth)
+                        {
+                            // Wade
+                            if (cmd.Move[0] != 1 && resp.HorizontalCollide != 0)
+                            {
+                                ssAnim.NextState = TR_STATE.LaraStop;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // No water, stay on run / walk
+                        if (cmd.Move[0] == 1 && resp.HorizontalCollide == 0)
+                        {
+                            if (currFc.Quicksand == QuicksandPosition.None)
+                            {
+                                ssAnim.NextState = TR_STATE.LaraRunForward;
+                            }
+                        }
+                        else
+                        {
+                            ssAnim.NextState = TR_STATE.LaraStop;
+                        }
+                    }
+                    break;
+                case TR_STATE.LaraWalkBack:
+                    cmd.Rotation.X *= 0.4f;
+                    ent.DirFlag = ENT_MOVE.MoveBackward;
+
+                    if (ent.HeightInfo.Quicksand != QuicksandPosition.None)
+                    {
+                        ent.CurrentSpeed = Math.Min(ent.CurrentSpeed, Constants.MAX_SPEED_QUICKSAND);
+                    }
+
+                    globalOffset = ent.Transform.Basis.Column1 * -Constants.WALK_BACK_OFFSET;
+                    globalOffset.Z += ent.Bf.BBMax.Z;
+                    nextStep = ent.CheckNextStep(globalOffset, nextFc);
+                    if (ent.MoveType == MoveType.FreeFalling)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraStartFreeFall, 0);
+                    }
+                    else if (currFc.Water && currFc.FloorPoint.Z + ent.Height < currFc.TransitionLevel)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraOnwaterSwimBack, 0);
+                        ssAnim.NextState = TR_STATE.LaraOnwaterBack;
+                        ent.MoveType = MoveType.OnWater;
+                    }
+                    else if (!nextStep.IsWalkableStep())
+                    {
+                        ent.DirFlag = ENT_MOVE.Stay;
+                        ent.SetAnimation(TR_ANIMATION.LaraClimb2clickEnd, 0);
+                    }
+                    else if (nextFc.FloorNormale.Z >= ent.CriticalSlantZComponent && nextStep == StepType.DownBig)
+                    {
+                        if (!ent.Bt.NoFixAll)
+                        {
+                            var framesCount =
+                                ssAnim.Model.Animations[(int) TR_ANIMATION.LaraWalkDownBackLeft].Frames.Count;
+                            var framesCount2 = (framesCount + 1) / 2;
+                            var b = true;
+                            if (ssAnim.CurrentFrame >= 0 && ssAnim.CurrentFrame <= framesCount2)
+                            {
+                                ent.SetAnimation(TR_ANIMATION.LaraWalkDownBackLeft, ssAnim.CurrentFrame);
+                            }
+                            else if (ssAnim.CurrentFrame >= framesCount &&
+                                     ssAnim.CurrentFrame <= framesCount + framesCount2)
+                            {
+                                ent.SetAnimation(TR_ANIMATION.LaraWalkDownBackRight,
+                                    ssAnim.CurrentFrame - framesCount);
+                            }
+                            else
+                            {
+                                b = false;
+                            }
+                            if (b)
+                            {
+                                ent.DirFlag = ENT_MOVE.MoveBackward;
+                                ent.Transform.Origin.Z -= currFc.FloorPoint.Z - nextFc.FloorPoint.Z;
+                                ent.Bt.NoFixAll = true;
+                            }
+                            else
+                            {
+                                ent.DirFlag = ENT_MOVE.Stay; // Waiting for correct frame
+                            }
+                        }
+                    }
+                    else if (cmd.Move[0] == -1 && (cmd.Shift || ent.HeightInfo.Quicksand != QuicksandPosition.None))
+                    {
+                        ent.DirFlag = ENT_MOVE.MoveBackward;
+                        ssAnim.NextState = TR_STATE.LaraWalkBack;
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraStop;
+                    }
+                    break;
+                case TR_STATE.LaraWalkLeft:
+                case TR_STATE.LaraWalkRight:
+                    var r = ssAnim.LastState == TR_STATE.LaraWalkRight;
+                    var n = r ? 1 : -1;
+
+                    cmd.Rotation.X = 0;
+                    ent.DirFlag = r ? ENT_MOVE.MoveRight : ENT_MOVE.MoveLeft;
+
+                    if (ent.MoveType == MoveType.FreeFalling)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraStartFreeFall, 0);
+                    }
+                    else if (cmd.Move[1] == n && cmd.Shift)
+                    {
+                        globalOffset = ent.Transform.Basis.Column0 * (Constants.RUN_FORWARD_OFFSET * n);
+                        globalOffset.Z += ent.Bf.BBMax.Z;
+                        globalOffset += pos;
+                        Character.GetHeightInfo(globalOffset, nextFc);
+                        if (nextFc.FloorHit && nextFc.FloorPoint.Z > pos.Z - ent.MaxStepUpHeight &&
+                            nextFc.FloorPoint.Z <= pos.Z + ent.MaxStepUpHeight)
+                        {
+                            if (currFc.Water && !(currFc.FloorPoint.Z + ent.Height > currFc.TransitionLevel))
+                            {
+                                ssAnim.NextState = r ? TR_STATE.LaraOnwaterRight : TR_STATE.LaraOnwaterLeft;
+                                ssAnim.OnFrame += ent_to_on_water;
+                            }
+                            // else continue walking
+                        }
+                        else
+                        {
+                            ent.DirFlag = ENT_MOVE.Stay;
+                            ent.SetAnimation(TR_ANIMATION.LaraStaySolid, 0);
+                        }
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraStop;
                     }
                     break;
 
                     #endregion
 
                     #region Slide animations
+
+                    case TR_STATE.LaraSlideBack:
+                    cmd.Rotation.X = 0;
+                    ent.Lean(cmd, 0.0f);
+                    ent.DirFlag = ENT_MOVE.MoveBackward;
+
+                    if(ent.MoveType == MoveType.FreeFalling)
+                    {
+                        if(cmd.Action)
+                        {
+                            ent.Speed.X = -ent.Transform.Basis.Column1.X * 128.0f;
+                            ent.Speed.Y = -ent.Transform.Basis.Column1.Y * 128.0f;
+                        }
+
+                        ent.SetAnimation(TR_ANIMATION.LaraFreeFallBack, 0);
+                    }
+                    else if(resp.Slide == SlideType.None)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraStop;
+                    }
+                    else if(resp.Slide != SlideType.None && cmd.Jump)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraJumpBack;
+                    }
+                    else
+                    {
+                        break;
+                    }
+
+                    Audio.Kill((int) TR_AUDIO_SOUND.Sliding, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
+                    break;
+                case TR_STATE.LaraSlideForward:
+                    cmd.Rotation.X = 0;
+                    ent.Lean(cmd, 0.0f);
+                    ent.DirFlag = ENT_MOVE.MoveForward;
+
+                    if (ent.MoveType == MoveType.FreeFalling)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraFreeFallForward, 0);
+                    }
+                    else if (resp.Slide == SlideType.None)
+                    {
+                        if (cmd.Move[0] == 1 && Global.EngineWorld.EngineVersion >= Loader.Engine.TR3)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraRunForward;
+                        }
+                        else
+                        {
+                            ssAnim.NextState = TR_STATE.LaraStop;
+                        }
+                    }
+                    else if (resp.Slide != SlideType.None && cmd.Jump)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraJumpBack;
+                    }
+                    else
+                    {
+                        break;
+                    }
+
+                    Audio.Kill((int)TR_AUDIO_SOUND.Sliding, TR_AUDIO_EMITTER.Entity, (int)ent.ID);
+                    break;
 
                     #endregion
 
