@@ -600,14 +600,50 @@ namespace FreeRaider
             return new Quaternion(vec, w);
         }
 
-        public static bool NotEqual<T>(this T val, params T[] vals)
+        public static bool NotEqual(this object val, params object[] vals)
         {
             return vals.All(x => !val.Equals(x) || !x.Equals(val));
         }
 
-        public static bool IsAnyOf<T>(this T val, params T[] vals)
+        public static bool IsAnyOf(this object val, params object[] vals)
         {
             return vals.Any(x => val.Equals(x) || x.Equals(val));
+        }
+
+        public static bool ToBool(this object obj)
+        {
+            return Convert.ToBoolean(obj);
+        }
+
+        public static bool IsUnsigned(this object value)
+        {
+            return value is byte
+                   || value is ushort
+                   || value is uint
+                   || value is ulong;
+        }
+
+        public static bool IsSigned(this object value)
+        {
+            return value is sbyte
+            || value is short
+            || value is int
+            || value is long
+            || value is float
+            || value is double
+            || value is decimal;
+        }
+
+        public static void ListCopy<T>(this List<T> sourceArray, List<T> destinationArray,
+           int length)
+        {
+            Helper.ListCopy(sourceArray, destinationArray, length);
+        }
+
+        public static void ListCopy<T>(this List<T> sourceArray, int sourceIndex, List<T> destinationArray,
+            int destinationIndex, int length)
+        {
+            Helper.ListCopy(sourceArray, sourceIndex, destinationArray, destinationIndex, length);
         }
     }
 }

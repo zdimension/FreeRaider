@@ -1611,7 +1611,7 @@ else
             }
             else
             {
-                UpdateListenerByCamera(Global.Renderer.camera());
+                UpdateListenerByCamera(Global.Renderer.Camera);
             }
         }
 

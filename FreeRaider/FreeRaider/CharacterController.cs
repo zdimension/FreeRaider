@@ -118,6 +118,12 @@ namespace FreeRaider
         public const float CHARACTER_BOX_HALF_SIZE = 128.0f;
         public const float CHARACTER_BASE_RADIUS = 128.0f;
         public const float CHARACTER_BASE_HEIGHT = 512.0f;
+
+        public const int TraverseNone = 0x00;
+
+        public const int TraverseForward = 0x01;
+
+        public const int TraverseBackward = 0x02;
     }
 
     public enum SlideType
@@ -559,12 +565,6 @@ namespace FreeRaider
         public int FindTraverse();
 
         public int CheckTraverse(Entity obj);
-
-        public const int TraverseNone = 0x00;
-
-        public const int TraverseForward = 0x01;
-
-        public const int TraverseBackward = 0x02;
 
         public void ApplyCommands();
 

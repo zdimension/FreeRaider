@@ -180,8 +180,6 @@ namespace FreeRaider
             layOutTextures();
         }
 
-        ~BorderedTextureAtlas();
-
         /// <summary>
         /// Returns the texture coordinates of the specified texture. This must
         /// only be
@@ -253,12 +251,20 @@ namespace FreeRaider
         /// Returns the number of texture atlas pages that have been created.
         /// Triggers a layout if none has happened so far.
         /// </summary>
-        public uint GetNumAtlasPages();
+        public uint NumAtlasPages => (uint) resultPageHeights.Count;
 
         /// <summary>
         /// Returns height of specified file object texture.
         /// </summary>
-        public uint GetTextureHeight(uint texture);
+        public uint GetTextureHeight(uint texture)
+        {
+            Assert.That(texture < fileObjectTextures.Count);
+
+            var fileObjectTexture = fileObjectTextures[(int) texture];
+            var canonical = canonicalObjectTextures[(int) fileObjectTexture.CanonicalTextureIndex];
+
+            return canonical.Height;
+        }
 
         /// <summary>
         /// Uploads the current data to OpenGL, as one or more texture pages.

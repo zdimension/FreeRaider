@@ -923,6 +923,13 @@ namespace FreeRaider
             OnFrame = null;
         }
 
+        public void SetOnFrame(OnFrameHandler h)
+        {
+            OnFrame = null;
+            OnFrame += h;
+        }
+        
+
         /// <summary>
         /// Base model
         /// </summary>

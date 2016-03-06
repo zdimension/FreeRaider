@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FreeRaider
 {
@@ -137,25 +139,103 @@ namespace FreeRaider
 
         private float itemAngle;
 
-        private int getItemsTypeCount(MenuItemType type);
+        private int getItemsTypeCount(MenuItemType type)
+        {
+            return inventory.Count(i => Global.EngineWorld.GetBaseItemByID(i.ID)?.Type == type);
+        }
 
-        private void restoreItemAngle(float time);
+        private void restoreItemAngle(float time)
+        {
+            if(itemAngle > 0.0f)
+            {
+                if(itemAngle <= 180.0f)
+                {
+                    itemAngle -= 180.0f * time / ringRotatePeriod;
+                    if (itemAngle < 0.0f) itemAngle = 0.0f;
+                }
+                else
+                {
+                    itemAngle += 180.0f * time / ringRotatePeriod;
+                    if (itemAngle >= 360.0f) itemAngle = 0.0f;
+                }
+            }
+        }
 
         public TextLine LabelTitle;
 
         public TextLine LabelItemName;
 
-        public InventoryManager();
+        public InventoryManager()
+        {
+            CurrentState = InventoryState.Disabled;
+            NextState = InventoryState.Disabled;
+            ItemsType = MenuItemType.System;
+            currentItemsCount = 0;
+            itemsOffset = 0;
+            nextItemsCount = 0;
 
-        ~InventoryManager();
+            ringRotatePeriod = 0.5f;
+            ringTime = 0.0f;
+            ringAngle = 0.0f;
+            ringVerticalAngle = 0.0f;
+            ringAngleStep = 0.0f;
+            baseRingRadius = 600.0f;
+            ringRadius = 600.0f;
+            verticalOffset = 0.0f;
 
-        public InventoryState CurrentState { get; }
+            itemRotatePeriod = 4.0f;
+            itemTime = 0.0f;
+            itemAngle = 0.0f;
+
+            inventory = new List<InventoryNode>();
+
+            LabelTitle.X = 0.0f;
+            LabelTitle.Y = 30.0f;
+            LabelTitle.Xanchor = HorizontalAnchor.Center;
+            LabelTitle.Yanchor = VerticalAnchor.Top;
+
+            LabelTitle.FontID = FontType.Primary;
+            LabelTitle.StyleID = FontStyle.MenuTitle;
+            LabelTitle.Show = false;
+
+            LabelItemName.X = 0.0f;
+            LabelItemName.Y = 50.0f;
+            LabelItemName.Xanchor = HorizontalAnchor.Center;
+            LabelItemName.Yanchor = VerticalAnchor.Bottom;
+                 
+            LabelItemName.FontID = FontType.Primary;
+            LabelItemName.StyleID = FontStyle.MenuContent;
+            LabelItemName.Show = false;
+
+            Gui.AddLine(LabelItemName);
+            Gui.AddLine(LabelTitle);
+        }
+
+        ~InventoryManager()
+        {
+            CurrentState = InventoryState.Disabled;
+            NextState = InventoryState.Disabled;
+            inventory = new List<InventoryNode>();
+
+            LabelItemName.Show = false;
+            Gui.DeleteLine(LabelItemName);
+
+            LabelTitle.Show = false;
+            Gui.DeleteLine(LabelTitle);
+        }
+
+        public InventoryState CurrentState { get; private set; }
 
         public InventoryState NextState { get; set; }
 
         public MenuItemType ItemsType { get; }
 
-        public void SetInventory(List<InventoryNode> i);
+        public void SetInventory(List<InventoryNode> i)
+        {
+            inventory = i.ToList();
+            CurrentState = InventoryState.Disabled;
+            NextState = InventoryState.Disabled;
+        }
 
         public void SetTitle(MenuItemType itemsType);
 
