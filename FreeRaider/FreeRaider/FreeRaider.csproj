@@ -119,6 +119,7 @@
     <Compile Include="Ragdoll.cs" />
     <Compile Include="Render.cs" />
     <Compile Include="Resource.cs" />
+    <Compile Include="Script.cs" />
     <Compile Include="ShaderDescription.cs" />
     <Compile Include="ShaderManager.cs" />
     <Compile Include="Strings.cs" />
