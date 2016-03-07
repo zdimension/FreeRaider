@@ -2301,15 +2301,16 @@ namespace FreeRaider
 
                     #region Climbing animations
 
-                    case TR_STATE.LaraJumpUp:
+                case TR_STATE.LaraJumpUp:
                     cmd.Rotation.X = 0.0f;
-                    if(cmd.Action && ent.MoveType != MoveType.WallsClimb && ent.MoveType != MoveType.Climbing)
+                    if (cmd.Action && ent.MoveType != MoveType.WallsClimb && ent.MoveType != MoveType.Climbing)
                     {
                         t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
                         globalOffset = ent.Transform.Basis.Column1 * t;
-                        globalOffset.Z += ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_EPSILON + Global.EngineFrameTime * ent.Speed.Z;
+                        globalOffset.Z += ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_EPSILON +
+                                          Global.EngineFrameTime * ent.Speed.Z;
                         climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
-                        if(climb.EdgeHit)
+                        if (climb.EdgeHit)
                         {
                             climb.Point = climb.EdgePoint;
                             ent.Angles.X = climb.EdgeZAngle;
@@ -2328,7 +2329,7 @@ namespace FreeRaider
                             {
                                 // Fix the position to the TR metering step.
                                 ent.Transform.Origin.Z =
-                                    (float)Math.Floor(ent.Transform.Origin.Z / Constants.TR_METERING_STEP) *
+                                    (float) Math.Floor(ent.Transform.Origin.Z / Constants.TR_METERING_STEP) *
                                     Constants.TR_METERING_STEP;
                                 ent.MoveType = MoveType.WallsClimb;
                                 ent.SetAnimation(TR_ANIMATION.LaraHangIdle, -1);
@@ -2337,19 +2338,19 @@ namespace FreeRaider
                         }
                     }
 
-                    if(cmd.Move[0] == 1)
+                    if (cmd.Move[0] == 1)
                     {
                         ent.DirFlag = ENT_MOVE.MoveForward;
                     }
-                    else if(cmd.Move[0] == -1)
+                    else if (cmd.Move[0] == -1)
                     {
                         ent.DirFlag = ENT_MOVE.MoveBackward;
                     }
-                    else if(cmd.Move[1] == 1)
+                    else if (cmd.Move[1] == 1)
                     {
                         ent.DirFlag = ENT_MOVE.MoveRight;
                     }
-                    else if(cmd.Move[1] == -1)
+                    else if (cmd.Move[1] == -1)
                     {
                         ent.DirFlag = ENT_MOVE.MoveLeft;
                     }
@@ -2358,30 +2359,31 @@ namespace FreeRaider
                         ent.DirFlag = ENT_MOVE.MoveForward; // Lara can move forward towards walls in this state
                     }
 
-                    if(ent.MoveType == MoveType.Underwater)
+                    if (ent.MoveType == MoveType.Underwater)
                     {
                         ent.Angles.Y = -45.0f;
                         cmd.Rotation.Y = 0.0f;
                         ent.UpdateTransform();
                         ent.SetAnimation(TR_ANIMATION.LaraFreeFallToUnderwater, 0);
                     }
-                    else if(cmd.Action && currFc.CeilingClimb && currFc.CeilingHit && pos.Z + ent.Bf.BBMax.Z > currFc.CeilingPoint.Z - 64.0f)
+                    else if (cmd.Action && currFc.CeilingClimb && currFc.CeilingHit &&
+                             pos.Z + ent.Bf.BBMax.Z > currFc.CeilingPoint.Z - 64.0f)
                     {
                         ssAnim.NextState = TR_STATE.LaraMonkeyswingIdle;
                         ssAnim.SetOnFrame(ent_to_monkey_swing);
                     }
-                    else if(cmd.Action && ent.MoveType == MoveType.Climbing)
+                    else if (cmd.Action && ent.MoveType == MoveType.Climbing)
                     {
                         ssAnim.NextState = TR_STATE.LaraHang;
                         ent.SetAnimation(TR_ANIMATION.LaraHangIdle, -1);
                     }
-                    else if(resp.VerticalCollide.HasFlagSig(0x01) || ent.MoveType == MoveType.OnFloor)
+                    else if (resp.VerticalCollide.HasFlagSig(0x01) || ent.MoveType == MoveType.OnFloor)
                     {
                         ssAnim.NextState = TR_STATE.LaraStop; // Landing immediately
                     }
                     else
                     {
-                        if(ent.Speed.Z < -Constants.FREE_FALL_SPEED_2) // Next free fall stage
+                        if (ent.Speed.Z < -Constants.FREE_FALL_SPEED_2) // Next free fall stage
                         {
                             ent.MoveType = MoveType.FreeFalling;
                             ssAnim.NextState = TR_STATE.LaraFreefall;
@@ -2404,7 +2406,8 @@ namespace FreeRaider
                     {
                         t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
                         globalOffset = ent.Transform.Basis.Column1 * t;
-                        globalOffset.Z += ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_EPSILON + Global.EngineFrameTime * ent.Speed.Z;
+                        globalOffset.Z += ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_EPSILON +
+                                          Global.EngineFrameTime * ent.Speed.Z;
                         climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
                         if (climb.EdgeHit && climb.CanHang)
                         {
@@ -2424,13 +2427,15 @@ namespace FreeRaider
                         }
                     }
 
-                    if (ent.MoveType != MoveType.OnFloor && cmd.Action && currFc.CeilingClimb && currFc.CeilingHit && pos.Z + ent.Bf.BBMax.Z > currFc.CeilingPoint.Z - 64.0f)
+                    if (ent.MoveType != MoveType.OnFloor && cmd.Action && currFc.CeilingClimb && currFc.CeilingHit &&
+                        pos.Z + ent.Bf.BBMax.Z > currFc.CeilingPoint.Z - 64.0f)
                     {
                         ssAnim.NextState = TR_STATE.LaraMonkeyswingIdle;
                         ssAnim.SetOnFrame(ent_to_monkey_swing);
                         break;
                     }
-                    if (resp.VerticalCollide.HasFlagSig(0x01) || ent.MoveType == MoveType.OnFloor && (!cmd.Action || !climb.CanHang))
+                    if (resp.VerticalCollide.HasFlagSig(0x01) ||
+                        ent.MoveType == MoveType.OnFloor && (!cmd.Action || !climb.CanHang))
                     {
                         ssAnim.NextState = TR_STATE.LaraStop; // Middle landing
                         break;
@@ -2468,36 +2473,36 @@ namespace FreeRaider
                     ent.Bt.NoFixAll = true;
                     //ssAnim.SetOnFrame(ent_set_on_floor_after_climb); // FIXME: Buggy
                     break;
-                    case TR_STATE.LaraHang:
+                case TR_STATE.LaraHang:
                     cmd.Rotation.X = 0.0f;
 
-                    if(ent.MoveType == MoveType.WallsClimb)
+                    if (ent.MoveType == MoveType.WallsClimb)
                     {
-                        if(cmd.Action)
+                        if (cmd.Action)
                         {
-                            if(climb.WallHit == ClimbType.FullBody && cmd.Move[0] == 0 && cmd.Move[1] == 0)
+                            if (climb.WallHit == ClimbType.FullBody && cmd.Move[0] == 0 && cmd.Move[1] == 0)
                             {
                                 ssAnim.NextState = TR_STATE.LaraLadderIdle;
                             }
-                            else if(cmd.Move[0] == 1) // UP
+                            else if (cmd.Move[0] == 1) // UP
                             {
                                 ent.SetAnimation(TR_ANIMATION.LaraLadderUpHands, 0);
                             }
-                            else if(cmd.Move[0] == -1) // DOWN
+                            else if (cmd.Move[0] == -1) // DOWN
                             {
                                 ent.SetAnimation(TR_ANIMATION.LaraLadderDownHands, 0);
                             }
-                            else if(cmd.Move[1] == 1) // RIGHT
+                            else if (cmd.Move[1] == 1) // RIGHT
                             {
                                 ent.DirFlag = ENT_MOVE.MoveRight;
                                 ent.SetAnimation(TR_ANIMATION.LaraClimbRight, 0); // Edge climb right
                             }
-                            else if(cmd.Move[1] == -1)
+                            else if (cmd.Move[1] == -1)
                             {
                                 ent.DirFlag = ENT_MOVE.MoveLeft;
                                 ent.SetAnimation(TR_ANIMATION.LaraClimbLeft, 0); // Edge climb left
                             }
-                            else if(climb.WallHit == ClimbType.None)
+                            else if (climb.WallHit == ClimbType.None)
                             {
                                 ent.MoveType = MoveType.FreeFalling;
                                 ent.SetAnimation(TR_ANIMATION.LaraStopHangVertical, 0); // Fall down
@@ -2515,7 +2520,7 @@ namespace FreeRaider
                         break;
                     }
 
-                    if(!resp.Killed && cmd.Action)
+                    if (!resp.Killed && cmd.Action)
                     {
                         t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
                         globalOffset = ent.Transform.Basis.Column1 * t;
@@ -2536,9 +2541,9 @@ namespace FreeRaider
                         break;
                     }
 
-                    if(ent.MoveType == MoveType.Climbing)
+                    if (ent.MoveType == MoveType.Climbing)
                     {
-                        if(cmd.Move[0] == 1)
+                        if (cmd.Move[0] == 1)
                         {
                             if (climb.EdgeHit && climb.NextZSpace >= 512.0f &&
                                 (climb.NextZSpace < ent.Height - Constants.LARA_HANG_VERTICAL_EPSILON || cmd.Crouch))
@@ -2551,21 +2556,24 @@ namespace FreeRaider
                             {
                                 Sys.DebugLog(Constants.LOG_FILENAME, "Zspace = {0}", climb.NextZSpace);
                                 climb.Point = climb.EdgePoint;
-                                ssAnim.NextState = cmd.Shift ? TR_STATE.LaraHandstand : TR_STATE.LaraClimbing; // climb up
+                                ssAnim.NextState = cmd.Shift ? TR_STATE.LaraHandstand : TR_STATE.LaraClimbing;
+                                // climb up
                             }
                             else
                             {
-                                pos.X = climb.Point.X - Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.X;
-                                pos.Y = climb.Point.Y - Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.Y;
+                                pos.X = climb.Point.X -
+                                        Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.X;
+                                pos.Y = climb.Point.Y -
+                                        Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.Y;
                                 pos.Z = climb.Point.Z - ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_OFFSET;
                                 ent.Speed = Vector3.Zero;
                                 ssAnim.AnimFlags = AnimControlFlags.LoopLastFrame; // Disable shake
                             }
                         }
-                        else if(cmd.Move[0] == -1) // Check walls climbing
+                        else if (cmd.Move[0] == -1) // Check walls climbing
                         {
                             climb = ent.CheckWallsClimbability();
-                            if(climb.WallHit != ClimbType.None)
+                            if (climb.WallHit != ClimbType.None)
                             {
                                 ent.MoveType = MoveType.WallsClimb;
                             }
@@ -2589,7 +2597,7 @@ namespace FreeRaider
                         {
                             move = ent.Transform.Basis.Column0 * Constants.PENETRATION_TEST_OFFSET;
                             if (ent.CheckNextPenetration(move) == 0 || ent.Response.HorizontalCollide == 0x00)
-                            // We only want Lara to shimmy when last frame is reached!
+                                // We only want Lara to shimmy when last frame is reached!
                             {
                                 ent.DirFlag = ENT_MOVE.MoveRight;
                                 ent.SetAnimation(TR_ANIMATION.LaraClimbRight, 0);
@@ -2620,22 +2628,999 @@ namespace FreeRaider
                         ent.SetAnimation(TR_ANIMATION.LaraTryHangVertical, 0); // Fall down
                     }
                     break;
+                case TR_STATE.LaraLadderIdle:
+                    cmd.Rotation.X = 0;
+                    ent.MoveType = MoveType.WallsClimb;
+                    ent.DirFlag = ENT_MOVE.Stay;
+                    ent.CamFollowCenter = 64;
+                    if (ent.MoveType == MoveType.Climbing)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraClimbing;
+                        break;
+                    }
+                    if (!cmd.Action)
+                    {
+                        ent.MoveType = MoveType.FreeFalling;
+                        ent.SetAnimation(TR_ANIMATION.LaraStopHangVertical, 0); // Fall down
+                    }
+                    else if (cmd.Jump)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraJumpBack;
+                        ent.DirFlag = ENT_MOVE.MoveBackward;
+                    }
+                    else if (cmd.Move[0] == 1)
+                    {
+                        t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
+                        globalOffset = ent.Transform.Basis.Column1 * t;
+                        globalOffset.Z += ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_EPSILON;
+                        climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
+                        if (climb.EdgeHit && climb.NextZSpace >= 512.0f)
+                        {
+                            ent.MoveType = MoveType.Climbing;
+                            ssAnim.NextState = TR_STATE.LaraClimbing;
+                        }
+                        else if (!currFc.CeilingHit || pos.Z + ent.Bf.BBMax.Z < currFc.CeilingPoint.Z)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraLadderUp;
+                        }
+                    }
+                    else if (cmd.Move[0] == -1)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraLadderDown;
+                    }
+                    else if (cmd.Move[1] == 11)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraLadderRight;
+                    }
+                    else if (cmd.Move[1] == -1)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraLadderLeft;
+                    }
+                    break;
+                case TR_STATE.LaraLadderLeft:
+                    ent.DirFlag = ENT_MOVE.MoveLeft;
+                    if (!cmd.Action || ent.Climb.WallHit == ClimbType.None)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraHang;
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraLadderIdle;
+                    }
+                    break;
+                case TR_STATE.LaraLadderRight:
+                    ent.DirFlag = ENT_MOVE.MoveRight;
+                    if (!cmd.Action || ent.Climb.WallHit == ClimbType.None)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraHang;
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraLadderIdle;
+                    }
+                    break;
+                case TR_STATE.LaraLadderUp:
+                    ent.CamFollowCenter = 64;
+                    if (ent.MoveType == MoveType.Climbing)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraLadderIdle;
+                        break;
+                    }
+
+                    if (cmd.Action && ent.Climb.WallHit != ClimbType.None)
+                    {
+                        t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
+                        globalOffset = ent.Transform.Basis.Column1 * t;
+                        globalOffset.Z += ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_EPSILON;
+                        climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
+                        if (climb.EdgeHit && climb.NextZSpace >= 512.0f)
+                        {
+                            ent.MoveType = MoveType.Climbing;
+                            ssAnim.NextState = TR_STATE.LaraLadderIdle;
+                        }
+                        else if (cmd.Move[0] <= 0 &&
+                                 (currFc.CeilingHit || pos.Z + ent.Bf.BBMax.Z >= currFc.CeilingPoint.Z))
+                        {
+                            ssAnim.NextState = TR_STATE.LaraLadderIdle;
+                        }
+
+                        if (currFc.CeilingHit && pos.Z + ent.Bf.BBMax.Z > currFc.CeilingPoint.Z)
+                        {
+                            pos.Z = currFc.CeilingPoint.Z - ent.Bf.BBMax.Z;
+                        }
+                    }
+                    else
+                    {
+                        // Free fall after stop
+                        ssAnim.NextState = TR_STATE.LaraLadderIdle;
+                    }
+                    break;
+                case TR_STATE.LaraLadderDown:
+                    ent.CamFollowCenter = 64;
+                    if (cmd.Action && ent.Climb.WallHit != ClimbType.None && cmd.Move[1] < 0)
+                    {
+                        if (ent.Climb.WallHit != ClimbType.FullBody)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraLadderIdle;
+                        }
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraLadderIdle;
+                    }
+                    break;
+                case TR_STATE.LaraShimmyLeft:
+                    ent.Bt.NoFixBodyParts = BODY_PART.Legs;
+
+                    cmd.Rotation.X = 0.0f;
+                    ent.DirFlag = ENT_MOVE.MoveLeft;
+                    if (!cmd.Action)
+                    {
+                        ent.Speed = Vector3.Zero;
+                        ent.MoveType = MoveType.FreeFalling;
+                        ent.SetAnimation(TR_ANIMATION.LaraTryHangVertical, 0); // fall down
+                        break;
+                    }
+
+                    if (ent.MoveType == MoveType.WallsClimb)
+                    {
+                        if (ent.Climb.WallHit == ClimbType.None)
+                        {
+                            ent.MoveType = MoveType.FreeFalling;
+                            ent.SetAnimation(TR_ANIMATION.LaraStopHangVertical, 0); // fall down
+                        }
+                    }
+                    else
+                    {
+                        t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
+                        globalOffset = ent.Transform.Basis.Column1 * t;
+                        globalOffset.Z += Constants.LARA_HANG_SENSOR_Z + Constants.LARA_HANG_VERTICAL_EPSILON;
+                        climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
+                        if (climb.EdgeHit)
+                        {
+                            climb.Point = climb.EdgePoint;
+                            ent.Angles.Z = climb.EdgeZAngle;
+                            ent.UpdateTransform();
+                            ent.MoveType = MoveType.Climbing; // hang on
+                            pos.X = climb.Point.X - Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.X;
+                            pos.Y = climb.Point.Y - Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.Y;
+                            pos.Z = climb.Point.Z - ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_OFFSET;
+                            ent.Speed = Vector3.Zero;
+                        }
+                        else
+                        {
+                            ent.MoveType = MoveType.FreeFalling;
+                            ent.SetAnimation(TR_ANIMATION.LaraStopHangVertical, 0); // fall down
+                            break;
+                        }
+                    }
+
+                    if (cmd.Move[1] == -1)
+                    {
+                        move = ent.Transform.Basis.Column0 * -Constants.PENETRATION_TEST_OFFSET;
+                        if (ent.CheckNextPenetration(move) > 0 && ent.Response.HorizontalCollide != 0x00)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraHang;
+                        }
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraHang;
+                    }
+                    break;
+                case TR_STATE.LaraShimmyRight:
+                    ent.Bt.NoFixBodyParts = BODY_PART.Legs;
+
+                    cmd.Rotation.X = 0.0f;
+                    ent.DirFlag = ENT_MOVE.MoveRight;
+                    if (!cmd.Action)
+                    {
+                        ent.Speed = Vector3.Zero;
+                        ent.MoveType = MoveType.FreeFalling;
+                        ent.SetAnimation(TR_ANIMATION.LaraTryHangVertical, 0); // fall down
+                        break;
+                    }
+
+                    if (ent.MoveType == MoveType.WallsClimb)
+                    {
+                        if (ent.Climb.WallHit == ClimbType.None)
+                        {
+                            ent.MoveType = MoveType.FreeFalling;
+                            ent.SetAnimation(TR_ANIMATION.LaraStopHangVertical, 0); // fall down
+                        }
+                    }
+                    else
+                    {
+                        t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
+                        globalOffset = ent.Transform.Basis.Column1 * t;
+                        globalOffset.Z += Constants.LARA_HANG_SENSOR_Z + Constants.LARA_HANG_VERTICAL_EPSILON;
+                        climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
+                        if (climb.EdgeHit)
+                        {
+                            climb.Point = climb.EdgePoint;
+                            ent.Angles.Z = climb.EdgeZAngle;
+                            ent.UpdateTransform();
+                            ent.MoveType = MoveType.Climbing; // hang on
+                            pos.X = climb.Point.X - Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.X;
+                            pos.Y = climb.Point.Y - Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.Y;
+                            pos.Z = climb.Point.Z - ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_OFFSET;
+                            ent.Speed = Vector3.Zero;
+                        }
+                        else
+                        {
+                            ent.MoveType = MoveType.FreeFalling;
+                            ent.SetAnimation(TR_ANIMATION.LaraStopHangVertical, 0); // fall down
+                            break;
+                        }
+                    }
+
+                    if (cmd.Move[1] == 1)
+                    {
+                        move = ent.Transform.Basis.Column0 * Constants.PENETRATION_TEST_OFFSET;
+                        if (ent.CheckNextPenetration(move) > 0 && ent.Response.HorizontalCollide != 0x00)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraHang;
+                        }
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraHang;
+                    }
+                    break;
+                case TR_STATE.LaraOnwaterExit:
+                    cmd.Rotation[0] *= 0.0f;
+                    ent.Bt.NoFixAll = true;
+                    ssAnim.SetOnFrame(ent_set_on_floor_after_climb);
+                    break;
+                case TR_STATE.LaraJumpForward:
+                case TR_STATE.LaraFallBackward:
+                    ent.Bt.NoFixBodyParts = BODY_PART.Hands | BODY_PART.Legs | BODY_PART.Head;
+                    ent.Lean(cmd, 4.0f);
+
+                    if (resp.VerticalCollide.HasFlagSig(0x01) || ent.MoveType == MoveType.OnFloor)
+                    {
+                        if (ent.Self.Room.Flags.HasFlagUns(RoomFlag.Quicksand))
+                        {
+                            ent.SetAnimation(TR_ANIMATION.LaraStayIdle, 0);
+                        }
+                        else if (!cmd.Action && cmd.Move[0] == 1 && !cmd.Crouch)
+                        {
+                            ent.MoveType = MoveType.OnFloor;
+                            ssAnim.NextState = TR_STATE.LaraRunForward;
+                        }
+                        else
+                        {
+                            ssAnim.NextState = TR_STATE.LaraStop;
+                        }
+                    }
+                    else if (ent.MoveType == MoveType.Underwater)
+                    {
+                        ent.Angles.Y = -45.0f;
+                        cmd.Rotation.Y = 0.0f;
+                        ent.UpdateTransform();
+                        ent.SetAnimation(TR_ANIMATION.LaraFreeFallToUnderwater, 0);
+                    }
+                    else if (resp.HorizontalCollide.HasFlagSig(0x01))
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraSmashJump, 0);
+                        ent.DirFlag = ENT_MOVE.MoveBackward;
+                        ent.UpdateCurrentSpeed(true);
+                    }
+                    else if (ent.Speed.Z <= -Constants.FREE_FALL_SPEED_2)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraFreefall; // free falling
+                    }
+                    else if (cmd.Action)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraReach;
+                    }
+                    else if (cmd.Shift)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraSwandiveBegin; // fly like fish
+                    }
+                    else if (cmd.Roll)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraJumpRoll;
+                    }
+                    break;
 
                     #endregion
 
                     #region Freefall and underwater cases
 
+                case TR_STATE.LaraUnderwaterDiving:
+                    ent.Angles.Y = -45.0f;
+                    cmd.Rotation.Y = 0.0f;
+                    ent.UpdateTransform();
+                    ssAnim.SetOnFrame(ent_correct_diving_angle);
+                    break;
+                case TR_STATE.LaraFreefall:
+                    ent.Bt.NoFixBodyParts = BODY_PART.Hands | BODY_PART.Legs;
+                    ent.Lean(cmd, 1.0f);
+
+                    if (((float) (int) ent.Speed.Z).IsBetween(-Constants.FREE_FALL_SPEED_CRITICAL - 100,
+                        -Constants.FREE_FALL_SPEED_CRITICAL))
+                    {
+                        ent.Speed.Z = -Constants.FREE_FALL_SPEED_CRITICAL - 101;
+                        Audio.Send((uint) TR_AUDIO_SOUND.LaraScream, TR_AUDIO_EMITTER.Entity, (int) ent.ID); // Scream
+                    }
+                    else if (ent.Speed.Z <= -Constants.FREE_FALL_SPEED_MAXSAFE)
+                    {
+                        // Reset these to zero so Lara is only falling downwards
+                        ent.Speed.X = 0.0f;
+                        ent.Speed.Y = 0.0f;
+                    }
+
+                    if (ent.MoveType == MoveType.Underwater)
+                    {
+                        ent.Angles.Y = -45.0f;
+                        cmd.Rotation.Y = 0.0f;
+                        ent.UpdateTransform();
+                        ent.SetAnimation(TR_ANIMATION.LaraFreeFallToUnderwater, 0);
+                        Audio.Kill((int) TR_AUDIO_SOUND.LaraScream, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
+                        // Stop scream
+
+                        // Splash sound is hardcoded, beginning with TR3
+                        if (Global.EngineWorld.EngineVersion > Loader.Engine.TR2)
+                        {
+                            Audio.Send((uint) TR_AUDIO_SOUND.Splash, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
+                        }
+                    }
+                    else if (resp.VerticalCollide.HasFlagSig(0x01) || ent.MoveType == MoveType.OnFloor)
+                    {
+                        if (ent.Self.Room.Flags.HasFlagUns(RoomFlag.Quicksand))
+                        {
+                            ent.SetAnimation(TR_ANIMATION.LaraStayIdle, 0);
+                            Audio.Kill((int) TR_AUDIO_SOUND.LaraScream, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
+                        }
+                        else if (ent.Speed.Z <= -Constants.FREE_FALL_SPEED_MAXSAFE)
+                        {
+                            if (
+                                ent.ChangeParam(CharParameters.Health,
+                                    (ent.Speed.Z + Constants.FREE_FALL_SPEED_MAXSAFE) / 2) == 0)
+                            {
+                                resp.Killed = true;
+                                ent.SetAnimation(TR_ANIMATION.LaraLandingDeath, 0);
+                                Controls.JoyRumble(200.0f, 500);
+                            }
+                            else
+                            {
+                                ent.SetAnimation(TR_ANIMATION.LaraLandingHard, 0);
+                            }
+                        }
+                        else if (ent.Speed.Z <= -Constants.FREE_FALL_SPEED_2)
+                        {
+                            ent.SetAnimation(TR_ANIMATION.LaraLandingHard, 0);
+                        }
+                        else
+                        {
+                            ent.SetAnimation(TR_ANIMATION.LaraLandingMiddle, 0);
+                        }
+
+                        if (resp.Killed)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraDeath;
+                            Audio.Kill((int) TR_AUDIO_SOUND.LaraScream, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
+                        }
+                    }
+                    else if (cmd.Action)
+                    {
+                        ent.DirFlag = ENT_MOVE.MoveForward;
+                        ssAnim.NextState = TR_STATE.LaraReach;
+                    }
+                    break;
+                case TR_STATE.LaraSwandiveBegin:
+                    cmd.Rotation.X *= 0.4f;
+                    if (resp.VerticalCollide.HasFlagSig(0x01) || ent.MoveType == MoveType.OnFloor)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraStop; // landing - roll
+                    }
+                    else if (ent.MoveType == MoveType.Underwater)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraUnderwaterDiving;
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraSwandiveEnd; // next stage
+                    }
+                    break;
+                case TR_STATE.LaraSwandiveEnd:
+                    cmd.Rotation.X = 0.0f;
+
+                    // Reset these to zero so Lara is only falling downwards
+                    ent.Speed.X = 0.0f;
+                    ent.Speed.Y = 0.0f;
+
+                    if (resp.VerticalCollide.HasFlagSig(0x01) || ent.MoveType == MoveType.OnFloor)
+                    {
+                        if (currFc.Quicksand != QuicksandPosition.None)
+                        {
+                            resp.Killed = true;
+                            ent.SetParam(CharParameters.Health, 0.0f);
+                            ent.SetParam(CharParameters.Air, 0.0f);
+                            ent.SetAnimation(TR_ANIMATION.LaraLandingDeath, -1);
+                        }
+                        else
+                        {
+                            ent.SetParam(CharParameters.Health, 0.0f);
+                            ssAnim.NextState = TR_STATE.LaraDeath;
+                        }
+                    }
+                    else if (ent.MoveType == MoveType.Underwater)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraUnderwaterDiving;
+                    }
+                    else if (cmd.Jump)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraJumpRoll;
+                    }
+                    break;
+
                     #endregion
 
                     #region Water animations
+
+                case TR_STATE.LaraUnderwaterStop:
+                    if (ent.MoveType.NotEqual(MoveType.Underwater, MoveType.OnWater))
+                    {
+                        ent.SetAnimation(0, 0);
+                    }
+                    else if (resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraWaterDeath;
+                    }
+                    else if (cmd.Roll)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraUnderwaterRollBegin, 0);
+                    }
+                    else if (cmd.Jump)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraUnderwaterForward;
+                    }
+                    else if (ent.MoveType == MoveType.OnWater)
+                    {
+                        ent.InertiaLinear = 0.0f;
+                        ssAnim.NextState = TR_STATE.LaraOnwaterStop;
+                        ent.SetAnimation(TR_ANIMATION.LaraUnderwaterToOnwater, 0); // go to the air
+                    }
+                    break;
+                case TR_STATE.LaraWaterDeath:
+                    if (ent.MoveType != MoveType.OnWater)
+                    {
+                        pos.Z = (Constants.TR_METERING_SECTORSIZE / 4) * Global.EngineFrameTime; // go to the air
+                    }
+                    break;
+                case TR_STATE.LaraUnderwaterForward:
+                    if (ent.MoveType.NotEqual(MoveType.Underwater, MoveType.OnWater))
+                    {
+                        ent.SetAnimation(0, 0);
+                    }
+                    else if (resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraWaterDeath;
+                    }
+                    else if (currFc.FloorHit && currFc.Water &&
+                             currFc.TransitionLevel - currFc.FloorPoint.Z <= ent.MaxStepUpHeight)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraUnderwaterToWade, 0); // go to the air
+                        ssAnim.NextState = TR_STATE.LaraStop;
+                        ent.Climb.Point = currFc.FloorPoint;
+                        ent.MoveType = MoveType.OnFloor;
+                    }
+                    else if (cmd.Roll)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraUnderwaterRollBegin, 0);
+                    }
+                    else if (ent.MoveType == MoveType.OnWater)
+                    {
+                        ent.InertiaLinear = 0.0f;
+                        ssAnim.NextState = TR_STATE.LaraOnwaterStop;
+                        ent.SetAnimation(TR_ANIMATION.LaraUnderwaterToOnwater, 0); // go to the air
+                    }
+                    else if (!cmd.Jump)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraUnderwaterInertia;
+                    }
+                    break;
+                case TR_STATE.LaraUnderwaterInertia:
+                    if (ent.MoveType == MoveType.OnWater)
+                    {
+                        ent.InertiaLinear = 0.0f;
+                        ent.SetAnimation(TR_ANIMATION.LaraUnderwaterToOnwater, 0); // go to the air
+                    }
+                    else if (resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraWaterDeath;
+                    }
+                    else if (cmd.Roll)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraUnderwaterRollBegin, 0);
+                    }
+                    else if (cmd.Jump)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraUnderwaterForward;
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraUnderwaterStop;
+                    }
+                    break;
+                case TR_STATE.LaraOnwaterStop:
+                    if (resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraWaterDeath;
+                    }
+                    else if (cmd.Move[0] == 1 || cmd.Jump)
+                    {
+                        ent.DirFlag = ENT_MOVE.MoveForward;
+                        ssAnim.NextState = TR_STATE.LaraOnwaterForward;
+                    }
+                    else if (cmd.Move[0] == -1)
+                    {
+                        ent.DirFlag = ENT_MOVE.MoveBackward;
+                        ssAnim.NextState = TR_STATE.LaraOnwaterBack;
+                    }
+                    else if (cmd.Move[1] == -1)
+                    {
+                        if (cmd.Shift)
+                        {
+                            ent.DirFlag = ENT_MOVE.MoveLeft;
+                            cmd.Rotation.X = 0.0f;
+                            ssAnim.NextState = TR_STATE.LaraOnwaterLeft;
+                        }
+                        else
+                        {
+                            // rotate on water
+                        }
+                    }
+                    else if (cmd.Move[1] == 1)
+                    {
+                        if (cmd.Shift)
+                        {
+                            ent.DirFlag = ENT_MOVE.MoveRight;
+                            cmd.Rotation.X = 0.0f;
+                            ssAnim.NextState = TR_STATE.LaraOnwaterRight;
+                        }
+                        else
+                        {
+                            // rotate on water
+                        }
+                    }
+                    else if (ent.MoveType == MoveType.Underwater)
+                    {
+                        ent.MoveType = MoveType.OnWater;
+                    }
+                    break;
+                case TR_STATE.LaraOnwaterForward:
+                    ent.Bt.NoFixBodyParts = BODY_PART.Hands;
+                    ent.MoveType = MoveType.OnWater;
+
+                    if (resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraWaterDeath;
+                    }
+                    else if (cmd.Jump)
+                    {
+                        t = pos.Z;
+                        Character.GetHeightInfo(pos, nextFc);
+                        pos.Z = t;
+                        ssAnim.NextState = TR_STATE.LaraUnderwaterForward;
+                        ssAnim.SetOnFrame(ent_set_underwater); // dive
+                    }
+                    else if (cmd.Move[0] == 1)
+                    {
+                        if (cmd.Action)
+                        {
+                            if (ent.MoveType != MoveType.Climbing)
+                            {
+                                t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
+                                globalOffset = ent.Transform.Basis.Column1 * t;
+                                globalOffset[2] += Constants.LARA_HANG_VERTICAL_EPSILON;
+                                climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
+                                if (climb.EdgeHit)
+                                {
+                                    lowVerticalSpace = true;
+                                }
+                                else
+                                {
+                                    lowVerticalSpace = false;
+                                    globalOffset.Z += ent.MaxStepUpHeight + Constants.LARA_HANG_VERTICAL_EPSILON;
+                                    climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
+                                }
+
+                                if (climb.EdgeHit &&
+                                    climb.NextZSpace >= ent.Height - Constants.LARA_HANG_VERTICAL_EPSILON)
+                                {
+                                    ent.DirFlag = ENT_MOVE.Stay;
+                                    ent.MoveType = MoveType.Climbing;
+                                    ent.Bt.NoFixAll = true;
+                                    ent.Angles.X = climb.EdgeZAngle;
+                                    ent.UpdateTransform();
+                                    climb.Point = climb.EdgePoint;
+                                }
+                            }
+                            else
+                            {
+                                ent.Speed = Vector3.Zero;
+                                cmd.Rotation.X = 0.0f;
+                                ent.Bt.NoFixAll = true;
+                                if (lowVerticalSpace)
+                                {
+                                    ent.SetAnimation(TR_ANIMATION.LaraOnwaterToLandLow, 0);
+                                }
+                                else
+                                {
+                                    ent.SetAnimation(TR_ANIMATION.LaraClimbOutOfWater, 0);
+                                }
+                                ent_climb_out_of_water(ent, ssAnim, ENTITY_ANIM.NewAnim);
+                            }
+                        }
+                        else if (!currFc.FloorHit || pos.Z - ent.Height > currFc.FloorPoint.Z - ent.SwimDepth)
+                        {
+                            //ent.LastState = ent.LastState; // swim forward
+                        }
+                        else
+                        {
+                            ssAnim.NextState = TR_STATE.LaraWadeForward;
+                            ssAnim.SetOnFrame(ent_set_on_floor); // to wade
+                        }
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraOnwaterStop;
+                    }
+                    break;
+                case TR_STATE.LaraOnwaterBack:
+                    if (cmd.Move[0] == -1 && !cmd.Jump)
+                    {
+                        if (!currFc.FloorHit || pos.Z + ent.Height < currFc.TransitionLevel)
+                        {
+                            //ent.CurrentState = TR_STATE.Current; // continue swimming
+                        }
+                        else
+                        {
+                            ssAnim.NextState = TR_STATE.LaraOnwaterStop;
+                        }
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraOnwaterStop;
+                    }
+                    break;
+                case TR_STATE.LaraOnwaterLeft:
+                    cmd.Rotation.X = 0.0f;
+                    if (!cmd.Jump)
+                    {
+                        if (cmd.Move[1] == -1)
+                        {
+                            if (!currFc.FloorHit || pos.Z - ent.Height > currFc.FloorPoint.Z)
+                            {
+                                // swim left
+                                ssAnim.NextState = TR_STATE.LaraOnwaterLeft;
+                            }
+                            else
+                            {
+                                // walk left
+                                ssAnim.NextState = TR_STATE.LaraWalkLeft;
+                                ssAnim.SetOnFrame(ent_set_on_floor);
+                            }
+                        }
+                        else
+                        {
+                            ssAnim.NextState = TR_STATE.LaraOnwaterStop;
+                        }
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraUnderwaterDiving;
+                    }
+                    break;
+                case TR_STATE.LaraOnwaterRight:
+                    cmd.Rotation.X = 0.0f;
+                    if (!cmd.Jump)
+                    {
+                        if (cmd.Move[1] == 1)
+                        {
+                            if (!currFc.FloorHit || pos.Z - ent.Height > currFc.FloorPoint.Z)
+                            {
+                                // swim right
+                                ssAnim.NextState = TR_STATE.LaraOnwaterRight;
+                            }
+                            else
+                            {
+                                // walk right
+                                ssAnim.NextState = TR_STATE.LaraWalkRight;
+                                ssAnim.SetOnFrame(ent_set_on_floor);
+                            }
+                        }
+                        else
+                        {
+                            ssAnim.NextState = TR_STATE.LaraOnwaterStop;
+                        }
+                    }
+                    else
+                    {
+                        ssAnim.NextState = TR_STATE.LaraUnderwaterDiving;
+                    }
+                    break;
 
                     #endregion
 
                     #region Crouch
 
-                    #endregion
+                case TR_STATE.LaraCrouchIdle:
+                    ent.DirFlag = ENT_MOVE.MoveForward;
+                    ent.Bt.NoFixBodyParts = BODY_PART.Hands2 | BODY_PART.Hands3 | BODY_PART.Legs3;
+                    move.X = pos.X;
+                    move.Y = pos.Y;
+                    move.Z = pos.Z + 0.5f * (ent.Bf.BBMax.Z - ent.Bf.BBMin.Z);
+                    Character.GetHeightInfo(move, nextFc);
 
-                    #region Monkeyswing
+                    ent.Lean(cmd, 0.0f);
+
+                    if (!cmd.Crouch && !lowVerticalSpace)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraStop; // Back to stand
+                    }
+                    else if (cmd.Move[0] != 0 || resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraCrawlIdle; // Both forward & back provoke crawl stage
+                    }
+                    else if (cmd.Jump)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraCrouchRoll; // Crouch roll
+                    }
+                    else
+                    {
+                        if (Global.EngineWorld.EngineVersion > Loader.Engine.TR3)
+                        {
+                            if (cmd.Move[1] == 1)
+                            {
+                                ent.DirFlag = ENT_MOVE.MoveForward;
+                                ssAnim.NextState = TR_STATE.LaraCrouchTurnRight;
+                            }
+                            else
+                            {
+                                ent.DirFlag = ENT_MOVE.MoveForward;
+                                ssAnim.NextState = TR_STATE.LaraCrouchTurnLeft;
+                            }
+                        }
+                        else
+                        {
+                            cmd.Rotation.X = 0.0f;
+                        }
+                    }
+                    break;
+                case TR_STATE.LaraCrouchRoll:
+                case TR_STATE.LaraSprintRoll:
+                    cmd.Rotation.X = 0.0f;
+                    ent.Lean(cmd, 0.0f);
+                    if (ent.MoveType == MoveType.FreeFalling)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraFreeFallForward, 0);
+                    }
+
+                    move = ent.Transform.Basis.Column1 * Constants.PENETRATION_TEST_OFFSET;
+                    if (ent.CheckNextPenetration(move) > 0 && resp.HorizontalCollide != 0x00) // Smash into wall
+                    {
+                        ssAnim.NextState = TR_STATE.LaraStop;
+                    }
+                    break;
+                case TR_STATE.LaraCrawlIdle:
+                    ent.DirFlag = ENT_MOVE.MoveForward;
+                    ent.Bt.NoFixBodyParts = BODY_PART.Hands2 | BODY_PART.Hands3 | BODY_PART.Legs3;
+                    if (resp.Killed)
+                    {
+                        ent.DirFlag = ENT_MOVE.Stay;
+                        ssAnim.NextState = TR_STATE.LaraDeath;
+                    }
+                    else if (cmd.Move[1] == -1)
+                    {
+                        ent.DirFlag = ENT_MOVE.MoveForward;
+                        ent.SetAnimation(TR_ANIMATION.LaraCrawlTurnLeft, 0);
+                    }
+                    else if (cmd.Move[1] == 1)
+                    {
+                        ent.DirFlag = ENT_MOVE.MoveForward;
+                        ent.SetAnimation(TR_ANIMATION.LaraCrawlTurnRight, 0);
+                    }
+                    else if (cmd.Move[0] == 1)
+                    {
+                        move = ent.Transform.Basis.Column1 * Constants.PENETRATION_TEST_OFFSET;
+                        if (ent.CheckNextPenetration(move) == 0 || resp.HorizontalCollide == 0x00)
+                        {
+                            globalOffset = ent.Transform.Basis.Column1 * Constants.CRAWL_FORWARD_OFFSET;
+                            globalOffset.Z += 0.5f * (ent.Bf.BBMax.Z + ent.Bf.BBMin.Z);
+                            globalOffset += pos;
+                            Character.GetHeightInfo(globalOffset, nextFc);
+                            if (nextFc.FloorPoint.Z.IsBetween(pos.Z - ent.MinStepUpHeight, pos.Z + ent.MinStepUpHeight,
+                                false))
+                            {
+                                ssAnim.NextState = TR_STATE.LaraCrawlForward; // In TR4+, first state is crawlspace jump
+                            }
+                        }
+                    }
+                    else if (cmd.Move[0] == -1)
+                    {
+                        move = ent.Transform.Basis.Column1 * -Constants.PENETRATION_TEST_OFFSET;
+                        if (ent.CheckNextPenetration(move) == 0 || resp.HorizontalCollide == 0x00)
+                        {
+                            globalOffset = ent.Transform.Basis.Column1 * -Constants.CRAWL_FORWARD_OFFSET;
+                            globalOffset.Z += 0.5f * (ent.Bf.BBMax.Z + ent.Bf.BBMin.Z);
+                            globalOffset += pos;
+                            Character.GetHeightInfo(globalOffset, nextFc);
+                            if (nextFc.FloorPoint.Z.IsBetween(pos.Z - ent.MinStepUpHeight, pos.Z + ent.MinStepUpHeight,
+                                false))
+                            {
+                                ent.DirFlag = ENT_MOVE.MoveBackward;
+                                ssAnim.NextState = TR_STATE.LaraCrawlBack;
+                            }
+                            else if (cmd.Action && resp.HorizontalCollide == 0 &&
+                                     nextFc.FloorPoint.Z < pos.Z - ent.Height)
+                            {
+                                var temp = pos; // save entity position
+                                pos.X = nextFc.FloorPoint.X;
+                                pos.Y = nextFc.FloorPoint.Y;
+                                globalOffset = ent.Transform.Basis.Column1 * 0.5f * Constants.CRAWL_FORWARD_OFFSET;
+                                globalOffset.Z += 128.0f;
+                                currFc.FloorHit = nextFc.FloorHit;
+                                currFc.FloorPoint = nextFc.FloorPoint;
+                                currFc.FloorNormale = nextFc.FloorNormale;
+                                currFc.FloorObject = nextFc.FloorObject;
+                                currFc.CeilingHit = nextFc.CeilingHit;
+                                currFc.CeilingPoint = nextFc.CeilingPoint;
+                                currFc.CeilingNormale = nextFc.CeilingNormale;
+                                currFc.CeilingObject = nextFc.CeilingObject;
+
+                                climb = ent.CheckClimbability(globalOffset, nextFc, 1.5f * ent.Bf.BBMax.Z);
+                                pos = temp; // restore entity position
+                                if (climb.CanHang)
+                                {
+                                    ent.Angles.X = climb.EdgeZAngle;
+                                    ent.DirFlag = ENT_MOVE.MoveBackward;
+                                    ent.MoveType = MoveType.Climbing;
+                                    climb.Point = climb.EdgePoint;
+                                    ssAnim.NextState = TR_STATE.LaraCrawlToClimb;
+                                }
+                            }
+                        }
+                    }
+                    else if (!cmd.Crouch)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraCrouchIdle; // Back to crouch
+                    }
+                    break;
+                case TR_STATE.LaraCrawlToClimb:
+                    ent.Bt.NoFixAll = true;
+                    ssAnim.SetOnFrame(ent_crawl_to_climb);
+                    break;
+                case TR_STATE.LaraCrawlForward:
+                    ent.DirFlag = ENT_MOVE.MoveForward;
+                    ent.Bt.NoFixBodyParts = BODY_PART.Hands2 | BODY_PART.Hands3 | BODY_PART.Legs3;
+                    cmd.Rotation.X *= 0.5f;
+                    move = ent.Transform.Basis.Column1 * Constants.PENETRATION_TEST_OFFSET;
+                    if (ent.CheckNextPenetration(move) > 0 && resp.HorizontalCollide != 0x00)
+                    {
+                        ent.DirFlag = ENT_MOVE.Stay;
+                        ent.SetAnimation(TR_ANIMATION.LaraCrawlIdle, 0);
+                        break;
+                    }
+                    globalOffset = ent.Transform.Basis.Column1 * Constants.CRAWL_FORWARD_OFFSET;
+                    globalOffset.Z += 0.5f * (ent.Bf.BBMax.Z + ent.Bf.BBMin.Z);
+                    globalOffset += pos;
+                    Character.GetHeightInfo(globalOffset, nextFc);
+
+                    if (cmd.Move[0] != 1 || resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraCrawlIdle; // Stop
+                    }
+                    else if (nextFc.FloorPoint.Z.IsBetween(pos.Z + ent.MinStepUpHeight, pos.Z - ent.MinStepUpHeight))
+                    {
+                        ent.DirFlag = ENT_MOVE.Stay;
+                        ent.SetAnimation(TR_ANIMATION.LaraCrawlIdle, 0);
+                    }
+                    break;
+                case TR_STATE.LaraCrawlBack:
+                    ent.DirFlag = ENT_MOVE.MoveForward; // TODO: Absurd? No, Core Design.
+                    ent.Bt.NoFixBodyParts = BODY_PART.Hands2 | BODY_PART.Hands3 | BODY_PART.Legs3;
+                    cmd.Rotation.X *= 0.5f;
+                    move = ent.Transform.Basis.Column1 * -Constants.PENETRATION_TEST_OFFSET;
+                    if (ent.CheckNextPenetration(move) > 0 && resp.HorizontalCollide != 0x00)
+                    {
+                        ent.DirFlag = ENT_MOVE.Stay;
+                        ent.SetAnimation(TR_ANIMATION.LaraCrawlIdle, 0);
+                        break;
+                    }
+                    globalOffset = ent.Transform.Basis.Column1 * -Constants.CRAWL_FORWARD_OFFSET;
+                    globalOffset.Z += 0.5f * (ent.Bf.BBMax.Z + ent.Bf.BBMin.Z);
+                    globalOffset += pos;
+                    Character.GetHeightInfo(globalOffset, nextFc);
+                    if (cmd.Move[0] != -1 || resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraCrawlIdle; // Stop
+                    }
+                    else if (nextFc.FloorPoint.Z.IsBetween(pos.Z + ent.MinStepUpHeight, pos.Z - ent.MinStepUpHeight))
+                    {
+                        ent.DirFlag = ENT_MOVE.Stay;
+                        ent.SetAnimation(TR_ANIMATION.LaraCrawlIdle, 0);
+                    }
+                    break;
+                case TR_STATE.LaraCrawlTurnLeft:
+                    ent.DirFlag = ENT_MOVE.MoveForward;
+                    ent.Bt.NoFixBodyParts = BODY_PART.Hands2 | BODY_PART.Hands3 | BODY_PART.Legs3;
+                    cmd.Rotation.X *= ((int) ssAnim.CurrentFrame).IsBetween(3, 14, false) ? 1.0f : 0.0f;
+
+                    if (cmd.Move[1] != -1 || resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraCrawlIdle; // Stop;
+                    }
+                    break;
+                case TR_STATE.LaraCrawlTurnRight:
+                    ent.DirFlag = ENT_MOVE.MoveForward;
+                    ent.Bt.NoFixBodyParts = BODY_PART.Hands2 | BODY_PART.Hands3 | BODY_PART.Legs3;
+                    cmd.Rotation.X *= ssAnim.CurrentFrame.IsBetween(3, 14, false) ? 1.0f : 0.0f;
+
+                    if (cmd.Move[1] != 1 || resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraCrawlIdle; // Stop;
+                    }
+                    break;
+                case TR_STATE.LaraCrouchTurnLeft:
+                case TR_STATE.LaraCrouchTurnRight:
+                    ent.Bt.NoFixBodyParts = BODY_PART.Hands2 | BODY_PART.Hands3 | BODY_PART.Legs3;
+                    cmd.Rotation.X *= ssAnim.CurrentFrame.IsBetween(3, 23, false) ? 0.6f : 0.0f;
+
+                    if (cmd.Move[1] == 0 || resp.Killed)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraCrouchIdle;
+                    }
+                    break;
+
+                #endregion
+
+                #region Monkeyswing
+
+                case TR_STATE.LaraMonkeyswingIdle:
+                    cmd.Rotation.X = 0.0f;
+                    ent.DirFlag = ENT_MOVE.Stay;
+                    // FIXME: stick for TR3+ monkey swing fix... something wrong with anim 150
+                    if (cmd.Action && ent.MoveType != MoveType.Monkeyswing && currFc.CeilingClimb && currFc.CeilingHit &&
+                        pos.Z + ent.Bf.BBMax.Z > currFc.CeilingPoint.Z - 96.0f)
+                    {
+                        ent.MoveType = MoveType.Monkeyswing;
+                        ent.SetAnimation(TR_ANIMATION.LaraMonkeyIdle, 0);
+                        ssAnim.NextState = TR_STATE.LaraMonkeyswingIdle;
+                        pos.Z = ent.HeightInfo.CeilingPoint.Z - ent.Bf.BBMax.Z;
+                    }
+
+                    if(ent.MoveType != MoveType.Monkeyswing || !cmd.Action)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraTryHangVertical, 0);
+                        ent.DirFlag = ENT_MOVE.Stay;
+                        ent.MoveType = MoveType.FreeFalling;
+                    }
+                    else if(cmd.Shift && cmd.Move[1] == -1)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraMonkeyswingLeft;
+                    }
+                    else if (cmd.Shift && cmd.Move[1] == 1)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraMonkeyswingRight;
+                    }
+                    else if(cmd.Move[0] == 1)
+                    {
+                        ent.DirFlag = ENT_MOVE.MoveForward;
+                        ssAnim.NextState = TR_STATE.LaraMonkeyswingForward;
+                    }
+                    else if(cmd.Move[1] == -1)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraMonkeyswingTurnLeft;
+                    }
+                    else if (cmd.Move[1] == 1)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraMonkeyswingTurnRight;
+                    }
+                    break;
 
                     #endregion
 

@@ -205,37 +205,45 @@ namespace FreeRaider
             return new Vector3(f / v.X, f / v.Y, f / v.Z);
         }
 
-        public static bool IsBetween<T>(this T f, T a, T b, bool inclusive = true, bool reorder = true)
-            where T : IComparable<T>
+
+        public static object ToType(this object obj, Type t)
         {
-            var c = a;
-            var d = b;
+            return Convert.ChangeType(obj, t);
+        }
+
+        public static bool IsBetween<T, Tc1, Tc2>(this T f, Tc1 a, Tc2 b, bool inclusive = true, bool reorder = true)
+            where T : IComparable
+            where Tc1 : IConvertible, IComparable
+            where Tc2 : IConvertible, IComparable
+        {
+            var c = (T) a.ToType(typeof (T));
+            var d = (T) b.ToType(typeof (T));
             if (reorder)
             {
-                c = GenericMin(a, b);
-                d = GenericMax(a, b);
+                c = GenericMin((T) a.ToType(typeof (T)), (T) b.ToType(typeof (T)));
+                d = GenericMax((T) a.ToType(typeof (T)), (T) b.ToType(typeof (T)));
             }
             var fc = f.CompareTo(c);
             var fd = f.CompareTo(d);
             if (inclusive) return fc >= 0 && fd <= 0;
-            return fc == 1 & fd == -1;
+            return fc == 1 && fd == -1;
         }
 
         public static T GenericMin<T>(T a, T b)
-            where T : IComparable<T>
+            where T : IComparable
         {
             var c = a.CompareTo(b);
-            return c == 1 ? b : a;
+            return c > 0 ? b : a;
         }
 
         public static T GenericMax<T>(T a, T b)
-            where T : IComparable<T>
+            where T : IComparable
         {
             var c = a.CompareTo(b);
-            return c == -1 ? b : a;
+            return c < 0 ? b : a;
         }
 
-     /*   public static bool IsBetween(this float f, float a, float b, bool inclusive = true, bool reorder = true)
+        /*   public static bool IsBetween(this float f, float a, float b, bool inclusive = true, bool reorder = true)
         {
             return ((double) f).IsBetween(a, b, inclusive, reorder);
         }
@@ -376,7 +384,7 @@ namespace FreeRaider
             var x = vec - o;
             var y = wAxis.Cross(vec);
 
-            return o + x * (float)Math.Cos(angle) + y * (float)Math.Sin(angle);
+            return o + x * (float) Math.Cos(angle) + y * (float) Math.Sin(angle);
         }
 
         public static bool HasFlagEx(this object theField, object theFlag)
@@ -386,7 +394,7 @@ namespace FreeRaider
 
         public static bool HasFlagUns(this object a, object f)
         {
-            return ((ulong)a & (ulong)f) == (ulong)f;
+            return ((ulong) a & (ulong) f) == (ulong) f;
         }
 
         public static bool HasFlagSig(this object a, object f)
@@ -489,7 +497,7 @@ namespace FreeRaider
 
         public static float WrapAngle(this float value)
         {
-            var i = (int)(value / 360.0f);
+            var i = (int) (value / 360.0f);
             i = value < 0.0f ? i - 1 : i;
             return value - 360.0f * i;
         }
@@ -535,9 +543,9 @@ namespace FreeRaider
 
             var temp = new float[4];
 
-            if(trace > 0.0f)
+            if (trace > 0.0f)
             {
-                var s = (float)Math.Sqrt(trace + 1.0f);
+                var s = (float) Math.Sqrt(trace + 1.0f);
                 temp[3] = s * 0.5f;
                 s = 0.5f / s;
 
@@ -573,12 +581,12 @@ namespace FreeRaider
 
         public static float[] ToArray(this Vector3 v)
         {
-            return new[] { v.X, v.Y, v.Z };
+            return new[] {v.X, v.Y, v.Z};
         }
 
         public static float[] ToArray(this Quaternion q)
         {
-            return new[] { q.X, q.Y, q.Z, q.W };
+            return new[] {q.X, q.Y, q.Z, q.W};
         }
 
         public static float[] ToArray3(this Color4 c)
@@ -626,16 +634,16 @@ namespace FreeRaider
         public static bool IsSigned(this object value)
         {
             return value is sbyte
-            || value is short
-            || value is int
-            || value is long
-            || value is float
-            || value is double
-            || value is decimal;
+                   || value is short
+                   || value is int
+                   || value is long
+                   || value is float
+                   || value is double
+                   || value is decimal;
         }
 
         public static void ListCopy<T>(this List<T> sourceArray, List<T> destinationArray,
-           int length)
+            int length)
         {
             Helper.ListCopy(sourceArray, destinationArray, length);
         }

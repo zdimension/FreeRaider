@@ -23,3 +23,5 @@ Dans AnimStateControl.cs, L979, nextFc.Cb = ent.RayCb mais après je modif certa
 
 Dans AnimStateControl.cs, L1380, pour saut RIGHT -> JumpLeft et LEFT -> JumpRight, pas forcément voulu -> à vérifier
 "" aussi L1443 et L1470
+
+Dans AnimStateControl.cs, L3467 et L3471, je fais currFc.FloorObject = nextFc.FloorObject (ce qui copie l'objet, ce qui n'est pas forcément voulu)
