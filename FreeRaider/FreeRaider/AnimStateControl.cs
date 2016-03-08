@@ -3576,9 +3576,9 @@ namespace FreeRaider
                     }
                     break;
 
-                #endregion
+                    #endregion
 
-                #region Monkeyswing
+                    #region Monkeyswing
 
                 case TR_STATE.LaraMonkeyswingIdle:
                     cmd.Rotation.X = 0.0f;
@@ -3593,13 +3593,13 @@ namespace FreeRaider
                         pos.Z = ent.HeightInfo.CeilingPoint.Z - ent.Bf.BBMax.Z;
                     }
 
-                    if(ent.MoveType != MoveType.Monkeyswing || !cmd.Action)
+                    if (ent.MoveType != MoveType.Monkeyswing || !cmd.Action)
                     {
                         ent.SetAnimation(TR_ANIMATION.LaraTryHangVertical, 0);
                         ent.DirFlag = ENT_MOVE.Stay;
                         ent.MoveType = MoveType.FreeFalling;
                     }
-                    else if(cmd.Shift && cmd.Move[1] == -1)
+                    else if (cmd.Shift && cmd.Move[1] == -1)
                     {
                         ssAnim.NextState = TR_STATE.LaraMonkeyswingLeft;
                     }
@@ -3607,12 +3607,12 @@ namespace FreeRaider
                     {
                         ssAnim.NextState = TR_STATE.LaraMonkeyswingRight;
                     }
-                    else if(cmd.Move[0] == 1)
+                    else if (cmd.Move[0] == 1)
                     {
                         ent.DirFlag = ENT_MOVE.MoveForward;
                         ssAnim.NextState = TR_STATE.LaraMonkeyswingForward;
                     }
-                    else if(cmd.Move[1] == -1)
+                    else if (cmd.Move[1] == -1)
                     {
                         ssAnim.NextState = TR_STATE.LaraMonkeyswingTurnLeft;
                     }
@@ -3621,13 +3621,233 @@ namespace FreeRaider
                         ssAnim.NextState = TR_STATE.LaraMonkeyswingTurnRight;
                     }
                     break;
+                case TR_STATE.LaraMonkeyswingTurnLeft:
+                    cmd.Rotation.X *= 0.5f;
+                    if (ent.MoveType != MoveType.Monkeyswing || !cmd.Action)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraTryHangVertical, 0);
+                        ent.DirFlag = ENT_MOVE.Stay;
+                        ent.MoveType = MoveType.FreeFalling;
+                    }
+                    else if (cmd.Move[1] != -1)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraMonkeyswingIdle;
+                    }
+                    break;
+                case TR_STATE.LaraMonkeyswingTurnRight:
+                    cmd.Rotation.X *= 0.5f;
+                    if (ent.MoveType != MoveType.Monkeyswing || !cmd.Action)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraTryHangVertical, 0);
+                        ent.DirFlag = ENT_MOVE.Stay;
+                        ent.MoveType = MoveType.FreeFalling;
+                    }
+                    else if (cmd.Move[1] != 1)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraMonkeyswingIdle;
+                    }
+                    break;
+                case TR_STATE.LaraMonkeyswingForward:
+                    cmd.Rotation.X *= 0.45f;
+                    ent.DirFlag = ENT_MOVE.MoveForward;
+
+                    if (ent.MoveType != MoveType.Monkeyswing || !cmd.Action)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraTryHangVertical, 0);
+                        ent.MoveType = MoveType.FreeFalling;
+                    }
+                    else if (cmd.Move[0] != 1)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraMonkeyswingIdle;
+                    }
+                    break;
+                case TR_STATE.LaraMonkeyswingLeft:
+                    cmd.Rotation.X = 0.0f;
+                    ent.DirFlag = ENT_MOVE.MoveLeft;
+
+                    if (ent.MoveType != MoveType.Monkeyswing || !cmd.Action)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraTryHangVertical, 0);
+                        ent.MoveType = MoveType.FreeFalling;
+                    }
+                    else if (cmd.Move[0] != 1)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraMonkeyswingIdle;
+                    }
+                    break;
+                case TR_STATE.LaraMonkeyswingRight:
+                    cmd.Rotation.X = 0.0f;
+                    ent.DirFlag = ENT_MOVE.MoveRight;
+
+                    if (ent.MoveType != MoveType.Monkeyswing || !cmd.Action)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraTryHangVertical, 0);
+                        ent.MoveType = MoveType.FreeFalling;
+                    }
+                    else if (cmd.Move[0] != 1)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraMonkeyswingIdle;
+                    }
+                    break;
 
                     #endregion
 
                     #region Tightrope
 
-                    #endregion
+                case TR_STATE.LaraTightropeEnter:
+                    cmd.Rotation.X = 0.0f;
+                    ent.Bt.NoFixAll = true;
+                    ent.DirFlag = ENT_MOVE.MoveForward;
+                    ssAnim.SetOnFrame(ent_to_tightrope);
+                    ssAnim.NextState = TR_STATE.LaraTightropeIdle;
+                    break;
+                case TR_STATE.LaraTightropeExit:
+                    cmd.Rotation.X = 0.0f;
+                    ent.Bt.NoFixAll = true;
+                    ent.DirFlag = ENT_MOVE.MoveForward;
+                    ssAnim.SetOnFrame(ent_from_tightrope);
+                    ssAnim.NextState = TR_STATE.LaraStop;
+                    break;
+                case TR_STATE.LaraTightropeIdle:
+                    cmd.Rotation.X = 0.0f;
+
+                    if (ssAnim.CurrentAnimation == TR_ANIMATION.LaraTightropeStand)
+                    {
+                        if (ent.Response.Lean == LeanType.Left)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraTightropeBalancingLeft;
+                            ent.Response.Lean = LeanType.None;
+                            break;
+                        }
+                        else if (ent.Response.Lean == LeanType.Right)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraTightropeBalancingRight;
+                            ent.Response.Lean = LeanType.None;
+                            break;
+                        }
+                        else if (lastFrame)
+                        {
+                            var chanceToFall = Helper.CPPRand() % 0x7FFF;
+
+                            ssAnim.NextState = chanceToFall > 0x5FFF
+                                ? TR_STATE.LaraTightropeBalancingLeft
+                                : TR_STATE.LaraTightropeBalancingRight;
+                        }
+                    }
+
+                    if (cmd.Roll || cmd.Move[0] == -1)
+                    {
+                        ent.SetAnimation(TR_ANIMATION.LaraTightropeTurn, 0);
+                        ent.DirFlag = ENT_MOVE.MoveForward;
+                    }
+                    else if (cmd.Move[0] == 1)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraTightropeForward;
+                    }
+                    break;
+                case TR_STATE.LaraTightropeForward:
+                    cmd.Rotation.X = 0.0f;
+                    ent.DirFlag = ENT_MOVE.MoveForward;
+
+                    if (cmd.Move[0] != 1)
+                    {
+                        ssAnim.NextState = TR_STATE.LaraTightropeIdle;
+                    }
+                    else
+                    {
+                        var chanceToUnbal = Helper.CPPRand() % 0x7FFF;
+                        if (chanceToUnbal < 0x00FF)
+                        {
+                            ssAnim.NextState = TR_STATE.LaraTightropeIdle;
+
+                            ent.Response.Lean = chanceToUnbal > 0x007F ? LeanType.Left : LeanType.Right;
+                        }
+                    }
+                    break;
+                case TR_STATE.LaraTightropeBalancingRight:
+                    cmd.Rotation.X = 0.0f;
+
+                    if (ssAnim.CurrentAnimation == TR_ANIMATION.LaraTightropeFallRight && lastFrame)
+                    {
+                        ent.MoveType = MoveType.FreeFalling;
+                        ent.Transform.Origin +=
+                            ent.Transform.Basis.MultiplyByVector(new Vector3(256.0f, 192.0f, -640.0f));
+                        ent.SetAnimation(TR_ANIMATION.LaraFreeFallLong, 0);
+                    }
+                    else if (ssAnim.CurrentAnimation == TR_ANIMATION.LaraTightropeLooseRight &&
+                             ssAnim.CurrentFrame >=
+                             ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count / 2 &&
+                             cmd.Move[1] == -1)
+                    {
+                        // MAGIC: mirroring animation offset
+                        ent.SetAnimation(TR_ANIMATION.LaraTightropeRecoverRight,
+                            ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count - ssAnim.CurrentFrame);
+                    }
+                    break;
+                case TR_STATE.LaraTightropeBalancingLeft:
+                    cmd.Rotation.X = 0.0f;
+
+                    if (ssAnim.CurrentAnimation == TR_ANIMATION.LaraTightropeFallLeft && lastFrame)
+                    {
+                        ent.MoveType = MoveType.FreeFalling;
+                        ent.SetAnimation(TR_ANIMATION.LaraFreeFallLong, 0);
+                        ent.Transform.Origin +=
+                            ent.Transform.Basis.MultiplyByVector(new Vector3(-256.0f, 192.0f, -640.0f));
+                    }
+                    else if (ssAnim.CurrentAnimation == TR_ANIMATION.LaraTightropeLooseLeft &&
+                             ssAnim.CurrentFrame >=
+                             ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count / 2 && cmd.Move[1] == 1)
+                    {
+                        // MAGIC: mirroring animation offset
+                        ent.SetAnimation(TR_ANIMATION.LaraTightropeRecoverLeft,
+                            ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count - ssAnim.CurrentFrame);
+                    }
+                    break;
+
+                #endregion
+
+                default:
+                    cmd.Rotation.X = 0.0f;
+                    if(ent.MoveType.IsAnyOf(MoveType.Monkeyswing, MoveType.WallsClimb))
+                    {
+                        if(!cmd.Action)
+                        {
+                            ent.SetAnimation(TR_ANIMATION.LaraStartFreeFall, 0);
+                            ent.DirFlag = ENT_MOVE.Stay;
+                            ent.MoveType = MoveType.FreeFalling;
+                        }
+                    }
+                    break;
             }
+
+            // Extra animation control
+
+            switch (ssAnim.CurrentAnimation)
+            {
+                case TR_ANIMATION.LaraStayJumpSides:
+                    ent.Bt.NoFixBodyParts |= BODY_PART.Head;
+                    break;
+
+                case TR_ANIMATION.LaraTryHangSolid:
+                case TR_ANIMATION.LaraFlyForwardTryHang:
+                    if (ent.MoveType == MoveType.FreeFalling && ent.Command.Action &&
+                        ent.Speed.X * ent.Transform.Basis.Column1.X + ent.Speed.Y * ent.Transform.Basis.Column1.Y < 0.0f)
+                    {
+                        ent.Speed.X = -ent.Speed.X;
+                        ent.Speed.Y = -ent.Speed.Y;
+                    }
+                    break;
+
+                case TR_ANIMATION.LaraAhBackward:
+                case TR_ANIMATION.LaraAhForward:
+                case TR_ANIMATION.LaraAhLeft:
+                case TR_ANIMATION.LaraAhRight:
+                    if (ssAnim.CurrentFrame > 12)
+                        ent.SetAnimation(TR_ANIMATION.LaraStaySolid, 0);
+                    break;
+            }
+
+            return 0;
         }
     }
 }
