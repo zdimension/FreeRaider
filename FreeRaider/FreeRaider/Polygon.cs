@@ -62,9 +62,9 @@ namespace FreeRaider
     public class Polygon
     {
         /// <summary>
-        /// Vertices data [Length 4]
+        /// Vertices data
         /// </summary>
-        public List<Vertex> Vertices { get; set; }
+        public List<Vertex> Vertices { get; set; } = Helper.FillArray(default(Vertex), 4).ToList();
 
         /// <summary>
         /// Texture index

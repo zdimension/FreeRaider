@@ -51,10 +51,7 @@ namespace FreeRaider
     {
         public Vector3 Position;
 
-        /// <summary>
-        /// Length 4
-        /// </summary>
-        public float[] Color;
+        public float[] Color = new float[4];
 
         public Vector3 Normal;
     }
@@ -597,9 +594,9 @@ namespace FreeRaider
         public uint Texture;
 
         /// <summary>
-        /// Texture coordinates [Length 8]
+        /// Texture coordinates
         /// </summary>
-        public float[] TexCoord;
+        public float[] TexCoord = new float[8];
 
         public uint Flag;
 
@@ -642,9 +639,9 @@ namespace FreeRaider
         public Vector3 Position;
 
         /// <summary>
-        /// RGBA value [Length 4]
+        /// RGBA value
         /// </summary>
-        public float[] Colour;
+        public float[] Colour = new float[4];
 
         public float Inner;
 
@@ -664,15 +661,9 @@ namespace FreeRaider
     /// </summary>
     public class TexFrame
     {
-        /// <summary>
-        /// Length 4
-        /// </summary>
-        public float[] Mat;
+        public float[] Mat = new float[4];
 
-        /// <summary>
-        /// Length 2
-        /// </summary>
-        public float[] Move;
+        public float[] Move = new float[2];
 
         public ushort TextureIndex;
     }
@@ -785,9 +776,9 @@ namespace FreeRaider
         public Vector3 Rotation;
 
         /// <summary>
-        /// Model tint [Length 4]
+        /// Model tint
         /// </summary>
-        public float[] Tint; // TODO: Replace all float[]s like this by some Color structure
+        public float[] Tint = new float[4]; // TODO: Replace all float[]s like this by some Color structure
 
         /// <summary>
         /// Visible bounding box

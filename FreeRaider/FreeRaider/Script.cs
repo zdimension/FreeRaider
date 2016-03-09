@@ -149,9 +149,9 @@ namespace FreeRaider.Script
 
         public static void BindKey(int act, int primary, object secondary);
 
-        public bool GetOverridedSamplesInfo(int numSamples, int numSounds, string samplesNameMask);
+        public bool GetOverridedSamplesInfo(out int numSamples, out int numSounds, out string samplesNameMask);
 
-        public bool GetOverridedSample(int soundID, int firstSampleNumber, int samplesCount);
+        public bool GetOverridedSample(int soundID, out int firstSampleNumber, out int samplesCount);
 
         public int GetGlobalSound(int globalSoundID);
 
@@ -159,7 +159,7 @@ namespace FreeRaider.Script
 
         public int GetNumTracks();
 
-        public bool GetSoundtrack(int trackIndex, string trackPath, int loadMethod, TR_AUDIO_STREAM_TYPE streamType);
+        public bool GetSoundtrack(int trackIndex, string trackPath, TR_AUDIO_STREAM_METHOD loadMethod, TR_AUDIO_STREAM_TYPE streamType);
 
         public bool GetLoadingScreen(int levelIndex, string picPath);
 

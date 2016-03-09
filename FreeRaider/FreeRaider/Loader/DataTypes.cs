@@ -7,6 +7,15 @@ using System.Linq;
 
 namespace FreeRaider.Loader
 {
+    public partial class Constants
+    {
+        public const ushort TextureIndexMaskTr4 = 0x7FFF;
+
+        public const ushort TextureIndexMask = 0x0FFF;
+
+        public const ushort TextureFlippedMask = 0x8000;
+    }
+
     public class LevelParseException : Exception
     {
         public long Position;

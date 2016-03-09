@@ -28,15 +28,7 @@ namespace FreeRaider
         {
             public uint CanonicalTextureIndex { get; set; }
 
-            /// <summary>
-            /// Length 4
-            /// </summary>
-            public CornerLocation[] CornerLocations { get; set; }
-
-            public FileObjectTexture()
-            {
-                CornerLocations = new CornerLocation[4];
-            }
+            public CornerLocation[] CornerLocations { get; set; } = new CornerLocation[4];
         }
 
         /// <summary>
@@ -50,21 +42,21 @@ namespace FreeRaider
         /// </summary>
         public class CanonicalObjectTexture
         {
-            public byte Width { get; set; }
+            public byte Width;
 
-            public byte Height { get; set; }
+            public byte Height;
 
-            public ushort OriginalPage { get; set; }
+            public ushort OriginalPage;
 
-            public byte OriginalX { get; set; }
+            public byte OriginalX;
 
-            public byte OriginalY { get; set; }
+            public byte OriginalY;
 
-            public uint NewPage { get; set; }
+            public uint NewPage;
 
-            public uint NewXWithBorder { get; set; }
+            public uint NewXWithBorder;
 
-            public uint NewYWithBorder { get; set; }
+            public uint NewYWithBorder;
         }
 
         /// <summary>
@@ -116,21 +108,170 @@ namespace FreeRaider
                 var canonical = canonicalObjectTextures[sortedIndices[texture]];
 
                 // Try to find space in an existing page.
-                ERROR
+                var foundPlace = false;
+                for (var page = 0; page < resultPageHeights.Count; page++)
+                {
+                    // TODO: Why loop here, since resultPageHeights' been cleared at line 112?
+                    foundPlace = resultPages[page].FindSpaceFor(
+                        canonical.Width + 2 * (uint) borderWidth,
+                        canonical.Height + 2 * (uint) borderWidth,
+                        ref canonical.NewXWithBorder,
+                        ref canonical.NewYWithBorder);
+                    if (foundPlace)
+                    {
+                        canonical.NewPage = (uint) page;
+
+                        var highestY = canonical.NewYWithBorder + canonical.Height + 2 * (uint) borderWidth;
+                        if (highestY + 1 > resultPageHeights[page])
+                            resultPageHeights[page] = highestY;
+
+                        break;
+                    }
+                }
+
+                // No existing page has enough remaining space so open new one.
+                if (!foundPlace)
+                {
+                    resultPages.Add(new BSPTree2DNode(0, 0, resultPageWidth, resultPageWidth));
+                    canonical.NewPage = (uint) resultPageHeights.Count;
+
+                    resultPages.Last().FindSpaceFor(
+                        canonical.Width + 2 * (uint) borderWidth,
+                        canonical.Height + 2 * (uint) borderWidth,
+                        ref canonical.NewXWithBorder,
+                        ref canonical.NewYWithBorder);
+
+                    resultPageHeights.Add(canonical.NewYWithBorder + canonical.Height + 2 * (uint) borderWidth);
+                }
             }
+
+            // Fix up heights if necessary
+            resultPageHeights = resultPageHeights.Select(Helper.NextPowerOf2).ToList();
         }
 
         /// <summary>
         /// Adds an object texture to the list.
         /// </summary>
         /// <param name="texture"></param>
-        private void addObjectTexture(ObjectTexture texture);
+        private void addObjectTexture(ObjectTexture texture)
+        {
+            // Determine the canonical texture for this texture.
+            // Use only first three vertices to find min, max, because for triangles the last will be 0,0 with no other marker that this is a triangle. As long as all textures are axis-aligned rectangles, this will always return the right result anyway.
+            var max = new[]
+            {
+                texture.Vertices.Max(x => x.Xpixel),
+                texture.Vertices.Max(x => x.Ypixel)
+            };
+            var min = new[]
+            {
+                texture.Vertices.Min(x => x.Xpixel),
+                texture.Vertices.Min(x => x.Ypixel)
+            };
+            var width = max[0] - min[0];
+            var height = max[1] - min[1];
+
+            // See whether it already exists
+            var canonicalIndex = -1;
+            for(var i = 0; i < canonicalObjectTextures.Count; i++)
+            {
+                var cand = canonicalObjectTextures[i];
+
+                if(cand.OriginalPage == (texture.TileAndFlag & Loader.Constants.TextureIndexMaskTr4)
+                    && cand.OriginalX == min[0]
+                    && cand.OriginalY == min[1]
+                    && cand.Width == width
+                    && cand.Height == height)
+                {
+                    canonicalIndex = i;
+                    break;
+                }
+            }
+
+            // Create it if not.
+            if(canonicalIndex == -1)
+            {
+                canonicalIndex = canonicalObjectTextures.Count;
+
+                canonicalObjectTextures.Add(new CanonicalObjectTexture
+                {
+                    Width = (byte)width,
+                    Height = (byte)height,
+                    OriginalPage = (ushort)(texture.TileAndFlag & Loader.Constants.TextureIndexMaskTr4),
+                    OriginalX = min[0],
+                    OriginalY = min[1]
+                });
+            }
+
+            // Create file object texture.
+            var fot = new FileObjectTexture {CanonicalTextureIndex = (uint) canonicalIndex};
+            for(var i = 0; i < 4; i++)
+            {
+                var v = texture.Vertices[i];
+                if(v.Xpixel == min[0])
+                {
+                    if(v.Ypixel == min[1])
+                        fot.CornerLocations[i] = CornerLocation.TopLeft;
+                    else
+                        fot.CornerLocations[i] = CornerLocation.BottomLeft;
+                }
+                else
+                {
+                    if (v.Ypixel == min[1])
+                        fot.CornerLocations[i] = CornerLocation.TopRight;
+                    else
+                        fot.CornerLocations[i] = CornerLocation.BottomRight;
+                }
+            }
+            fileObjectTextures.Add(fot);
+        }
 
         /// <summary>
         /// Adds a sprite texture to the list.
         /// </summary>
         /// <param name="texture"></param>
-        private void addSpriteTexture(SpriteTexture texture);
+        private void addSpriteTexture(SpriteTexture texture)
+        {
+            // Determine the canonical texture for this texture.
+            var x = texture.X0;
+            var y = texture.Y0;
+            var width = texture.X1 - texture.X0; // TODO: Add Width and Height properties for that
+            var height = texture.Y1 - texture.Y0;
+
+            // See whether it already exists
+            var canonicalIndex = -1;
+            for (var i = 0; i < canonicalObjectTextures.Count; i++)
+            {
+                var cand = canonicalObjectTextures[i];
+
+                if (cand.OriginalPage == (texture.Tile & Loader.Constants.TextureIndexMaskTr4)
+                    && cand.OriginalX == x
+                    && cand.OriginalY == y
+                    && cand.Width == width
+                    && cand.Height == height)
+                {
+                    canonicalIndex = i;
+                    break;
+                }
+            }
+
+            // Create it if not.
+            if (canonicalIndex == -1)
+            {
+                canonicalIndex = canonicalObjectTextures.Count;
+
+                canonicalObjectTextures.Add(new CanonicalObjectTexture
+                {
+                    Width = (byte)width,
+                    Height = (byte)height,
+                    OriginalPage = (ushort)(texture.Tile & Loader.Constants.TextureIndexMaskTr4),
+                    OriginalX = (byte)x,
+                    OriginalY = (byte)y
+                });
+            }
+
+            // Create sprite texture assignment.
+            canonicalTexturesForSpriteTextures.Add((uint)canonicalIndex);
+        }
 
         /// <summary>
         /// Create a new Bordered texture atlas with the specified border width
@@ -139,10 +280,10 @@ namespace FreeRaider
         /// </summary>
         /// <param name="border">The border width around each texture.</param>
         public BorderedTextureAtlas(
-            int border, 
+            int border,
             bool conserveMemory,
             List<DWordTexture> pages,
-            List<ObjectTexture> objectTextures, 
+            List<ObjectTexture> objectTextures,
             List<SpriteTexture> spriteTextures)
         {
             borderWidth = border;
@@ -160,11 +301,14 @@ namespace FreeRaider
                 long areaSum = objectTextures.Sum(t => t.Width * t.Height) +
                                spriteTextures.Sum(t => Math.Abs((t.X1 - t.X0) * (t.Y1 - t.Y0)));
 
-                resultPageWidth = (uint)Math.Min(maxTextureEdgeLength, Helper.NextPowerOf2((uint) (Math.Sqrt(areaSum) * Constants.Sqrt2)));
+                resultPageWidth =
+                    (uint)
+                        Math.Min(maxTextureEdgeLength,
+                            Helper.NextPowerOf2((uint) (Math.Sqrt(areaSum) * Constants.Sqrt2)));
             }
             else
             {
-                resultPageWidth = Helper.NextPowerOf2((uint)maxTextureEdgeLength);
+                resultPageWidth = Helper.NextPowerOf2((uint) maxTextureEdgeLength);
             }
 
             foreach (var tex in objectTextures)
@@ -194,8 +338,8 @@ namespace FreeRaider
             Assert.That(poly.Vertices.Count <= 4);
 
             Assert.That(texture < fileObjectTextures.Count);
-            var fileObjectTexture = fileObjectTextures[(int)texture];
-            var canonical = canonicalObjectTextures[(int)fileObjectTexture.CanonicalTextureIndex];
+            var fileObjectTexture = fileObjectTextures[(int) texture];
+            var canonical = canonicalObjectTextures[(int) fileObjectTexture.CanonicalTextureIndex];
 
             poly.TexIndex = (ushort) canonical.NewPage;
             for (var i = 0; i < poly.Vertices.Count; i++)
@@ -203,13 +347,13 @@ namespace FreeRaider
                 long xCoord = 0;
                 long yCoord = 0;
 
-                switch(fileObjectTexture.CornerLocations[i])
+                switch (fileObjectTexture.CornerLocations[i])
                 {
                     case CornerLocation.TopLeft:
                         xCoord = canonical.NewXWithBorder + borderWidth;
                         yCoord = canonical.NewYWithBorder + borderWidth - shift;
 
-                        if(split)
+                        if (split)
                         {
                             yCoord += (canonical.Height / 2);
                         }
@@ -225,7 +369,7 @@ namespace FreeRaider
                         break;
                     case CornerLocation.BottomLeft:
                         xCoord = canonical.NewXWithBorder + borderWidth;
-                        yCoord = canonical.NewYWithBorder + borderWidth  + canonical.Height - shift;
+                        yCoord = canonical.NewYWithBorder + borderWidth + canonical.Height - shift;
                         break;
                     case CornerLocation.BottomRight:
                         xCoord = canonical.NewXWithBorder + borderWidth + canonical.Width;
@@ -236,7 +380,7 @@ namespace FreeRaider
                 var index = reverse ? (poly.Vertices.Count - i - 1) : i;
 
                 poly.Vertices[index].TexCoord[0] = (float) xCoord / resultPageWidth;
-                poly.Vertices[index].TexCoord[1] = (float) yCoord / resultPageHeights[(int)canonical.NewPage];
+                poly.Vertices[index].TexCoord[1] = (float) yCoord / resultPageHeights[(int) canonical.NewPage];
             }
         }
 
@@ -245,7 +389,40 @@ namespace FreeRaider
         /// coordinates (eight float values), in the order top right, top left,
         /// bottom left, bottom right.
         /// </summary>
-        public void GetSpriteCoordinates(uint spriteTexture, uint outPage, float coordinates);
+        public void GetSpriteCoordinates(uint spriteTexture, out uint outPage, float[] coordinates)
+        {
+            Assert.That(spriteTexture < canonicalTexturesForSpriteTextures.Count);
+
+            var canonicalIndex = canonicalTexturesForSpriteTextures[(int) spriteTexture];
+            var canonical = canonicalObjectTextures[(int) canonicalIndex];
+
+            outPage = canonical.NewPage;
+
+            var pixelCoords = new[]
+            {
+                // top right
+                canonical.NewXWithBorder + borderWidth + canonical.Width,
+                canonical.NewYWithBorder + borderWidth + canonical.Height,
+
+                // top left
+                canonical.NewXWithBorder + borderWidth,
+                canonical.NewYWithBorder + borderWidth + canonical.Height,
+
+                // bottom left
+                canonical.NewXWithBorder + borderWidth,
+                canonical.NewYWithBorder + borderWidth,
+
+                // bottom right
+                canonical.NewXWithBorder + borderWidth + canonical.Width,
+                canonical.NewYWithBorder + borderWidth
+            };
+
+            for(var i = 0; i < 4; i++)
+            {
+                coordinates[i * 2 + 0] = pixelCoords[i * 2 + 0] / (float)resultPageWidth;
+                coordinates[i * 2 + 1] = pixelCoords[i * 2 + 1] / (float)resultPageHeights[(int)canonical.NewPage];
+            }
+        }
 
         /// <summary>
         /// Returns the number of texture atlas pages that have been created.
@@ -273,7 +450,35 @@ namespace FreeRaider
         /// </summary>
         /// <param name="textureNames">The names of the textures.</param>
         /// <param name="additionalTextureNames">How many texture names to create in addition to the needed ones.</param>
-        public void CreateTextures(uint textureNames, uint additionalTextureNames);
+        public unsafe void CreateTextures(uint* textureNames, uint additionalTextureNames)
+        {
+            GL.GenTextures(resultPageHeights.Count + (int)additionalTextureNames, textureNames);
+
+            for(var page = 0; page < resultPageHeights.Count; page++)
+            {
+                var data = new byte[4 * resultPageWidth * resultPageWidth];
+                for(var texture = 0; texture < canonicalObjectTextures.Count; texture++)
+                {
+                    var canonical = canonicalObjectTextures[texture];
+                    if (canonical.NewPage != page)
+                        continue;
+
+                    fixed(uint* pixels = originalPages[canonical.OriginalPage].Pixels[0])
+                    {
+                        // Add top border
+                        for(var border = 0; border < borderWidth; border++)
+                        {
+                            var x = canonical.NewXWithBorder;
+                            var y = canonical.NewYWithBorder + border;
+                            var oldX = canonical.OriginalX;
+                            var oldY = canonical.OriginalY;
+
+                            // expand top-left pixel
+                        }
+                    }
+                }
+            }
+        }
 
         public class TextureSizeComparator : IComparer<int>
         {

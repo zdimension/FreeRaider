@@ -23,12 +23,12 @@ namespace FreeRaider
         /// <summary>
         /// Camera view direction
         /// </summary>
-        public Vector3 ViewDirection { get; private set; } = new Vector3(0.0f, 0.0f, 1.0f);
+        public Vector3 ViewDirection = new Vector3(0.0f, 0.0f, 1.0f);
 
         /// <summary>
         /// Up vector
         /// </summary>
-        public Vector3 UpDirection { get; private set; } = new Vector3(0.0f, 1.0f, 0.0f);
+        public Vector3 UpDirection = new Vector3(0.0f, 1.0f, 0.0f);
 
         /// <summary>
         /// Strafe vector

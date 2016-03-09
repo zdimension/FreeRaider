@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using FreeRaider.Loader;
 using LibSndFile;
 using OpenTK;
@@ -110,6 +111,8 @@ namespace FreeRaider
         public const float TR_AUDIO_STREAM_DAMP_SPEED = GAME_LOGIC_REFRESH_INTERVAL / 1.0f;
 
         public const double TR_AUDIO_DEINIT_DELAY = 2.0;
+
+        public const int SFM_READ = 16;
     }
 
     /// <summary>
@@ -1885,23 +1888,23 @@ else
             AL.Listener(ALListenerfv.Orientation, ref cam.ViewDirection, ref cam.UpDirection);
             ALExt.Listener(ALListener3f.Position, cam.Position);
 
-            ALExt.Listener(ALListener3f.Velocity, (cam.Position - cam.previousPosition) / (float)Global.EngineFrameTime);
-            cam.previousPosition = cam.Position;
+            ALExt.Listener(ALListener3f.Velocity, (cam.Position - cam.PreviousPosition) / (float)Global.EngineFrameTime);
+            cam.PreviousPosition = cam.Position;
 
-            if(cam.currentRoom != null)
+            if(cam.CurrentRoom != null)
             {
-                if(cam.currentRoom.Flags.HasFlagEx(RoomFlags.FilledWithWater))
+                if(cam.CurrentRoom.Flags.HasFlagEx(RoomFlags.FilledWithWater))
                 {
                     FXManager.CurrentRoomType = (uint)TR_AUDIO_FX.Water;
                 }
                 else
                 {
-                    FXManager.CurrentRoomType = cam.currentRoom.ReverbInfo;
+                    FXManager.CurrentRoomType = cam.CurrentRoom.ReverbInfo;
                 }
 
-                if(FXManager.WaterState != (cam.currentRoom.Flags.HasFlagEx(RoomFlags.FilledWithWater) ? 1 : 0))
+                if(FXManager.WaterState != (cam.CurrentRoom.Flags.HasFlagEx(RoomFlags.FilledWithWater) ? 1 : 0))
                 {
-                    if((FXManager.WaterState = (sbyte)(cam.currentRoom.Flags.HasFlagEx(RoomFlags.FilledWithWater) ? 1 : 0)) != 0)
+                    if((FXManager.WaterState = (sbyte)(cam.CurrentRoom.Flags.HasFlagEx(RoomFlags.FilledWithWater) ? 1 : 0)) != 0)
                     {
                         Send((uint)TR_AUDIO_SOUND.Underwater);
                     }
@@ -1937,7 +1940,51 @@ else
         }
 
         public static unsafe int LoadALBufferFromMem(uint bufNumber, byte* samplePointer, uint sampleSize,
-            uint uncompSampleSize = 0);
+            uint uncompSampleSize = 0)
+        {
+            try
+            {
+                var wavMem = new MemBufferFileIo();
+                var b1 = Pointer.Box(&wavMem, typeof (MemBufferFileIo));
+                var b2 = Pointer.Box(samplePointer, typeof (byte));
+                typeof(MBFIHelper).GetMethod("Ctor", BindingFlags.Public | BindingFlags.Static).Invoke(null, new [] {b1, b2, sampleSize});
+
+                using (var file = new SndFile(wavMem, Constants.SFM_READ, new SndFileInfo(), &wavMem))
+                {
+                    var sfInfo = new SndFileInfo();
+
+                    // Uncomp_sample_size explicitly specifies amount of raw sample data
+                    // to load into buffer. It is only used in TR4/5 with ADPCM samples,
+                    // because full-sized ADPCM sample contains a bit of silence at the end,
+                    // which should be removed. That's where uncomp_sample_size comes into
+                    // business.
+                    // Note that we also need to compare if uncomp_sample_size is smaller
+                    // than native wav length, because for some reason many TR5 uncomp sizes
+                    // are messed up and actually more than actual sample size.
+                    var realSize = sfInfo.Frames * sizeof (ushort);
+
+                    if(uncompSampleSize == 0 || realSize < uncompSampleSize)
+                    {
+                        uncompSampleSize = (uint)realSize;
+                    }
+
+                    // We need to change buffer size, as we're using floats here.
+                    uncompSampleSize = (uncompSampleSize / sizeof (ushort)) * sizeof (float);
+
+                    // Find out sample format and load it correspondingly.
+                    // Note that with OpenAL, we can have samples of different formats in same level.
+
+                    return FillALBuffer(bufNumber, file, uncompSampleSize, sfInfo) ? 0 : -3;
+                    // Zero means success
+                }
+
+            }
+            catch
+            {
+                Sys.DebugLog(Constants.LOG_FILENAME, "Error: can't load sample {0} from sample block!", bufNumber);
+                return -1;
+            }
+        }
 
         public static int LoadALBufferFromFile(uint bufNumber, string filename)
         {
@@ -1948,19 +1995,52 @@ else
                     using (var file = new SndFile(fs, new SndFileInfo()))
                     {
                         var sfInfo = file.GetSndFileInfo();
-                        // TODO: See line 1826 of audio.cpp
+
                         return FillALBuffer(bufNumber, file, (uint) file.FramesCount * sizeof (float), sfInfo) ? 0 : -3; // Zero means success
                     }
                 }
             }
             catch
             {
-                // TODO: Handle warning "Can't open file"
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_OPEN_FILE);
                 return -1;
             }
         }
 
-        public static void LoadOverridedSamples(World world);
+        public static void LoadOverridedSamples(World world)
+        {
+            int numSamples, numSounds;
+            string sampleNameMask;
+
+            if (Global.EngineLua.GetOverridedSamplesInfo(out numSamples, out numSounds, out sampleNameMask))
+            {
+                var bufferCount = 0;
+
+                for (var i = 0; i < world.AudioBuffers.Count; i++)
+                {
+                    if(world.AudioMap[i] != -1)
+                    {
+                        int sampleIndex;
+                        int sampleCount;
+                        if(Global.EngineLua.GetOverridedSample(i, out sampleIndex, out sampleCount))
+                        {
+                            for(var j = 0; j < sampleCount; j++, bufferCount++)
+                            {
+                                var sampleName = string.Format(sampleNameMask, sampleIndex + j);
+                                if(Engine.FileFound(sampleName))
+                                {
+                                    LoadALBufferFromFile(world.AudioBuffers[bufferCount], sampleName);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            bufferCount += (int)world.AudioEffects[world.AudioMap[i]].SampleCount;
+                        }
+                    }
+                }
+            }
+        }
 
         public static bool LoadReverbToFX(TR_AUDIO_FX effectID, EffectsExtension.EfxEaxReverb reverb)
         {
@@ -2075,12 +2155,18 @@ else
         /// <summary>
         /// Pause all streams [of specified type]
         /// </summary>
-        public static void PauseStreams(TR_AUDIO_STREAM_TYPE streamType = TR_AUDIO_STREAM_TYPE.Unknown);
+        public static void PauseStreams(TR_AUDIO_STREAM_TYPE streamType = TR_AUDIO_STREAM_TYPE.Unknown)
+        {
+            throw new NotImplementedException("Not implemented in OpenTomb!");
+        }
 
         /// <summary>
         /// Resume all streams [of specified type]
         /// </summary>
-        public static void ResumeStreams(TR_AUDIO_STREAM_TYPE streamType = TR_AUDIO_STREAM_TYPE.Unknown);
+        public static void ResumeStreams(TR_AUDIO_STREAM_TYPE streamType = TR_AUDIO_STREAM_TYPE.Unknown)
+        {
+            throw new NotImplementedException("Not implemented in OpenTomb!");
+        }
 
         /// <summary>
         /// End all streams (with crossfade) [of specified type]
@@ -2155,7 +2241,7 @@ else
             // "load_method" argument. Function itself returns false, if script wasn't found or
             // request was broken; in this case, we quit.
 
-            if(!engine_lua.GetSoundtrack(trackID, filePath, loadMethod, streamType))
+            if(!Global.EngineLua.GetSoundtrack((int)trackID, filePath, loadMethod, streamType))
             {
                 // TODO: Warning Track wrong index
                 return TR_AUDIO_STREAMPLAY.WrongTrack;
@@ -2236,7 +2322,10 @@ else
         /// <summary>
         /// <see cref="SndFile"/>-specified error handler
         /// </summary>
-        public static void LogSndFileError(int code);
+        public static void LogSndFileError(int code)
+        {
+            Sys.DebugLog(Constants.LOG_FILENAME, SndFile.SfErrorNumber(code));
+        }
 
         #endregion
 

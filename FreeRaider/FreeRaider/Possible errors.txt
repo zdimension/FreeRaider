@@ -25,3 +25,5 @@ Dans AnimStateControl.cs, L1380, pour saut RIGHT -> JumpLeft et LEFT -> JumpRigh
 "" aussi L1443 et L1470
 
 Dans AnimStateControl.cs, L3467 et L3471, je fais currFc.FloorObject = nextFc.FloorObject (ce qui copie l'objet, ce qui n'est pas forcément voulu)
+
+Dans Audio.cs, L1952, je passe wavMem sans ref ou pointeur alors que c'est une struct (c'est une public ref struct mais je suis pas sûr que ça passe bien en référence)

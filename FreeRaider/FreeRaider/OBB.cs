@@ -14,17 +14,11 @@ namespace FreeRaider
     /// </summary>
     public class OBB
     {
-        /// <summary>
-        /// Length = 6
-        /// </summary>
-        public Polygon[] BasePolygons; // bv base surface
+        public Polygon[] BasePolygons = new Polygon[6]; // bv base surface
 
-        /// <summary>
-        /// Length = 6
-        /// </summary>
-        public Polygon[] Polygons; // bv world coordinate surface
+        public Polygon[] Polygons = new Polygon[6]; // bv world coordinate surface
 
-        public Transform Transform; // Object transform matrix
+        public Transform Transform = new Transform(); // Object transform matrix
 
         public float Radius;
 
@@ -33,13 +27,6 @@ namespace FreeRaider
         public Vector3 Centre;
 
         public Vector3 Extent;
-
-        public OBB()
-        {
-            BasePolygons = new Polygon[6];
-            Polygons = new Polygon[6];
-            Transform = new Transform();
-        }
 
         public void DoTransform()
         {
