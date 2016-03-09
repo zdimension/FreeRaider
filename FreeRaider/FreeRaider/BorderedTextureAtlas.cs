@@ -474,6 +474,7 @@ namespace FreeRaider
                             var oldY = canonical.OriginalY;
 
                             // expand top-left pixel
+                            
                         }
                     }
                 }
