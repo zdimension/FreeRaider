@@ -306,6 +306,20 @@ namespace FreeRaider
             GL.GenBuffers(1, out ret);
             return ret;
         }
+
+        public static unsafe void* memcpy(void* destination, void* source, uint num)
+        {
+            var dest = (byte*) destination;
+            var src = (byte*) source;
+            for (uint i = 0; i < num; i++)
+                dest[i] = src[i];
+            return destination;
+        }
+
+        public static unsafe void* memcpy(void* destination, void* source, int num)
+        {
+            return memcpy(destination, source, (uint) num);
+        }
     }
 
     public static class ALExt

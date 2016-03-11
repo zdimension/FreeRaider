@@ -653,5 +653,27 @@ namespace FreeRaider
         {
             Helper.ListCopy(sourceArray, sourceIndex, destinationArray, destinationIndex, length);
         }
+
+        public static bool FuzzyZero(this Vector3 v)
+        {
+            return v.LengthSquared < Constants.SIMD_EPSILON; // TODO: Replace by float.Epsilon
+        }
+
+        public static void CopyToArray(this Vector3 v, float[] target, int index)
+        {
+            target[index + 0] = v[0];
+            target[index + 1] = v[1];
+            target[index + 2] = v[2];
+        }
+    }
+
+    public partial class Constants
+    {
+        public const float FLT_EPSILON = 1.19209290E-07F;
+
+        /// <summary>
+        /// TODO: Replace by float.Epsilon
+        /// </summary>
+        public const float SIMD_EPSILON = FLT_EPSILON;
     }
 }

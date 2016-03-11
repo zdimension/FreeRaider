@@ -2499,9 +2499,9 @@ namespace FreeRaider
         /**
          * Item notifier functions.
          */
-        public static void NotifierStart(int item)
+        public static void NotifierStart(uint item)
         {
-            Global.Notifier.Start(item, Constants.GUI_NOTIFIER_SHOWTIME);
+            Global.Notifier.Start((int)item, Constants.GUI_NOTIFIER_SHOWTIME);
         }
 
         public static void NotifierStop()

@@ -6,6 +6,20 @@ using OpenTK.Graphics.OpenGL;
 
 namespace FreeRaider
 {
+    public partial class Helper
+    {
+        /// <summary>
+        /// Fills an area of memory with a four-byte pattern pointed to.
+        /// </summary>
+        public static unsafe void memset_pattern4(void* b, void* pattern, int len)
+        {
+            var intb = (uint*) b;
+            var patternValue = *(uint*) pattern;
+            for (int i = 0; i < len / 4; i++)
+                intb[-i] = patternValue;
+        }
+    }
+
     public class BorderedTextureAtlas
     {
         /// <summary>
@@ -454,30 +468,103 @@ namespace FreeRaider
         {
             GL.GenTextures(resultPageHeights.Count + (int)additionalTextureNames, textureNames);
 
-            for(var page = 0; page < resultPageHeights.Count; page++)
+            for (var page = 0; page < resultPageHeights.Count; page++)
             {
                 var data = new byte[4 * resultPageWidth * resultPageWidth];
-                for(var texture = 0; texture < canonicalObjectTextures.Count; texture++)
+                for (var texture = 0; texture < canonicalObjectTextures.Count; texture++)
                 {
                     var canonical = canonicalObjectTextures[texture];
                     if (canonical.NewPage != page)
                         continue;
 
-                    fixed(uint* pixels = originalPages[canonical.OriginalPage].Pixels[0])
+                    fixed (uint* pixels = originalPages[canonical.OriginalPage].Pixels[0])
                     {
                         // Add top border
-                        for(var border = 0; border < borderWidth; border++)
+                        for (var border = 0; border < borderWidth; border++)
                         {
                             var x = canonical.NewXWithBorder;
                             var y = canonical.NewYWithBorder + border;
                             var oldX = canonical.OriginalX;
                             var oldY = canonical.OriginalY;
 
-                            // expand top-left pixel
-                            
+                            fixed (byte* ptr = data)
+                            {
+                                // expand top-left pixel
+                                Helper.memset_pattern4(&ptr[(y * resultPageWidth + x) * 4],
+                                    &pixels[oldY * 256 + oldX],
+                                    4 * borderWidth);
+                                // copy top line
+                                Helper.memcpy(&ptr[(y * resultPageWidth + x + borderWidth) * 4],
+                                    &pixels[oldY * 256 + oldY],
+                                    canonical.Width * 4);
+                                // expand top-right pixel
+                                Helper.memset_pattern4(
+                                    &ptr[(y * resultPageWidth + x + borderWidth + canonical.Width) * 4],
+                                    &pixels[oldY * 256 + oldX + canonical.Width],
+                                    4 * borderWidth);
+                            }
+                        }
+
+                        // Copy main content
+                        for (var line = 0; line < canonical.Height; line++)
+                        {
+                            var x = canonical.NewXWithBorder;
+                            var y = canonical.NewYWithBorder + borderWidth + line;
+                            var oldX = canonical.OriginalX;
+                            var oldY = canonical.OriginalY + line;
+
+                            fixed (byte* ptr = data)
+                            {
+                                // expand left pixel
+                                Helper.memset_pattern4(&ptr[(y * resultPageWidth + x) * 4],
+                                    &pixels[oldY * 256 + oldX],
+                                    4 * borderWidth);
+                                // copy line
+                                Helper.memcpy(&ptr[(y * resultPageWidth + x + borderWidth) * 4],
+                                    &pixels[oldY * 256 + oldY],
+                                    canonical.Width * 4);
+                                // expand right pixel
+                                Helper.memset_pattern4(
+                                    &ptr[(y * resultPageWidth + x + borderWidth + canonical.Width) * 4],
+                                    &pixels[oldY * 256 + oldX + canonical.Width],
+                                    4 * borderWidth);
+                            }
+                        }
+
+                        // Add bottom border
+                        for (var border = 0; border < borderWidth; border++)
+                        {
+                            var x = canonical.NewXWithBorder;
+                            var y = canonical.NewYWithBorder + canonical.Height + borderWidth + border;
+                            var oldX = canonical.OriginalX;
+                            var oldY = canonical.OriginalY + canonical.Height;
+
+                            fixed (byte* ptr = data)
+                            {
+                                // expand bottom-left pixel
+                                Helper.memset_pattern4(&ptr[(y * resultPageWidth + x) * 4],
+                                    &pixels[oldY * 256 + oldX],
+                                    4 * borderWidth);
+                                // copy bottom line
+                                Helper.memcpy(&ptr[(y * resultPageWidth + x + borderWidth) * 4],
+                                    &pixels[oldY * 256 + oldY],
+                                    canonical.Width * 4);
+                                // expand bottom-right pixel
+                                Helper.memset_pattern4(
+                                    &ptr[(y * resultPageWidth + x + borderWidth + canonical.Width) * 4],
+                                    &pixels[oldY * 256 + oldX + canonical.Width],
+                                    4 * borderWidth);
+                            }
                         }
                     }
                 }
+
+                GL.BindTexture(TextureTarget.Texture2D, textureNames[page]);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, (int) resultPageWidth,
+                    (int) resultPageHeights[page], 0, PixelFormat.Rgba, PixelType.UnsignedByte, data);
+                GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
             }
         }
 
