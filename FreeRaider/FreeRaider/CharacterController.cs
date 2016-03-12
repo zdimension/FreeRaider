@@ -1018,7 +1018,91 @@ namespace FreeRaider
             return ret;
         }
 
-        public ClimbInfo CheckWallsClimbability();
+        public ClimbInfo CheckWallsClimbability()
+        {
+            var ret = new ClimbInfo();
+            ret.CanHang = false;
+            ret.WallHit = ClimbType.None;
+            ret.EdgeHit = false;
+            ret.EdgeObject = null;
+            ret.FloorLimit = HeightInfo.FloorHit ? HeightInfo.FloorPoint.Z : -9e10f;
+            ret.CeilingLimit = HeightInfo.CeilingHit ? HeightInfo.CeilingPoint.Z : 9e10f;
+            ret.Point = Climb.Point;
+
+            if(!HeightInfo.WallsClimb)
+            {
+                return ret;
+            }
+
+            ret.Up = Vector3.UnitZ;
+
+            var pos = Transform.Origin;
+            var from = pos + Transform.Basis.Column2 * Bf.BBMax.Z - Transform.Basis.Column1 * ClimbR;
+            var to = from;
+            var t = ForwardSize + Bf.BBMax.Y;
+            to += Transform.Basis.Column1 * t;
+
+            var ccb = ConvexCb;
+            ccb.ClosestHitFraction = 1.0f;
+            ccb.HitCollisionObject = null;
+
+            var tr1 = new Transform();
+            tr1.SetIdentity();
+            tr1.Origin = from;
+
+            var tr2 = new Transform();
+            tr2.SetIdentity();
+            tr2.Origin = to;
+
+            Global.BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) tr1, (Matrix4) tr2, ccb);
+            if(!ccb.HasHit)
+            {
+                return ret;
+            }
+
+            ret.Point = ccb.HitPointWorld;
+            ret.N = ccb.HitNormalWorld;
+            var wn2 = new[] {ret.N.X, ret.N.Y};
+            t = (float) Math.Sqrt(wn2[0] * wn2[0] + wn2[1] * wn2[1]);
+            wn2[0] /= t;
+            wn2[1] /= t;
+
+            ret.Right.X = -wn2[1];
+            ret.Right.Y = wn2[0];
+            ret.Right.Z = 0.0f;
+
+            // now we have wall normale in XOY plane. Let us check all flags
+            if(HeightInfo.WallsClimbDir.HasFlagSig(SectorFlag.ClimbNorth) && wn2[1] < -0.7f
+                || HeightInfo.WallsClimbDir.HasFlagSig(SectorFlag.ClimbEast) && wn2[0] < -0.7f
+                || HeightInfo.WallsClimbDir.HasFlagSig(SectorFlag.ClimbSouth) && wn2[1] > 0.7f
+                || HeightInfo.WallsClimbDir.HasFlagSig(SectorFlag.ClimbWest) && wn2[0] > 0.7f)
+            {
+                ret.WallHit = ClimbType.HandsOnly;
+            }
+
+            if(ret.WallHit != ClimbType.None)
+            {
+                t = 0.67f * Height;
+                from -= Transform.Basis.Column2 * t;
+                to = from;
+                t = ForwardSize + Bf.BBMax.Y;
+                to += Transform.Basis.Column1 * t;
+
+                ccb.ClosestHitFraction = 1.0f;
+                ccb.HitCollisionObject = null;
+                tr1.SetIdentity();
+                tr1.Origin = from;
+                tr2.SetIdentity();
+                tr2.Origin = to;
+                Global.BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4)tr1, (Matrix4)tr2, ccb);
+                if (ccb.HasHit)
+                {
+                    ret.WallHit = ClimbType.FullBody;
+                }
+            }
+
+            return ret;
+        }
 
         /// <summary>
         /// Calculates next height info and information about next step
@@ -1092,11 +1176,157 @@ namespace FreeRaider
 #endif
         }
 
-        public void Lean(CharacterCommand cmd, float maxLen);
+        public void Lean(CharacterCommand cmd, float maxLean)
+        {
+            var negLean = 360.0f - maxLean;
+            var leanCoeff = maxLean == 0.0f ? 48.0f : maxLean * 3;
 
-        public float GetInertiaLinear(float maxSpeed, float accel, bool command);
+            // Continously lean character, according to current left/right direction.
 
-        public float GetInertiaAngular(float maxAngle, float accel, byte axis);
+            if (cmd.Move[1] == 0 || maxLean == 0.0f) // No direction - restore straight vertical position!
+            {
+                if(Angles.Z != 0.0f)
+                {
+                    if (Angles.Z < 180.0f)
+                    {
+                        Angles.Z = Math.Max(0.0f,
+                            Angles.Z - (Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime);
+                    }
+                    else
+                    {
+                        Angles.Z += (360 - Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime;
+                        if (Angles.Z < 180.0f) Angles.Z = 0.0f;
+                    }
+                }
+            }
+            else if(cmd.Move[1] == 1) // Right direction
+            {
+                if (Angles.Z != maxLean)
+                {
+                    if (Angles.Z < maxLean) // Approaching from center
+                    {
+                        Angles.Z = Math.Min(maxLean,
+                            Angles.Z + (Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime);
+                    }
+                    else if(Angles.Z > 180.0f) // Approaching from left
+                    {
+                        Angles.Z += (360 - Math.Abs(Angles.Z) + leanCoeff * 2) / 2 * Global.EngineFrameTime;
+                        if (Angles.Z < 180.0f) Angles.Z = 0.0f;
+                    }
+                    else // Reduce previous lean
+                    {
+                        Angles.Z = Math.Max(0.0f,
+                             Angles.Z - (Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime);
+                    }
+                }
+            }
+            else if (cmd.Move[1] == -1) // Left direction
+            {
+                if (Angles.Z != negLean)
+                {
+                    if (Angles.Z > negLean) // Reduce previous lean
+                    {
+                        Angles.Z = Math.Max(negLean,
+                           Angles.Z - (360.0f - Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime);
+                    }
+                    else if (Angles.Z > 180.0f) // Approaching from right
+                    {
+                        Angles.Z -= (Math.Abs(Angles.Z) + leanCoeff * 2) / 2 * Global.EngineFrameTime;
+                        if (Angles.Z < 0.0f) Angles.Z += 360.0f;
+                    }
+                    else // Approaching from center
+                    {
+                        Angles.Z += (360.0f - Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime;
+                        if (Angles.Z > 360.0f) Angles.Z -= 360.0f;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Linear inertia is absolutely needed for in-water states, and also it gives
+        /// more organic feel to land animations.
+        /// </summary>
+        public float GetInertiaLinear(float maxSpeed, float accel, bool command)
+        {
+            if (accel == 0.0f || accel >= maxSpeed)
+            {
+                InertiaLinear = command ? maxSpeed : 0.0f;
+            }
+            else
+            {
+                if (command)
+                {
+                    if (InertiaLinear < maxSpeed)
+                    {
+                        InertiaLinear = Math.Min(maxSpeed, InertiaLinear + maxSpeed * accel * Global.EngineFrameTime);
+                    }
+                }
+                else
+                {
+                    if (InertiaLinear > 0.0f)
+                    {
+                        InertiaLinear = Math.Max(0.0f, InertiaLinear - maxSpeed * accel * Global.EngineFrameTime);
+                    }
+                }
+
+            }
+
+            return InertiaLinear * SpeedMult;
+        }
+
+        /// <summary>
+        /// Angular inertia is used on keyboard-driven (non-analog) rotational controls.
+        /// </summary>
+        public float GetInertiaAngular(float maxAngle, float accel, byte axis)
+        {
+            if (axis > 1) return 0.0f;
+
+            var currRotDir = 0;
+            if(Command.Rotation[axis] < 0.0f)
+            {
+                currRotDir = 1;
+            }
+            else if(Command.Rotation[axis] > 0.0f)
+            {
+                currRotDir = 2;
+            }
+
+            if(currRotDir == 0 || maxAngle == 0.0f || accel == 0.0f)
+            {
+                InertiaAngular[axis] = 0.0f;
+            }
+            else
+            {
+                if(InertiaAngular[axis] != maxAngle)
+                {
+                    if(currRotDir == 2)
+                    {
+                        if (InertiaAngular[axis] < 0.0f)
+                        {
+                            InertiaAngular[axis] = 0.0f;
+                        }
+                        else
+                        {
+                            InertiaAngular[axis] = Math.Min(maxAngle, InertiaAngular[axis] + maxAngle * accel * Global.EngineFrameTime);
+                        }
+                    }
+                    else
+                    {
+                        if (InertiaAngular[axis] > 0.0f)
+                        {
+                            InertiaAngular[axis] = 0.0f;
+                        }
+                        else
+                        {
+                            InertiaAngular[axis] = Math.Max(-maxAngle, InertiaAngular[axis] - maxAngle * accel * Global.EngineFrameTime);
+                        }
+                    }
+                }
+            }
+
+            return Math.Abs(InertiaAngular[axis]) * Command.Rotation[axis];
+        }
 
         public int MoveOnFloor();
 
@@ -1138,4 +1368,6 @@ namespace FreeRaider
         public static int Sector_AllowTraverse(RoomSector rs, float floor, EngineContainer cont);
     }
 }
+
+
 
