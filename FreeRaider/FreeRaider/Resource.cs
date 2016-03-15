@@ -240,7 +240,7 @@ namespace FreeRaider
 
         // Open autoexec.
 
-        public static void Res_AutoexecOpen(Game engine_version);
+        public static void Res_AutoexecOpen(TRGame engine_version);
 
         // Functions generating native OpenTomb structs from legacy TR structs.
 

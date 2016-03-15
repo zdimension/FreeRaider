@@ -17,12 +17,14 @@ namespace FreeRaider.Loader
             reader = br;
         }
 
-        protected Level(BinaryReader br, Game ver)
+        protected Level(BinaryReader br, TRGame ver)
             : this(br, Helper.GameToEngine(ver))
         {
         }
 
         public bool IsDemoOrUb { get; set; }
+
+        public abstract void Load();
 
         /// <summary>
         /// Color palette
@@ -205,29 +207,29 @@ namespace FreeRaider.Loader
                     Level lvl = null;
                     switch(ver)
                     {
-                        case Game.TR1:
+                        case TRGame.TR1:
                             lvl = new TR1Level(br, ver);
                             break;
-                        case Game.TR1Demo:
-                            case Game.TR1UnfinishedBusiness:
+                        case TRGame.TR1Demo:
+                            case TRGame.TR1UnfinishedBusiness:
                             lvl = new TR1Level(br, ver);
                             lvl.IsDemoOrUb = true;
                             break;
-                        case Game.TR2:
+                        case TRGame.TR2:
                             lvl = new TR2Level(br, ver);
                             break;
-                        case Game.TR2Demo:
+                        case TRGame.TR2Demo:
                             lvl = new TR2Level(br, ver);
                             lvl.IsDemoOrUb = true;
                             break;
-                        case Game.TR3:
+                        case TRGame.TR3:
                             lvl = new TR3Level(br, ver);
                             break;
-                        case Game.TR4:
-                        case Game.TR4Demo:
+                        case TRGame.TR4:
+                        case TRGame.TR4Demo:
                             lvl = new TR4Level(br, ver);
                             break;
-                        case Game.TR5:
+                        case TRGame.TR5:
                             lvl = new TR5Level(br, ver);
                             break;
                     }

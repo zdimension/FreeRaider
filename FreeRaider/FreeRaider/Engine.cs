@@ -1,6 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.Linq;
 using BulletSharp;
 using FreeRaider.Loader;
+using OpenTK;
+using OpenTK.Audio;
+using OpenTK.Audio.OpenAL;
+using OpenTK.Graphics.OpenGL;
 
 namespace FreeRaider
 {
@@ -172,27 +180,68 @@ namespace FreeRaider
 
     public partial class Global
     {
-        public static EngineControlState ControlStates;
+        public static EngineControlState ControlStates = new EngineControlState();
 
-        public static ControlSettings ControlMapper;
+        public static ControlSettings ControlMapper = new ControlSettings();
 
-        public static AudioSettings AudioSettings;
+        public static AudioSettings AudioSettings = new AudioSettings();
 
-        public static float EngineFrameTime;
+        public static float EngineFrameTime = 0.0f;
 
         public static Camera EngineCamera;
 
         public static World EngineWorld;
 
-        public static DefaultCollisionConfiguration BtEngineCollisionConfiguration;
+        public static List<float> FrameVertexBuffer = new List<float>();
 
-        public static CollisionDispatcher BtEngineDispatcher;
+        public static int FrameVertexBufferSizeLeft = 0; 
 
-        public static BroadphaseInterface BtEngineOverlappingPairCache;
+        public static DefaultCollisionConfiguration BtEngineCollisionConfiguration = null;
 
-        public static SequentialImpulseConstraintSolver BtEngineSolver;
+        public static CollisionDispatcher BtEngineDispatcher = null;
 
-        public static DiscreteDynamicsWorld BtEngineDynamicsWorld;
+        public static GhostPairCallback BtEngineGhostPairCallback = null;
+
+        public static BroadphaseInterface BtEngineOverlappingPairCache = null;
+
+        public static SequentialImpulseConstraintSolver BtEngineSolver = null;
+
+        public static DiscreteDynamicsWorld BtEngineDynamicsWorld = null;
+
+        public static OverlapFilterCallback BtEngineFilterCallback = null;
+
+        public static IntPtr ALDevice;
+
+        public static ContextHandle ALContext;
+
+        // Debug globals
+
+        public static Vector3 LightPosition = new Vector3(255.0f, 255.0f, 8.0f);
+
+        public static float[] CastRay = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+
+        public static int FPSCycles = 0;
+
+        public static float FPSTime = 0.0f;
+    }
+
+    public partial class StaticFuncs
+    {
+        public static void FPSCycle(float time)
+        {
+            if(Global.FPSCycles < 20)
+            {
+                Global.FPSCycles++;
+                Global.FPSTime += time;
+            }
+            else
+            {
+                Global.ScreenInfo.Fps = 20.0f / Global.FPSTime;
+                Global.SystemFps.Text = Math.Round(Global.ScreenInfo.Fps, 1).ToString();
+                Global.FPSCycles = 0;
+                Global.FPSTime = 0.0f;
+            }
+        }
     }
 
     public class BtEngineClosestRayResultCallback : ClosestRayResultCallback
@@ -282,11 +331,103 @@ namespace FreeRaider
     {
         #region Starter and destructor
 
-        public static void Start();
+        public static void Start()
+        {
+            // Set defaults parameters and load config file.
+            InitConfig("config.lua");
 
-        public static void Destroy();
+            // Primary initialization.
+            InitPre();
 
-        public static void Shutdown(int val);
+            // Init generic SDL interfaces.
+            InitSDLControls();
+            InitSDLVideo();
+
+            // Additional OpenGL initialization.
+            InitGL();
+            Global.Renderer.DoShaders();
+
+            // Secondary (deferred) initialization.
+            InitPost();
+
+            // Initial window resize.
+            Resize(Global.ScreenInfo.W, Global.ScreenInfo.H, Global.ScreenInfo.W, Global.ScreenInfo.H);
+
+            // OpenAL initialization.
+            InitAL();
+
+            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_ENGINE_INITED);
+
+            // Clearing up memory for initial level loading.
+            Global.EngineWorld.Prepare();
+
+            // SDL_SetRelativeMouseMode(SDL_TRUE); TODO
+
+            // Make splash screen.
+            Gui.FadeAssignPic(FaderType.LoadScreen, "resource/graphics/legal.png");
+            Gui.FadeStart(FaderType.LoadScreen, FaderDir.Out);
+
+            Global.EngineLua.DoFile("autoexec.lua");
+        }
+
+        public static void Destroy()
+        {
+            Global.Renderer.Empty();
+            //ConsoleInfo.Instance.Destroy();
+            Common.Destroy();
+            Sys.Destroy();
+
+            // delete dynamics world
+            Global.BtEngineDynamicsWorld.Dispose();
+            Global.BtEngineDynamicsWorld = null;
+
+            // delete solver
+            Global.BtEngineSolver.Dispose();
+            Global.BtEngineSolver = null;
+
+            // delete broadphase
+            Global.BtEngineOverlappingPairCache.Dispose();
+            Global.BtEngineOverlappingPairCache = null;
+
+            // delete disptacher
+            Global.BtEngineDispatcher.Dispose();
+            Global.BtEngineDispatcher = null;
+
+            Global.BtEngineCollisionConfiguration.Dispose();
+            Global.BtEngineCollisionConfiguration = null;
+
+            Global.BtEngineGhostPairCallback.Dispose();
+            Global.BtEngineGhostPairCallback = null;
+
+            Gui.Destroy();
+        }
+
+        public static void Shutdown(int val)
+        {
+            Global.EngineLua.ClearTasks();
+            Global.Renderer.Empty();
+            Global.EngineWorld.Empty();
+            Destroy();
+
+            // TODO Joystick SDL stuff etc L792 Engine.cpp
+
+            if(Global.ALContext != ContextHandle.Zero)
+            {
+                Alc.MakeContextCurrent(ContextHandle.Zero);
+                Alc.DestroyContext(Global.ALContext);
+            }
+
+            if(Global.ALDevice != IntPtr.Zero)
+            {
+                Alc.CloseDevice(Global.ALDevice);
+            }
+
+            // free temporary memory
+            Global.FrameVertexBuffer.Clear();
+            Global.FrameVertexBufferSizeLeft = 0;
+
+            Environment.Exit(val);
+        }
 
         #endregion
 
@@ -295,16 +436,67 @@ namespace FreeRaider
         /// <summary>
         /// Initial init
         /// </summary>
-        public static void InitPre();
+        public static void InitPre()
+        {
+            Gui.InitFontManager();
+            ConsoleInfo.Instance.Init();
+
+            Global.EngineLua.Call("loadscript_pre");
+
+            Global.GameflowManager.Init();
+
+            Global.FrameVertexBuffer.Resize(Constants.INIT_FRAME_VERTEX_BUFFER_SIZE);
+            Global.FrameVertexBufferSizeLeft = Global.FrameVertexBuffer.Count;
+
+            ConsoleInfo.Instance.CompletionItems = Global.EngineLua.GetGlobals();
+
+            Common.Init();
+            Global.Renderer.Init();
+            Global.Renderer.Camera = Global.EngineCamera;
+
+            InitBullet();
+        }
 
         /// <summary>
         /// Finalizing init
         /// </summary>
-        public static void InitPost();
+        public static void InitPost()
+        {
+            Global.EngineLua.Call("loadscript_post");
 
-        public static void InitDefaultGlobals();
+            ConsoleInfo.Instance.InitFonts();
 
-        public static void InitGL();
+            Gui.Init();
+            Sys.Init();
+        }
+
+        public static void InitDefaultGlobals()
+        {
+            ConsoleInfo.Instance.InitGlobals();
+            Controls.InitGlobals();
+            Game.InitGlobals();
+            Global.Renderer.InitGlobals();
+            Audio.InitGlobals();
+        }
+
+        public static void InitGL()
+        {
+            GL.GetError();
+
+            GL.ClearColor(Color.Black);
+
+            GL.Enable(EnableCap.DepthTest);
+            GL.DepthFunc(DepthFunction.Lequal);
+
+            if(Global.Renderer.Settings.Antialias)
+            {
+                GL.Enable(EnableCap.Multisample);
+            }
+            else
+            {
+                GL.Disable(EnableCap.Multisample);
+            }
+        }
 
         public static void InitSDLControls();
 
@@ -312,9 +504,103 @@ namespace FreeRaider
 
         public static void InitSDLImage();
 
-        public static void InitAL();
+        public static void InitAL()
+        {
+            if(!Constants.NO_AUDIO)
+            {
+                var paramList = new int[]
+                {
+                    (int)AlcContextAttributes.StereoSources, Constants.TR_AUDIO_STREAM_NUMSOURCES,
+                    (int)AlcContextAttributes.MonoSources,
+                    Constants.TR_AUDIO_MAX_CHANNELS - Constants.TR_AUDIO_STREAM_NUMSOURCES,
+                    (int)AlcContextAttributes.Frequency, 44100, 0
+                };
 
-        public static void InitBullet();
+                Sys.DebugLog(Constants.LOG_FILENAME, "Probing OpenAL devices...");
+
+                var devlist = Alc.GetString(IntPtr.Zero, AlcGetStringList.DeviceSpecifier);
+
+                if(devlist.Count == 0)
+                {
+                    Sys.DebugLog(Constants.LOG_FILENAME, "InitAL: No AL audio devices!");
+                    return;
+                }
+
+                foreach (var s in devlist)
+                {
+                    Sys.DebugLog(Constants.LOG_FILENAME, " Device: {0}", s);
+                    var dev = Alc.OpenDevice(s);
+
+                    if(Global.AudioSettings.UseEffects)
+                    {
+                        if(Alc.IsExtensionPresent(dev, "ALC_EXT_EFX"))
+                        {
+                            Sys.DebugLog(Constants.LOG_FILENAME, " EFX supported!");
+                            Global.ALDevice = dev;
+                            Global.ALContext = Alc.CreateContext(dev, paramList);
+                            // fails e.g. with Rapture3D, where EFX is supported
+                            if(Global.ALContext != ContextHandle.Zero)
+                            {
+                                break;
+                            }
+                        }
+                        Alc.CloseDevice(dev);
+                    }
+                    else
+                    {
+                        Global.ALDevice = dev;
+                        Global.ALContext = Alc.CreateContext(dev, paramList);
+                        break;
+                    }
+                }
+
+                if(Global.ALContext == ContextHandle.Zero)
+                {
+                    Sys.DebugLog(Constants.LOG_FILENAME, " Failed to create OpenAL context.");
+                    Alc.CloseDevice(Global.ALDevice);
+                    Global.ALDevice = IntPtr.Zero;
+                    return;
+                }
+
+                Alc.MakeContextCurrent(Global.ALContext);
+
+                Audio.LoadALExtFunctions(Global.ALDevice);
+
+                var driver = "OpenAL library: " + Alc.GetString(Global.ALDevice, AlcGetString.DeviceSpecifier);
+                ConsoleInfo.Instance.AddLine(driver, FontStyle.ConsoleInfo);
+
+                AL.SpeedOfSound(330.0f * 512.0f);
+                AL.DopplerVelocity(330.0f * 510.0f);
+                AL.DistanceModel(ALDistanceModel.LinearDistanceClamped);
+            }
+        }
+
+        public static void InitBullet()
+        {
+            // collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
+            Global.BtEngineCollisionConfiguration = new DefaultCollisionConfiguration();
+
+            // use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
+            Global.BtEngineDispatcher = new CollisionDispatcher(Global.BtEngineCollisionConfiguration);
+            Global.BtEngineDispatcher.NearCallback = RoomNearCallback;
+
+            // btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
+            Global.BtEngineOverlappingPairCache = new DbvtBroadphase();
+            Global.BtEngineGhostPairCallback = new GhostPairCallback();
+            Global.BtEngineOverlappingPairCache.OverlappingPairCache.SetInternalGhostPairCallback(Global.BtEngineGhostPairCallback);
+
+            // the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
+            Global.BtEngineSolver = new SequentialImpulseConstraintSolver();
+
+            Global.BtEngineDynamicsWorld = new DiscreteDynamicsWorld(Global.BtEngineDispatcher,
+                Global.BtEngineOverlappingPairCache, Global.BtEngineSolver, Global.BtEngineCollisionConfiguration);
+            Global.BtEngineDynamicsWorld.SetInternalTickCallback(InternalTickCallback);
+            Global.BtEngineDynamicsWorld.Gravity = new Vector3(0, 0, -4500.0f);
+
+            Global.DebugDrawer.DebugMode = DebugDrawModes.DrawWireframe | DebugDrawModes.DrawConstraints;
+            Global.BtEngineDynamicsWorld.DebugDrawer = Global.DebugDrawer;
+            //Global.BtEngineDynamicsWorld.PairCache.SetInternalGhostPairCallback(Global.BtEngineFilterCallback);
+        }
 
         #endregion
 
@@ -328,9 +614,53 @@ namespace FreeRaider
 
         #region Core system routines - display and tick
 
-        public static void Display();
+        public static void Display()
+        {
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-        public static void Frame(float time);
+            Global.EngineCamera.Apply();
+            Global.EngineCamera.RecalcClipPlanes();
+
+            if(Global.ScreenInfo.ShowDebugInfo)
+            {
+                ShowDebugInfo();
+            }
+
+            GL.FrontFace(FrontFaceDirection.Cw);
+
+            Global.Renderer.GenWorldList();
+            Global.Renderer.DrawList();
+
+            Gui.SwitchGLMode(true);
+            {
+                Gui.DrawNotifier();
+                if(Global.EngineWorld.Character != null && Global.MainInventoryManager != null)
+                {
+                    Gui.DrawInventory();
+                }
+            }
+
+            Gui.Render();
+            Gui.SwitchGLMode(false);
+
+            Global.Renderer.DrawListDebugLines();
+
+            // SDL_GL_SwapWindow(sdl_window); TODO
+        }
+
+        public static void Frame(float time)
+        {
+            if(time > 0.1f)
+            {
+                time = 0.1f;
+            }
+
+            Global.EngineFrameTime = time;
+            StaticFuncs.FPSCycle(time);
+
+            Game.Frame(time);
+            Global.GameflowManager.Do();
+        }
 
         #endregion
 
@@ -339,7 +669,24 @@ namespace FreeRaider
         // Nominal values are used e.g. to set the size for the console.
         // pixel values are used for glViewport. Both will be the same on
         // normal displays, but on retina displays or similar, pixels will be twice nominal (or more).
-        public static void Resize(int nominalW, int nominalH, int pixelsW, int pixelsH);
+        public static void Resize(int nominalW, int nominalH, int pixelsW, int pixelsH)
+        {
+            Global.ScreenInfo.W = (short) nominalW;
+            Global.ScreenInfo.H = (short) nominalH;
+
+            Global.ScreenInfo.Wunit = nominalW / Constants.ScreenMeteringResolution;
+            Global.ScreenInfo.Hunit = nominalH / Constants.ScreenMeteringResolution;
+            Global.ScreenInfo.ScaleFactor = Global.ScreenInfo.W < Global.ScreenInfo.H
+                ? Global.ScreenInfo.Hunit
+                : Global.ScreenInfo.Wunit;
+
+            Gui.Resize();
+
+            Global.EngineCamera.SetFovAspect(Global.ScreenInfo.Fov, (float)nominalW / nominalH);
+            Global.EngineCamera.RecalcClipPlanes();
+
+            GL.Viewport(0, 0, pixelsW, pixelsH);
+        }
 
         #endregion
 
@@ -349,23 +696,137 @@ namespace FreeRaider
 
         public static void SecondaryMouseDown();
 
-        public static void ShowDebugInfo();
+        public static void ShowDebugInfo()
+        {
+            var colorArray = new[] {1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f};
 
-        public static void DumpRoom(Room r);
+            Global.LightPosition = Global.EngineCamera.Position;
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            GL.LineWidth(2.0f);
+            GL.VertexPointer(3, VertexPointerType.Float, 0, Global.CastRay);
+            GL.ColorPointer(3, ColorPointerType.Float, 0, colorArray);
+            GL.DrawArrays(PrimitiveType.Lines, 0, 2);
+
+            var ent = Global.EngineWorld.Character;
+            if(ent != null)
+            {
+                Gui.OutTextXY(30.0f, 30.0f,
+                    "last_anim = {0} ({0:D}), curr_anim = {1} ({1:D}), next_anim = {2} ({2:D}), last_st = {3} ({3:D}), next_st = {4} ({4:D}), speed={5} frame={6}",
+                    ent.Bf.Animations.LastAnimation,
+                    ent.Bf.Animations.CurrentAnimation,
+                    ent.Bf.Animations.NextAnimation,
+                    ent.Bf.Animations.LastState,
+                    ent.Bf.Animations.NextState,
+                    ent.CurrentSpeed,
+                    ent.Bf.Animations.CurrentFrame
+                    );
+
+                Gui.OutTextXY(20, 8, "pos = {0}", ent.Transform.Origin);
+            }
+
+            if(Global.LastContainer != null)
+            {
+                switch(Global.LastContainer.ObjectType)
+                {
+                    case OBJECT_TYPE.Entity:
+                        Gui.OutTextXY(30.0f, 60.0f, "cont_entity: id = {0}, model = {1}",
+                            ((Entity) Global.LastContainer.Object).ID,
+                            ((Entity) Global.LastContainer.Object).Bf.Animations.Model.ID);
+                        break;
+
+                    case OBJECT_TYPE.StaticMesh:
+                        Gui.OutTextXY(30.0f, 60.0f, "cont_static: id = {0}",
+                            ((StaticMesh)Global.LastContainer.Object).ObjectID);
+                        break;
+
+                    case OBJECT_TYPE.RoomBase:
+                        Gui.OutTextXY(30.0f, 60.0f, "cont_room: id = {0}",
+                            ((Room)Global.LastContainer.Object).ID);
+                        break;
+                }
+            }
+
+            if(Global.EngineCamera.CurrentRoom != null)
+            {
+                var rs = Global.EngineCamera.CurrentRoom.GetSectorRaw(Global.EngineCamera.Position);
+                if(rs != null)
+                {
+                    Gui.OutTextXY(30.0f, 90.0f, "room = (id = {0}, sx = {1}, sy = {2})",
+                        Global.EngineCamera.CurrentRoom.ID, rs.IndexX, rs.IndexY);
+                    Gui.OutTextXY(30.0f, 120.0f, "room_below = {0}, room_above = {1}",
+                        rs.SectorBelow == null ? -1 : (long) rs.SectorBelow.OwnerRoom.ID,
+                        rs.SectorAbove == null ? -1 : (long) rs.SectorAbove.OwnerRoom.ID);
+                }
+            }
+            Gui.OutTextXY(30.0f, 150.0f, "cam_pos = {0}", Global.EngineCamera.Position);
+        }
+
+        public static void DumpRoom(Room r)
+        {
+            if(r != null)
+            {
+                Sys.DebugLog("room_dump.txt", "ROOM = {0}, ({1} x {2}), bottom = {3}, top = {4}, pos({5})",
+                    r.ID, r.SectorsX, r.SectorsY, r.BBMin.Z, r.BBMax.Z, r.Transform.Origin.ToString("{0}, {1}"));
+                Sys.DebugLog("room_dump.txt", "flag = {0} ({0:X}), alt_room = {1}, base_room = {2}",
+                    (RoomFlag) r.Flags, r.AlternateRoom == null ? -1 : (long) r.AlternateRoom.ID,
+                    r.BaseRoom == null ? -1 : (long) r.BaseRoom.ID);
+                foreach (var rs in r.Sectors)
+                {
+                    Sys.DebugLog("room_dump.txt", "({0}, {1})\tfloor = {2}, ceiling = {3}, portal = {4}", rs.IndexX,
+                        rs.IndexY, rs.Floor, rs.Ceiling, rs.PortalToRoom);
+                }
+                foreach (var sm in r.StaticMesh)
+                {
+                    Sys.DebugLog("room_dump.txt", "static_mesh = {0}", sm.ObjectID);
+                }
+                foreach (
+                    var ent in
+                        from cont in r.Containers
+                        where cont.ObjectType == OBJECT_TYPE.Entity
+                        select (Entity) cont.Object)
+                {
+                    Sys.DebugLog("room_dump.txt", "entity: id = {0}, model = {1}", ent.ID,
+                        ent.Bf.Animations.Model.ID);
+                }
+            }
+        }
 
         #endregion
 
         #region PC-specific level loader routines
 
-        public static bool LoadPCLevel(string name);
+        public static bool LoadPCLevel(string name)
+        {
+            var loader = Level.CreateLoader(name);
+            if (loader == null)
+                return false;
+
+            loader.Load();
+
+            StaticFuncs.TR_GenWorld(Global.EngineWorld, loader);
+
+            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_LOADED_PC_LEVEL);
+            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_ENGINE_VERSION, loader.Version, GetLevelName(name));
+            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_NUM_ROOMS, Global.EngineWorld.Rooms.Count);
+
+            return true;
+        }
 
         #endregion
 
         #region General level loading routines
 
-        public static bool FileFound(string name, bool write = false);
+        public static bool FileFound(string name, bool write = false)
+        {
+            return File.Exists(name);
+        }
 
-        public static int GetLevelFormat(string name);
+        public static LEVEL_FORMAT GetLevelFormat(string name)
+        {
+            return LEVEL_FORMAT.PC;
+        }
 
         public static int LoadMap(string name);
 
@@ -373,9 +834,43 @@ namespace FreeRaider
 
         #region String getters
 
-        public static string GetLevelName(string path);
+        public static string GetLevelName(string path)
+        {
+            return Path.GetFileNameWithoutExtension(path);
+        }
 
-        public static string GetAutoexecName(Game gameVersion, string postfix = "");
+        public static string GetAutoexecName(TRGame gameVersion, string postfix = "")
+        {
+            var levelName = GetLevelName(Global.GameflowManager.CurrentLevelPath).ToUpper();
+
+            var name = "scripts/autoexec";
+
+            if(gameVersion < TRGame.TR2)
+            {
+                name += "tr1/";
+            }
+            else if(gameVersion < TRGame.TR3)
+            {
+                name += "tr2/";
+            }
+            else if(gameVersion < TRGame.TR4)
+            {
+                name += "tr3/";
+            }
+            else if(gameVersion < TRGame.TR5)
+            {
+                name += "tr4/";
+            }
+            else
+            {
+                name += "tr5/";
+            }
+
+            name += levelName;
+            name += postfix;
+            name += ".lua";
+            return name;
+        }
 
         #endregion
 
@@ -388,10 +883,59 @@ namespace FreeRaider
         #region Bullet global methods
 
         public static void RoomNearCallback(BroadphasePair collisionPair, CollisionDispatcher dispatcher,
-            DispatcherInfo dispatchInfo);
+            DispatcherInfo dispatchInfo)
+        {
+            var c0 = (EngineContainer) ((CollisionObject) collisionPair.Proxy0.ClientObject).UserObject;
+            var r0 = c0?.Room;
+            var c1 = (EngineContainer) ((CollisionObject) collisionPair.Proxy1.ClientObject).UserObject;
+            var r1 = c1?.Room;
 
-        public static void InternalTickCallback(DynamicsWorld world, float timeStep);
+            if (c1 != null && c1 == c0)
+            {
+                if (((CollisionObject) collisionPair.Proxy0.ClientObject).IsStaticOrKinematicObject
+                    || ((CollisionObject) collisionPair.Proxy1.ClientObject).IsStaticOrKinematicObject)
+                {
+                    return; // No self interaction
+                }
+                dispatcher.NearCallback(collisionPair, dispatcher, dispatchInfo);
+                return;
+            }
+
+            if(r0 == null && r1 == null)
+            {
+                dispatcher.NearCallback(collisionPair, dispatcher, dispatchInfo); // Both are out of rooms
+                return;
+            }
+
+            if(r0 != null && r1 != null)
+            {
+                if(r0.IsInNearRoomsList(r1))
+                {
+                    dispatcher.NearCallback(collisionPair, dispatcher, dispatchInfo);
+                }
+            }
+        }
+
+        public static void InternalTickCallback(DynamicsWorld world, float timeStep)
+        {
+            for(var i = world.NumCollisionObjects - 1; i >= 0; i--)
+            {
+                Assert.That(i >= 0 && i < Global.BtEngineDynamicsWorld.CollisionObjectArray.Count);
+                var obj = Global.BtEngineDynamicsWorld.CollisionObjectArray[i];
+                var body = RigidBody.Upcast(obj);
+                if(body != null && !body.IsStaticObject && body.MotionState != null)
+                {
+                    var trans = (Transform)body.MotionState.WorldTransform;
+                    var cont = (EngineContainer) body.UserObject;
+                    if(cont != null && cont.ObjectType == OBJECT_TYPE.BulletMisc)
+                    {
+                        cont.Room = Room.FindPosCogerrence(trans.Origin, cont.Room);
+                    }
+                }
+            }
+        }
 
         #endregion
     }
 }
+

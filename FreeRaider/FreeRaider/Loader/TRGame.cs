@@ -2,7 +2,7 @@
 
 namespace FreeRaider.Loader
 {
-    public enum Game
+    public enum TRGame
     {
         TR1,
         TR1Demo,
@@ -32,26 +32,26 @@ namespace FreeRaider
 {
     public partial class Helper
     {
-        public static Loader.Engine GameToEngine(Game game)
+        public static Loader.Engine GameToEngine(TRGame game)
         {
             {
                 switch (game)
                 {
-                    case Game.TR1:
-                    case Game.TR1Demo:
-                    case Game.TR1UnfinishedBusiness:
+                    case TRGame.TR1:
+                    case TRGame.TR1Demo:
+                    case TRGame.TR1UnfinishedBusiness:
                         return Loader.Engine.TR1;
-                    case Game.TR2:
-                    case Game.TR2Demo:
-                    case Game.TR2Gold:
+                    case TRGame.TR2:
+                    case TRGame.TR2Demo:
+                    case TRGame.TR2Gold:
                         return Loader.Engine.TR2;
-                    case Game.TR3:
-                    case Game.TR3Gold:
+                    case TRGame.TR3:
+                    case TRGame.TR3Gold:
                         return Loader.Engine.TR3;
-                    case Game.TR4:
-                    case Game.TR4Demo:
+                    case TRGame.TR4:
+                    case TRGame.TR4Demo:
                         return Loader.Engine.TR4;
-                    case Game.TR5:
+                    case TRGame.TR5:
                         return Loader.Engine.TR5;
                     default:
                         return Loader.Engine.Unknown;

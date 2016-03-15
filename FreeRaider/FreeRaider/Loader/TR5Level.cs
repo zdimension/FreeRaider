@@ -12,15 +12,13 @@ namespace FreeRaider.Loader
     {
         public TR5Level(BinaryReader br, Engine ver) : base(br, ver)
         {
-            Load();
         }
 
-        public TR5Level(BinaryReader br, Game ver) : base(br, ver)
+        public TR5Level(BinaryReader br, TRGame ver) : base(br, ver)
         {
-            Load();
         }
 
-        private void Load()
+        public override void Load()
         {
             var version = reader.ReadUInt32();
 

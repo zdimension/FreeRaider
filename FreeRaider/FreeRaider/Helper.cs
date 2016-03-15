@@ -15,7 +15,7 @@ namespace FreeRaider
 {
     public partial class Helper
     {
-        public static Game ParseVersion(BinaryReader br, string fext)
+        public static TRGame ParseVersion(BinaryReader br, string fext)
         {
             fext = fext.ToUpper();
             var check = br.ReadBytes(4);
@@ -24,31 +24,31 @@ namespace FreeRaider
             {
                 case ".PHD":
                     if (ver == 0x00000020)
-                        return Game.TR1;
+                        return TRGame.TR1;
                     break;
                 case ".TUB":
                     if (ver == 0x00000020)
-                        return Game.TR1UnfinishedBusiness;
+                        return TRGame.TR1UnfinishedBusiness;
                     break;
                 case ".TR2":
                     if (ver == 0x0000002D)
-                        return Game.TR2;
+                        return TRGame.TR2;
                     else if ((check[0] == 0x38 || check[0] == 0x34) &&
                              (check[1] == 0x00) &&
                              (check[2] == 0x18 || check[2] == 0x08) &&
                              (check[3] == 0xFF))
-                        return Game.TR3;
+                        return TRGame.TR3;
                     break;
                 case ".TR4":
                     if (ver == 0x00345254 || ver == 0x63345254 || ver == 0xFFFFFFF0)
-                        return Game.TR4;
+                        return TRGame.TR4;
                     break;
                 case ".TRC":
                     if (ver == 0x00345254)
-                        return Game.TR5;
+                        return TRGame.TR5;
                     break;
             }
-            return Game.Unknown;
+            return TRGame.Unknown;
         }
 
         public static Random Random = null;
@@ -319,6 +319,13 @@ namespace FreeRaider
         public static unsafe void* memcpy(void* destination, void* source, int num)
         {
             return memcpy(destination, source, (uint) num);
+        }
+
+        public static void SetFromOpenGLSubMatrix(ref Matrix3 mat, float[] m)
+        {
+            mat.Row0 = new Vector3(m[0], m[4], m[8]);
+            mat.Row1 = new Vector3(m[1], m[5], m[9]);
+            mat.Row2 = new Vector3(m[2], m[6], m[10]);
         }
     }
 

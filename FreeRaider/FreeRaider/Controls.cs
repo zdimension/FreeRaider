@@ -1,4 +1,7 @@
-﻿namespace FreeRaider
+﻿using BulletSharp;
+using OpenTK;
+
+namespace FreeRaider
 {
     public partial class Constants
     {
@@ -159,16 +162,52 @@
     public class Controls
     {
         public static void PollSDLInput();
+
         public static void DebugKeys(int button, int state);
-        public static void PrimaryMouseDown();
+
+        public static void PrimaryMouseDown()
+        {
+            var cont = new EngineContainer();
+            var dbgR = 128.0f;
+            var v = Global.EngineCamera.Position;
+            var dir = Global.EngineCamera.ViewDirection;
+            var localInertia = Vector3.Zero;
+
+            var cshape = new SphereShape(dbgR);
+            cshape.Margin = Constants.COLLISION_MARGIN_DEFAULT;
+
+            var startTransform = new Transform();
+            startTransform.SetIdentity();
+            var newPos = v;
+            startTransform.Origin = newPos;
+            cshape.CalculateLocalInertia(12.0f, out localInertia);
+            var motionState = new DefaultMotionState((Matrix4)startTransform);
+            var body = new RigidBody(new RigidBodyConstructionInfo(12.0f, motionState, cshape, localInertia));
+            Global.BtEngineDynamicsWorld.AddRigidBody(body);
+            body.LinearVelocity = dir * 6000;
+            cont.Room = Room.FindPosCogerrence(newPos, Global.EngineCamera.CurrentRoom);
+            cont.ObjectType = OBJECT_TYPE.BulletMisc; // bullet have to destroy this user pointer
+            body.UserObject = cont;
+            body.CcdMotionThreshold = dbgR; // disable tunneling effect
+            body.CcdSweptSphereRadius = dbgR;
+        }
+
         public static void SecondaryMouseDown();
+
         public static void Key(int button, bool state);
+
         public static void WrapGameControllerKey(int button, bool state);
+
         public static void WrapGameControllerAxis(int axis, short value);
+
         public static void JoyAxis(int axis, short value);
+
         public static void JoyHat(int value);
+
         public static void JoyRumble(float power, int time);
+
         public static void RefreshStates();
+
         public static void InitGlobals();
     }
 }

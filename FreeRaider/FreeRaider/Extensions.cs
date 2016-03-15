@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using BulletSharp;
@@ -664,6 +665,25 @@ namespace FreeRaider
             target[index + 0] = v[0];
             target[index + 1] = v[1];
             target[index + 2] = v[2];
+        }
+
+        public static unsafe float[] ToArray(this Matrix3 mat)
+        {
+            var p = Marshal.AllocHGlobal(Marshal.SizeOf(mat));
+            Marshal.StructureToPtr(mat, p, false);
+            return Helper.GetArrayFromPointer((float*) p, 9);
+        }
+
+        public static unsafe float[] ToArray(this Matrix4 mat)
+        {
+            var p = Marshal.AllocHGlobal(Marshal.SizeOf(mat));
+            Marshal.StructureToPtr(mat, p, false);
+            return Helper.GetArrayFromPointer((float*)p, 16);
+        }
+
+        public static string ToString(this Vector3 vec, string format)
+        {
+            return string.Format(format, vec.X, vec.Y, vec.Z);
         }
     }
 

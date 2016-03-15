@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using OpenTK;
 
 namespace FreeRaider
@@ -35,6 +36,13 @@ namespace FreeRaider
             return Helper.CreateInstance<Matrix4>(t.GetOpenGLMatrix());
         }
 
+        public static explicit operator Transform(Matrix4 t)
+        {
+            var r = new Transform();
+            r.SetFromOpenGLMatrix(t.ToArray());
+            return r;
+        }
+
         public float[] GetOpenGLMatrix()
         {
             var ret = new float[16];
@@ -45,6 +53,12 @@ namespace FreeRaider
             ret[14] = Origin.Z;
             ret[15] = 1.0f;
             return ret;
+        }
+
+        public void SetFromOpenGLMatrix(float[] m)
+        {
+            Helper.SetFromOpenGLSubMatrix(ref Basis, m);
+            Origin = new Vector3(m[12], m[13], m[14]);
         }
 
         public void SetIdentity()

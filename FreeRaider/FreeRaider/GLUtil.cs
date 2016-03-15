@@ -21,7 +21,7 @@ namespace FreeRaider
                     return 0;
                 }
 
-                Sys.DebugLog(Constants.GL_LOG_FILENAME, "OpenGL Error: {0} (0x{0:X4}}) in {1}:{2}", glErr, file, line);
+                Sys.DebugLog(Constants.GL_LOG_FILENAME, "OpenGL Error: {0} (0x{0:X}}) in {1}:{2}", glErr, file, line);
                 return 1;
 
                 /*switch(glErr)

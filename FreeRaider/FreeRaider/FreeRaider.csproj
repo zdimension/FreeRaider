@@ -89,6 +89,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="Frustum.cs" />
     <Compile Include="Game.cs" />
+    <Compile Include="Gameflow.cs" />
     <Compile Include="GLFont.cs" />
     <Compile Include="GLFontBuffer.cs" />
     <Compile Include="GLUtil.cs" />
@@ -99,7 +100,7 @@
     <Compile Include="LoaderTests\Loader.cs" />
     <Compile Include="LoaderTests\TR2Level.cs" />
     <Compile Include="Loader\DataTypes.cs" />
-    <Compile Include="Loader\Game.cs" />
+    <Compile Include="Loader\TRGame.cs" />
     <Compile Include="Loader\Level.cs" />
     <Compile Include="Loader\TR1Level.cs" />
     <Compile Include="Loader\TR2Level.cs" />

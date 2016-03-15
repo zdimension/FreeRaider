@@ -238,7 +238,7 @@ namespace FreeRaider
                 case Key.Up:
                 case Key.Down:
                     if (historyLines.Count == 0) break;
-                    Audio.Send(Global.EngineLua.GetGlobalSound(TR_AUDIO_SOUND_GLOBALID.MenuPage));
+                    Audio.Send((uint)Global.EngineLua.GetGlobalSound((int)TR_AUDIO_SOUND_GLOBALID.MenuPage));
                     if (k == Key.Up && historyPos < historyLines.Count)
                         historyPos++;
                     else if (k == Key.Down && historyPos > 0)
@@ -396,13 +396,13 @@ namespace FreeRaider
 
         public void Warning(int warnStringIndex, params object[] args)
         {
-            var fmt = Global.EngineLua.GetSysNotify(warnStringIndex, 256);
+            var fmt = Global.EngineLua.GetSysNotify(warnStringIndex);
             AddLine(Helper.Format(fmt, args), FontStyle.ConsoleWarning);
         }
 
         public void Notify(int notifyStringIndex, params object[] args)
         {
-            var fmt = Global.EngineLua.GetSysNotify(notifyStringIndex, 256);
+            var fmt = Global.EngineLua.GetSysNotify(notifyStringIndex);
             AddLine(Helper.Format(fmt, args), FontStyle.ConsoleNotify);
         }
 

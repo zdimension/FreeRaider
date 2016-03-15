@@ -55,9 +55,9 @@ namespace FreeRaider.Script
             return this;
         }
 
-        public object Call(string funcName, params object[] args)
+        public object[] Call(string funcName, params object[] args)
         {
-            return (Get(funcName) as NLua.LuaFunction).Call(args).FirstOrDefault();
+            return (Get(funcName) as LuaFunction).Call(args);
         }
 
         public void RegisterC(string funcName, MethodInfo m)
@@ -161,11 +161,11 @@ namespace FreeRaider.Script
 
         public bool GetSoundtrack(int trackIndex, string trackPath, TR_AUDIO_STREAM_METHOD loadMethod, TR_AUDIO_STREAM_TYPE streamType);
 
-        public bool GetLoadingScreen(int levelIndex, string picPath);
+        public string GetLoadingScreen(int levelIndex);
 
-        public bool GetString(int stringID, int stringLength, string buffer);
+        public string GetString(int stringID);
 
-        public bool GetSysNotify(int stringID, int stringLength, string buffer);
+        public string GetSysNotify(int stringID);
 
         public static string ParseToken(string data, string token);
 
