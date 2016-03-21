@@ -208,9 +208,5 @@ namespace FreeRaider
             Frustum.Vertices = new List<Vector3>();
             Frustum.Planes = ClipPlanes.Take(4).ToList();
         }
-
-        public static void FollowEntity(Camera cam, Entity ent, float dx, float dz);
-
-        public static bool HasHit(BtEngineClosestConvexResultCallback cb, Transform cameraFrom, Transform cameraTo);
     }
 }

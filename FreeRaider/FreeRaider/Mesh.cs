@@ -907,6 +907,13 @@ namespace FreeRaider
 
         public event OnFrameHandler OnFrame = delegate { };
 
+        public void PerfomOnFrame(Character ent, SSAnimation ssAnim, ENTITY_ANIM state)
+        {
+            OnFrame(ent, ssAnim, state);
+        }
+
+        public bool OnFrameSet => OnFrame != null;
+
         public delegate void OnFrameHandler(Character ent, SSAnimation ssAnim, ENTITY_ANIM state);
 
         public void ClearOnFrame()

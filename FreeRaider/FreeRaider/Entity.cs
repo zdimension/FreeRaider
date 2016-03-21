@@ -289,7 +289,7 @@ namespace FreeRaider
 
         public void UpdateCurrentCollisions();
 
-        public int GetPenetrationFixVector(Vector3 reaction, bool hasMove);
+        public int GetPenetrationFixVector(out Vector3 reaction, bool hasMove);
 
         public void CheckCollisionCallback();
 
@@ -366,7 +366,7 @@ namespace FreeRaider
 
         public virtual void TransferToRoom(Room room);
 
-        public virtual void FrameImpl(float time, short frame, int state)
+        public virtual void FrameImpl(float time, short frame, ENTITY_ANIM state)
         {
             Bf.Animations.CurrentFrame = frame;
         }

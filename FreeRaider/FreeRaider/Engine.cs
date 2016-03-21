@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq;
 using BulletSharp;
 using FreeRaider.Loader;
+using FreeRaider.Script;
+using NLua.Exceptions;
 using OpenTK;
 using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
@@ -606,9 +608,38 @@ namespace FreeRaider
 
         #region Config parser
 
-        public static void InitConfig(string filename);
+        public static void InitConfig(string filename)
+        {
+            InitDefaultGlobals();
 
-        public static void SaveConfig();
+            if(!string.IsNullOrWhiteSpace(filename) && FileFound(filename))
+            {
+                var state = new ScriptEngine();
+                state.RegisterC("bind", ((Action<int, int, object>) MainEngine.BindKey).Method); // get and set key bindings
+                try
+                {
+                    state.DoFile(filename);
+                }
+                catch(Exception e)
+                {
+                    Sys.DebugLog(Constants.LUA_LOG_FILENAME, "{0}", e.Message);
+                    return;
+                }
+
+                state.ParseScreen(Global.ScreenInfo);
+                state.ParseRender(Global.Renderer.Settings);
+                state.ParseAudio(Global.AudioSettings);
+                state.ParseConsole(ConsoleInfo.Instance);
+                state.ParseControls(Global.ControlMapper);
+                state.ParseSystem(Global.SystemSettings);
+            }
+            else
+            {
+                Sys.Warn("Could not find \"{0}\"", filename);
+            }
+        }
+
+        //public static void SaveConfig();
 
         #endregion
 
@@ -828,7 +859,66 @@ namespace FreeRaider
             return LEVEL_FORMAT.PC;
         }
 
-        public static int LoadMap(string name);
+        public static bool LoadMap(string name)
+        {
+            if(!FileFound(name))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_FILE_NOT_FOUND, name);
+                return false;
+            }
+
+            Gui.DrawLoadScreen(0);
+
+            Global.EngineCamera.CurrentRoom = null;
+
+            Global.Renderer.HideSkyBox();
+            Global.Renderer.ResetWorld();
+
+            Global.GameflowManager.CurrentLevelPath = name; // it is needed for "not in the game" levels or correct saves loading.
+
+            Gui.DrawLoadScreen(50);
+
+            Global.EngineWorld.Empty();
+            Global.EngineWorld.Prepare();
+
+            Global.EngineLua.Clean();
+
+            Audio.Init();
+
+            Gui.DrawLoadScreen(100);
+
+            // Here we can place different platform-specific level loading routines.
+
+            switch (GetLevelFormat(name))
+            {
+                case LEVEL_FORMAT.PC:
+                    if (!LoadPCLevel(name)) return false;
+                    break;
+                case LEVEL_FORMAT.PSX:
+                    break;
+                case LEVEL_FORMAT.DC:
+                    break;
+                case LEVEL_FORMAT.OPENTOMB:
+                    break;
+            }
+
+            Global.EngineWorld.ID = 0;
+            Global.EngineWorld.Name = null;
+            Global.EngineWorld.Type = 0;
+
+            Game.Prepare();
+
+            Global.EngineLua.Prepare();
+
+            Global.Renderer.SetWorld(Global.EngineWorld);
+
+            Gui.DrawLoadScreen(1000);
+
+            Gui.FadeStart(FaderType.LoadScreen, FaderDir.In);
+            Gui.NotifierStop();
+
+            return true;
+        }
 
         #endregion
 
@@ -876,7 +966,169 @@ namespace FreeRaider
 
         #region Console command parser
 
-        public static int ExecCmd(string ch);
+        public static bool ExecCmd(string cmd)
+        {
+            var token = "";
+            var sect = new RoomSector();
+            cmd = cmd.ToLower();
+
+            var ch = 0;
+            for(var i = 0; i < cmd.Length; i++)
+            {
+                ch = MainEngine.ParseToken(cmd, ch, out token);
+                token = token.ToLower();
+                
+                switch (token)
+                {
+                    case "help":
+                        for(var j = Strings.SYSNOTE_COMMAND_HELP1; j <= Strings.SYSNOTE_COMMAND_HELP15; j++)
+                        {
+                            ConsoleInfo.Instance.Notify(j);
+                        }
+                        break;
+                    case "goto":
+                    {
+                        Global.ControlStates.FreeLook = true;
+                        var x = MainEngine.ParseFloat(cmd, ch);
+                        var y = MainEngine.ParseFloat(cmd, ch);
+                        var z = MainEngine.ParseFloat(cmd, ch);
+                        Global.Renderer.Camera.Position = new Vector3(x, y, z);
+                        return true;
+                    }
+                    case "save":
+                        ch = MainEngine.ParseToken(cmd, ch, out token);
+                        if(ch != 0)
+                        {
+                            Game.Save(token);
+                        }
+                        return true;
+                    case "load":
+                        ch = MainEngine.ParseToken(cmd, ch, out token);
+                        if (ch != 0)
+                        {
+                            Game.Load(token);
+                        }
+                        return true;
+                    case "exit":
+                        Shutdown(0);
+                        return true;
+                    case "cls":
+                        ConsoleInfo.Instance.Clean();
+                        return true;
+                    case "spacing":
+                        ch = MainEngine.ParseToken(cmd, ch, out token);
+                        if(ch == 0)
+                        {
+                            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_CONSOLE_SPACING, ConsoleInfo.Instance.Spacing);
+                            return true;
+                        }
+                        ConsoleInfo.Instance.SetLineInterval(float.Parse(token));
+                        return true;
+                    case "showing_lines":
+                        ch = MainEngine.ParseToken(cmd, ch, out token);
+                        if (ch == 0)
+                        {
+                            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_CONSOLE_LINECOUNT, ConsoleInfo.Instance.VisibleLines);
+                            return true;
+                        }
+                        else
+                        {
+                            var val = int.Parse(token);
+                            if(val >= 2 && val <= Global.ScreenInfo.H / ConsoleInfo.Instance.LineHeight)
+                            {
+                                ConsoleInfo.Instance.VisibleLines = val;
+                                ConsoleInfo.Instance.CursorY = (short)(Global.ScreenInfo.H -
+                                                                       ConsoleInfo.Instance.LineHeight *
+                                                                       ConsoleInfo.Instance.VisibleLines);
+                            }
+                            else
+                            {
+                                ConsoleInfo.Instance.Warning(Strings.SYSWARN_INVALID_LINECOUNT);
+                            }
+                        }
+                        return true;
+                    case "r_wireframe":
+                        Global.Renderer.ToggleWireframe();
+                        return true;
+                    case "r_points":
+                        Global.Renderer.ToggleDrawPoints();
+                        return true;
+                    case "r_coll":
+                        Global.Renderer.ToggleDrawColl();
+                        return true;
+                    case "r_normals":
+                        Global.Renderer.ToggleDrawNormals();
+                        return true;
+                    case "r_portals":
+                        Global.Renderer.ToggleDrawPortals();
+                        return true;
+                    case "r_frustums":
+                        Global.Renderer.ToggleDrawFrustums();
+                        return true;
+                    case "r_room_boxes":
+                        Global.Renderer.ToggleDrawRoomBoxes();
+                        return true;
+                    case "r_boxes":
+                        Global.Renderer.ToggleDrawBoxes();
+                        return true;
+                    case "r_axis":
+                        Global.Renderer.ToggleDrawAxis();
+                        return true;
+                    case "r_allmodels":
+                        Global.Renderer.ToggleDrawAllModels();
+                        return true;
+                    case "r_dummy_statics":
+                        Global.Renderer.ToggleDrawDummyStatics();
+                        return true;
+                    case "r_skip_room":
+                        Global.Renderer.ToggleSkipRoom();
+                        return true;
+                    case "room_info":
+                        var r = Global.Renderer.Camera.CurrentRoom;
+                        if (r != null)
+                        {
+                            sect = r.GetSectorXYZ(Global.Renderer.Camera.Position);
+                            ConsoleInfo.Instance.Printf("ID = {0}, x_sect = {1}, y_sect = {2}", r.ID, r.SectorsX, r.SectorsY);
+                            if(sect != null)
+                            {
+                                ConsoleInfo.Instance.Printf("sect({0}, {1}), inpenetrable = {2}, r_up = {3}, r_down = {4}",
+                                    sect.IndexX, sect.IndexY,
+                                    Constants.TR_METERING_WALLHEIGHT.IsAnyOf(sect.Ceiling, sect.Floor),
+                                    sect.SectorAbove != null, sect.SectorBelow != null);
+                                for (var j = 0; j < sect.OwnerRoom.StaticMesh.Count; j++)
+                                {
+                                    ConsoleInfo.Instance.Printf("static[{0}].object_id = {1}", j, sect.OwnerRoom.StaticMesh[j].ObjectID);
+                                }
+                                foreach (
+                                    var e in
+                                        sect.OwnerRoom.Containers.Where(x => x.ObjectType == OBJECT_TYPE.Entity)
+                                            .Select(cont => (Entity) cont.Object))
+                                {
+                                    ConsoleInfo.Instance.Printf("cont[entity]{0}.object_id = {1}", e.Transform.Origin, e.ID);
+                                }
+                            }
+                        }
+                        return true;
+                    default:
+                        if(token[0] != '\0')
+                        {
+                            ConsoleInfo.Instance.AddLine(cmd, FontStyle.ConsoleEvent);
+                            try
+                            {
+                                Global.EngineLua.DoString(cmd);
+                            }
+                            catch(Exception e)
+                            {
+                                ConsoleInfo.Instance.AddLine(e.Message, FontStyle.ConsoleWarning);
+                            }
+                            
+                        }
+                        return false;
+                }
+            }
+
+            return false;
+        }
 
         #endregion
 

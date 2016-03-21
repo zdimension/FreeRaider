@@ -682,7 +682,7 @@ namespace FreeRaider
         }
 
         public static string ToString(this Vector3 vec, string format)
-        {
+        {vec.ToString()
             return string.Format(format, vec.X, vec.Y, vec.Z);
         }
     }

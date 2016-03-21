@@ -107,7 +107,9 @@ namespace FreeRaider
             inited = true;
         }
 
-        public static ConsoleInfo Instance => new ConsoleInfo();
+        private static ConsoleInfo _instance;
+
+        public static ConsoleInfo Instance => _instance ?? (_instance = new ConsoleInfo());
 
         public void InitFonts()
         {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BulletSharp;
 using OpenTK;
+using SharpFont;
 
 namespace FreeRaider
 {
@@ -487,9 +488,433 @@ namespace FreeRaider
             }
         }
 
-        public int CheckNextPenetration(Vector3 move);
+        public int CheckNextPenetration(Vector3 move)
+        {
+            if (Bt.GhostObjects.Count == 0)
+                return 0;
 
-        public void DoWeaponFrame(float time);
+            GhostUpdate();
+            Transform.Origin += move;
+            //Response.HorizontalCollide = 0x00;
+            Vector3 reaction;
+            var ret = GetPenetrationFixVector(out reaction, true);
+            if(ret > 0)
+            {
+                var t1 = reaction.X.Square() + reaction.Y.Square();
+                var t2 = move.X.Square() + move.Y.Square();
+                if(reaction.Z.Square() < t1 && move.Z.Square() < t2)
+                {
+                    t2 *= t1;
+                    t1 = (reaction.X * move.X + reaction.Y * move.Y) / (float) Math.Sqrt(t2);
+                    if(t1 < CriticalWallComponent)
+                    {
+                        Response.HorizontalCollide |= 0x01;
+                    }
+                }
+            }
+            Transform.Origin -= move;
+            GhostUpdate();
+            CleanCollisionAllBodyParts();
+
+            return ret;
+        }
+
+        public void DoWeaponFrame(float time)
+        {
+            /* anims (TR1 - TR5):
+             * pistols:
+             * 0: idle to fire;
+             * 1: draw weapon (short?);
+             * 2: draw weapon (full);
+             * 3: fire process;
+             *
+             * shotgun, rifles, crossbow, harpoon, launchers (2 handed weapons):
+             * 0: idle to fire;
+             * 1: draw weapon;
+             * 2: fire process;
+             * 3: hide weapon;
+             * 4: idle to fire (targeted);
+             */
+            if(Command.ReadyWeapon && CurrentWeapon > 0 && WeaponCurrentState == WeaponState.Hide)
+            {
+                SetWeaponModel(CurrentWeapon, 1);
+            }
+
+            float dt;
+            int t;
+
+            for(var ssAnim = Bf.Animations.Next; ssAnim != null; ssAnim = ssAnim.Next)
+            {
+                if(ssAnim.Model != null && ssAnim.Model.Animations.Count > 4)
+                {
+                    switch(WeaponCurrentState)
+                    {
+                        case WeaponState.Hide:
+                            if(Command.ReadyWeapon) // ready weapon
+                            {
+                                ssAnim.CurrentAnimation = TR_ANIMATION.LaraWalkForward;
+                                ssAnim.NextAnimation = TR_ANIMATION.LaraWalkForward;
+                                ssAnim.CurrentFrame = 0;
+                                ssAnim.NextFrame = 0;
+                                ssAnim.FrameTime = 0.0f;
+                                WeaponCurrentState = WeaponState.HideToReady;
+                            }
+                            break;
+
+                        case WeaponState.HideToReady:
+                            ssAnim.FrameTime += time;
+                            ssAnim.CurrentFrame = (short)(ssAnim.FrameTime / ssAnim.Period);
+                            dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
+                            ssAnim.Lerp = dt / ssAnim.Period;
+                            t = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count;
+
+                            if(ssAnim.CurrentFrame < t - 1)
+                            {
+                                ssAnim.NextFrame = (short)((ssAnim.CurrentFrame + 1) % t);
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                            }
+                            else if(ssAnim.CurrentFrame < t)
+                            {
+                                ssAnim.NextFrame = 0;
+                                ssAnim.NextAnimation = TR_ANIMATION.LaraRun;
+                            }
+                            else
+                            {
+                                ssAnim.CurrentFrame = 0;
+                                ssAnim.CurrentAnimation = TR_ANIMATION.LaraRun;
+                                ssAnim.NextFrame = 0;
+                                ssAnim.NextAnimation = TR_ANIMATION.LaraRun;
+                                ssAnim.FrameTime = 0.0f;
+                                WeaponCurrentState = WeaponState.Idle;
+                            }
+                            break;
+
+                        case WeaponState.Idle:
+                            ssAnim.CurrentFrame = 0;
+                            ssAnim.CurrentAnimation = TR_ANIMATION.LaraRun;
+                            ssAnim.NextFrame = 0;
+                            ssAnim.NextAnimation = TR_ANIMATION.LaraRun;
+                            ssAnim.FrameTime = 0.0f;
+                            if(Command.ReadyWeapon)
+                            {
+                                ssAnim.CurrentAnimation = ssAnim.NextAnimation = TR_ANIMATION.LaraEndWalkLeft;
+                                ssAnim.CurrentFrame = ssAnim.NextFrame = 0;
+                                ssAnim.FrameTime = 0.0f;
+                                WeaponCurrentState = WeaponState.IdleToHide;
+                            }
+                            else if(Command.Action)
+                            {
+                                WeaponCurrentState = WeaponState.IdleToFire;
+                            }
+                            else
+                            {
+                                // do nothing here, may be;
+                            }
+                            break;
+
+                        case WeaponState.FireToIdle:
+                            // Yes, same animation, reverse frames order;
+                            t = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count;
+                            ssAnim.FrameTime += time;
+                            ssAnim.CurrentFrame = (short) (ssAnim.FrameTime / ssAnim.Period);
+                            dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
+                            ssAnim.Lerp = dt / ssAnim.Period;
+                            ssAnim.CurrentFrame = (short)(t - 1 - ssAnim.CurrentFrame);
+                            if(ssAnim.CurrentFrame > 0)
+                            {
+                                ssAnim.NextFrame = (short) (ssAnim.CurrentFrame - 1);
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                            }
+                            else
+                            {
+                                ssAnim.NextFrame = ssAnim.CurrentFrame = 0;
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                                WeaponCurrentState = WeaponState.Idle;
+                            }
+                            break;
+
+                        case WeaponState.IdleToFire:
+                            ssAnim.FrameTime += time;
+                            ssAnim.CurrentFrame = (short) (ssAnim.FrameTime / ssAnim.Period);
+                            dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
+                            ssAnim.Lerp = dt / ssAnim.Period;
+                            t = ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count;
+
+                            if(ssAnim.CurrentFrame < t - 1)
+                            {
+                                ssAnim.NextFrame = (short) (ssAnim.CurrentFrame + 1);
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                            }
+                            else if(ssAnim.CurrentFrame < t)
+                            {
+                                ssAnim.NextFrame = 0;
+                                ssAnim.NextAnimation = TR_ANIMATION.LaraEndWalkRight;
+                            }
+                            else if(Command.Action)
+                            {
+                                ssAnim.CurrentFrame = 0;
+                                ssAnim.NextFrame = 1;
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation = TR_ANIMATION.LaraEndWalkRight;
+                                WeaponCurrentState = WeaponState.Fire;
+                            }
+                            else
+                            {
+                                ssAnim.FrameTime = 0.0f;
+                                ssAnim.CurrentFrame =
+                                    (short) (ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count - 1);
+                                WeaponCurrentState = WeaponState.FireToIdle;
+                            }
+                            break;
+
+                        case WeaponState.Fire:
+                            if (Command.Action)
+                            {
+                                // inc time, loop;
+                                ssAnim.FrameTime += time;
+                                ssAnim.CurrentFrame = (short) (ssAnim.FrameTime / ssAnim.Period);
+                                dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
+                                ssAnim.Lerp = dt / ssAnim.Period;
+                                t = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count;
+
+                                if (ssAnim.CurrentFrame < t - 1)
+                                {
+                                    ssAnim.NextFrame = (short) (ssAnim.CurrentFrame + 1);
+                                    ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                                }
+                                else if (ssAnim.CurrentFrame < t)
+                                {
+                                    ssAnim.NextFrame = 0;
+                                    ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                                }
+                                else
+                                {
+                                    ssAnim.FrameTime = dt;
+                                    ssAnim.CurrentFrame = 0;
+                                    ssAnim.NextFrame = 1;
+                                }
+                            }
+                            else
+                            {
+                                ssAnim.FrameTime = 0.0f;
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation = TR_ANIMATION.LaraRun;
+                                ssAnim.CurrentFrame =
+                                    (short) (ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count - 1);
+                                ssAnim.NextFrame = (short)(ssAnim.CurrentFrame > 0 ? ssAnim.CurrentFrame - 1 : 0);
+                                WeaponCurrentState = WeaponState.FireToIdle;
+                            }
+                            break;
+
+                        case WeaponState.IdleToHide:
+                            t = ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count;
+                            ssAnim.FrameTime += time;
+                            ssAnim.CurrentFrame = (short)(ssAnim.FrameTime / ssAnim.Period);
+                            dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
+                            ssAnim.Lerp = dt / ssAnim.Period;
+                            if (ssAnim.CurrentFrame < t - 1)
+                            {
+                                ssAnim.NextFrame = (short)(ssAnim.CurrentFrame + 1);
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                            }
+                            else
+                            {
+                                ssAnim.NextFrame = ssAnim.CurrentFrame = 0;
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                                WeaponCurrentState = WeaponState.Hide;
+                                SetWeaponModel(CurrentWeapon, 0);
+                            }
+                            break;
+                    }
+                }
+                else if(ssAnim.Model != null && ssAnim.Model.Animations.Count == 4)
+                {
+                    switch (WeaponCurrentState)
+                    {
+                        case WeaponState.Hide:
+                            if (Command.ReadyWeapon) // ready weapon
+                            {
+                                ssAnim.CurrentAnimation = TR_ANIMATION.LaraEndWalkRight;
+                                ssAnim.NextAnimation = TR_ANIMATION.LaraEndWalkRight;
+                                ssAnim.CurrentFrame = 0;
+                                ssAnim.NextFrame = 0;
+                                ssAnim.FrameTime = 0.0f;
+                                WeaponCurrentState = WeaponState.HideToReady;
+                            }
+                            break;
+
+                        case WeaponState.HideToReady:
+                            ssAnim.FrameTime += time;
+                            ssAnim.CurrentFrame = (short)(ssAnim.FrameTime / ssAnim.Period);
+                            dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
+                            ssAnim.Lerp = dt / ssAnim.Period;
+                            t = ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count;
+
+                            if (ssAnim.CurrentFrame < t - 1)
+                            {
+                                ssAnim.NextFrame = (short)((ssAnim.CurrentFrame + 1) % t);
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                            }
+                            else if (ssAnim.CurrentFrame < t)
+                            {
+                                ssAnim.NextFrame = 0;
+                                ssAnim.NextAnimation = TR_ANIMATION.LaraRun;
+                            }
+                            else
+                            {
+                                ssAnim.CurrentFrame = 0;
+                                ssAnim.CurrentAnimation = TR_ANIMATION.LaraRun;
+                                ssAnim.NextFrame = 0;
+                                ssAnim.NextAnimation = TR_ANIMATION.LaraRun;
+                                ssAnim.FrameTime = 0.0f;
+                                WeaponCurrentState = WeaponState.Idle;
+                            }
+                            break;
+
+                        case WeaponState.Idle:
+                            ssAnim.CurrentFrame = 0;
+                            ssAnim.CurrentAnimation = TR_ANIMATION.LaraRun;
+                            ssAnim.NextFrame = 0;
+                            ssAnim.NextAnimation = TR_ANIMATION.LaraRun;
+                            ssAnim.FrameTime = 0.0f;
+                            if (Command.ReadyWeapon)
+                            {
+                                ssAnim.CurrentAnimation = ssAnim.NextAnimation = TR_ANIMATION.LaraEndWalkRight;
+                                ssAnim.CurrentFrame =
+                                    ssAnim.NextFrame =
+                                        (short)
+                                            (ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count - 1);
+                                ssAnim.FrameTime = 0.0f;
+                                WeaponCurrentState = WeaponState.IdleToHide;
+                            }
+                            else if (Command.Action)
+                            {
+                                WeaponCurrentState = WeaponState.IdleToFire;
+                            }
+                            else
+                            {
+                                // do nothing here, may be;
+                            }
+                            break;
+
+                        case WeaponState.FireToIdle:
+                            // Yes, same animation, reverse frames order;
+                            t = ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count;
+                            ssAnim.FrameTime += time;
+                            ssAnim.CurrentFrame = (short)(ssAnim.FrameTime / ssAnim.Period);
+                            dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
+                            ssAnim.Lerp = dt / ssAnim.Period;
+                            ssAnim.CurrentFrame = (short)(t - 1 - ssAnim.CurrentFrame);
+                            if (ssAnim.CurrentFrame > 0)
+                            {
+                                ssAnim.NextFrame = (short)(ssAnim.CurrentFrame - 1);
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                            }
+                            else
+                            {
+                                ssAnim.NextFrame = ssAnim.CurrentFrame = 0;
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                                WeaponCurrentState = WeaponState.Idle;
+                            }
+                            break;
+
+                        case WeaponState.IdleToFire:
+                            ssAnim.FrameTime += time;
+                            ssAnim.CurrentFrame = (short)(ssAnim.FrameTime / ssAnim.Period);
+                            dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
+                            ssAnim.Lerp = dt / ssAnim.Period;
+                            t = ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count;
+
+                            if (ssAnim.CurrentFrame < t - 1)
+                            {
+                                ssAnim.NextFrame = (short)(ssAnim.CurrentFrame + 1);
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                            }
+                            else if (ssAnim.CurrentFrame < t)
+                            {
+                                ssAnim.NextFrame = 0;
+                                ssAnim.NextAnimation = TR_ANIMATION.LaraEndWalkLeft;
+                            }
+                            else if (Command.Action)
+                            {
+                                ssAnim.CurrentFrame = 0;
+                                ssAnim.NextFrame = 1;
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation = TR_ANIMATION.LaraEndWalkLeft;
+                                WeaponCurrentState = WeaponState.Fire;
+                            }
+                            else
+                            {
+                                ssAnim.FrameTime = 0.0f;
+                                ssAnim.CurrentFrame =
+                                    (short)(ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count - 1);
+                                WeaponCurrentState = WeaponState.FireToIdle;
+                            }
+                            break;
+
+                        case WeaponState.Fire:
+                            if (Command.Action)
+                            {
+                                // inc time, loop;
+                                ssAnim.FrameTime += time;
+                                ssAnim.CurrentFrame = (short)(ssAnim.FrameTime / ssAnim.Period);
+                                dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
+                                ssAnim.Lerp = dt / ssAnim.Period;
+                                t = ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count;
+
+                                if (ssAnim.CurrentFrame < t - 1)
+                                {
+                                    ssAnim.NextFrame = (short)(ssAnim.CurrentFrame + 1);
+                                    ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                                }
+                                else if (ssAnim.CurrentFrame < t)
+                                {
+                                    ssAnim.NextFrame = 0;
+                                    ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                                }
+                                else
+                                {
+                                    ssAnim.FrameTime = dt;
+                                    ssAnim.CurrentFrame = 0;
+                                    ssAnim.NextFrame = 1;
+                                }
+                            }
+                            else
+                            {
+                                ssAnim.FrameTime = 0.0f;
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation = TR_ANIMATION.LaraRun;
+                                ssAnim.CurrentFrame =
+                                    (short)(ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count - 1);
+                                ssAnim.NextFrame = (short)(ssAnim.CurrentFrame > 0 ? ssAnim.CurrentFrame - 1 : 0);
+                                WeaponCurrentState = WeaponState.FireToIdle;
+                            }
+                            break;
+
+                        case WeaponState.IdleToHide:
+                            // Yes, same animation, reverse frames order;
+                            t = ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count;
+                            ssAnim.FrameTime += time;
+                            ssAnim.CurrentFrame = (short)(ssAnim.FrameTime / ssAnim.Period);
+                            dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
+                            ssAnim.Lerp = dt / ssAnim.Period;
+                            ssAnim.CurrentFrame = (short) (t - 1 - ssAnim.CurrentFrame);
+
+                            if (ssAnim.CurrentFrame > 0)
+                            {
+                                ssAnim.NextFrame = (short)(ssAnim.CurrentFrame - 1);
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                            }
+                            else
+                            {
+                                ssAnim.NextFrame = ssAnim.CurrentFrame = 0;
+                                ssAnim.NextAnimation = ssAnim.CurrentAnimation;
+                                WeaponCurrentState = WeaponState.Hide;
+                                SetWeaponModel(CurrentWeapon, 0);
+                            }
+                            break;
+                    }
+                }
+
+                DoAnimCommands(ssAnim, 0);
+            }
+        }
 
         public override void FixPenetrations(Vector3 move);
 
@@ -508,20 +933,159 @@ namespace FreeRaider
         /// <summary>
         /// Constantly updates some specific parameterd to keep hair aligned to entity
         /// </summary>
-        public override void UpdateHair();
+        public override void UpdateHair()
+        {
+            if (Hairs.Count == 0)
+                return;
 
-        public override void FrameImpl(float time, short frame, int state);
+            foreach (var hair in Hairs)
+            {
+                if (hair == null || hair.Elements.Count == 0)
+                    continue;
 
-        public override void ProcessSectorImpl();
+                var ownerChar = hair.OwnerChar;
+                if(ownerChar != null)
+                {
+                    hair.Container.Room = ownerChar.Self.Room;
+                }
+            }
+        }
 
-        public override void Jump(float vert, float hor);
+        public override void FrameImpl(float time, short frame, ENTITY_ANIM state)
+        {
+            // Update acceleration/speed, it is calculated per anim frame index
+            var af = Bf.Animations.Model.Animations[(int) Bf.Animations.CurrentAnimation];
+
+            CurrentSpeed = (af.SpeedX + frame * af.AccelX) / (1 << 16); // Decompiled from TOMB5.EXE
+
+            Bf.Animations.CurrentFrame = frame;
+
+            DoWeaponFrame(time);
+
+            if(Bf.Animations.OnFrameSet)
+            {
+                Bf.Animations.PerfomOnFrame(this, Bf.Animations, state);
+            }
+        }
+
+        public override void ProcessSectorImpl()
+        {
+            Assert.That(CurrentSector != null);
+            var highestSector = CurrentSector.GetHighestSector();
+            Assert.That(highestSector != null);
+            var lowestSector = CurrentSector.GetLowestSector();
+            Assert.That(lowestSector != null);
+
+            HeightInfo.WallsClimbDir = 0;
+            HeightInfo.WallsClimbDir |= (sbyte)(lowestSector.Flags & (uint)(SectorFlag.ClimbWest |
+                                                              SectorFlag.ClimbEast |
+                                                              SectorFlag.ClimbNorth |
+                                                              SectorFlag.ClimbSouth));
+
+            HeightInfo.WallsClimb = HeightInfo.WallsClimbDir > 0;
+            HeightInfo.CeilingClimb = highestSector.Flags.HasFlagUns(SectorFlag.ClimbCeiling) || lowestSector.Flags.HasFlagUns(SectorFlag.ClimbCeiling);
+
+            if(lowestSector.Flags.HasFlagUns(SectorFlag.Death))
+            {
+                if(MoveType.IsAnyOf(MoveType.OnFloor, MoveType.Wade, MoveType.Quicksand))
+                {
+                    if(HeightInfo.FloorHit)
+                    {
+                        var cont = (EngineContainer) HeightInfo.FloorObject.UserObject;
+
+                        if(cont != null && cont.ObjectType == OBJECT_TYPE.RoomBase)
+                        {
+                            SetParam(CharParameters.Health, 0.0f);
+                            Response.Killed = true;
+                        }
+                    }
+                }
+                else if(MoveType.IsAnyOf(MoveType.Underwater, MoveType.OnWater))
+                {
+                    SetParam(CharParameters.Health, 0.0f);
+                    Response.Killed = true;
+                }
+            }
+        }
+
+        public override void Jump(float vert, float hor)
+        {
+            var spd = Vector3.Zero;
+
+            // Jump length is a speed value multiplied by global speed coefficient.
+            var t = hor * SpeedMult;
+
+            // Calculate the direction of jump by vector multiplication.
+            if(DirFlag.HasFlag(ENT_MOVE.MoveForward))
+            {
+                spd = Transform.Basis.Column1 * t;
+            }
+            else if (DirFlag.HasFlag(ENT_MOVE.MoveBackward))
+            {
+                spd = Transform.Basis.Column1 * -t;
+            }
+            else if (DirFlag.HasFlag(ENT_MOVE.MoveLeft))
+            {
+                spd = Transform.Basis.Column0 * -t;
+            }
+            else if (DirFlag.HasFlag(ENT_MOVE.MoveRight))
+            {
+                spd = Transform.Basis.Column0 * t;
+            }
+            else
+            {
+                DirFlag = ENT_MOVE.MoveForward;
+            }
+
+            Response.VerticalCollide = 0x00;
+
+            Response.Slide = SlideType.None;
+            Response.Lean = LeanType.None;
+
+            // Jump speed should NOT be added to current speed, as native engine
+            // fully replaces current speed with jump speed by anim command.
+            Speed = spd;
+
+            // Apply vertical speed.
+            Speed.Z = vert * SpeedMult;
+            MoveType = MoveType.FreeFalling;
+        }
 
         public override void Kill()
         {
             Response.Killed = true;
         }
 
-        public override Substance GetSubstanceState();
+        public override Substance GetSubstanceState()
+        {
+            if(Self.Room.Flags.HasFlagUns(RoomFlag.Quicksand))
+            {
+                if(HeightInfo.TransitionLevel > Transform.Origin.Z + Height)
+                {
+                    return Substance.QuicksandConsumed;
+                }
+                else
+                {
+                    return Substance.QuicksandShallow;
+                }
+            }
+            else if(!HeightInfo.Water)
+            {
+                return Substance.None;
+            }
+            else if(HeightInfo.Water && HeightInfo.TransitionLevel > Transform.Origin.Z && HeightInfo.TransitionLevel < Transform.Origin.Z + WadeDepth)
+            {
+                return Substance.WaterShallow;
+            }
+            else if(HeightInfo.Water && HeightInfo.TransitionLevel > Transform.Origin.Z + WadeDepth)
+            {
+                return Substance.WaterWade;
+            }
+            else
+            {
+                return Substance.WaterSwim;
+            }
+        }
 
         public override void UpdateTransform()
         {
@@ -529,7 +1093,20 @@ namespace FreeRaider
             base.UpdateTransform();
         }
 
-        public override void UpdateGhostRigidBody();
+        public override void UpdateGhostRigidBody()
+        {
+            if(Bt.GhostObjects.Count > 0)
+            {
+                Assert.That(Bf.BoneTags.Count == Bt.GhostObjects.Count);
+                for(var i = 0; i < Bf.BoneTags.Count; i++)
+                {
+                    var tr = (Transform)Bt.BtBody[i].WorldTransform;
+                    tr.Origin = tr * Bf.BoneTags[i].MeshBase.Center;
+                    Bt.GhostObjects[i].WorldTransform = (Matrix4)tr;
+                    ERROR
+                }
+            }
+        }
 
         public override BtEngineClosestConvexResultCallback CallbackForCamera()
         {
@@ -1358,7 +1935,7 @@ namespace FreeRaider
 
         public int SetParamMaximum(CharParameters parameter, float maxValue);
 
-        public int SetWeaponModel(CharParameters weaponModel, int armed);
+        public int SetWeaponModel(int weaponModel, int armed);
     }
 
     public partial class StaticFuncs

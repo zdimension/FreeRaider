@@ -167,11 +167,11 @@ namespace FreeRaider.Script
 
         public string GetSysNotify(int stringID);
 
-        public static string ParseToken(string data, string token);
+        public static int ParseToken(string data, int index, out string token);
 
-        public static float ParseFloat(string str);
+        public static float ParseFloat(string str, int index);
 
-        public static int ParseInt(string str);
+        public static int ParseInt(string str, int index);
 
         private void registerMainFunctions();
     }
