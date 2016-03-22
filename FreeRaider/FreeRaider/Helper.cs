@@ -74,7 +74,7 @@ namespace FreeRaider
 
         public static Vector3 ZeroW = Vector3.Zero;
 
-        public static void SetInterpolate3(ref Vector3 v, Vector3 v0, Vector3 v1, float rt)
+        public static void SetInterpolate3(out Vector3 v, Vector3 v0, Vector3 v1, float rt)
         {
             var s = 1.0f - rt;
             v.X = s * v0.X + rt * v1.X;

@@ -1689,7 +1689,7 @@ namespace FreeRaider
                             (tween.CeilingCorners[0][2] - tween.CeilingCorners[1][2]));
                         t = 1.0f / (1.0f + t);
                         var o = new Vector3();
-                        Helper.SetInterpolate3(ref o, tween.CeilingCorners[0], tween.CeilingCorners[2], t);
+                        Helper.SetInterpolate3(out o, tween.CeilingCorners[0], tween.CeilingCorners[2], t);
                         trimesh.AddTriangle(
                             tween.CeilingCorners[0],
                             tween.CeilingCorners[1],
@@ -1741,7 +1741,7 @@ namespace FreeRaider
                             (tween.FloorCorners[0][2] - tween.FloorCorners[1][2]));
                         t = 1.0f / (1.0f + t);
                         var o = new Vector3();
-                        Helper.SetInterpolate3(ref o, tween.FloorCorners[0], tween.FloorCorners[2], t);
+                        Helper.SetInterpolate3(out o, tween.FloorCorners[0], tween.FloorCorners[2], t);
                         trimesh.AddTriangle(
                             tween.FloorCorners[0],
                             tween.FloorCorners[1],

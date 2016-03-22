@@ -391,7 +391,7 @@ namespace FreeRaider
 
         public virtual Vector3 CamPosForFollowing(float dz)
         {
-            var camPos = Transform / Bf.BoneTags[0].FullTransform.Origin;
+            var camPos = Transform * Bf.BoneTags[0].FullTransform.Origin;
             camPos[2] += dz;
             return camPos;
         }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BulletSharp;
 using OpenTK;
+using OpenTK.Graphics.ES20;
 using SharpFont;
 
 namespace FreeRaider
@@ -95,14 +96,14 @@ namespace FreeRaider
         public const float INERTIA_SPEED_ONWATER = 1.5f;
 
         // Lara's character behavior constants
-        public const int DEFAULT_MAX_MOVE_ITERATIONS = 3;                              //!< @fixme magic
-        public const float DEFAULT_MIN_STEP_UP_HEIGHT = 128.0f;                         //!< @fixme check original
-        public const float DEFAULT_MAX_STEP_UP_HEIGHT = 256.0f + 32.0f;                 //!< @fixme check original
-        public const float DEFAULT_FALL_DOWN_HEIGHT = 320.0f;                         //!< @fixme check original
-        public const float DEFAULT_CLIMB_UP_HEIGHT = 1920.0f;                        //!< @fixme check original
-        public const float DEFAULT_CRITICAL_SLANT_Z_COMPONENT = 0.810f;                         //!< @fixme cos(alpha = 30 deg)
-        public const float DEFAULT_CRITICAL_WALL_COMPONENT = -0.707f;                        //!< @fixme cos(alpha = 45 deg)
-        public const float DEFAULT_CHARACTER_SLIDE_SPEED_MULT = 75.0f;                          //!< @fixme magic - not like in original
+        public const int DEFAULT_MAX_MOVE_ITERATIONS = 3; //!< @fixme magic
+        public const float DEFAULT_MIN_STEP_UP_HEIGHT = 128.0f; //!< @fixme check original
+        public const float DEFAULT_MAX_STEP_UP_HEIGHT = 256.0f + 32.0f; //!< @fixme check original
+        public const float DEFAULT_FALL_DOWN_HEIGHT = 320.0f; //!< @fixme check original
+        public const float DEFAULT_CLIMB_UP_HEIGHT = 1920.0f; //!< @fixme check original
+        public const float DEFAULT_CRITICAL_SLANT_Z_COMPONENT = 0.810f; //!< @fixme cos(alpha = 30 deg)
+        public const float DEFAULT_CRITICAL_WALL_COMPONENT = -0.707f; //!< @fixme cos(alpha = 45 deg)
+        public const float DEFAULT_CHARACTER_SLIDE_SPEED_MULT = 75.0f; //!< @fixme magic - not like in original
         public const float DEFAULT_CHARACTER_CLIMB_R = 32.0f;
         public const float DEFAULT_CHARACTER_WADE_DEPTH = 256.0f;
 
@@ -111,10 +112,10 @@ namespace FreeRaider
         // CHARACTER PARAMETERS DEFAULTS
         public const float PARAM_ABSOLUTE_MAX = -1;
 
-        public const float LARA_PARAM_HEALTH_MAX = 1000.0f;      //!< 1000 HP
-        public const float LARA_PARAM_AIR_MAX = 3600.0f;      //!< 60 secs of air
-        public const float LARA_PARAM_STAMINA_MAX = 120.0f;       //!< 4  secs of sprint
-        public const float LARA_PARAM_WARMTH_MAX = 240.0f;       //!< 8  secs of freeze
+        public const float LARA_PARAM_HEALTH_MAX = 1000.0f; //!< 1000 HP
+        public const float LARA_PARAM_AIR_MAX = 3600.0f; //!< 60 secs of air
+        public const float LARA_PARAM_STAMINA_MAX = 120.0f; //!< 4  secs of sprint
+        public const float LARA_PARAM_WARMTH_MAX = 240.0f; //!< 8  secs of freeze
         public const float LARA_PARAM_POISON_MAX = 5.0f;
 
         public const float CHARACTER_BOX_HALF_SIZE = 128.0f;
@@ -138,13 +139,13 @@ namespace FreeRaider
     public enum StepType
     {
         DownCanHang, // enough height to hang here
-        DownDrop,    // big height, cannot walk next, drop only
-        DownBig,     // enough height change, step down is needed
-        DownLittle,  // too little height change, step down is not needed
-        Horizontal,  // horizontal plane
-        UpLittle,    // too little height change, step up is not needed
-        UpBig,       // enough height change, step up is needed
-        UpClimb,     // big height, cannot walk next, climb only
+        DownDrop, // big height, cannot walk next, drop only
+        DownBig, // enough height change, step down is needed
+        DownLittle, // too little height change, step down is not needed
+        Horizontal, // horizontal plane
+        UpLittle, // too little height change, step up is not needed
+        UpBig, // enough height change, step up is needed
+        UpClimb, // big height, cannot walk next, climb only
         UpImpossible // too big height, no one ways here, or phantom case
     }
 
@@ -482,7 +483,7 @@ namespace FreeRaider
 
         ~Character()
         {
-            if(Self.Room != null && this != Global.EngineWorld.Character)
+            if (Self.Room != null && this != Global.EngineWorld.Character)
             {
                 Self.Room.RemoveEntity(this);
             }
@@ -498,15 +499,15 @@ namespace FreeRaider
             //Response.HorizontalCollide = 0x00;
             Vector3 reaction;
             var ret = GetPenetrationFixVector(out reaction, true);
-            if(ret > 0)
+            if (ret > 0)
             {
                 var t1 = reaction.X.Square() + reaction.Y.Square();
                 var t2 = move.X.Square() + move.Y.Square();
-                if(reaction.Z.Square() < t1 && move.Z.Square() < t2)
+                if (reaction.Z.Square() < t1 && move.Z.Square() < t2)
                 {
                     t2 *= t1;
                     t1 = (reaction.X * move.X + reaction.Y * move.Y) / (float) Math.Sqrt(t2);
-                    if(t1 < CriticalWallComponent)
+                    if (t1 < CriticalWallComponent)
                     {
                         Response.HorizontalCollide |= 0x01;
                     }
@@ -535,7 +536,7 @@ namespace FreeRaider
              * 3: hide weapon;
              * 4: idle to fire (targeted);
              */
-            if(Command.ReadyWeapon && CurrentWeapon > 0 && WeaponCurrentState == WeaponState.Hide)
+            if (Command.ReadyWeapon && CurrentWeapon > 0 && WeaponCurrentState == WeaponState.Hide)
             {
                 SetWeaponModel(CurrentWeapon, 1);
             }
@@ -543,14 +544,14 @@ namespace FreeRaider
             float dt;
             int t;
 
-            for(var ssAnim = Bf.Animations.Next; ssAnim != null; ssAnim = ssAnim.Next)
+            for (var ssAnim = Bf.Animations.Next; ssAnim != null; ssAnim = ssAnim.Next)
             {
-                if(ssAnim.Model != null && ssAnim.Model.Animations.Count > 4)
+                if (ssAnim.Model != null && ssAnim.Model.Animations.Count > 4)
                 {
-                    switch(WeaponCurrentState)
+                    switch (WeaponCurrentState)
                     {
                         case WeaponState.Hide:
-                            if(Command.ReadyWeapon) // ready weapon
+                            if (Command.ReadyWeapon) // ready weapon
                             {
                                 ssAnim.CurrentAnimation = TR_ANIMATION.LaraWalkForward;
                                 ssAnim.NextAnimation = TR_ANIMATION.LaraWalkForward;
@@ -563,17 +564,17 @@ namespace FreeRaider
 
                         case WeaponState.HideToReady:
                             ssAnim.FrameTime += time;
-                            ssAnim.CurrentFrame = (short)(ssAnim.FrameTime / ssAnim.Period);
+                            ssAnim.CurrentFrame = (short) (ssAnim.FrameTime / ssAnim.Period);
                             dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
                             ssAnim.Lerp = dt / ssAnim.Period;
                             t = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count;
 
-                            if(ssAnim.CurrentFrame < t - 1)
+                            if (ssAnim.CurrentFrame < t - 1)
                             {
-                                ssAnim.NextFrame = (short)((ssAnim.CurrentFrame + 1) % t);
+                                ssAnim.NextFrame = (short) ((ssAnim.CurrentFrame + 1) % t);
                                 ssAnim.NextAnimation = ssAnim.CurrentAnimation;
                             }
-                            else if(ssAnim.CurrentFrame < t)
+                            else if (ssAnim.CurrentFrame < t)
                             {
                                 ssAnim.NextFrame = 0;
                                 ssAnim.NextAnimation = TR_ANIMATION.LaraRun;
@@ -595,14 +596,14 @@ namespace FreeRaider
                             ssAnim.NextFrame = 0;
                             ssAnim.NextAnimation = TR_ANIMATION.LaraRun;
                             ssAnim.FrameTime = 0.0f;
-                            if(Command.ReadyWeapon)
+                            if (Command.ReadyWeapon)
                             {
                                 ssAnim.CurrentAnimation = ssAnim.NextAnimation = TR_ANIMATION.LaraEndWalkLeft;
                                 ssAnim.CurrentFrame = ssAnim.NextFrame = 0;
                                 ssAnim.FrameTime = 0.0f;
                                 WeaponCurrentState = WeaponState.IdleToHide;
                             }
-                            else if(Command.Action)
+                            else if (Command.Action)
                             {
                                 WeaponCurrentState = WeaponState.IdleToFire;
                             }
@@ -619,8 +620,8 @@ namespace FreeRaider
                             ssAnim.CurrentFrame = (short) (ssAnim.FrameTime / ssAnim.Period);
                             dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
                             ssAnim.Lerp = dt / ssAnim.Period;
-                            ssAnim.CurrentFrame = (short)(t - 1 - ssAnim.CurrentFrame);
-                            if(ssAnim.CurrentFrame > 0)
+                            ssAnim.CurrentFrame = (short) (t - 1 - ssAnim.CurrentFrame);
+                            if (ssAnim.CurrentFrame > 0)
                             {
                                 ssAnim.NextFrame = (short) (ssAnim.CurrentFrame - 1);
                                 ssAnim.NextAnimation = ssAnim.CurrentAnimation;
@@ -638,19 +639,19 @@ namespace FreeRaider
                             ssAnim.CurrentFrame = (short) (ssAnim.FrameTime / ssAnim.Period);
                             dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
                             ssAnim.Lerp = dt / ssAnim.Period;
-                            t = ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count;
+                            t = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count;
 
-                            if(ssAnim.CurrentFrame < t - 1)
+                            if (ssAnim.CurrentFrame < t - 1)
                             {
                                 ssAnim.NextFrame = (short) (ssAnim.CurrentFrame + 1);
                                 ssAnim.NextAnimation = ssAnim.CurrentAnimation;
                             }
-                            else if(ssAnim.CurrentFrame < t)
+                            else if (ssAnim.CurrentFrame < t)
                             {
                                 ssAnim.NextFrame = 0;
                                 ssAnim.NextAnimation = TR_ANIMATION.LaraEndWalkRight;
                             }
-                            else if(Command.Action)
+                            else if (Command.Action)
                             {
                                 ssAnim.CurrentFrame = 0;
                                 ssAnim.NextFrame = 1;
@@ -699,20 +700,20 @@ namespace FreeRaider
                                 ssAnim.NextAnimation = ssAnim.CurrentAnimation = TR_ANIMATION.LaraRun;
                                 ssAnim.CurrentFrame =
                                     (short) (ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count - 1);
-                                ssAnim.NextFrame = (short)(ssAnim.CurrentFrame > 0 ? ssAnim.CurrentFrame - 1 : 0);
+                                ssAnim.NextFrame = (short) (ssAnim.CurrentFrame > 0 ? ssAnim.CurrentFrame - 1 : 0);
                                 WeaponCurrentState = WeaponState.FireToIdle;
                             }
                             break;
 
                         case WeaponState.IdleToHide:
-                            t = ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count;
+                            t = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count;
                             ssAnim.FrameTime += time;
-                            ssAnim.CurrentFrame = (short)(ssAnim.FrameTime / ssAnim.Period);
+                            ssAnim.CurrentFrame = (short) (ssAnim.FrameTime / ssAnim.Period);
                             dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
                             ssAnim.Lerp = dt / ssAnim.Period;
                             if (ssAnim.CurrentFrame < t - 1)
                             {
-                                ssAnim.NextFrame = (short)(ssAnim.CurrentFrame + 1);
+                                ssAnim.NextFrame = (short) (ssAnim.CurrentFrame + 1);
                                 ssAnim.NextAnimation = ssAnim.CurrentAnimation;
                             }
                             else
@@ -725,7 +726,7 @@ namespace FreeRaider
                             break;
                     }
                 }
-                else if(ssAnim.Model != null && ssAnim.Model.Animations.Count == 4)
+                else if (ssAnim.Model != null && ssAnim.Model.Animations.Count == 4)
                 {
                     switch (WeaponCurrentState)
                     {
@@ -743,14 +744,14 @@ namespace FreeRaider
 
                         case WeaponState.HideToReady:
                             ssAnim.FrameTime += time;
-                            ssAnim.CurrentFrame = (short)(ssAnim.FrameTime / ssAnim.Period);
+                            ssAnim.CurrentFrame = (short) (ssAnim.FrameTime / ssAnim.Period);
                             dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
                             ssAnim.Lerp = dt / ssAnim.Period;
-                            t = ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count;
+                            t = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count;
 
                             if (ssAnim.CurrentFrame < t - 1)
                             {
-                                ssAnim.NextFrame = (short)((ssAnim.CurrentFrame + 1) % t);
+                                ssAnim.NextFrame = (short) ((ssAnim.CurrentFrame + 1) % t);
                                 ssAnim.NextAnimation = ssAnim.CurrentAnimation;
                             }
                             else if (ssAnim.CurrentFrame < t)
@@ -781,7 +782,7 @@ namespace FreeRaider
                                 ssAnim.CurrentFrame =
                                     ssAnim.NextFrame =
                                         (short)
-                                            (ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count - 1);
+                                            (ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count - 1);
                                 ssAnim.FrameTime = 0.0f;
                                 WeaponCurrentState = WeaponState.IdleToHide;
                             }
@@ -797,15 +798,15 @@ namespace FreeRaider
 
                         case WeaponState.FireToIdle:
                             // Yes, same animation, reverse frames order;
-                            t = ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count;
+                            t = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count;
                             ssAnim.FrameTime += time;
-                            ssAnim.CurrentFrame = (short)(ssAnim.FrameTime / ssAnim.Period);
+                            ssAnim.CurrentFrame = (short) (ssAnim.FrameTime / ssAnim.Period);
                             dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
                             ssAnim.Lerp = dt / ssAnim.Period;
-                            ssAnim.CurrentFrame = (short)(t - 1 - ssAnim.CurrentFrame);
+                            ssAnim.CurrentFrame = (short) (t - 1 - ssAnim.CurrentFrame);
                             if (ssAnim.CurrentFrame > 0)
                             {
-                                ssAnim.NextFrame = (short)(ssAnim.CurrentFrame - 1);
+                                ssAnim.NextFrame = (short) (ssAnim.CurrentFrame - 1);
                                 ssAnim.NextAnimation = ssAnim.CurrentAnimation;
                             }
                             else
@@ -818,14 +819,14 @@ namespace FreeRaider
 
                         case WeaponState.IdleToFire:
                             ssAnim.FrameTime += time;
-                            ssAnim.CurrentFrame = (short)(ssAnim.FrameTime / ssAnim.Period);
+                            ssAnim.CurrentFrame = (short) (ssAnim.FrameTime / ssAnim.Period);
                             dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
                             ssAnim.Lerp = dt / ssAnim.Period;
-                            t = ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count;
+                            t = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count;
 
                             if (ssAnim.CurrentFrame < t - 1)
                             {
-                                ssAnim.NextFrame = (short)(ssAnim.CurrentFrame + 1);
+                                ssAnim.NextFrame = (short) (ssAnim.CurrentFrame + 1);
                                 ssAnim.NextAnimation = ssAnim.CurrentAnimation;
                             }
                             else if (ssAnim.CurrentFrame < t)
@@ -844,7 +845,7 @@ namespace FreeRaider
                             {
                                 ssAnim.FrameTime = 0.0f;
                                 ssAnim.CurrentFrame =
-                                    (short)(ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count - 1);
+                                    (short) (ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count - 1);
                                 WeaponCurrentState = WeaponState.FireToIdle;
                             }
                             break;
@@ -854,14 +855,14 @@ namespace FreeRaider
                             {
                                 // inc time, loop;
                                 ssAnim.FrameTime += time;
-                                ssAnim.CurrentFrame = (short)(ssAnim.FrameTime / ssAnim.Period);
+                                ssAnim.CurrentFrame = (short) (ssAnim.FrameTime / ssAnim.Period);
                                 dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
                                 ssAnim.Lerp = dt / ssAnim.Period;
-                                t = ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count;
+                                t = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count;
 
                                 if (ssAnim.CurrentFrame < t - 1)
                                 {
-                                    ssAnim.NextFrame = (short)(ssAnim.CurrentFrame + 1);
+                                    ssAnim.NextFrame = (short) (ssAnim.CurrentFrame + 1);
                                     ssAnim.NextAnimation = ssAnim.CurrentAnimation;
                                 }
                                 else if (ssAnim.CurrentFrame < t)
@@ -881,24 +882,24 @@ namespace FreeRaider
                                 ssAnim.FrameTime = 0.0f;
                                 ssAnim.NextAnimation = ssAnim.CurrentAnimation = TR_ANIMATION.LaraRun;
                                 ssAnim.CurrentFrame =
-                                    (short)(ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count - 1);
-                                ssAnim.NextFrame = (short)(ssAnim.CurrentFrame > 0 ? ssAnim.CurrentFrame - 1 : 0);
+                                    (short) (ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count - 1);
+                                ssAnim.NextFrame = (short) (ssAnim.CurrentFrame > 0 ? ssAnim.CurrentFrame - 1 : 0);
                                 WeaponCurrentState = WeaponState.FireToIdle;
                             }
                             break;
 
                         case WeaponState.IdleToHide:
                             // Yes, same animation, reverse frames order;
-                            t = ssAnim.Model.Animations[(int)ssAnim.CurrentAnimation].Frames.Count;
+                            t = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count;
                             ssAnim.FrameTime += time;
-                            ssAnim.CurrentFrame = (short)(ssAnim.FrameTime / ssAnim.Period);
+                            ssAnim.CurrentFrame = (short) (ssAnim.FrameTime / ssAnim.Period);
                             dt = ssAnim.FrameTime - ssAnim.CurrentFrame * ssAnim.Period;
                             ssAnim.Lerp = dt / ssAnim.Period;
                             ssAnim.CurrentFrame = (short) (t - 1 - ssAnim.CurrentFrame);
 
                             if (ssAnim.CurrentFrame > 0)
                             {
-                                ssAnim.NextFrame = (short)(ssAnim.CurrentFrame - 1);
+                                ssAnim.NextFrame = (short) (ssAnim.CurrentFrame - 1);
                                 ssAnim.NextAnimation = ssAnim.CurrentAnimation;
                             }
                             else
@@ -916,7 +917,72 @@ namespace FreeRaider
             }
         }
 
-        public override void FixPenetrations(Vector3 move);
+        public override void FixPenetrations(Vector3 move)
+        {
+            if (Bt.GhostObjects.Count == 0)
+                return;
+
+            if (move != Vector3.Zero)
+            {
+                Response.HorizontalCollide = 0x00;
+                Response.VerticalCollide = 0x00;
+            }
+
+            if (TypeFlags.HasFlag(ENTITY_TYPE.Dynamic))
+            {
+                return;
+            }
+
+            if (Bt.NoFixAll)
+            {
+                GhostUpdate();
+                return;
+            }
+
+            Vector3 reaction;
+            var numPenetrationLoops = GetPenetrationFixVector(out reaction, move != Vector3.Zero);
+            Transform.Origin += reaction;
+
+            UpdateCurrentHeight();
+            if (move != Vector3.Zero && numPenetrationLoops > 0)
+            {
+                var t1 = reaction.X.Square() + reaction.Y.Square();
+                var t2 = move.X.Square() + move.Y.Square();
+                if (reaction.Z.Square() < t1 && move.Z.Square() < t2)
+                    // we have horizontal move and horizontal correction
+                {
+                    t2 *= t1;
+                    t1 = (float) ((reaction.X * move.X + reaction.Y * move.Y) / Math.Sqrt(t2));
+                    if (t1 < CriticalWallComponent)
+                    {
+                        Response.HorizontalCollide |= 0x01;
+                    }
+                }
+                else if (reaction.Z.Square() > t1 && move.Z.Square() > t2)
+                {
+                    if (reaction.Z > 0.0f && move.Z < 0.0f)
+                    {
+                        Response.VerticalCollide |= 0x01;
+                    }
+                    else if (reaction.Z < 0.0f && move.Z > 0.0f)
+                    {
+                        Response.VerticalCollide |= 0x02;
+                    }
+                }
+            }
+
+            if (HeightInfo.CeilingHit && reaction.Z < -0.1f)
+            {
+                Response.HorizontalCollide |= 0x02;
+            }
+
+            if (HeightInfo.FloorHit && reaction.Z > 0.1f)
+            {
+                Response.HorizontalCollide |= 0x01;
+            }
+
+            GhostUpdate();
+        }
 
         public override Vector3 GetRoomPos()
         {
@@ -944,7 +1010,7 @@ namespace FreeRaider
                     continue;
 
                 var ownerChar = hair.OwnerChar;
-                if(ownerChar != null)
+                if (ownerChar != null)
                 {
                     hair.Container.Room = ownerChar.Self.Room;
                 }
@@ -962,7 +1028,7 @@ namespace FreeRaider
 
             DoWeaponFrame(time);
 
-            if(Bf.Animations.OnFrameSet)
+            if (Bf.Animations.OnFrameSet)
             {
                 Bf.Animations.PerfomOnFrame(this, Bf.Animations, state);
             }
@@ -977,30 +1043,31 @@ namespace FreeRaider
             Assert.That(lowestSector != null);
 
             HeightInfo.WallsClimbDir = 0;
-            HeightInfo.WallsClimbDir |= (sbyte)(lowestSector.Flags & (uint)(SectorFlag.ClimbWest |
-                                                              SectorFlag.ClimbEast |
-                                                              SectorFlag.ClimbNorth |
-                                                              SectorFlag.ClimbSouth));
+            HeightInfo.WallsClimbDir |= (sbyte) (lowestSector.Flags & (uint) (SectorFlag.ClimbWest |
+                                                                              SectorFlag.ClimbEast |
+                                                                              SectorFlag.ClimbNorth |
+                                                                              SectorFlag.ClimbSouth));
 
             HeightInfo.WallsClimb = HeightInfo.WallsClimbDir > 0;
-            HeightInfo.CeilingClimb = highestSector.Flags.HasFlagUns(SectorFlag.ClimbCeiling) || lowestSector.Flags.HasFlagUns(SectorFlag.ClimbCeiling);
+            HeightInfo.CeilingClimb = highestSector.Flags.HasFlagUns(SectorFlag.ClimbCeiling) ||
+                                      lowestSector.Flags.HasFlagUns(SectorFlag.ClimbCeiling);
 
-            if(lowestSector.Flags.HasFlagUns(SectorFlag.Death))
+            if (lowestSector.Flags.HasFlagUns(SectorFlag.Death))
             {
-                if(MoveType.IsAnyOf(MoveType.OnFloor, MoveType.Wade, MoveType.Quicksand))
+                if (MoveType.IsAnyOf(MoveType.OnFloor, MoveType.Wade, MoveType.Quicksand))
                 {
-                    if(HeightInfo.FloorHit)
+                    if (HeightInfo.FloorHit)
                     {
                         var cont = (EngineContainer) HeightInfo.FloorObject.UserObject;
 
-                        if(cont != null && cont.ObjectType == OBJECT_TYPE.RoomBase)
+                        if (cont != null && cont.ObjectType == OBJECT_TYPE.RoomBase)
                         {
                             SetParam(CharParameters.Health, 0.0f);
                             Response.Killed = true;
                         }
                     }
                 }
-                else if(MoveType.IsAnyOf(MoveType.Underwater, MoveType.OnWater))
+                else if (MoveType.IsAnyOf(MoveType.Underwater, MoveType.OnWater))
                 {
                     SetParam(CharParameters.Health, 0.0f);
                     Response.Killed = true;
@@ -1016,7 +1083,7 @@ namespace FreeRaider
             var t = hor * SpeedMult;
 
             // Calculate the direction of jump by vector multiplication.
-            if(DirFlag.HasFlag(ENT_MOVE.MoveForward))
+            if (DirFlag.HasFlag(ENT_MOVE.MoveForward))
             {
                 spd = Transform.Basis.Column1 * t;
             }
@@ -1058,9 +1125,9 @@ namespace FreeRaider
 
         public override Substance GetSubstanceState()
         {
-            if(Self.Room.Flags.HasFlagUns(RoomFlag.Quicksand))
+            if (Self.Room.Flags.HasFlagUns(RoomFlag.Quicksand))
             {
-                if(HeightInfo.TransitionLevel > Transform.Origin.Z + Height)
+                if (HeightInfo.TransitionLevel > Transform.Origin.Z + Height)
                 {
                     return Substance.QuicksandConsumed;
                 }
@@ -1069,15 +1136,16 @@ namespace FreeRaider
                     return Substance.QuicksandShallow;
                 }
             }
-            else if(!HeightInfo.Water)
+            else if (!HeightInfo.Water)
             {
                 return Substance.None;
             }
-            else if(HeightInfo.Water && HeightInfo.TransitionLevel > Transform.Origin.Z && HeightInfo.TransitionLevel < Transform.Origin.Z + WadeDepth)
+            else if (HeightInfo.Water && HeightInfo.TransitionLevel > Transform.Origin.Z &&
+                     HeightInfo.TransitionLevel < Transform.Origin.Z + WadeDepth)
             {
                 return Substance.WaterShallow;
             }
-            else if(HeightInfo.Water && HeightInfo.TransitionLevel > Transform.Origin.Z + WadeDepth)
+            else if (HeightInfo.Water && HeightInfo.TransitionLevel > Transform.Origin.Z + WadeDepth)
             {
                 return Substance.WaterWade;
             }
@@ -1095,15 +1163,14 @@ namespace FreeRaider
 
         public override void UpdateGhostRigidBody()
         {
-            if(Bt.GhostObjects.Count > 0)
+            if (Bt.GhostObjects.Count > 0)
             {
                 Assert.That(Bf.BoneTags.Count == Bt.GhostObjects.Count);
-                for(var i = 0; i < Bf.BoneTags.Count; i++)
+                for (var i = 0; i < Bf.BoneTags.Count; i++)
                 {
-                    var tr = (Transform)Bt.BtBody[i].WorldTransform;
+                    var tr = (Transform) Bt.BtBody[i].WorldTransform;
                     tr.Origin = tr * Bf.BoneTags[i].MeshBase.Center;
-                    Bt.GhostObjects[i].WorldTransform = (Matrix4)tr;
-                    ERROR
+                    Bt.GhostObjects[i].WorldTransform = (Matrix4) tr;
                 }
             }
         }
@@ -1113,7 +1180,15 @@ namespace FreeRaider
             return ConvexCb;
         }
 
-        public override Vector3 CamPosForFollowing(float dz);
+        public override Vector3 CamPosForFollowing(float dz)
+        {
+            if (CamFollowCenter > 0)
+            {
+                CamFollowCenter--;
+                return OBB.Centre;
+            }
+            return base.CamPosForFollowing(dz);
+        }
 
         /// <returns>Item count after the function's end</returns>
         public int AddItem(uint itemID, int count)
@@ -1127,7 +1202,7 @@ namespace FreeRaider
             count = count < 0 ? item.Count : count;
 
             var it = Inventory.FirstOrDefault(x => x.ID == itemID);
-            if(it != null)
+            if (it != null)
             {
                 it.Count += count;
                 return it.Count;
@@ -1149,12 +1224,12 @@ namespace FreeRaider
 
             foreach (var it in Inventory.Where(it => it.ID == itemID).ToList())
             {
-                if(it.Count > count)
+                if (it.Count > count)
                 {
                     it.Count -= count;
                     return it.Count;
                 }
-                else if(it.Count == count)
+                else if (it.Count == count)
                 {
                     Inventory.Remove(it);
                 }
@@ -1197,17 +1272,17 @@ namespace FreeRaider
             fc.TransitionLevel = 32512.0f;
 
             r = Room.FindPosCogerrence(pos, r)?.CheckFlip();
-            if(r != null)
+            if (r != null)
             {
                 rs = r.GetSectorXYZ(pos);
-                if(r.Flags.HasFlagUns(RoomFlag.Water))
+                if (r.Flags.HasFlagUns(RoomFlag.Water))
                 {
-                    while(rs.SectorAbove != null)
+                    while (rs.SectorAbove != null)
                     {
                         Assert.That(rs.SectorAbove != null);
                         rs = rs.SectorAbove.CheckFlip();
                         Assert.That(rs?.OwnerRoom != null);
-                        if((rs.OwnerRoom.Flags & (uint)RoomFlag.Water) == 0x00)
+                        if ((rs.OwnerRoom.Flags & (uint) RoomFlag.Water) == 0x00)
                         {
                             fc.TransitionLevel = rs.Floor;
                             fc.Water = true;
@@ -1222,7 +1297,7 @@ namespace FreeRaider
                         Assert.That(rs.SectorAbove != null);
                         rs = rs.SectorAbove.CheckFlip();
                         Assert.That(rs?.OwnerRoom != null);
-                        if ((rs.OwnerRoom.Flags & (uint)RoomFlag.Quicksand) == 0x00)
+                        if ((rs.OwnerRoom.Flags & (uint) RoomFlag.Quicksand) == 0x00)
                         {
                             fc.TransitionLevel = rs.Floor;
                             fc.Quicksand = fc.TransitionLevel - fc.FloorPoint.Z > vOffset
@@ -1239,13 +1314,13 @@ namespace FreeRaider
                         Assert.That(rs.SectorBelow != null);
                         rs = rs.SectorBelow.CheckFlip();
                         Assert.That(rs?.OwnerRoom != null);
-                        if ((rs.OwnerRoom.Flags & (uint)RoomFlag.Water) != 0x00)
+                        if ((rs.OwnerRoom.Flags & (uint) RoomFlag.Water) != 0x00)
                         {
                             fc.TransitionLevel = rs.Ceiling;
                             fc.Water = true;
                             break;
                         }
-                        else if ((rs.OwnerRoom.Flags & (uint)RoomFlag.Quicksand) != 0x00)
+                        else if ((rs.OwnerRoom.Flags & (uint) RoomFlag.Quicksand) != 0x00)
                         {
                             fc.TransitionLevel = rs.Ceiling;
                             fc.Quicksand = fc.TransitionLevel - fc.FloorPoint.Z > vOffset
@@ -1265,10 +1340,10 @@ namespace FreeRaider
             cb.CollisionObject = null;
             Global.BtEngineDynamicsWorld.RayTest(from, to, cb);
             fc.FloorHit = cb.HasHit;
-            if(fc.FloorHit)
+            if (fc.FloorHit)
             {
                 fc.FloorNormale = cb.HitNormalWorld;
-                Helper.SetInterpolate3(ref fc.FloorPoint, from, to, cb.ClosestHitFraction);
+                Helper.SetInterpolate3(out fc.FloorPoint, from, to, cb.ClosestHitFraction);
                 fc.FloorObject = cb.CollisionObject;
             }
 
@@ -1281,7 +1356,7 @@ namespace FreeRaider
             if (fc.CeilingHit)
             {
                 fc.CeilingNormale = cb.HitNormalWorld;
-                Helper.SetInterpolate3(ref fc.CeilingPoint, from, to, cb.ClosestHitFraction);
+                Helper.SetInterpolate3(out fc.CeilingPoint, from, to, cb.ClosestHitFraction);
                 fc.CeilingObject = cb.CollisionObject;
             }
         }
@@ -1374,7 +1449,7 @@ namespace FreeRaider
             HeightInfo.Cb.ClosestHitFraction = 1.0f;
             HeightInfo.Cb.CollisionObject = null;
             Global.BtEngineDynamicsWorld.RayTest(from, to, HeightInfo.Cb);
-            if(HeightInfo.Cb.HasHit)
+            if (HeightInfo.Cb.HasHit)
             {
                 ret = StepType.UpImpossible;
             }
@@ -1574,20 +1649,20 @@ namespace FreeRaider
             ret.Up.X = 0.0f;
             ret.Up.Y = 0.0f;
             ret.Up.Z = 1.0f;
-            ret.EdgeZAngle = (float)Math.Atan2(n2.X, -n2.Y) * Constants.DegPerRad;
+            ret.EdgeZAngle = (float) Math.Atan2(n2.X, -n2.Y) * Constants.DegPerRad;
             ret.EdgeTanXY.X = -n2.Y;
             ret.EdgeTanXY.Y = n2.X;
             ret.EdgeTanXY.Z = 0.0f;
             ret.EdgeTanXY /= (float) Math.Sqrt(n2.X * n2.X + n2.Y * n2.Y);
             ret.Right = ret.EdgeTanXY;
 
-            if(!HeightInfo.FloorHit || ret.EdgePoint.Z - HeightInfo.FloorPoint.Z >= Height)
+            if (!HeightInfo.FloorHit || ret.EdgePoint.Z - HeightInfo.FloorPoint.Z >= Height)
             {
                 ret.CanHang = true;
             }
 
             ret.NextZSpace = 2.0f * Height;
-            if(nfc.FloorHit && nfc.CeilingHit)
+            if (nfc.FloorHit && nfc.CeilingHit)
             {
                 ret.NextZSpace = nfc.CeilingPoint.Z - nfc.FloorPoint.Z;
             }
@@ -1606,7 +1681,7 @@ namespace FreeRaider
             ret.CeilingLimit = HeightInfo.CeilingHit ? HeightInfo.CeilingPoint.Z : 9e10f;
             ret.Point = Climb.Point;
 
-            if(!HeightInfo.WallsClimb)
+            if (!HeightInfo.WallsClimb)
             {
                 return ret;
             }
@@ -1632,7 +1707,7 @@ namespace FreeRaider
             tr2.Origin = to;
 
             Global.BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) tr1, (Matrix4) tr2, ccb);
-            if(!ccb.HasHit)
+            if (!ccb.HasHit)
             {
                 return ret;
             }
@@ -1649,7 +1724,7 @@ namespace FreeRaider
             ret.Right.Z = 0.0f;
 
             // now we have wall normale in XOY plane. Let us check all flags
-            if(HeightInfo.WallsClimbDir.HasFlagSig(SectorFlag.ClimbNorth) && wn2[1] < -0.7f
+            if (HeightInfo.WallsClimbDir.HasFlagSig(SectorFlag.ClimbNorth) && wn2[1] < -0.7f
                 || HeightInfo.WallsClimbDir.HasFlagSig(SectorFlag.ClimbEast) && wn2[0] < -0.7f
                 || HeightInfo.WallsClimbDir.HasFlagSig(SectorFlag.ClimbSouth) && wn2[1] > 0.7f
                 || HeightInfo.WallsClimbDir.HasFlagSig(SectorFlag.ClimbWest) && wn2[0] > 0.7f)
@@ -1657,7 +1732,7 @@ namespace FreeRaider
                 ret.WallHit = ClimbType.HandsOnly;
             }
 
-            if(ret.WallHit != ClimbType.None)
+            if (ret.WallHit != ClimbType.None)
             {
                 t = 0.67f * Height;
                 from -= Transform.Basis.Column2 * t;
@@ -1671,7 +1746,7 @@ namespace FreeRaider
                 tr1.Origin = from;
                 tr2.SetIdentity();
                 tr2.Origin = to;
-                Global.BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4)tr1, (Matrix4)tr2, ccb);
+                Global.BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) tr1, (Matrix4) tr2, ccb);
                 if (ccb.HasHit)
                 {
                     ret.WallHit = ClimbType.FullBody;
@@ -1762,7 +1837,7 @@ namespace FreeRaider
 
             if (cmd.Move[1] == 0 || maxLean == 0.0f) // No direction - restore straight vertical position!
             {
-                if(Angles.Z != 0.0f)
+                if (Angles.Z != 0.0f)
                 {
                     if (Angles.Z < 180.0f)
                     {
@@ -1776,7 +1851,7 @@ namespace FreeRaider
                     }
                 }
             }
-            else if(cmd.Move[1] == 1) // Right direction
+            else if (cmd.Move[1] == 1) // Right direction
             {
                 if (Angles.Z != maxLean)
                 {
@@ -1785,7 +1860,7 @@ namespace FreeRaider
                         Angles.Z = Math.Min(maxLean,
                             Angles.Z + (Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime);
                     }
-                    else if(Angles.Z > 180.0f) // Approaching from left
+                    else if (Angles.Z > 180.0f) // Approaching from left
                     {
                         Angles.Z += (360 - Math.Abs(Angles.Z) + leanCoeff * 2) / 2 * Global.EngineFrameTime;
                         if (Angles.Z < 180.0f) Angles.Z = 0.0f;
@@ -1793,7 +1868,7 @@ namespace FreeRaider
                     else // Reduce previous lean
                     {
                         Angles.Z = Math.Max(0.0f,
-                             Angles.Z - (Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime);
+                            Angles.Z - (Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime);
                     }
                 }
             }
@@ -1804,7 +1879,7 @@ namespace FreeRaider
                     if (Angles.Z > negLean) // Reduce previous lean
                     {
                         Angles.Z = Math.Max(negLean,
-                           Angles.Z - (360.0f - Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime);
+                            Angles.Z - (360.0f - Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime);
                     }
                     else if (Angles.Z > 180.0f) // Approaching from right
                     {
@@ -1860,24 +1935,24 @@ namespace FreeRaider
             if (axis > 1) return 0.0f;
 
             var currRotDir = 0;
-            if(Command.Rotation[axis] < 0.0f)
+            if (Command.Rotation[axis] < 0.0f)
             {
                 currRotDir = 1;
             }
-            else if(Command.Rotation[axis] > 0.0f)
+            else if (Command.Rotation[axis] > 0.0f)
             {
                 currRotDir = 2;
             }
 
-            if(currRotDir == 0 || maxAngle == 0.0f || accel == 0.0f)
+            if (currRotDir == 0 || maxAngle == 0.0f || accel == 0.0f)
             {
                 InertiaAngular[axis] = 0.0f;
             }
             else
             {
-                if(InertiaAngular[axis] != maxAngle)
+                if (InertiaAngular[axis] != maxAngle)
                 {
-                    if(currRotDir == 2)
+                    if (currRotDir == 2)
                     {
                         if (InertiaAngular[axis] < 0.0f)
                         {
@@ -1885,7 +1960,8 @@ namespace FreeRaider
                         }
                         else
                         {
-                            InertiaAngular[axis] = Math.Min(maxAngle, InertiaAngular[axis] + maxAngle * accel * Global.EngineFrameTime);
+                            InertiaAngular[axis] = Math.Min(maxAngle,
+                                InertiaAngular[axis] + maxAngle * accel * Global.EngineFrameTime);
                         }
                     }
                     else
@@ -1896,7 +1972,8 @@ namespace FreeRaider
                         }
                         else
                         {
-                            InertiaAngular[axis] = Math.Max(-maxAngle, InertiaAngular[axis] - maxAngle * accel * Global.EngineFrameTime);
+                            InertiaAngular[axis] = Math.Max(-maxAngle,
+                                InertiaAngular[axis] - maxAngle * accel * Global.EngineFrameTime);
                         }
                     }
                 }
@@ -1909,40 +1986,598 @@ namespace FreeRaider
 
         public int FreeFalling();
 
-        public int MonkeyClimbing();
+        public int MonkeyClimbing()
+        {
+            var spd = Vector3.Zero;
+            var pos = Transform.Origin;
 
-        public int WallsClimbing();
+            Speed.Z = 0.0f;
 
-        public int Climbing();
+            Response.Slide = SlideType.None;
+            Response.Lean = LeanType.None;
 
-        public int MoveUnderwater();
+            Response.HorizontalCollide = 0x00;
+            Response.VerticalCollide = 0x00;
+
+            var t = CurrentSpeed * SpeedMult;
+            Response.VerticalCollide |= 0x01;
+
+            Angles.X += GetInertiaAngular(1.0f, Constants.ROT_SPEED_MONKEYSWING, 0);
+            Angles.Y = 0.0f;
+            Angles.Z = 0.0f;
+            UpdateTransform(); // apply rotations
+
+            if (DirFlag.HasFlag(ENT_MOVE.MoveForward))
+            {
+                spd = Transform.Basis.Column1 * t;
+            }
+            else if (DirFlag.HasFlag(ENT_MOVE.MoveBackward))
+            {
+                spd = Transform.Basis.Column1 * -t;
+            }
+            else if (DirFlag.HasFlag(ENT_MOVE.MoveLeft))
+            {
+                spd = Transform.Basis.Column0 * -t;
+            }
+            else if (DirFlag.HasFlag(ENT_MOVE.MoveRight))
+            {
+                spd = Transform.Basis.Column0 * t;
+            }
+            else
+            {
+                //DirFlag = ENT_MOVE.MoveForward;
+            }
+
+            Speed = spd;
+            var move = spd * Global.EngineFrameTime;
+            move.Z = 0.0f;
+
+            GhostUpdate();
+            UpdateCurrentHeight();
+            pos += move;
+            FixPenetrations(move); // get horizontal collide
+
+            if (HeightInfo.CeilingHit && pos.Z + Bf.BBMax.Z - HeightInfo.CeilingPoint.Z > -0.33 * MinStepUpHeight)
+            {
+                pos.Z = HeightInfo.CeilingPoint.Z - Bf.BBMax.Z;
+            }
+            else
+            {
+                MoveType = MoveType.FreeFalling;
+                UpdateRoomPos();
+                return 2;
+            }
+
+            UpdateRoomPos();
+
+            return 1;
+        }
+
+        public int WallsClimbing()
+        {
+            var climb = Climb;
+            var pos = Transform.Origin;
+
+            Response.Slide = SlideType.None;
+            Response.HorizontalCollide = 0x00;
+            Response.VerticalCollide = 0x00;
+
+            var spd = Vector3.Zero;
+            climb = CheckWallsClimbability();
+            Climb = climb;
+            if (climb.WallHit == ClimbType.None)
+            {
+                HeightInfo.WallsClimb = false;
+                return 2;
+            }
+
+            Angles.X = (float) (Math.Atan2(climb.N.X, -climb.N.Y) * Constants.DegPerRad);
+            UpdateTransform();
+            pos.X = climb.Point.X - Transform.Basis.Column1.X * Bf.BBMax.Y;
+            pos.Y = climb.Point.Y - Transform.Basis.Column1.Y * Bf.BBMax.Y;
+
+            if (DirFlag == ENT_MOVE.MoveForward)
+            {
+                spd += climb.Up;
+            }
+            else if (DirFlag == ENT_MOVE.MoveBackward)
+            {
+                spd -= climb.Up;
+            }
+            else if (DirFlag == ENT_MOVE.MoveRight)
+            {
+                spd += climb.Right;
+            }
+            else if (DirFlag == ENT_MOVE.MoveLeft)
+            {
+                spd -= climb.Right;
+            }
+            var t = spd.Length;
+            if (t > 0.01f)
+            {
+                spd /= t;
+            }
+            Speed = spd * CurrentSpeed * SpeedMult;
+            var move = Speed * Global.EngineFrameTime;
+
+            GhostUpdate();
+            UpdateCurrentHeight();
+            pos += move;
+            FixPenetrations(move); // get horizontal collide
+            UpdateRoomPos();
+
+            climb = CheckWallsClimbability();
+            if (pos.Z + Bf.BBMax.Z > climb.CeilingLimit)
+            {
+                pos.Z = climb.CeilingLimit - Bf.BBMax.Z;
+            }
+
+            return 1;
+        }
+
+        public int Climbing()
+        {
+            var spd = Vector3.Zero;
+            var pos = Transform.Origin;
+            var z = pos.Z;
+
+            Response.Slide = SlideType.None;
+            Response.HorizontalCollide = 0x00;
+            Response.VerticalCollide = 0x00;
+
+            var t = CurrentSpeed * SpeedMult;
+            Response.VerticalCollide |= 0x01;
+            Angles.X += Command.Rotation.X;
+            Angles.Y = 0.0f;
+            Angles.Z = 0.0f;
+            UpdateTransform(); // apply rotations
+
+            if (DirFlag == ENT_MOVE.MoveForward)
+            {
+                spd = Transform.Basis.Column1 * t;
+            }
+            else if (DirFlag == ENT_MOVE.MoveBackward)
+            {
+                spd = Transform.Basis.Column1 * -t;
+            }
+            else if (DirFlag == ENT_MOVE.MoveLeft)
+            {
+                spd = Transform.Basis.Column0 * -t;
+            }
+            else if (DirFlag == ENT_MOVE.MoveRight)
+            {
+                spd = Transform.Basis.Column0 * t;
+            }
+            else
+            {
+                Response.Slide = SlideType.None;
+                GhostUpdate();
+                FixPenetrations(Vector3.Zero);
+                return 1;
+            }
+
+            Response.Slide = SlideType.None;
+
+            Speed = spd;
+            var move = spd * Global.EngineFrameTime;
+
+            GhostUpdate();
+            pos += move;
+            FixPenetrations(move); // get horizontal collide
+            UpdateRoomPos();
+            pos.Z = z;
+
+            return 1;
+        }
+
+        public int MoveUnderwater()
+        {
+            var spd = Vector3.Zero;
+            var pos = Transform.Origin;
+
+            // Check current place.
+
+            if (Self.Room != null && !Self.Room.Flags.HasFlagUns(RoomFlag.Water))
+            {
+                MoveType = MoveType.FreeFalling;
+                return 2;
+            }
+
+            Response.Slide = SlideType.None;
+            Response.Lean = LeanType.None;
+
+            Response.HorizontalCollide = 0x00;
+            Response.VerticalCollide = 0x00;
+
+            // Calculate current speed.
+
+            var t = GetInertiaLinear(Constants.MAX_SPEED_UNDERWATER, Constants.INERTIA_SPEED_UNDERWATER, Command.Jump);
+
+            if (!Response.Killed) // Block controls if Lara is dead.
+            {
+                Angles.X += GetInertiaLinear(1.0f, Constants.ROT_SPEED_UNDERWATER, false);
+                Angles.Y -= GetInertiaLinear(1.0f, Constants.ROT_SPEED_UNDERWATER, true);
+                Angles.Z = 0.0f;
+
+                if (Angles.Y.IsBetween(70.0f, 180.0f, false)) // Underwater angle limiter.
+                {
+                    Angles.Y = 70.0f;
+                }
+                else if (Angles.IsBetween(180.0f, 270.0f, false))
+                {
+                    Angles.Y = 270.0f;
+                }
+
+                UpdateTransform(); // apply rotations
+
+                spd = Transform.Basis.Column1 * t; // OY move only!
+                Speed = spd;
+            }
+
+            var move = spd * Global.EngineFrameTime;
+
+            GhostUpdate();
+            pos += move;
+            FixPenetrations(move); // get horizontal collide
+
+            UpdateRoomPos();
+            if (HeightInfo.Water && pos.Z + Bf.BBMax.Z >= HeightInfo.TransitionLevel)
+            {
+                if (Transform.Basis.Column1.Z > 0.67f)
+                {
+                    MoveType = MoveType.OnWater;
+                    return 2;
+                }
+                if (!HeightInfo.FloorHit || HeightInfo.TransitionLevel - HeightInfo.FloorPoint.Z >= Height)
+                {
+                    pos.Z = HeightInfo.TransitionLevel - Bf.BBMax.Z;
+                }
+            }
+
+            return 1;
+        }
 
         public int MoveOnWater();
 
-        public int FindTraverse();
+        public int FindTraverse()
+        {
+            var ch_s = Self.Room.GetSectorRaw(Transform.Origin);
+            RoomSector obj_s = null;
+
+            if (ch_s == null)
+            {
+                return 0;
+            }
+
+            TraversedObject = null;
+
+            var c1 = Transform.Basis.Column1;
+
+            // OX move case
+            if (c1.X > 0.9f)
+            {
+                obj_s =
+                    ch_s.OwnerRoom.GetSectorRaw(new Vector3(ch_s.Position.X + Constants.TR_METERING_SECTORSIZE,
+                        ch_s.Position.Y, 0.0f));
+            }
+            else if (c1.X < -0.9f)
+            {
+                obj_s =
+                    ch_s.OwnerRoom.GetSectorRaw(new Vector3(ch_s.Position.X - Constants.TR_METERING_SECTORSIZE,
+                        ch_s.Position.Y, 0.0f));
+            }
+            // OY move case
+            if (c1.Y > 0.9f)
+            {
+                obj_s =
+                    ch_s.OwnerRoom.GetSectorRaw(new Vector3(ch_s.Position.X,
+                        ch_s.Position.Y + Constants.TR_METERING_SECTORSIZE, 0.0f));
+            }
+            else if (c1.Y < -0.9f)
+            {
+                obj_s =
+                    ch_s.OwnerRoom.GetSectorRaw(new Vector3(ch_s.Position.X,
+                        ch_s.Position.Y - Constants.TR_METERING_SECTORSIZE, 0.0f));
+            }
+
+            if (obj_s != null)
+            {
+                obj_s = obj_s.CheckPortalPointer();
+                foreach (var cont in obj_s.OwnerRoom.Containers)
+                {
+                    if (cont.ObjectType == OBJECT_TYPE.Entity)
+                    {
+                        var e = (Entity) cont.Object;
+                        if (e.TypeFlags.HasFlag(ENTITY_TYPE.Traverse) && OBB.OBB_Test(e, this) == 1 &&
+                            Math.Abs(e.Transform.Origin.Z - Transform.Origin.Z) < 1.1f)
+                        {
+                            var oz = (int) ((Angles.X + 45.0f) / 90.0f);
+                            Angles.X = oz * 90.0f;
+                            TraversedObject = e;
+                            UpdateTransform();
+                            return 1;
+                        }
+                    }
+                }
+            }
+
+            return 0;
+        }
 
         public int CheckTraverse(Entity obj);
 
-        public void ApplyCommands();
+        /// <summary>
+        /// Main character frame function
+        /// </summary>
+        public void ApplyCommands()
+        {
+            if (TypeFlags.HasFlag(ENTITY_TYPE.Dynamic))
+            {
+                return;
+            }
 
-        public void UpdateParams();
+            UpdatePlatformPreStep();
 
-        public float GetParam(CharParameters parameter);
+            StateFunc?.Invoke(this, Bf.Animations);
 
-        public int SetParam(CharParameters parameter, float value);
+            switch (MoveType)
+            {
+                case MoveType.OnFloor:
+                    MoveOnFloor();
+                    break;
 
-        public int ChangeParam(CharParameters parameter, float value);
+                case MoveType.FreeFalling:
+                    FreeFalling();
+                    break;
 
-        public int SetParamMaximum(CharParameters parameter, float maxValue);
+                case MoveType.Climbing:
+                    Climbing();
+                    break;
 
-        public int SetWeaponModel(int weaponModel, int armed);
+                case MoveType.Monkeyswing:
+                    MonkeyClimbing();
+                    break;
+
+                case MoveType.WallsClimb:
+                    WallsClimbing();
+                    break;
+
+                case MoveType.Underwater:
+                    MoveUnderwater();
+                    break;
+
+                case MoveType.OnWater:
+                    MoveOnWater();
+                    break;
+
+                default:
+                    MoveType = MoveType.OnFloor;
+                    break;
+            }
+
+            UpdateRigidBody(true);
+            UpdatePlatformPostStep();
+        }
+
+        public void UpdateParams()
+        {
+            // Poisoning is always global
+
+            var poison = GetParam(CharParameters.Poison);
+
+            if (poison != 0)
+            {
+                ChangeParam(CharParameters.Poison, 0.0001f);
+                ChangeParam(CharParameters.Health, -poison);
+            }
+
+            switch (MoveType)
+            {
+                case MoveType.OnFloor:
+                case MoveType.FreeFalling:
+                case MoveType.Climbing:
+                case MoveType.Monkeyswing:
+                case MoveType.WallsClimb:
+
+                    if (HeightInfo.Quicksand == QuicksandPosition.Drowning && MoveType == MoveType.OnFloor)
+                    {
+                        if (ChangeParam(CharParameters.Air, -3.0f) == 0)
+                            ChangeParam(CharParameters.Health, -3.0f);
+                    }
+                    else if (HeightInfo.Quicksand == QuicksandPosition.Sinking)
+                    {
+                        ChangeParam(CharParameters.Air, 3.0f);
+                    }
+                    else
+                    {
+                        SetParam(CharParameters.Air, Constants.PARAM_ABSOLUTE_MAX);
+                    }
+
+                    ChangeParam(CharParameters.Stamina,
+                        Bf.Animations.LastState.IsAnyOf(TR_STATE.LaraSprint, TR_STATE.LaraSprintRoll)
+                            ? -0.5f
+                            : 0.5f);
+
+                    break;
+
+                case MoveType.OnWater:
+                    ChangeParam(CharParameters.Air, 3.0f);
+                    break;
+
+                case MoveType.Underwater:
+                    if (ChangeParam(CharParameters.Air, -1.0f) == 0)
+                    {
+                        if (ChangeParam(CharParameters.Health, -3.0f) == 0)
+                        {
+                            Response.Killed = true;
+                        }
+                    }
+                    break;
+
+                default:
+                    break; // Add quicksand later...
+            }
+        }
+
+        public float GetParam(CharParameters parameter)
+        {
+            if (parameter >= CharParameters.Sentinel)
+                return 0;
+
+            return Parameters.Param[(int) parameter];
+        }
+
+        public int SetParam(CharParameters parameter, float value)
+        {
+            if (parameter >= CharParameters.Sentinel)
+                return 0;
+
+            if (value == Parameters.Param[(int) parameter])
+                return 0;
+
+            var maximum = Parameters.Maximum[(int) parameter];
+
+            if (value < 0) value = maximum; // Char params can't be less than zero.
+            else if (value > maximum) value = maximum;
+
+            Parameters.Param[(int) parameter] = value;
+            return 1;
+        }
+
+        public int ChangeParam(CharParameters parameter, float value)
+        {
+            if (parameter >= CharParameters.Sentinel)
+                return 0;
+
+            var maximum = Parameters.Maximum[(int) parameter];
+            var current = Parameters.Param[(int) parameter];
+
+            if (current == maximum && value > 0)
+                return 0;
+
+            current += value;
+
+            current = current.Clamp(0, maximum);
+
+            Parameters.Param[(int) parameter] = current;
+
+            return 1;
+        }
+
+        public int SetParamMaximum(CharParameters parameter, float maxValue)
+        {
+            if (parameter >= CharParameters.Sentinel)
+                return 0;
+
+            maxValue = Math.Max(0, maxValue); // Clamp max. to at least zero
+            Parameters.Maximum[(int) parameter] = maxValue;
+            return 1;
+        }
+
+        // overrided == 0x00: no overriding;
+        // overrided == 0x01: overriding mesh in armed state;
+        // overrided == 0x02: add mesh to slot in armed state;
+        // overrided == 0x03: overriding mesh in disarmed state;
+        // overrided == 0x04: add mesh to slot in disarmed state;
+        public int SetWeaponModel(int weaponModel, int armed)
+        {
+            var sm = Global.EngineWorld.GetModelByID((uint) weaponModel);
+
+            var bm = Bf.Animations.Model;
+            if (sm != null && Bf.BoneTags.Count == sm.MeshCount && sm.Animations.Count >= 4)
+            {
+                if (Bf.Animations.Next == null)
+                {
+                    AddOverrideAnim(weaponModel);
+                }
+                else
+                {
+                    Bf.Animations.Next.Model = sm;
+                }
+
+                for (var i = 0; i < bm.MeshCount; i++)
+                {
+                    Bf.BoneTags[i].MeshBase = bm.MeshTree[i].MeshBase;
+                    Bf.BoneTags[i].MeshSlot = null;
+                }
+
+                if (armed != 0)
+                {
+                    for (var i = 0; i < bm.MeshCount; i++)
+                    {
+                        if (sm.MeshTree[i].ReplaceMesh.IsAnyOf(0x01, 0x02))
+                        {
+                            Bf.BoneTags[i].MeshBase = sm.MeshTree[i].MeshBase;
+                        }
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < bm.MeshCount; i++)
+                    {
+                        if (sm.MeshTree[i].ReplaceMesh.IsAnyOf(0x03, 0x04))
+                        {
+                            Bf.BoneTags[i].MeshBase = sm.MeshTree[i].MeshBase;
+                        }
+                    }
+                    Bf.Animations.Next.Model = null;
+                }
+
+                return 1;
+            }
+            else
+            {
+                for (var i = 0; i < bm.MeshCount; i++)
+                {
+                    Bf.BoneTags[i].MeshBase = bm.MeshTree[i].MeshBase;
+                    Bf.BoneTags[i].MeshSlot = null;
+                }
+                if (Bf.Animations.Next != null)
+                {
+                    Bf.Animations.Next.Model = null;
+                }
+            }
+
+            return 0;
+        }
     }
 
     public partial class StaticFuncs
     {
-        public static bool IsCharacter(Entity ent);
+        public static int Sector_AllowTraverse(RoomSector rs, float floor, EngineContainer container)
+        {
+            var f0 = rs.FloorCorners[0][2];
+            if (rs.FloorCorners[1][2] != f0 || rs.FloorCorners[2][2] != f0 || rs.FloorCorners[3][2] != f0)
+            {
+                return 0x00;
+            }
 
-        public static int Sector_AllowTraverse(RoomSector rs, float floor, EngineContainer cont);
+            if (Math.Abs(floor - f0) < 1.1f && rs.Ceiling - rs.Floor >= Constants.TR_METERING_SECTORSIZE)
+            {
+                return 0x01;
+            }
+
+            var cb = new BtEngineClosestRayResultCallback(container);
+            var from = new Vector3(rs.Position.X, rs.Position.Y, floor + Constants.TR_METERING_SECTORSIZE * 0.5f);
+            var to = new Vector3(rs.Position.X, rs.Position.Y, floor - Constants.TR_METERING_SECTORSIZE * 0.5f);
+            Global.BtEngineDynamicsWorld.RayTest(from, to, cb);
+            if (cb.HasHit)
+            {
+                Vector3 v;
+                Helper.SetInterpolate3(out v, from, to, cb.ClosestHitFraction);
+                if (Math.Abs(v.Z - floor) < 1.1f)
+                {
+                    var cont = (EngineContainer) cb.CollisionObject.UserObject;
+                    if (cont != null && cont.ObjectType == OBJECT_TYPE.Entity &&
+                        ((Entity) cont.Object).TypeFlags.HasFlag(ENTITY_TYPE.TraverseFloor))
+                    {
+                        return 0x01;
+                    }
+                }
+            }
+
+            return 0x00;
+        }
     }
 }
 
