@@ -1984,7 +1984,112 @@ namespace FreeRaider
 
         public int MoveOnFloor();
 
-        public int FreeFalling();
+        public int FreeFalling()
+        {
+            var pos = Transform.Origin;
+
+            // init height info structure
+
+            Response.Slide = SlideType.None;
+            Response.HorizontalCollide = 0x00;
+            Response.VerticalCollide = 0x00;
+
+            var rot = GetInertiaAngular(1.0f, Constants.ROT_SPEED_FREEFALL, 0);
+            Angles.X += rot;
+            Angles.Y = 0.0f;
+
+            UpdateTransform(); // apply rotations
+
+            var move = ApplyGravity(Global.EngineFrameTime);
+            Speed.Z = Math.Max(-Constants.FREE_FALL_SPEED_MAXIMUM, Speed.Z);
+            Speed = Speed.Rotate(Vector3.UnitZ, rot * Constants.RadPerDeg);
+
+            UpdateCurrentHeight();
+
+            if(Self.Room != null && Self.Room.Flags.HasFlagUns(RoomFlag.Water))
+            {
+                if(Speed.Z < 0.0f)
+                {
+                    CurrentSpeed = 0.0f;
+                    Speed.X = 0.0f;
+                    Speed.Y = 0.0f;
+                }
+
+                if (Global.EngineWorld.EngineVersion < Loader.Engine.TR2)
+                    // Lara cannot wade in < TRII so when floor < transition level she has to swim
+                {
+                    if(!HeightInfo.Water || CurrentSector.Floor <= HeightInfo.TransitionLevel)
+                    {
+                        MoveType = MoveType.Underwater;
+                        return 2;
+                    }
+                }
+                else
+                {
+                    if (!HeightInfo.Water || CurrentSector.Floor + Height <= HeightInfo.TransitionLevel)
+                    {
+                        MoveType = MoveType.Underwater;
+                        return 2;
+                    }
+                }
+            }
+
+            GhostUpdate();
+
+            if(HeightInfo.CeilingHit && Speed.Z > 0.0f)
+            {
+                if(HeightInfo.CeilingPoint.Z < Bf.BBMax.Z + pos.Z)
+                {
+                    pos.Z = HeightInfo.CeilingPoint.Z - Bf.BBMax.Z;
+                    Speed.Z = 1.0f; // As in original.
+                    Response.VerticalCollide |= 0x02;
+                    FixPenetrations(Vector3.Zero);
+                    UpdateRoomPos();
+                }
+            }
+            if (HeightInfo.FloorHit && Speed.Z < 0.0f) // move down
+            {
+                if (HeightInfo.FloorPoint.Z >= pos.Z + Bf.BBMin.Z + move.Z)
+                {
+                    pos.Z = HeightInfo.FloorPoint.Z;
+                    //Speed.Z = 1.0f;
+                    MoveType = MoveType.OnFloor;
+                    Response.VerticalCollide |= 0x01;
+                    FixPenetrations(Vector3.Zero);
+                    UpdateRoomPos();
+                    return 2;
+                }
+            }
+
+            pos += move;
+            FixPenetrations(move); // get horizontal collide
+
+            if (HeightInfo.CeilingHit && Speed.Z > 0.0f)
+            {
+                if (HeightInfo.CeilingPoint.Z < Bf.BBMax.Z + pos.Z)
+                {
+                    pos.Z = HeightInfo.CeilingPoint.Z - Bf.BBMax.Z;
+                    Speed.Z = 1.0f; // As in original.
+                    Response.VerticalCollide |= 0x02;
+                }
+            }
+            if (HeightInfo.FloorHit && Speed.Z < 0.0f) // move down
+            {
+                if (HeightInfo.FloorPoint.Z >= pos.Z + Bf.BBMin.Z + move.Z)
+                {
+                    pos.Z = HeightInfo.FloorPoint.Z;
+                    //Speed.Z = 1.0f;
+                    MoveType = MoveType.OnFloor;
+                    Response.VerticalCollide |= 0x01;
+                    FixPenetrations(Vector3.Zero);
+                    UpdateRoomPos();
+                    return 2;
+                }
+            }
+            UpdateRoomPos();
+
+            return 1;
+        }
 
         public int MonkeyClimbing()
         {
@@ -2203,7 +2308,7 @@ namespace FreeRaider
                 {
                     Angles.Y = 70.0f;
                 }
-                else if (Angles.IsBetween(180.0f, 270.0f, false))
+                else if (Angles.Y.IsBetween(180.0f, 270.0f, false))
                 {
                     Angles.Y = 270.0f;
                 }

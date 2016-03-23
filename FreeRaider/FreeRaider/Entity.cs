@@ -315,7 +315,7 @@ namespace FreeRaider
         /// <summary>
         /// Process frame + trying to change state
         /// </summary>
-        public int Frame(float time);
+        public ENTITY_ANIM Frame(float time);
 
         public virtual void UpdateTransform();
 

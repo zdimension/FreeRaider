@@ -132,5 +132,22 @@ namespace FreeRaider
             }
             fp.Close();
         }
+
+        public static void LogCurrPlace()
+        {
+            DebugLog(Constants.LOG_FILENAME, "\"{0}\" str = {1}", Helper.__FILE__, Helper.__LINE__);
+        }
+
+        public static void extError(string error, params object[] args)
+        {
+            LogCurrPlace();
+            Error(error, args);
+        }
+
+        public static void extWarn(string warning, params object[] args)
+        {
+            LogCurrPlace();
+            Warn(warning, args);
+        }
     }
 }

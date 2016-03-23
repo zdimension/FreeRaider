@@ -682,8 +682,13 @@ namespace FreeRaider
         }
 
         public static string ToString(this Vector3 vec, string format)
-        {vec.ToString()
+        {
             return string.Format(format, vec.X, vec.Y, vec.Z);
+        }
+
+        public static string Lcase(this bool b, string trueStr = "true", string falseStr = "false")
+        {
+            return b ? trueStr : falseStr;
         }
     }
 

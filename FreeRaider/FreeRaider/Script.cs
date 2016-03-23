@@ -77,6 +77,16 @@ namespace FreeRaider.Script
             state.RegisterFunction(funcName, func.Method);
         }
 
+        public void RegisterFunction(string funcName, MethodBase func)
+        {
+            state.RegisterFunction(funcName, func);
+        }
+
+        public void RegisterFunction(string funcName, Action func)
+        {
+            state.RegisterFunction(funcName, func.Method);
+        }
+
 
         public void ExposeConstants();
 

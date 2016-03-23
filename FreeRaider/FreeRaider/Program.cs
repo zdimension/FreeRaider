@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
+using System.Threading;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
@@ -20,6 +22,8 @@ namespace FreeRaider
         [STAThread]
         static void Main(string[] args)
         {
+            Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
+
             using (var game = new GameWindow())
             {
                 game.Load += (sender, e) =>
