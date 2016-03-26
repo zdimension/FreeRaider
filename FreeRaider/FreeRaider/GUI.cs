@@ -9,6 +9,8 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using SharpFont;
 using PixelFormat = OpenTK.Graphics.OpenGL.PixelFormat;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -221,7 +223,7 @@ namespace FreeRaider
 
         public bool AddFont(FontType index, uint size, string path)
         {
-            if (!((float) size).IsBetween(Constants.MinFontSize, Constants.MaxFontSize))
+            if (!((float) size).IsBetween(MinFontSize, MaxFontSize))
             {
                 return false;
             }
@@ -230,7 +232,7 @@ namespace FreeRaider
 
             if(desiredFont == null)
             {
-                if(fonts.Count >= Constants.MaxFonts)
+                if(fonts.Count >= MaxFonts)
                 {
                     return false;
                 }
@@ -306,7 +308,7 @@ namespace FreeRaider
         {
             if(fadeDirection)
             {
-                fadeValue += Global.EngineFrameTime * Constants.FontFadeSpeed;
+                fadeValue += EngineFrameTime * FontFadeSpeed;
 
                 if(fadeValue >= 1.0f)
                 {
@@ -316,11 +318,11 @@ namespace FreeRaider
             }
             else
             {
-                fadeValue -= Global.EngineFrameTime * Constants.FontFadeSpeed;
+                fadeValue -= EngineFrameTime * FontFadeSpeed;
 
-                if(fadeValue <= Constants.FontFadeMin)
+                if(fadeValue <= FontFadeMin)
                 {
-                    fadeValue = Constants.FontFadeMin;
+                    fadeValue = FontFadeMin;
                     fadeDirection = true;
                 }
             }
@@ -505,7 +507,7 @@ namespace FreeRaider
             {
                 if (currentAlpha > 0.0f) // If alpha is more than zero, continue to fade.
                 {
-                    currentAlpha -= Global.EngineFrameTime * speed;
+                    currentAlpha -= EngineFrameTime * speed;
                 }
                 else
                 {
@@ -519,7 +521,7 @@ namespace FreeRaider
             {
                 if(currentAlpha < maxAlpha) // If alpha is less than maximum, continue to fade.
                 {
-                    currentAlpha += Global.EngineFrameTime * speed;
+                    currentAlpha += EngineFrameTime * speed;
                 }
                 else
                 {
@@ -537,11 +539,11 @@ namespace FreeRaider
                 {
                     if(currentAlpha == maxAlpha)
                     {
-                        currentTime += Global.EngineFrameTime;
+                        currentTime += EngineFrameTime;
                     }
                     else if(currentAlpha < maxAlpha)
                     {
-                        currentAlpha += Global.EngineFrameTime * speed;
+                        currentAlpha += EngineFrameTime * speed;
                     }
                     else
                     {
@@ -552,7 +554,7 @@ namespace FreeRaider
                 {
                     if(currentAlpha > 0.0f)
                     {
-                        currentAlpha -= Global.EngineFrameTime * speedSecondary;
+                        currentAlpha -= EngineFrameTime * speedSecondary;
                     }
                     else
                     {
@@ -1088,7 +1090,7 @@ namespace FreeRaider
                 if(autoShowCount > 0)
                 {
                     Visible = true;
-                    autoShowCount -= Global.EngineFrameTime;
+                    autoShowCount -= EngineFrameTime;
 
                     if(autoShowCount <= 0)
                     {
@@ -1106,7 +1108,7 @@ namespace FreeRaider
                     // increase fade counter, until it's 1 (i. e. fully opaque).
                     if(autoShowFadeCount < 1)
                     {
-                        autoShowFadeCount = Math.Min(autoShowFadeCount + Global.EngineFrameTime * autoShowFadeDelay, 1);
+                        autoShowFadeCount = Math.Min(autoShowFadeCount + EngineFrameTime * autoShowFadeDelay, 1);
                     }
                 }
                 else
@@ -1119,7 +1121,7 @@ namespace FreeRaider
                     }
                     else
                     {
-                        autoShowFadeCount = Math.Max(autoShowFadeCount - Global.EngineFrameTime * autoShowFadeDelay, 0);
+                        autoShowFadeCount = Math.Max(autoShowFadeCount - EngineFrameTime * autoShowFadeDelay, 0);
                     }
                 }
 
@@ -1150,7 +1152,7 @@ namespace FreeRaider
             // We check if bar is in a warning state. If it is, we blink it continously.
             if(blink)
             {
-                blinkCount -= Global.EngineFrameTime;
+                blinkCount -= EngineFrameTime;
                 if(blinkCount > blinkInterval)
                 {
                     value = 0; // Force zero value, which results in empty bar.
@@ -1691,9 +1693,9 @@ namespace FreeRaider
             currRotX = 0.0f;
             currRotY = 0.0f;
 
-            endPosX = Global.ScreenInfo.W / Constants.ScreenMeteringResolution * absPosX;
-            posY = Global.ScreenInfo.H / Constants.ScreenMeteringResolution * absPosY;
-            currPosX = Global.ScreenInfo.W + Global.ScreenInfo.W / Constants.GUI_NOTIFIER_OFFSCREEN_DIVIDER * size;
+            endPosX = Global.ScreenInfo.W / ScreenMeteringResolution * absPosX;
+            posY = Global.ScreenInfo.H / ScreenMeteringResolution * absPosY;
+            currPosX = Global.ScreenInfo.W + Global.ScreenInfo.W / GUI_NOTIFIER_OFFSCREEN_DIVIDER * size;
             startPosX = currPosX; // Equalize current and start positions.
         }
 
@@ -1703,25 +1705,25 @@ namespace FreeRaider
 
             if(rotateTime != 0)
             {
-                currRotX += (Global.EngineFrameTime * rotateTime).WrapAngle();
+                currRotX += (EngineFrameTime * rotateTime).WrapAngle();
             }
 
             if(currTime != 0)
             {
-                var step = Math.Max(0.5f, (currPosX - endPosX) * Global.EngineFrameTime * 4.0f);
+                var step = Math.Max(0.5f, (currPosX - endPosX) * EngineFrameTime * 4.0f);
 
                 currPosX = Math.Max(endPosX, currPosX - step);
 
                 if (currPosX == endPosX)
-                    currTime += Global.EngineFrameTime;
+                    currTime += EngineFrameTime;
             }
             else if(currTime < showTime)
             {
-                currTime += Global.EngineFrameTime;
+                currTime += EngineFrameTime;
             }
             else
             {
-                var step = Math.Max(0.5f, (currPosX - endPosX) * Global.EngineFrameTime * 4.0f);
+                var step = Math.Max(0.5f, (currPosX - endPosX) * EngineFrameTime * 4.0f);
 
                 currPosX = Math.Min(startPosX, currPosX + step);
 
@@ -1734,7 +1736,7 @@ namespace FreeRaider
         {
             if (!active) return;
 
-            var item = Global.EngineWorld.GetBaseItemByID((uint)this.item);
+            var item = EngineWorld.GetBaseItemByID((uint)this.item);
             if (item == null) return;
 
             var anim = item.BoneFrame.Animations.CurrentAnimation;
@@ -1828,19 +1830,19 @@ namespace FreeRaider
             InitNotifier();
             InitTempLines();
 
-            Global.CrosshairBuffer = Helper.GenBufferU();
+            CrosshairBuffer = Helper.GenBufferU();
             FillCrosshairBuffer();
 
             //Global.MainInventoryMenu = new GuiInventoryMenu();
-            Global.MainInventoryManager = new InventoryManager();
+            MainInventoryManager = new InventoryManager();
         }
 
         public static void Destroy()
         {
-            for (var i = 0; i < Constants.MaxTempLines; i++)
+            for (var i = 0; i < MaxTempLines; i++)
             {
-                Global.GuiTempLines[i].Show = false;
-                Global.GuiTempLines[i].Text = "";
+                GuiTempLines[i].Show = false;
+                GuiTempLines[i].Text = "";
             }
 
             foreach (var fader in Global.FaderType)
@@ -1848,13 +1850,13 @@ namespace FreeRaider
                 fader.Value.Cut();
             }
 
-            Global.TempLinesUsed = Constants.MaxTempLines;
+            TempLinesUsed = MaxTempLines;
 
             /*
             Global.MainInventoryMenu = null;
             */
 
-            Global.MainInventoryManager = null;
+            MainInventoryManager = null;
             
 
             Global.FontManager = null;
@@ -1863,7 +1865,7 @@ namespace FreeRaider
 
         public static void InitBars()
         {
-            Global.Bar = new Dictionary<BarType, ProgressBar>();
+            Bar = new Dictionary<BarType, ProgressBar>();
             {
                 var pb = new ProgressBar
                 {
@@ -1883,12 +1885,12 @@ namespace FreeRaider
                 pb.SetColor(BarColorType.BackFade, 60, 60, 60, 130);
                 pb.SetColor(BarColorType.BorderMain, 200, 200, 200, 50);
                 pb.SetColor(BarColorType.BorderFade, 80, 80, 80, 100);
-                pb.SetValues(Constants.LARA_PARAM_HEALTH_MAX, Constants.LARA_PARAM_HEALTH_MAX / 3);
+                pb.SetValues(LARA_PARAM_HEALTH_MAX, LARA_PARAM_HEALTH_MAX / 3);
                 pb.SetBlink(300);
                 pb.SetExtrude(true, 100);
                 pb.SetAutoshow(true, 2000, true, 400);
 
-                Global.Bar.Add(BarType.Health, pb);
+                Bar.Add(BarType.Health, pb);
             }
             {
                 var pb = new ProgressBar
@@ -1907,12 +1909,12 @@ namespace FreeRaider
                 pb.SetColor(BarColorType.BackFade, 60, 60, 60, 130);
                 pb.SetColor(BarColorType.BorderMain, 200, 200, 200, 50);
                 pb.SetColor(BarColorType.BorderFade, 80, 80, 80, 100);
-                pb.SetValues(Constants.LARA_PARAM_HEALTH_MAX, Constants.LARA_PARAM_HEALTH_MAX / 3);
+                pb.SetValues(LARA_PARAM_HEALTH_MAX, LARA_PARAM_HEALTH_MAX / 3);
                 pb.SetBlink(300);
                 pb.SetExtrude(true, 100);
                 pb.SetAutoshow(true, 2000, true, 400);
 
-                Global.Bar.Add(BarType.Air, pb);
+                Bar.Add(BarType.Air, pb);
             }
             {
                 var pb = new ProgressBar
@@ -1931,11 +1933,11 @@ namespace FreeRaider
                 pb.SetColor(BarColorType.BackFade, 60, 60, 60, 130);
                 pb.SetColor(BarColorType.BorderMain, 110, 110, 110, 100);
                 pb.SetColor(BarColorType.BorderFade, 60, 60, 60, 180);
-                pb.SetValues(Constants.LARA_PARAM_STAMINA_MAX, 0);
+                pb.SetValues(LARA_PARAM_STAMINA_MAX, 0);
                 pb.SetExtrude(true, 100);
                 pb.SetAutoshow(true, 500, true, 300);
 
-                Global.Bar.Add(BarType.Stamina, pb);
+                Bar.Add(BarType.Stamina, pb);
             }
             {
                 var pb = new ProgressBar
@@ -1954,12 +1956,12 @@ namespace FreeRaider
                 pb.SetColor(BarColorType.BackFade, 60, 60, 60, 130);
                 pb.SetColor(BarColorType.BorderMain, 200, 200, 200, 50);
                 pb.SetColor(BarColorType.BorderFade, 80, 80, 80, 100);
-                pb.SetValues(Constants.LARA_PARAM_WARMTH_MAX, Constants.LARA_PARAM_WARMTH_MAX / 3);
+                pb.SetValues(LARA_PARAM_WARMTH_MAX, LARA_PARAM_WARMTH_MAX / 3);
                 pb.SetBlink(200);
                 pb.SetExtrude(true, 60);
                 pb.SetAutoshow(true, 500, true, 300);
 
-                Global.Bar.Add(BarType.Warmth, pb);
+                Bar.Add(BarType.Warmth, pb);
             }
             {
                 var pb = new ProgressBar
@@ -1982,7 +1984,7 @@ namespace FreeRaider
                 pb.SetExtrude(true, 70);
                 pb.SetAutoshow(false, 500, false, 300);
 
-                Global.Bar.Add(BarType.Loading, pb);
+                Bar.Add(BarType.Loading, pb);
             }
         }
 
@@ -2022,17 +2024,17 @@ namespace FreeRaider
 
         public static void InitNotifier()
         {
-            Global.Notifier.SetPos(850.0f, 850.0f);
-            Global.Notifier.SetRot(180.0f, 270.0f);
-            Global.Notifier.SetSize(128.0f);
-            Global.Notifier.SetRotateTime(2500.0f);
+            Notifier.SetPos(850.0f, 850.0f);
+            Notifier.SetRot(180.0f, 270.0f);
+            Notifier.SetSize(128.0f);
+            Notifier.SetRotateTime(2500.0f);
         }
 
         public static void InitTempLines()
         {
-            for (var i = 0; i < Constants.MaxTempLines; i++)
+            for (var i = 0; i < MaxTempLines; i++)
             {
-                Global.GuiTempLines[i] = new TextLine
+                GuiTempLines[i] = new TextLine
                 {
                     Text = "",
                     Show = false,
@@ -2079,48 +2081,48 @@ namespace FreeRaider
                 }
             };
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, Global.CrosshairBuffer);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, CrosshairBuffer);
             GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) Marshal.SizeOf(crosshairBuf), crosshairBuf,
                 BufferUsageHint.StaticDraw);
 
             var attribs = new[]
             {
                 new VertexArrayAttribute((int) GuiShaderDescription.VertexAttribs.Position, 2,
-                    VertexAttribPointerType.Float, false, Global.CrosshairBuffer,
+                    VertexAttribPointerType.Float, false, CrosshairBuffer,
                     Marshal.SizeOf(typeof (GuiBufferEntryS)),
                     (int) Marshal.OffsetOf(typeof (GuiBufferEntryS), "Position")),
                 new VertexArrayAttribute((int) GuiShaderDescription.VertexAttribs.Color, 4,
-                    VertexAttribPointerType.UnsignedByte, true, Global.CrosshairBuffer,
+                    VertexAttribPointerType.UnsignedByte, true, CrosshairBuffer,
                     Marshal.SizeOf(typeof (GuiBufferEntryS)),
                     (int) Marshal.OffsetOf(typeof (GuiBufferEntryS), "Color"))
             };
-            Global.CrosshairArray = new VertexArray(0, attribs);
+            CrosshairArray = new VertexArray(0, attribs);
         }
 
         public static void AddLine(TextLine line)
         {
-            if(Global.GuiBaseLines == null)
+            if(GuiBaseLines == null)
             {
-                Global.GuiBaseLines = line;
+                GuiBaseLines = line;
                 line.Next = null;
                 line.Previous = null;
                 return;
             }
 
             line.Previous = null;
-            line.Next = Global.GuiBaseLines;
-            Global.GuiBaseLines.Previous = line;
-            Global.GuiBaseLines = line;
+            line.Next = GuiBaseLines;
+            GuiBaseLines.Previous = line;
+            GuiBaseLines = line;
         }
 
         public static void DeleteLine(TextLine line)
         {
-            if(line == Global.GuiBaseLines)
+            if(line == GuiBaseLines)
             {
-                Global.GuiBaseLines = line.Next;
-                if(Global.GuiBaseLines != null)
+                GuiBaseLines = line.Next;
+                if(GuiBaseLines != null)
                 {
-                    Global.GuiBaseLines.Previous = null;
+                    GuiBaseLines.Previous = null;
                 }
                 return;
             }
@@ -2185,9 +2187,9 @@ namespace FreeRaider
 
             if(style.Shadowed)
             {
-                glFont.GLFontColor = new[] {0, 0, 0, style.Color[3] * Constants.FontShadowTransparency}; // derive alpha from base color
-                GLF.RenderStr(glFont, realX + Constants.FontShadowHorizontalShift,
-                    realY + Constants.FontShadowVerticalShift, line.Text);
+                glFont.GLFontColor = new[] {0, 0, 0, style.Color[3] * FontShadowTransparency}; // derive alpha from base color
+                GLF.RenderStr(glFont, realX + FontShadowHorizontalShift,
+                    realY + FontShadowVerticalShift, line.Text);
             }
 
             glFont.GLFontColor = style.RealColor.ToArray();
@@ -2198,7 +2200,7 @@ namespace FreeRaider
         {
             if(Global.FontManager != null)
             {
-                var l = Global.GuiBaseLines;
+                var l = GuiBaseLines;
 
                 GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
 
@@ -2214,9 +2216,9 @@ namespace FreeRaider
                     l = l.Next;
                 }
 
-                for(var i = 0; i < Global.TempLinesUsed; i++)
+                for(var i = 0; i < TempLinesUsed; i++)
                 {
-                    var cl = Global.GuiTempLines[i];
+                    var cl = GuiTempLines[i];
                     if(cl.Show)
                     {
                         RenderStringLine(cl);
@@ -2224,7 +2226,7 @@ namespace FreeRaider
                     }
                 }
 
-                Global.TempLinesUsed = 0;
+                TempLinesUsed = 0;
             }
         }
 
@@ -2233,16 +2235,16 @@ namespace FreeRaider
         /// </summary>
         public static TextLine OutTextXY(float x, float y, string fmt, params object[] args)
         {
-            if(Global.FontManager != null && Global.TempLinesUsed < Constants.MaxTempLines - 1)
+            if(Global.FontManager != null && TempLinesUsed < MaxTempLines - 1)
             {
 
-                var l = Global.GuiTempLines[Global.TempLinesUsed];
+                var l = GuiTempLines[TempLinesUsed];
                 l.FontID = FontType.Secondary;
                 l.StyleID = FontStyle.Generic;
                 l.Text = Helper.Format(fmt, args);
                 l.Next = null;
                 l.Previous = null;
-                Global.TempLinesUsed++;
+                TempLinesUsed++;
                 l.X = x;
                 l.Y = y;
                 l.Xanchor = HorizontalAnchor.Left;
@@ -2265,7 +2267,7 @@ namespace FreeRaider
                 var farDist = 4096.0f;
                 var nearDist = -1.0f;
 
-                Global.GuiProjectionMatrix = new Matrix4
+                GuiProjectionMatrix = new Matrix4
                 {
                     [0, 0] = 2.0f / Global.ScreenInfo.W,
                     [1, 1] = 2.0f / Global.ScreenInfo.H,
@@ -2277,7 +2279,7 @@ namespace FreeRaider
             }
             else
             {
-                Global.GuiProjectionMatrix = Global.EngineCamera.GLProjMat;
+                GuiProjectionMatrix = EngineCamera.GLProjMat;
             }
         }
 
@@ -2356,28 +2358,28 @@ namespace FreeRaider
                     break;
             }
 
-            if (Global.RectanglePositionBuffer == 0)
+            if (RectanglePositionBuffer == 0)
             {
-                Global.RectanglePositionBuffer = Helper.GenBufferU();
-                GL.BindBuffer(BufferTarget.ArrayBuffer, Global.RectanglePositionBuffer);
+                RectanglePositionBuffer = Helper.GenBufferU();
+                GL.BindBuffer(BufferTarget.ArrayBuffer, RectanglePositionBuffer);
                 var rectCoords = new[] {0, 0, 1, 0, 1, 1, 0, 1};
                 GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) Marshal.SizeOf(rectCoords), rectCoords,
                     BufferUsageHint.StaticDraw);
 
-                Global.RectangleColorBuffer = Helper.GenBufferU();
+                RectangleColorBuffer = Helper.GenBufferU();
                 var attribs = new[]
                 {
                     new VertexArrayAttribute((int) GuiShaderDescription.VertexAttribs.Position, 2,
-                        VertexAttribPointerType.Float, false, Global.RectanglePositionBuffer,
+                        VertexAttribPointerType.Float, false, RectanglePositionBuffer,
                         Marshal.SizeOf(new float[2]), 0),
                     new VertexArrayAttribute((int) GuiShaderDescription.VertexAttribs.Color, 4,
-                        VertexAttribPointerType.Float, false, Global.RectangleColorBuffer, Marshal.SizeOf(new float[4]),
+                        VertexAttribPointerType.Float, false, RectangleColorBuffer, Marshal.SizeOf(new float[4]),
                         0)
                 };
-                Global.RectangleArray = new VertexArray(0, attribs);
+                RectangleArray = new VertexArray(0, attribs);
             }
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, Global.RectangleColorBuffer);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, RectangleColorBuffer);
             GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) (Marshal.SizeOf(new float[4]) * 4), IntPtr.Zero,
                 BufferUsageHint.StreamDraw);
             unsafe
@@ -2404,7 +2406,7 @@ namespace FreeRaider
             GL.Uniform2(shader.Offset, 1, offset);
             GL.Uniform2(shader.Factor, 1, factor);
 
-            Global.RectangleArray.Bind();
+            RectangleArray.Bind();
 
             GL.DrawArrays(PrimitiveType.TriangleFan, 0, 4);
         }
@@ -2501,12 +2503,12 @@ namespace FreeRaider
          */
         public static void NotifierStart(uint item)
         {
-            Global.Notifier.Start((int)item, Constants.GUI_NOTIFIER_SHOWTIME);
+            Notifier.Start((int)item, GUI_NOTIFIER_SHOWTIME);
         }
 
         public static void NotifierStop()
         {
-            Global.Notifier.Reset();
+            Notifier.Reset();
         }
 
         /**
@@ -2523,7 +2525,7 @@ namespace FreeRaider
             var offset = new[] {-1.0f, -1.0f};
             GL.Uniform2(shader.Offset, 1, offset);
 
-            Global.CrosshairArray.Bind();
+            CrosshairArray.Bind();
 
             GL.DrawArrays(PrimitiveType.Lines, 0, 4);
         }
@@ -2538,18 +2540,18 @@ namespace FreeRaider
 
         public static void DrawBars()
         {
-            if(Global.EngineWorld.Character != null)
+            if(EngineWorld.Character != null)
             {
-                if (Global.EngineWorld.Character.WeaponCurrentState > WeaponState.HideToReady)
-                    Global.Bar[BarType.Health].Forced = true;
+                if (EngineWorld.Character.WeaponCurrentState > WeaponState.HideToReady)
+                    Bar[BarType.Health].Forced = true;
 
-                if (Global.EngineWorld.Character.GetParam(CharParameters.Poison) > 0.0f)
-                    Global.Bar[BarType.Health].Alternate = true;
+                if (EngineWorld.Character.GetParam(CharParameters.Poison) > 0.0f)
+                    Bar[BarType.Health].Alternate = true;
 
-                Global.Bar[BarType.Air].Show(Global.EngineWorld.Character.GetParam(CharParameters.Air));
-                Global.Bar[BarType.Stamina].Show(Global.EngineWorld.Character.GetParam(CharParameters.Stamina));
-                Global.Bar[BarType.Health].Show(Global.EngineWorld.Character.GetParam(CharParameters.Health));
-                Global.Bar[BarType.Warmth].Show(Global.EngineWorld.Character.GetParam(CharParameters.Warmth));
+                Bar[BarType.Air].Show(EngineWorld.Character.GetParam(CharParameters.Air));
+                Bar[BarType.Stamina].Show(EngineWorld.Character.GetParam(CharParameters.Stamina));
+                Bar[BarType.Health].Show(EngineWorld.Character.GetParam(CharParameters.Health));
+                Bar[BarType.Warmth].Show(EngineWorld.Character.GetParam(CharParameters.Warmth));
             }
         }
 
@@ -2567,7 +2569,7 @@ namespace FreeRaider
             GL.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
 
             Global.FaderType[FaderType.LoadScreen].Show();
-            Global.Bar[BarType.Loading].Show(value);
+            Bar[BarType.Loading].Show(value);
 
             GL.DepthMask(true);
 
@@ -2578,8 +2580,8 @@ namespace FreeRaider
 
         public static void DrawInventory()
         {
-            Global.MainInventoryManager.Frame(Global.EngineFrameTime);
-            if(Global.MainInventoryManager.CurrentState == InventoryManager.InventoryState.Disabled)
+            MainInventoryManager.Frame(EngineFrameTime);
+            if(MainInventoryManager.CurrentState == InventoryManager.InventoryState.Disabled)
             {
                 return;
             }
@@ -2607,14 +2609,14 @@ namespace FreeRaider
             GL.PopAttrib();
 
             SwitchGLMode(false);
-            Global.MainInventoryManager.Render();
+            MainInventoryManager.Render();
             SwitchGLMode(true);
         }
 
         public static void DrawNotifier()
         {
-            Global.Notifier.Draw();
-            Global.Notifier.Animate();
+            Notifier.Draw();
+            Notifier.Animate();
         }
 
         /**
@@ -2630,7 +2632,7 @@ namespace FreeRaider
 
         public static void Resize()
         {
-            var l = Global.GuiBaseLines;
+            var l = GuiBaseLines;
 
             while(l != null)
             {
@@ -2639,12 +2641,12 @@ namespace FreeRaider
                 l = l.Next;
             }
 
-            for (var i = 0; i < Global.TempLinesUsed; i++)
+            for (var i = 0; i < TempLinesUsed; i++)
             {
-                MoveLine(Global.GuiTempLines[i]);
+                MoveLine(GuiTempLines[i]);
             }
 
-            foreach (var i in Global.Bar)
+            foreach (var i in Bar)
             {
                 i.Value.Resize();
             }
@@ -2732,7 +2734,7 @@ namespace FreeRaider
                     VMath.Mat4_Scale(scaledMatrix, size, size, size);
                 }
                 var scaledMvMatrix = mvMatrix * scaledMatrix;
-                var mvpMatrix = Global.GuiProjectionMatrix.MultiplyByTransform(scaledMvMatrix);
+                var mvpMatrix = GuiProjectionMatrix.MultiplyByTransform(scaledMvMatrix);
 
                 // Render with scaled model view projection matrix
                 // Use original modelview matrix, as that is used for normals whose size shouldn't change.
@@ -2740,7 +2742,7 @@ namespace FreeRaider
             }
             else
             {
-                var mvpMatrix = Global.GuiProjectionMatrix.MultiplyByTransform(mvMatrix);
+                var mvpMatrix = GuiProjectionMatrix.MultiplyByTransform(mvMatrix);
                 Global.Renderer.RenderSkeletalModel(shader, bf, (Matrix4)mvMatrix, mvpMatrix);
             }
         }
@@ -2752,7 +2754,7 @@ namespace FreeRaider
 
         public static TextLine GuiBaseLines;
 
-        public static TextLine[] GuiTempLines = new TextLine[Constants.MaxTempLines];
+        public static TextLine[] GuiTempLines = new TextLine[MaxTempLines];
 
         public static ushort TempLinesUsed;
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -17,18 +18,18 @@ namespace FreeRaider
     {
         private static void ensureAvailable()
         {
-            if(Global.FontBufferVAO != null && Global.FontBufferVBO != 0)
+            if(FontBufferVAO != null && FontBufferVBO != 0)
             {
                 return;
             }
 
-            Global.FontBufferVBO = Helper.GenBufferU();
+            FontBufferVBO = Helper.GenBufferU();
 
-            Global.FontBufferVAO = new VertexArray(0, new []
+            FontBufferVAO = new VertexArray(0, new []
             {
-                new VertexArrayAttribute((int)TextShaderDescription.VertexAttribs.Position, 2, VertexAttribPointerType.Float, false, Global.FontBufferVBO, Marshal.SizeOf(new float[8]), 0), 
-                new VertexArrayAttribute((int)TextShaderDescription.VertexAttribs.TexCoord, 2, VertexAttribPointerType.Float, false, Global.FontBufferVBO, Marshal.SizeOf(new float[8]), Marshal.SizeOf(new float[2])), 
-                new VertexArrayAttribute((int)TextShaderDescription.VertexAttribs.Color, 4, VertexAttribPointerType.Float, false, Global.FontBufferVBO, Marshal.SizeOf(new float[8]), Marshal.SizeOf(new float[4]))
+                new VertexArrayAttribute((int)TextShaderDescription.VertexAttribs.Position, 2, VertexAttribPointerType.Float, false, FontBufferVBO, Marshal.SizeOf(new float[8]), 0), 
+                new VertexArrayAttribute((int)TextShaderDescription.VertexAttribs.TexCoord, 2, VertexAttribPointerType.Float, false, FontBufferVBO, Marshal.SizeOf(new float[8]), Marshal.SizeOf(new float[2])), 
+                new VertexArrayAttribute((int)TextShaderDescription.VertexAttribs.Color, 4, VertexAttribPointerType.Float, false, FontBufferVBO, Marshal.SizeOf(new float[8]), Marshal.SizeOf(new float[4]))
             });
         }
 
@@ -50,9 +51,9 @@ namespace FreeRaider
         {
             ensureAvailable();
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, Global.FontBufferVBO);
-            Global.CurrentSize = Math.Max(Global.CurrentSize, bytes);
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)Global.CurrentSize, IntPtr.Zero, BufferUsageHint.StreamDraw);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, FontBufferVBO);
+            CurrentSize = Math.Max(CurrentSize, bytes);
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)CurrentSize, IntPtr.Zero, BufferUsageHint.StreamDraw);
             return (float*) GL.MapBuffer(BufferTarget.ArrayBuffer, BufferAccess.WriteOnly);
         }
 
@@ -74,7 +75,7 @@ namespace FreeRaider
         {
             ensureAvailable();
 
-            Global.FontBufferVAO.Bind();
+            FontBufferVAO.Bind();
         }
     }
 }

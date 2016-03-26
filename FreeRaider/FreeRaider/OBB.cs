@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using OpenTK;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -139,8 +141,8 @@ namespace FreeRaider
                 var ins = true;
                 foreach (var polygon in polys)
                 {
-                    var t = polygon.Plane.Distance(Global.EngineCamera.Position);
-                    if (t > 0 && Global.EngineCamera.Frustum.IsPolyVisible(polygon, cam))
+                    var t = polygon.Plane.Distance(EngineCamera.Position);
+                    if (t > 0 && EngineCamera.Frustum.IsPolyVisible(polygon, cam))
                     {
                         return true;
                     }
@@ -158,7 +160,7 @@ namespace FreeRaider
                                                 select polygon).Any());
         }
 
-        public static int OBB_Test(Entity e1, Entity e2, float overlap = Constants.DEFAULT_OBB_TEST_OVERLAP)
+        public static int OBB_Test(Entity e1, Entity e2, float overlap = DEFAULT_OBB_TEST_OVERLAP)
         {
             // translation, in parent frame
             var v = e2.OBB.Centre - e1.OBB.Centre;

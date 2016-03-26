@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using BulletSharp;
 using OpenTK;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -97,13 +99,13 @@ namespace FreeRaider
         {
             foreach (var joint in Joints.Where(joint => joint != null))
             {
-                Global.BtEngineDynamicsWorld.RemoveConstraint(joint);
+                BtEngineDynamicsWorld.RemoveConstraint(joint);
             }
 
             foreach (var element in Elements.Where(element => element.Body != null))
             {
                 element.Body.UserObject = null;
-                Global.BtEngineDynamicsWorld.RemoveRigidBody(element.Body);
+                BtEngineDynamicsWorld.RemoveRigidBody(element.Body);
             }
         }
 
@@ -117,7 +119,7 @@ namespace FreeRaider
                 parentEntity.Bt.BtBody[(int)setup.LinkBody] == null)
                 return false;
 
-            var model = Global.EngineWorld.GetModelByID(setup.Model);
+            var model = EngineWorld.GetModelByID(setup.Model);
 
             // No model to link to - bypass function.
             if (model == null || model.MeshCount == 0) return false;
@@ -187,7 +189,7 @@ namespace FreeRaider
                 // bodies (e. g. animated meshes), or else Lara's ghost object or anything else will be able to
                 // collide with hair!
                 Elements[i].Body.UserObject = Container;
-                Global.BtEngineDynamicsWorld.AddRigidBody(Elements[i].Body, CollisionFilterGroups.CharacterFilter, CollisionFilterGroups.KinematicFilter);
+                BtEngineDynamicsWorld.AddRigidBody(Elements[i].Body, CollisionFilterGroups.CharacterFilter, CollisionFilterGroups.KinematicFilter);
 
                 Elements[i].Body.Activate();
             }
@@ -226,7 +228,7 @@ namespace FreeRaider
                     OwnerBodyHairRoot = localA;
 
                     localB.Origin = new Vector3(jointX, 0.0f, jointY);
-                    Helper.SetEulerZYX(ref localB.Basis, 0, -Constants.HalfPI, 0);
+                    Helper.SetEulerZYX(ref localB.Basis, 0, -HalfPI, 0);
 
                     prevBody = parentEntity.Bt.BtBody[(int) OwnerBody]; // Previous body is parent body.
                 }
@@ -237,11 +239,11 @@ namespace FreeRaider
                                  setup.JointOverlap;
 
                     localA.Origin = new Vector3(jointX, bodyLength, jointY);
-                    Helper.SetEulerZYX(ref localA.Basis, 0, -Constants.HalfPI, 0);
+                    Helper.SetEulerZYX(ref localA.Basis, 0, -HalfPI, 0);
 
                     // Pivot point B is automatically adjusted by Bullet.
                     localB.Origin = new Vector3(jointX, 0.0f, jointY);
-                    Helper.SetEulerZYX(ref localB.Basis, 0, -Constants.HalfPI, 0);
+                    Helper.SetEulerZYX(ref localB.Basis, 0, -HalfPI, 0);
 
                     prevBody = Elements[i - 1].Body; // Previous body is preceding hair mesh.
                 }
@@ -265,8 +267,8 @@ namespace FreeRaider
                 {
                     // First joint group should be more limited in motion, as it is connected
                     // right to the head. NB: Should we make it scriptable as well?
-                    Joints[currJoint].AngularLowerLimit = new Vector3(-Constants.HalfPI, 0.0f, -Constants.HalfPI * 0.4f);
-                    Joints[currJoint].AngularLowerLimit = new Vector3(-Constants.HalfPI * 0.3f, 0.0f, Constants.HalfPI * 0.4f);
+                    Joints[currJoint].AngularLowerLimit = new Vector3(-HalfPI, 0.0f, -HalfPI * 0.4f);
+                    Joints[currJoint].AngularLowerLimit = new Vector3(-HalfPI * 0.3f, 0.0f, HalfPI * 0.4f);
 
                     // Increased solver iterations make constraint even more stable.
                     Joints[currJoint].OverrideNumSolverIterations = 100;
@@ -274,14 +276,14 @@ namespace FreeRaider
                 else
                 {
                     // Normal joint with more movement freedom.
-                    Joints[currJoint].AngularLowerLimit = new Vector3(-Constants.HalfPI * 0.5f, 0.0f, -Constants.HalfPI * 0.5f);
-                    Joints[currJoint].AngularLowerLimit = new Vector3(Constants.HalfPI * 0.5f, 0.0f, Constants.HalfPI * 0.5f);
+                    Joints[currJoint].AngularLowerLimit = new Vector3(-HalfPI * 0.5f, 0.0f, -HalfPI * 0.5f);
+                    Joints[currJoint].AngularLowerLimit = new Vector3(HalfPI * 0.5f, 0.0f, HalfPI * 0.5f);
                 }
 
                 Joints[currJoint].DebugDrawSize = 5.0f; // Draw constraint axes.
 
                 // Add constraint to the world.
-                Global.BtEngineDynamicsWorld.AddConstraint(Joints[currJoint], true);
+                BtEngineDynamicsWorld.AddConstraint(Joints[currJoint], true);
 
                 currJoint++; // Point to the next joint.
             }
@@ -295,7 +297,7 @@ namespace FreeRaider
         private void createHairMesh(SkeletalModel model)
         {
             Mesh = new BaseMesh();
-            Mesh.ElementsPerTexture.Resize(Global.EngineWorld.Textures.Count);
+            Mesh.ElementsPerTexture.Resize(EngineWorld.Textures.Count);
             var totalElements = 0;
 
             // Gather size information
@@ -397,7 +399,7 @@ namespace FreeRaider
                 }
             }
 
-            Mesh.GenVBO(Global.Renderer);
+            Mesh.GenVBO(Renderer);
         }
     }
 

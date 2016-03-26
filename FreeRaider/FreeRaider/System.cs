@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -62,7 +64,7 @@ namespace FreeRaider
 
         public static void Init()
         {
-            Global.SystemFps = new TextLine
+            SystemFps = new TextLine
             {
                 Text = "",
                 X = 10.0f,
@@ -74,7 +76,7 @@ namespace FreeRaider
                 Show = true
             };
 
-            Gui.AddLine(Global.SystemFps);
+            Gui.AddLine(SystemFps);
         }
 
         public static void InitGlobals()
@@ -98,19 +100,19 @@ namespace FreeRaider
 
         public static void Destroy()
         {
-            Global.SystemFps.Show = false;
-            Global.SystemFps.Text = "";
+            SystemFps.Show = false;
+            SystemFps.Text = "";
         }
 
         public static void Error(string error, params object[] args)
         {
-            DebugLog(Constants.LOG_FILENAME, "System error: {0}", error, args);
+            DebugLog(LOG_FILENAME, "System error: {0}", error, args);
             Engine.Shutdown(1);
         }
 
         public static void Warn(string warning, params object[] args)
         {
-            DebugLog(Constants.LOG_FILENAME, "Warning: {0}", warning, args);
+            DebugLog(LOG_FILENAME, "Warning: {0}", warning, args);
         }
 
         public static void DebugLog(string file, string fmt, params object[] args)
@@ -135,7 +137,7 @@ namespace FreeRaider
 
         public static void LogCurrPlace()
         {
-            DebugLog(Constants.LOG_FILENAME, "\"{0}\" str = {1}", Helper.__FILE__, Helper.__LINE__);
+            DebugLog(LOG_FILENAME, "\"{0}\" str = {1}", Helper.__FILE__, Helper.__LINE__);
         }
 
         public static void extError(string error, params object[] args)

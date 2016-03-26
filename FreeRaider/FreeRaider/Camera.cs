@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using OpenTK;
+using static FreeRaider.Constants;
 
 namespace FreeRaider
 {
@@ -106,7 +107,7 @@ namespace FreeRaider
         {
             Fov = fov;
             Aspect = aspect;
-            F = (float)Math.Tan(fov * Constants.RadPerDeg / 2);
+            F = (float)Math.Tan(fov * RadPerDeg / 2);
             Height = 2.0f * DistNear * F;
             Width = Height * aspect;
             F = 1.0f / F;
@@ -201,7 +202,7 @@ namespace FreeRaider
 
         public Camera()
         {
-            F = 1.0f / (float) Math.Tan(Fov * Constants.RadPerDeg / 2);
+            F = 1.0f / (float) Math.Tan(Fov * RadPerDeg / 2);
             Height = 2.0f * DistNear / F;
             Width = Height * Aspect;
 

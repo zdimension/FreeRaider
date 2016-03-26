@@ -7,6 +7,8 @@ using FreeRaider.Loader;
 using OpenTK;
 using OpenTK.Graphics.ES30;
 using VertexAttribPointerType = OpenTK.Graphics.OpenGL.VertexAttribPointerType;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -566,11 +568,11 @@ namespace FreeRaider
         {
             foreach (var p in Polygons)
             {
-                if(p.AnimID > 0 && p.AnimID <= Global.EngineWorld.AnimSequences.Count)
+                if(p.AnimID > 0 && p.AnimID <= EngineWorld.AnimSequences.Count)
                 {
-                    var seq = Global.EngineWorld.AnimSequences[p.AnimID - 1];
+                    var seq = EngineWorld.AnimSequences[p.AnimID - 1];
                     // set tex coordinates to the first frame for correct texture transform in renderer
-                    Global.EngineWorld.TextureAtlas.GetCoordinates(seq.FrameList[0], false, p, 0, seq.UVRotate);
+                    EngineWorld.TextureAtlas.GetCoordinates(seq.FrameList[0], false, p, 0, seq.UVRotate);
                 }
 
                 if(p.BlendMode != BlendingMode.Opaque && p.BlendMode != BlendingMode.Transparent)
@@ -1301,12 +1303,12 @@ namespace FreeRaider
 
         public void FillTransparency()
         {
-            TransparencyFlags = Constants.MESH_FULL_OPAQUE;
+            TransparencyFlags = MESH_FULL_OPAQUE;
             for (var i = 0; i < MeshCount; i++)
             {
                 if (MeshTree[i].MeshBase.TransparencyPolygons.Count > 0)
                 {
-                    TransparencyFlags = Constants.MESH_HAS_TRANSPARENCY;
+                    TransparencyFlags = MESH_HAS_TRANSPARENCY;
                     return;
                 }
             }
@@ -1493,7 +1495,7 @@ namespace FreeRaider
             if (radius == 0) return null;
 
             var ret = new SphereShape(radius);
-            ret.Margin = Constants.COLLISION_MARGIN_RIGIDBODY;
+            ret.Margin = COLLISION_MARGIN_RIGIDBODY;
 
             return ret;
         }
@@ -1528,7 +1530,7 @@ namespace FreeRaider
 
 
             CollisionShape ret = new ConvexTriangleMeshShape(trimesh, true);
-            ret.Margin = Constants.COLLISION_MARGIN_RIGIDBODY;
+            ret.Margin = COLLISION_MARGIN_RIGIDBODY;
 
             return ret;
         }
@@ -1566,7 +1568,7 @@ namespace FreeRaider
             {
                 ret = new ConvexTriangleMeshShape(trimesh, true);
             }
-            ret.Margin = Constants.COLLISION_MARGIN_RIGIDBODY;
+            ret.Margin = COLLISION_MARGIN_RIGIDBODY;
 
             return ret;
         }
@@ -1796,7 +1798,7 @@ namespace FreeRaider
             }
 
             var ret = new BvhTriangleMeshShape(trimesh, useCompression, buildBvh);
-            ret.Margin = Constants.COLLISION_MARGIN_RIGIDBODY;
+            ret.Margin = COLLISION_MARGIN_RIGIDBODY;
             return ret;
         }
     }

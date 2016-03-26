@@ -4,6 +4,8 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using FreeRaider.Loader;
 using OpenTK;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -64,7 +66,7 @@ namespace FreeRaider
         /// <summary>
         /// Vertices data
         /// </summary>
-        public List<Vertex> Vertices { get; set; } = Helper.FillArray(default(Vertex), 4).ToList();
+        public List<Vertex> Vertices { get; set; }
 
         /// <summary>
         /// Texture index
@@ -98,7 +100,7 @@ namespace FreeRaider
 
         public Polygon()
         {
-            Vertices = new List<Vertex>();
+            Vertices = Helper.FillArray(default(Vertex), 4).ToList();
             Plane = new Plane();
         }
 
@@ -252,8 +254,8 @@ namespace FreeRaider
             foreach (var curr_v in Vertices)
             {
                 var dist1 = p2.Plane.Distance(curr_v.Position);
-                if ((dist1 > Constants.SPLIT_EPSILON && dist0 < -Constants.SPLIT_EPSILON)
-                    || (dist1 < -Constants.SPLIT_EPSILON && dist0 > Constants.SPLIT_EPSILON))
+                if ((dist1 > SPLIT_EPSILON && dist0 < -SPLIT_EPSILON)
+                    || (dist1 < -SPLIT_EPSILON && dist0 > SPLIT_EPSILON))
                 {
                     resultBuf.Add(p2.Plane.RayIntersect(prev_v.Position, curr_v.Position - prev_v.Position));
                 }
@@ -274,8 +276,8 @@ namespace FreeRaider
             foreach (var curr_v in Vertices)
             {
                 var dist1 = p2.Plane.Distance(curr_v.Position);
-                if ((dist1 > Constants.SPLIT_EPSILON && dist0 < -Constants.SPLIT_EPSILON)
-                    || (dist1 < -Constants.SPLIT_EPSILON && dist0 > Constants.SPLIT_EPSILON))
+                if ((dist1 > SPLIT_EPSILON && dist0 < -SPLIT_EPSILON)
+                    || (dist1 < -SPLIT_EPSILON && dist0 > SPLIT_EPSILON))
                 {
                     resultBuf.Add(p2.Plane.RayIntersect(prev_v.Position, curr_v.Position - prev_v.Position));
                 }
@@ -295,32 +297,32 @@ namespace FreeRaider
             dist0 = Math.Abs(dir.Y);
             var dist1_ = Math.Abs(dir.Z);
             var dist2 = 0.0f;
-            var pn = Constants.PLANE_X;
+            var pn = PLANE_X;
             if(t < dist0)
             {
                 t = dist0;
-                pn = Constants.PLANE_Y;
+                pn = PLANE_Y;
             }
             if(t < dist1_)
             {
-                pn = Constants.PLANE_Z;
+                pn = PLANE_Z;
             }
 
             switch(pn)
             {
-                case Constants.PLANE_X:
+                case PLANE_X:
                     dist0 = (resultBuf[1][0] - resultBuf[0][0]) / dir[0];
                     dist1_ = (resultBuf[2][0] - resultBuf[0][0]) / dir[0];
                     dist2 = (resultBuf[3][0] - resultBuf[0][0]) / dir[0];
                     break;
 
-                case Constants.PLANE_Y:
+                case PLANE_Y:
                     dist0 = (resultBuf[1][1] - resultBuf[0][1]) / dir[1];
                     dist1_ = (resultBuf[2][1] - resultBuf[0][1]) / dir[1];
                     dist2 = (resultBuf[3][1] - resultBuf[0][1]) / dir[1];
                     break;
 
-                case Constants.PLANE_Z:
+                case PLANE_Z:
                     dist0 = (resultBuf[1][2] - resultBuf[0][2]) / dir[2];
                     dist1_ = (resultBuf[2][2] - resultBuf[0][2]) / dir[2];
                     dist2 = (resultBuf[3][2] - resultBuf[0][2]) / dir[2];
@@ -338,8 +340,8 @@ namespace FreeRaider
         public PolygonSplit SplitClassify(Plane plane)
         {
             var pos = Vertices.Select(v => plane.Distance(v.Position));
-            var positive = pos.Count(dist => dist > Constants.SPLIT_EPSILON);
-            var negative = pos.Count(dist => dist < -Constants.SPLIT_EPSILON);
+            var positive = pos.Count(dist => dist > SPLIT_EPSILON);
+            var negative = pos.Count(dist => dist < -SPLIT_EPSILON);
 
             if(positive > 0 && negative == 0) return PolygonSplit.Front;
             if(positive == 0 && negative > 0) return PolygonSplit.Back;
@@ -369,10 +371,10 @@ namespace FreeRaider
             {
                 var dist1 = n.Distance(curr_v.Position);
 
-                if(Math.Abs(dist1) > Constants.SPLIT_EPSILON)
+                if(Math.Abs(dist1) > SPLIT_EPSILON)
                 {
-                    if ((dist1 > Constants.SPLIT_EPSILON && dist0 < -Constants.SPLIT_EPSILON)
-                        || (dist1 < -Constants.SPLIT_EPSILON && dist0 > Constants.SPLIT_EPSILON))
+                    if ((dist1 > SPLIT_EPSILON && dist0 < -SPLIT_EPSILON)
+                        || (dist1 < -SPLIT_EPSILON && dist0 > SPLIT_EPSILON))
                     {
                         var dir = curr_v.Position - prev_v.Position;
                         float t;
@@ -398,7 +400,7 @@ namespace FreeRaider
                         back.Vertices.Add(tv);
                     }
 
-                    if (dist1 > Constants.SPLIT_EPSILON)
+                    if (dist1 > SPLIT_EPSILON)
                         front.Vertices.Add(curr_v);
                     else
                         back.Vertices.Add(curr_v);

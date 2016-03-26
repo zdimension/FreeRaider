@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static FreeRaider.Constants;
 
 namespace FreeRaider
 {
@@ -51,9 +52,9 @@ namespace FreeRaider
             foreach(Vertex v in transformed.Vertices)
             {
                 var dist = root.Plane.Distance(v.Position);
-                if (dist > Constants.SPLIT_EPSILON)
+                if (dist > SPLIT_EPSILON)
                     positive++;
-                else if (dist < -Constants.SPLIT_EPSILON)
+                else if (dist < -SPLIT_EPSILON)
                     negative++;
                 else
                     inPlane++;

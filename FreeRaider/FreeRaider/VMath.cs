@@ -1,5 +1,6 @@
 ﻿using System;
 using OpenTK;
+using static FreeRaider.Constants;
 
 namespace FreeRaider
 {
@@ -84,13 +85,13 @@ namespace FreeRaider
         public static void Vec4_SetTRRotations(ref Quaternion v, Vector3 rot)
         {
             var qX = new Quaternion();
-            Helper.Quat_SetRotation(ref qX, Vector3.UnitX, rot.Z * Constants.RadPerDeg);
+            Helper.Quat_SetRotation(ref qX, Vector3.UnitX, rot.Z * RadPerDeg);
 
             var qY = new Quaternion();
-            Helper.Quat_SetRotation(ref qY, Vector3.UnitY, rot.Z * Constants.RadPerDeg);
+            Helper.Quat_SetRotation(ref qY, Vector3.UnitY, rot.Z * RadPerDeg);
 
             var qZ = new Quaternion();
-            Helper.Quat_SetRotation(ref qZ, Vector3.UnitZ, rot.Z * Constants.RadPerDeg);
+            Helper.Quat_SetRotation(ref qZ, Vector3.UnitZ, rot.Z * RadPerDeg);
 
             v = qZ * qX * qY;
         }
@@ -112,7 +113,7 @@ namespace FreeRaider
 
         public static void Mat4_RotateX(Transform mat, float ang)
         {
-            var tmp = ang * Constants.RadPerDeg;
+            var tmp = ang * RadPerDeg;
             var sina = (float) Math.Sin(tmp);
             var cosa = (float) Math.Cos(tmp);
 
@@ -125,7 +126,7 @@ namespace FreeRaider
 
         public static void Mat4_RotateY(Transform mat, float ang)
         {
-            var tmp = ang * Constants.RadPerDeg;
+            var tmp = ang * RadPerDeg;
             var sina = (float)Math.Sin(tmp);
             var cosa = (float)Math.Cos(tmp);
 
@@ -138,7 +139,7 @@ namespace FreeRaider
 
         public static void Mat4_RotateZ(Transform mat, float ang)
         {
-            var tmp = ang * Constants.RadPerDeg;
+            var tmp = ang * RadPerDeg;
             var sina = (float)Math.Sin(tmp);
             var cosa = (float)Math.Cos(tmp);
 

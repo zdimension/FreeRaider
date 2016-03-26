@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using FreeRaider.Loader;
 using OpenTK;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -223,7 +224,7 @@ namespace FreeRaider
             // Fool-proof check for entity existence. Fixes LOTS of stray non-existent
             // entity #256 occurences in original games (primarily TR4-5).
 
-            if (Global.EngineWorld.GetEntityByID(entity_index) == null) return true;
+            if (EngineWorld.GetEntityByID(entity_index) == null) return true;
 
             var currTableIndex = 0;
 

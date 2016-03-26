@@ -7,6 +7,8 @@ using FreeRaider.Script;
 using NLua;
 using NLua.Exceptions;
 using OpenTK;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -34,11 +36,11 @@ namespace FreeRaider
     {
         public static void InitGlobals()
         {
-            Global.ControlStates.FreeLookSpeed = 3000.0f;
-            Global.ControlStates.MouseLook = true;
-            Global.ControlStates.FreeLook = false;
-            Global.ControlStates.NoClip = false;
-            Global.ControlStates.CamDistance = 800.0f;
+            ControlStates.FreeLookSpeed = 3000.0f;
+            ControlStates.MouseLook = true;
+            ControlStates.FreeLook = false;
+            ControlStates.NoClip = false;
+            ControlStates.CamDistance = 800.0f;
         }
 
         public static void RegisterLUAFunctions(ScriptEngine state)
@@ -57,12 +59,12 @@ namespace FreeRaider
 
             try
             {
-                Global.EngineLua.ClearTasks();
-                Global.EngineLua.DoFile(name);
+                EngineLua.ClearTasks();
+                EngineLua.DoFile(name);
             }
             catch(LuaException ex)
             {
-                Sys.DebugLog(Constants.LUA_LOG_FILENAME, ex.Message);
+                Sys.DebugLog(LUA_LOG_FILENAME, ex.Message);
             }
             catch(Exception ex)
             {
@@ -146,20 +148,20 @@ namespace FreeRaider
             {
                 using (var f = File.CreateText(name))
                 {
-                    f.WriteLine("loadMap(\"{0}\", {1}, {2});", Global.GameflowManager.CurrentLevelPath,
-                        Global.GameflowManager.GameID, Global.GameflowManager.LevelID);
+                    f.WriteLine("loadMap(\"{0}\", {1}, {2});", GameflowManager.CurrentLevelPath,
+                        GameflowManager.GameID, GameflowManager.LevelID);
 
                     // Save flipmap and flipped room states.
 
-                    for (var i = 0; i < Global.EngineWorld.FlipData.Count; i++)
+                    for (var i = 0; i < EngineWorld.FlipData.Count; i++)
                     {
-                        f.WriteLine("setFlipMap({0}, 0x{1:X}, 0);", i, Global.EngineWorld.FlipData[i].Map);
-                        f.WriteLine("setFlipState({0}, {1});", i, (Global.EngineWorld.FlipData[i].State != 0).Lcase());
+                        f.WriteLine("setFlipMap({0}, 0x{1:X}, 0);", i, EngineWorld.FlipData[i].Map);
+                        f.WriteLine("setFlipState({0}, {1});", i, (EngineWorld.FlipData[i].State != 0).Lcase());
                     }
 
-                    Save_Entity(f, Global.EngineWorld.Character); // Save Lara.
+                    Save_Entity(f, EngineWorld.Character); // Save Lara.
 
-                    Save_EntityTree(f, Global.EngineWorld.EntityTree);
+                    Save_EntityTree(f, EngineWorld.EntityTree);
                 }
 
                 return true;
@@ -173,8 +175,8 @@ namespace FreeRaider
 
         public static float Tick(ref float gameLogicTime)
         {
-            var t = (int) (gameLogicTime / Constants.GAME_LOGIC_REFRESH_INTERVAL);
-            var dt = t * Constants.GAME_LOGIC_REFRESH_INTERVAL;
+            var t = (int) (gameLogicTime / GAME_LOGIC_REFRESH_INTERVAL);
+            var dt = t * GAME_LOGIC_REFRESH_INTERVAL;
             gameLogicTime -= dt;
             return dt;
         }
@@ -184,7 +186,7 @@ namespace FreeRaider
             var gameLogicTime = 0.0f;
             gameLogicTime += time;
 
-            var isCharacter = Global.EngineWorld.Character != null;
+            var isCharacter = EngineWorld.Character != null;
 
             // GUI and controls should be updated at all times!
 
@@ -193,23 +195,23 @@ namespace FreeRaider
 
             // FIXME: I have no idea what's happening here! - Lwmte
             
-            if(!ConsoleInfo.Instance.IsVisible && Global.ControlStates.GuiInventory && Global.MainInventoryManager != null)
+            if(!ConsoleInfo.Instance.IsVisible && ControlStates.GuiInventory && MainInventoryManager != null)
             {
-                if(isCharacter && Global.MainInventoryManager.CurrentState == InventoryManager.InventoryState.Disabled)
+                if(isCharacter && MainInventoryManager.CurrentState == InventoryManager.InventoryState.Disabled)
                 {
-                    Global.MainInventoryManager.SetInventory(Global.EngineWorld.Character.Inventory);
-                    Global.MainInventoryManager.NextState = InventoryManager.InventoryState.Open;
+                    MainInventoryManager.SetInventory(EngineWorld.Character.Inventory);
+                    MainInventoryManager.NextState = InventoryManager.InventoryState.Open;
                 }
-                if(Global.MainInventoryManager.CurrentState == InventoryManager.InventoryState.Idle)
+                if(MainInventoryManager.CurrentState == InventoryManager.InventoryState.Idle)
                 {
-                    Global.MainInventoryManager.NextState = InventoryManager.InventoryState.Closed;
+                    MainInventoryManager.NextState = InventoryManager.InventoryState.Closed;
                 }
             }
 
             // If console or inventory is active, only thing to update is audio.
-            if(ConsoleInfo.Instance.IsVisible || Global.MainInventoryManager.CurrentState != InventoryManager.InventoryState.Disabled)
+            if(ConsoleInfo.Instance.IsVisible || MainInventoryManager.CurrentState != InventoryManager.InventoryState.Disabled)
             {
-                if(gameLogicTime >= Constants.GAME_LOGIC_REFRESH_INTERVAL)
+                if(gameLogicTime >= GAME_LOGIC_REFRESH_INTERVAL)
                 {
                     Audio.Update();
                     Tick(ref gameLogicTime);
@@ -220,99 +222,99 @@ namespace FreeRaider
             // We're going to update main logic with a fixed step.
             // This allows to conserve CPU resources and keep everything in sync!
 
-            if(gameLogicTime >= Constants.GAME_LOGIC_REFRESH_INTERVAL)
+            if(gameLogicTime >= GAME_LOGIC_REFRESH_INTERVAL)
             {
                 var dt = Tick(ref gameLogicTime);
-                Global.EngineLua.DoTasks(dt);
+                EngineLua.DoTasks(dt);
                 UpdateAI();
                 Audio.Update();
 
                 if(isCharacter)
                 {
-                    Global.EngineWorld.Character.ProcessSector();
-                    Global.EngineWorld.Character.UpdateParams();
-                    Global.EngineWorld.Character.CheckCollisionCallbacks();   // FIXME: Must do it for ALL interactive entities!
+                    EngineWorld.Character.ProcessSector();
+                    EngineWorld.Character.UpdateParams();
+                    EngineWorld.Character.CheckCollisionCallbacks();   // FIXME: Must do it for ALL interactive entities!
                 }
 
-                LoopEntities(Global.EngineWorld.EntityTree);
+                LoopEntities(EngineWorld.EntityTree);
             }
 
             // This must be called EVERY frame to max out smoothness.
             // Includes animations, camera movement, and so on.
 
-            ApplyControls(Global.EngineWorld.Character);
+            ApplyControls(EngineWorld.Character);
 
             if(isCharacter)
             {
-                if(Global.EngineWorld.Character.TypeFlags.HasFlag(ENTITY_TYPE.Dynamic))
+                if(EngineWorld.Character.TypeFlags.HasFlag(ENTITY_TYPE.Dynamic))
                 {
-                    Global.EngineWorld.Character.UpdateRigidBody(false);
+                    EngineWorld.Character.UpdateRigidBody(false);
                 }
-                if(!Global.ControlStates.NoClip && !Global.ControlStates.FreeLook)
+                if(!ControlStates.NoClip && !ControlStates.FreeLook)
                 {
-                    Global.EngineWorld.Character.Frame(Global.EngineFrameTime);
-                    Global.EngineWorld.Character.ApplyCommands();
-                    Global.EngineWorld.Character.Frame(0.0f);
-                    StaticFuncs.Cam_FollowEntity(Global.Renderer.Camera, Global.EngineWorld.Character, 16.0f, 128.0f);
+                    EngineWorld.Character.Frame(EngineFrameTime);
+                    EngineWorld.Character.ApplyCommands();
+                    EngineWorld.Character.Frame(0.0f);
+                    StaticFuncs.Cam_FollowEntity(Renderer.Camera, EngineWorld.Character, 16.0f, 128.0f);
                 }
             }
 
             UpdateCharacters();
 
-            UpdateAllEntities(Global.EngineWorld.EntityTree);
+            UpdateAllEntities(EngineWorld.EntityTree);
 
-            Global.BtEngineDynamicsWorld.StepSimulation(time / 2.0f, 0);
-            Global.BtEngineDynamicsWorld.StepSimulation(time / 2.0f, 0);
+            BtEngineDynamicsWorld.StepSimulation(time / 2.0f, 0);
+            BtEngineDynamicsWorld.StepSimulation(time / 2.0f, 0);
 
             Controls.RefreshStates();
-            Global.EngineWorld.UpdateAnimTextures();
+            EngineWorld.UpdateAnimTextures();
         }
 
         public static void Prepare()
         {
-            if(Global.EngineWorld.Character != null)
+            if(EngineWorld.Character != null)
             {
                 // Set character values to default.
 
-                Global.EngineWorld.Character.SetParamMaximum(CharParameters.Health, Constants.LARA_PARAM_HEALTH_MAX);
-                Global.EngineWorld.Character.SetParam(CharParameters.Health, Constants.LARA_PARAM_HEALTH_MAX);
-                Global.EngineWorld.Character.SetParamMaximum(CharParameters.Air, Constants.LARA_PARAM_AIR_MAX);
-                Global.EngineWorld.Character.SetParam(CharParameters.Air, Constants.LARA_PARAM_AIR_MAX);
-                Global.EngineWorld.Character.SetParamMaximum(CharParameters.Stamina, Constants.LARA_PARAM_STAMINA_MAX);
-                Global.EngineWorld.Character.SetParam(CharParameters.Stamina, Constants.LARA_PARAM_STAMINA_MAX);
-                Global.EngineWorld.Character.SetParamMaximum(CharParameters.Warmth, Constants.LARA_PARAM_WARMTH_MAX);
-                Global.EngineWorld.Character.SetParam(CharParameters.Warmth, Constants.LARA_PARAM_WARMTH_MAX);
-                Global.EngineWorld.Character.SetParamMaximum(CharParameters.Poison, Constants.LARA_PARAM_POISON_MAX);
-                Global.EngineWorld.Character.SetParam(CharParameters.Poison, 0);
+                EngineWorld.Character.SetParamMaximum(CharParameters.Health, LARA_PARAM_HEALTH_MAX);
+                EngineWorld.Character.SetParam(CharParameters.Health, LARA_PARAM_HEALTH_MAX);
+                EngineWorld.Character.SetParamMaximum(CharParameters.Air, LARA_PARAM_AIR_MAX);
+                EngineWorld.Character.SetParam(CharParameters.Air, LARA_PARAM_AIR_MAX);
+                EngineWorld.Character.SetParamMaximum(CharParameters.Stamina, LARA_PARAM_STAMINA_MAX);
+                EngineWorld.Character.SetParam(CharParameters.Stamina, LARA_PARAM_STAMINA_MAX);
+                EngineWorld.Character.SetParamMaximum(CharParameters.Warmth, LARA_PARAM_WARMTH_MAX);
+                EngineWorld.Character.SetParam(CharParameters.Warmth, LARA_PARAM_WARMTH_MAX);
+                EngineWorld.Character.SetParamMaximum(CharParameters.Poison, LARA_PARAM_POISON_MAX);
+                EngineWorld.Character.SetParam(CharParameters.Poison, 0);
 
                 // Set character statistics to default.
 
-                Global.EngineWorld.Character.Statistics.Distance = 0.0f;
-                Global.EngineWorld.Character.Statistics.AmmoUsed = 0;
-                Global.EngineWorld.Character.Statistics.Hits = 0;
-                Global.EngineWorld.Character.Statistics.Kills = 0;
-                Global.EngineWorld.Character.Statistics.MedipacksUsed = 0;
-                Global.EngineWorld.Character.Statistics.SavesUsed = 0;
-                Global.EngineWorld.Character.Statistics.SecretsGame = 0;
-                Global.EngineWorld.Character.Statistics.SecretsLevel = 0;
+                EngineWorld.Character.Statistics.Distance = 0.0f;
+                EngineWorld.Character.Statistics.AmmoUsed = 0;
+                EngineWorld.Character.Statistics.Hits = 0;
+                EngineWorld.Character.Statistics.Kills = 0;
+                EngineWorld.Character.Statistics.MedipacksUsed = 0;
+                EngineWorld.Character.Statistics.SavesUsed = 0;
+                EngineWorld.Character.Statistics.SecretsGame = 0;
+                EngineWorld.Character.Statistics.SecretsLevel = 0;
             }
-            else if(Global.EngineWorld.Rooms.Count > 0)
+            else if(EngineWorld.Rooms.Count > 0)
             {
                 // If there is no character present, move default camera position to
                 // the first room (useful for TR1-3 cutscene levels).
 
-                Global.EngineCamera.Position = Global.EngineWorld.Rooms[0].BBMax;
+                EngineCamera.Position = EngineWorld.Rooms[0].BBMax;
             }
 
             // Set gameflow parameters to default.
             // Reset secret trigger map.
 
-            Global.GameflowManager.SecretsTriggerMap = new bool[Constants.GF_MAX_SECRETS + 1];
+            GameflowManager.SecretsTriggerMap = new bool[GF_MAX_SECRETS + 1];
         }
 
         public static void LevelTransition(ushort levelIndex)
         {
-            var filePath = Global.EngineLua.GetLoadingScreen(levelIndex);
+            var filePath = EngineLua.GetLoadingScreen(levelIndex);
             Gui.FadeAssignPic(FaderType.LoadScreen, filePath);
             Gui.FadeStart(FaderType.LoadScreen, FaderDir.Out);
 
@@ -325,102 +327,102 @@ namespace FreeRaider
 
             var moveLogic = new[]
             {
-                Global.ControlStates.MoveForward.Sub(Global.ControlStates.MoveBackward),
-                Global.ControlStates.MoveRight.Sub(Global.ControlStates.MoveLeft),
-                Global.ControlStates.MoveUp.Sub(Global.ControlStates.MoveDown)
+                ControlStates.MoveForward.Sub(ControlStates.MoveBackward),
+                ControlStates.MoveRight.Sub(ControlStates.MoveLeft),
+                ControlStates.MoveUp.Sub(ControlStates.MoveDown)
             };
 
             // Keyboard look logic
 
             var lookLogic = new Vector3
                 (
-                Global.ControlStates.LookLeft.Sub(Global.ControlStates.LookRight),
-                Global.ControlStates.LookDown.Sub(Global.ControlStates.LookUp),
-                Global.ControlStates.LookRollRight.Sub(Global.ControlStates.LookRollLeft)
+                ControlStates.LookLeft.Sub(ControlStates.LookRight),
+                ControlStates.LookDown.Sub(ControlStates.LookUp),
+                ControlStates.LookRollRight.Sub(ControlStates.LookRollLeft)
                 );
 
             // APPLY CONTROLS
 
-            Global.CamAngles += 2.2f * Global.EngineFrameTime * lookLogic;
+            CamAngles += 2.2f * EngineFrameTime * lookLogic;
 
             // FIXME: Duplicate code - do we need cam control with no world??
-            if (Global.Renderer.World == null)
+            if (Renderer.World == null)
             {
-                if (Global.ControlMapper.UseJoy)
+                if (ControlMapper.UseJoy)
                 {
                     // TODO: Useless check? (if it's not zero, do nothing, if it's zero, multiply it, but if it's zero, it won't substract so check for zero is useless)
-                    if (Global.ControlMapper.JoyLookX != 0)
+                    if (ControlMapper.JoyLookX != 0)
                     {
-                        Global.CamAngles.X -= 0.015f * Global.EngineFrameTime * Global.ControlMapper.JoyLookX;
+                        CamAngles.X -= 0.015f * EngineFrameTime * ControlMapper.JoyLookX;
                     }
-                    if (Global.ControlMapper.JoyLookX != 0)
+                    if (ControlMapper.JoyLookX != 0)
                     {
-                        Global.CamAngles.X -= 0.015f * Global.EngineFrameTime * Global.ControlMapper.JoyLookX;
+                        CamAngles.X -= 0.015f * EngineFrameTime * ControlMapper.JoyLookX;
                     }
                 }
 
-                if (Global.ControlStates.MouseLook)
+                if (ControlStates.MouseLook)
                 {
-                    Global.CamAngles.X -= 0.015f * Global.ControlStates.LookAxisX;
-                    Global.CamAngles.Y -= 0.015f * Global.ControlStates.LookAxisY;
-                    Global.ControlStates.LookAxisX = Global.ControlStates.LookAxisY = 0.0f;
+                    CamAngles.X -= 0.015f * ControlStates.LookAxisX;
+                    CamAngles.Y -= 0.015f * ControlStates.LookAxisY;
+                    ControlStates.LookAxisX = ControlStates.LookAxisY = 0.0f;
                 }
 
-                Global.Renderer.Camera.SetRotation(Global.CamAngles);
-                var dist = Global.ControlStates.FreeLookSpeed * Global.EngineFrameTime;
-                if (Global.ControlStates.StateWalk) dist *= 0.3f;
-                Global.Renderer.Camera.MoveAlong(dist * moveLogic[0]);
-                Global.Renderer.Camera.MoveStrafe(dist * moveLogic[1]);
-                Global.Renderer.Camera.MoveVertical(dist * moveLogic[2]);
+                Renderer.Camera.SetRotation(CamAngles);
+                var dist = ControlStates.FreeLookSpeed * EngineFrameTime;
+                if (ControlStates.StateWalk) dist *= 0.3f;
+                Renderer.Camera.MoveAlong(dist * moveLogic[0]);
+                Renderer.Camera.MoveStrafe(dist * moveLogic[1]);
+                Renderer.Camera.MoveVertical(dist * moveLogic[2]);
 
                 return;
             }
 
-            if (Global.ControlMapper.UseJoy)
+            if (ControlMapper.UseJoy)
             {
                 // TODO: Useless check? (if it's not zero, do nothing, if it's zero, multiply it, but if it's zero, it won't substract so check for zero is useless)
-                if (Global.ControlMapper.JoyLookX != 0)
+                if (ControlMapper.JoyLookX != 0)
                 {
-                    Global.CamAngles.X -= Global.EngineFrameTime * Global.ControlMapper.JoyLookX;
+                    CamAngles.X -= EngineFrameTime * ControlMapper.JoyLookX;
                 }
-                if (Global.ControlMapper.JoyLookX != 0)
+                if (ControlMapper.JoyLookX != 0)
                 {
-                    Global.CamAngles.X -= Global.EngineFrameTime * Global.ControlMapper.JoyLookX;
+                    CamAngles.X -= EngineFrameTime * ControlMapper.JoyLookX;
                 }
             }
 
-            if (Global.ControlStates.MouseLook)
+            if (ControlStates.MouseLook)
             {
-                Global.CamAngles.X -= 0.015f * Global.ControlStates.LookAxisX;
-                Global.CamAngles.Y -= 0.015f * Global.ControlStates.LookAxisY;
-                Global.ControlStates.LookAxisX = Global.ControlStates.LookAxisY = 0.0f;
+                CamAngles.X -= 0.015f * ControlStates.LookAxisX;
+                CamAngles.Y -= 0.015f * ControlStates.LookAxisY;
+                ControlStates.LookAxisX = ControlStates.LookAxisY = 0.0f;
             }
 
-            if(Global.ControlStates.FreeLook || !(ent is Character))
+            if(ControlStates.FreeLook || !(ent is Character))
             {
-                var dist = Global.ControlStates.FreeLookSpeed * Global.EngineFrameTime;
-                if (Global.ControlStates.StateWalk) dist *= 0.3f;
-                Global.Renderer.Camera.SetRotation(Global.CamAngles);
-                Global.Renderer.Camera.MoveAlong(dist * moveLogic[0]);
-                Global.Renderer.Camera.MoveStrafe(dist * moveLogic[1]);
-                Global.Renderer.Camera.MoveVertical(dist * moveLogic[2]);
-                Global.Renderer.Camera.CurrentRoom = Room.FindPosCogerrence(Global.Renderer.Camera.Position,
-                    Global.Renderer.Camera.CurrentRoom);
+                var dist = ControlStates.FreeLookSpeed * EngineFrameTime;
+                if (ControlStates.StateWalk) dist *= 0.3f;
+                Renderer.Camera.SetRotation(CamAngles);
+                Renderer.Camera.MoveAlong(dist * moveLogic[0]);
+                Renderer.Camera.MoveStrafe(dist * moveLogic[1]);
+                Renderer.Camera.MoveVertical(dist * moveLogic[2]);
+                Renderer.Camera.CurrentRoom = Room.FindPosCogerrence(Renderer.Camera.Position,
+                    Renderer.Camera.CurrentRoom);
             }
-            else if(Global.ControlStates.NoClip)
+            else if(ControlStates.NoClip)
             {
-                var dist = Global.ControlStates.FreeLookSpeed * Global.EngineFrameTime;
-                if (Global.ControlStates.StateWalk) dist *= 0.3f;
-                Global.Renderer.Camera.SetRotation(Global.CamAngles);
-                Global.Renderer.Camera.MoveAlong(dist * moveLogic[0]);
-                Global.Renderer.Camera.MoveStrafe(dist * moveLogic[1]);
-                Global.Renderer.Camera.MoveVertical(dist * moveLogic[2]);
-                Global.Renderer.Camera.CurrentRoom = Room.FindPosCogerrence(Global.Renderer.Camera.Position,
-                    Global.Renderer.Camera.CurrentRoom);
+                var dist = ControlStates.FreeLookSpeed * EngineFrameTime;
+                if (ControlStates.StateWalk) dist *= 0.3f;
+                Renderer.Camera.SetRotation(CamAngles);
+                Renderer.Camera.MoveAlong(dist * moveLogic[0]);
+                Renderer.Camera.MoveStrafe(dist * moveLogic[1]);
+                Renderer.Camera.MoveVertical(dist * moveLogic[2]);
+                Renderer.Camera.CurrentRoom = Room.FindPosCogerrence(Renderer.Camera.Position,
+                    Renderer.Camera.CurrentRoom);
 
-                ent.Angles.X = Global.CamAngles.X * Constants.DegPerRad;
-                var pos = Global.Renderer.Camera.Position +
-                          Global.Renderer.Camera.ViewDirection * Global.ControlStates.CamDistance;
+                ent.Angles.X = CamAngles.X * DegPerRad;
+                var pos = Renderer.Camera.Position +
+                          Renderer.Camera.ViewDirection * ControlStates.CamDistance;
                 pos.Z -= 512.0f;
                 ent.Transform.Origin = pos;
                 ent.UpdateTransform();
@@ -429,19 +431,19 @@ namespace FreeRaider
             {
                 var ch = (Character) ent;
                 // Apply controls to Lara
-                ch.Command.Action = Global.ControlStates.StateAction;
-                ch.Command.ReadyWeapon = Global.ControlStates.DoDrawWeapon;
-                ch.Command.Jump = Global.ControlStates.DoJump;
-                ch.Command.Shift = Global.ControlStates.StateWalk;
+                ch.Command.Action = ControlStates.StateAction;
+                ch.Command.ReadyWeapon = ControlStates.DoDrawWeapon;
+                ch.Command.Jump = ControlStates.DoJump;
+                ch.Command.Shift = ControlStates.StateWalk;
 
-                ch.Command.Roll = (Global.ControlStates.MoveForward && Global.ControlStates.MoveBackward) ||
-                                  Global.ControlStates.DoRoll;
+                ch.Command.Roll = (ControlStates.MoveForward && ControlStates.MoveBackward) ||
+                                  ControlStates.DoRoll;
 
                 // New commands only for TR3 and above
-                ch.Command.Sprint = Global.ControlStates.StateSprint;
-                ch.Command.Crouch = Global.ControlStates.StateCrouch;
+                ch.Command.Sprint = ControlStates.StateSprint;
+                ch.Command.Crouch = ControlStates.StateCrouch;
                 
-                if(Global.ControlStates.UseSmallMedipack)
+                if(ControlStates.UseSmallMedipack)
                 {
                     if(ch.GetItemsCount((uint)ITEM.SmallMedipack) > 0 && ch.ChangeParam(CharParameters.Health, 250))
                     {
@@ -450,41 +452,41 @@ namespace FreeRaider
                         Audio.Send((uint) TR_AUDIO_SOUND.Medipack);
                     }
 
-                    Global.ControlStates.UseSmallMedipack = !Global.ControlStates.UseSmallMedipack;
+                    ControlStates.UseSmallMedipack = !ControlStates.UseSmallMedipack;
                 }
 
-                if (Global.ControlStates.UseBigMedipack)
+                if (ControlStates.UseBigMedipack)
                 {
-                    if (ch.GetItemsCount((uint)ITEM.LargeMedipack) > 0 && ch.ChangeParam(CharParameters.Health, Constants.LARA_PARAM_HEALTH_MAX))
+                    if (ch.GetItemsCount((uint)ITEM.LargeMedipack) > 0 && ch.ChangeParam(CharParameters.Health, LARA_PARAM_HEALTH_MAX))
                     {
                         ch.SetParam(CharParameters.Poison, 0);
                         ch.RemoveItem((uint)ITEM.LargeMedipack, 1);
                         Audio.Send((uint)TR_AUDIO_SOUND.Medipack);
                     }
 
-                    Global.ControlStates.UseBigMedipack = !Global.ControlStates.UseBigMedipack;
+                    ControlStates.UseBigMedipack = !ControlStates.UseBigMedipack;
                 }
 
                 // TODO: Useless check for zero?
-                if(Global.ControlMapper.UseJoy && Global.ControlMapper.JoyMoveX != 0)
+                if(ControlMapper.UseJoy && ControlMapper.JoyMoveX != 0)
                 {
-                    ch.Command.Rotation.X = -2 * Constants.DegPerRad * Global.EngineFrameTime *
-                                            Global.ControlMapper.JoyMoveX;
+                    ch.Command.Rotation.X = -2 * DegPerRad * EngineFrameTime *
+                                            ControlMapper.JoyMoveX;
                 }
                 else
                 {
-                    ch.Command.Rotation.X = -2 * Constants.DegPerRad * Global.EngineFrameTime * moveLogic[1];
+                    ch.Command.Rotation.X = -2 * DegPerRad * EngineFrameTime * moveLogic[1];
                 }
 
                 // TODO: Useless check for zero?
-                if (Global.ControlMapper.UseJoy && Global.ControlMapper.JoyMoveY != 0)
+                if (ControlMapper.UseJoy && ControlMapper.JoyMoveY != 0)
                 {
-                    ch.Command.Rotation.Y = -2 * Constants.DegPerRad * Global.EngineFrameTime *
-                                            Global.ControlMapper.JoyMoveY;
+                    ch.Command.Rotation.Y = -2 * DegPerRad * EngineFrameTime *
+                                            ControlMapper.JoyMoveY;
                 }
                 else
                 {
-                    ch.Command.Rotation.Y = -2 * Constants.DegPerRad * Global.EngineFrameTime * moveLogic[0];
+                    ch.Command.Rotation.Y = -2 * DegPerRad * EngineFrameTime * moveLogic[0];
                 }
 
                 ch.Command.Move = moveLogic;
@@ -499,7 +501,7 @@ namespace FreeRaider
                 {
                     entity.UpdateRigidBody(false);
                 }
-                else if (entity.Frame(Global.EngineFrameTime) != ENTITY_ANIM.None)
+                else if (entity.Frame(EngineFrameTime) != ENTITY_ANIM.None)
                 {
                     entity.UpdateRigidBody(false);
                 }
@@ -511,7 +513,7 @@ namespace FreeRaider
             foreach (var entity in entities.Values.Where(entity => entity.Enabled))
             {
                 entity.ProcessSector();
-                Global.EngineLua.LoopEntity((int) entity.ID);
+                EngineLua.LoopEntity((int) entity.ID);
 
                 if(entity.TypeFlags.HasFlag(ENTITY_TYPE.CollCheck))
                     entity.CheckCollisionCallbacks();
@@ -528,7 +530,7 @@ namespace FreeRaider
 
         public static void UpdateCharacters()
         {
-            var ent = Global.EngineWorld.Character;
+            var ent = EngineWorld.Character;
 
             if(ent != null)
             {
@@ -543,7 +545,7 @@ namespace FreeRaider
                 ent.UpdateHair();
             }
 
-            UpdateCharactersTree(Global.EngineWorld.EntityTree);
+            UpdateCharactersTree(EngineWorld.EntityTree);
         }
 
         private static void UpdateCharactersTree(Dictionary<uint, Entity> entities)
@@ -568,11 +570,13 @@ namespace FreeRaider
     {
         public static bool Cam_HasHit(BtEngineClosestConvexResultCallback cb, Transform cameraFrom, Transform cameraTo)
         {
-            var cameraSphere = new SphereShape(Constants.COLLISION_CAMERA_SPHERE_RADIUS);
-            cameraSphere.Margin = Constants.COLLISION_MARGIN_DEFAULT;
+            var cameraSphere = new SphereShape(COLLISION_CAMERA_SPHERE_RADIUS)
+            {
+                Margin = COLLISION_MARGIN_DEFAULT
+            };
             cb.ClosestHitFraction = 1.0f;
             cb.HitCollisionObject = null;
-            Global.BtEngineDynamicsWorld.ConvexSweepTest(cameraSphere, (Matrix4)cameraFrom, (Matrix4)cameraTo, cb);
+            BtEngineDynamicsWorld.ConvexSweepTest(cameraSphere, (Matrix4)cameraFrom, (Matrix4)cameraTo, cb);
             return cb.HasHit;
         }
 
@@ -590,10 +594,10 @@ namespace FreeRaider
             var camPos = cam.Position;
 
             // Basic camera override, completely placeholder until a system classic-like is created
-            if (!Global.ControlStates.MouseLook) // If mouse look is off
+            if (!ControlStates.MouseLook) // If mouse look is off
             {
-                var currentAngle = Global.CamAngles.X * Constants.RadPerDeg; // Current is the current cam angle
-                var targetAngle = ent.Angles.X * Constants.RadPerDeg;
+                var currentAngle = CamAngles.X * RadPerDeg; // Current is the current cam angle
+                var targetAngle = ent.Angles.X * RadPerDeg;
                     // Target is the target angle which is the entity's angle itself
                 var rotSpeed = 2.0f; // Speed of rotation
 
@@ -605,10 +609,10 @@ namespace FreeRaider
                     {
                         var camPos2 = camPos;
                         cameraFrom.Origin = camPos2;
-                        camPos2.X += (float) (Math.Sin((ent.Angles.X - 90.0f) * Constants.RadPerDeg) *
-                                              Global.ControlStates.CamDistance);
-                        camPos2.Y -= (float) (Math.Cos((ent.Angles.X - 90.0f) * Constants.RadPerDeg) *
-                                              Global.ControlStates.CamDistance);
+                        camPos2.X += (float) (Math.Sin((ent.Angles.X - 90.0f) * RadPerDeg) *
+                                              ControlStates.CamDistance);
+                        camPos2.Y -= (float) (Math.Cos((ent.Angles.X - 90.0f) * RadPerDeg) *
+                                              ControlStates.CamDistance);
                         cameraTo.Origin = camPos2;
 
                         // If collided we want to go right otherwise stay left
@@ -616,10 +620,10 @@ namespace FreeRaider
                         {
                             camPos2 = camPos;
                             cameraFrom.Origin = camPos2;
-                            camPos2.X += (float)(Math.Sin((ent.Angles.X + 90.0f) * Constants.RadPerDeg) *
-                                             Global.ControlStates.CamDistance);
-                            camPos2.Y -= (float)(Math.Cos((ent.Angles.X + 90.0f) * Constants.RadPerDeg) *
-                                                  Global.ControlStates.CamDistance);
+                            camPos2.X += (float)(Math.Sin((ent.Angles.X + 90.0f) * RadPerDeg) *
+                                             ControlStates.CamDistance);
+                            camPos2.Y -= (float)(Math.Cos((ent.Angles.X + 90.0f) * RadPerDeg) *
+                                                  ControlStates.CamDistance);
                             cameraTo.Origin = camPos2;
 
                             // If collided we want to go to back else right
@@ -647,49 +651,49 @@ namespace FreeRaider
                     switch (cam.TargetDir)
                     {
                         case TR_CAM_TARG.Back:
-                            targetAngle = ent.Angles.X * Constants.RadPerDeg;
+                            targetAngle = ent.Angles.X * RadPerDeg;
                             break;
                         case TR_CAM_TARG.Front:
-                            targetAngle = (ent.Angles.X - 180.0f) * Constants.RadPerDeg;
+                            targetAngle = (ent.Angles.X - 180.0f) * RadPerDeg;
                             break;
                         case TR_CAM_TARG.Left:
-                            targetAngle = (ent.Angles.X - 75.0f) * Constants.RadPerDeg;
+                            targetAngle = (ent.Angles.X - 75.0f) * RadPerDeg;
                             break;
                         case TR_CAM_TARG.Right:
-                            targetAngle = (ent.Angles.X + 75.0f) * Constants.RadPerDeg;
+                            targetAngle = (ent.Angles.X + 75.0f) * RadPerDeg;
                             break;
                         default:
-                            targetAngle = ent.Angles.X * Constants.RadPerDeg; // Same as TR_CAM_TARG_BACK (default pos)
+                            targetAngle = ent.Angles.X * RadPerDeg; // Same as TR_CAM_TARG_BACK (default pos)
                             break;
                     }
 
-                    var dAngle = Global.CamAngles.X - targetAngle;
-                    if (dAngle > Constants.Rad90)
+                    var dAngle = CamAngles.X - targetAngle;
+                    if (dAngle > Rad90)
                     {
-                        dAngle -= 1 * Constants.RadPerDeg;
+                        dAngle -= 1 * RadPerDeg;
                     }
                     else
                     {
-                        dAngle += 1 * Constants.RadPerDeg;
+                        dAngle += 1 * RadPerDeg;
                     }
-                    Global.CamAngles.X =
+                    CamAngles.X =
                         (float)
-                            ((Global.CamAngles.X +
+                            ((CamAngles.X +
                               Math.Atan2(Math.Sin(currentAngle - dAngle), Math.Cos(currentAngle + dAngle)) *
-                              Global.EngineFrameTime * rotSpeed) % Constants.Rad360); // Update camera's angle
+                              EngineFrameTime * rotSpeed) % Rad360); // Update camera's angle
                 }
             }
 
             camPos = ent.CamPosForFollowing(dz);
 
             // Code to manage screen shaking effects
-            if(Global.Renderer.Camera.ShakeTime > 0.0f && Global.Renderer.Camera.ShakeValue > 0.0f)
+            if(Renderer.Camera.ShakeTime > 0.0f && Renderer.Camera.ShakeValue > 0.0f)
             {
-                camPos = camPos.AddF((Helper.CPPRand() % Math.Abs(Global.Renderer.Camera.ShakeValue) -
-                                     Global.Renderer.Camera.ShakeValue / 2.0f) * Global.Renderer.Camera.ShakeTime);
-                Global.Renderer.Camera.ShakeTime = Global.Renderer.Camera.ShakeTime < 0.0f
+                camPos = camPos.AddF((Helper.CPPRand() % Math.Abs(Renderer.Camera.ShakeValue) -
+                                     Renderer.Camera.ShakeValue / 2.0f) * Renderer.Camera.ShakeTime);
+                Renderer.Camera.ShakeTime = Renderer.Camera.ShakeTime < 0.0f
                     ? 0.0f
-                    : Global.Renderer.Camera.ShakeTime - Global.EngineFrameTime;
+                    : Renderer.Camera.ShakeTime - EngineFrameTime;
             }
 
             cameraFrom.Origin = camPos;
@@ -714,13 +718,13 @@ namespace FreeRaider
 
                 cameraFrom.Origin = camPos;
 
-                var cosAy = Math.Cos(Global.CamAngles.Y);
-                var camDx = Math.Sin(Global.CamAngles.X) * cosAy;
-                var camDy = -Math.Cos(Global.CamAngles.X) * cosAy;
-                var camDz = -Math.Sin(Global.CamAngles.Y);
-                camPos.X += (float) (camDx * Global.ControlStates.CamDistance);
-                camPos.Y += (float) (camDy * Global.ControlStates.CamDistance);
-                camPos.Z += (float) (camDz * Global.ControlStates.CamDistance);
+                var cosAy = Math.Cos(CamAngles.Y);
+                var camDx = Math.Sin(CamAngles.X) * cosAy;
+                var camDy = -Math.Cos(CamAngles.X) * cosAy;
+                var camDz = -Math.Sin(CamAngles.Y);
+                camPos.X += (float) (camDx * ControlStates.CamDistance);
+                camPos.Y += (float) (camDy * ControlStates.CamDistance);
+                camPos.Z += (float) (camDz * ControlStates.CamDistance);
 
                 cameraTo.Origin = camPos;
                 if (Cam_HasHit(cb, cameraFrom, cameraTo))
@@ -742,7 +746,7 @@ namespace FreeRaider
                 cam.Position = pos;
             }
 
-            cam.SetRotation(Global.CamAngles);
+            cam.SetRotation(CamAngles);
             cam.CurrentRoom = Room.FindPosCogerrence(cam.Position, cam.CurrentRoom);
         }
     }
@@ -753,52 +757,52 @@ namespace FreeRaider
         {
             if (mlook is bool)
             {
-                Global.ControlStates.MouseLook = (bool) mlook;
+                ControlStates.MouseLook = (bool) mlook;
             }
             else
             {
-                Global.ControlStates.MouseLook = !Global.ControlStates.MouseLook;
+                ControlStates.MouseLook = !ControlStates.MouseLook;
             }
 
-            ConsoleInfo.Instance.Printf("mlook = {0}", Global.ControlStates.MouseLook);
+            ConsoleInfo.Instance.Printf("mlook = {0}", ControlStates.MouseLook);
         }
 
         public static void lua_freelook(object free)
         {
             if (free is bool)
             {
-                Global.ControlStates.FreeLook = (bool)free;
+                ControlStates.FreeLook = (bool)free;
             }
             else
             {
-                Global.ControlStates.FreeLook = !Global.ControlStates.FreeLook;
+                ControlStates.FreeLook = !ControlStates.FreeLook;
             }
 
-            ConsoleInfo.Instance.Printf("free_look = {0}", Global.ControlStates.FreeLook);
+            ConsoleInfo.Instance.Printf("free_look = {0}", ControlStates.FreeLook);
         }
 
         public static void lua_cam_distance(object mlook)
         {
             if (mlook is float)
             {
-                Global.ControlStates.CamDistance = (float)mlook;
+                ControlStates.CamDistance = (float)mlook;
             }
 
-            ConsoleInfo.Instance.Printf("cam_distance = {0}", Global.ControlStates.CamDistance);
+            ConsoleInfo.Instance.Printf("cam_distance = {0}", ControlStates.CamDistance);
         }
 
         public static void lua_noclip(object noclip)
         {
             if (noclip is bool)
             {
-                Global.ControlStates.NoClip = (bool)noclip;
+                ControlStates.NoClip = (bool)noclip;
             }
             else
             {
-                Global.ControlStates.NoClip = !Global.ControlStates.NoClip;
+                ControlStates.NoClip = !ControlStates.NoClip;
             }
 
-            ConsoleInfo.Instance.Printf("noclip = {0}", Global.ControlStates.NoClip);
+            ConsoleInfo.Instance.Printf("noclip = {0}", ControlStates.NoClip);
         }
 
         public static void lua_debuginfo(object show)

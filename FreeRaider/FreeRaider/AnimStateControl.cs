@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows.Forms;
 using OpenTK;
+using static FreeRaider.Constants;
 
 namespace FreeRaider
 {
@@ -806,10 +807,10 @@ namespace FreeRaider
             if (state == ENTITY_ANIM.NewAnim)
             {
                 var v = ent.TraversedObject.Transform.Origin;
-                var i = (int) (v.X / Constants.TR_METERING_SECTORSIZE);
-                v.X = i * Constants.TR_METERING_SECTORSIZE + 512.0f;
-                i = (int) (v.Y / Constants.TR_METERING_SECTORSIZE);
-                v.Y = i * Constants.TR_METERING_SECTORSIZE + 512.0f;
+                var i = (int) (v.X / TR_METERING_SECTORSIZE);
+                v.X = i * TR_METERING_SECTORSIZE + 512.0f;
+                i = (int) (v.Y / TR_METERING_SECTORSIZE);
+                v.Y = i * TR_METERING_SECTORSIZE + 512.0f;
                 ent.TraversedObject.UpdateRigidBody(true);
                 ent.TraversedObject = null;
                 ssAnim.ClearOnFrame();
@@ -1009,7 +1010,7 @@ namespace FreeRaider
 
             var lowVerticalSpace = currFc.FloorHit && currFc.CeilingHit &&
                                    currFc.CeilingPoint.Z - currFc.FloorPoint.Z <
-                                   ent.Height - Constants.LARA_HANG_VERTICAL_EPSILON;
+                                   ent.Height - LARA_HANG_VERTICAL_EPSILON;
             var lastFrame = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count <=
                             ssAnim.CurrentFrame + 1;
 
@@ -1043,7 +1044,7 @@ namespace FreeRaider
                     ent.Lean(cmd, 0.0f);
 
                     if ((climb.CanHang &&
-                         climb.NextZSpace >= ent.Height - Constants.LARA_HANG_VERTICAL_EPSILON &&
+                         climb.NextZSpace >= ent.Height - LARA_HANG_VERTICAL_EPSILON &&
                          ent.MoveType == MoveType.Climbing) ||
                         ssAnim.CurrentAnimation == TR_ANIMATION.LaraStaySolid)
                     {
@@ -1140,10 +1141,10 @@ namespace FreeRaider
                     }
                     else if (cmd.Move[0] == 1)
                     {
-                        move = ent.Transform.Basis.Column1 * Constants.PENETRATION_TEST_OFFSET;
+                        move = ent.Transform.Basis.Column1 * PENETRATION_TEST_OFFSET;
                         if (cmd.Shift)
                         {
-                            globalOffset = ent.Transform.Basis.Column1 * Constants.WALK_FORWARD_OFFSET;
+                            globalOffset = ent.Transform.Basis.Column1 * WALK_FORWARD_OFFSET;
                             globalOffset.Z += ent.Bf.BBMax.Z;
                             globalOffset += pos;
                             Character.GetHeightInfo(globalOffset, nextFc);
@@ -1166,7 +1167,7 @@ namespace FreeRaider
                         }
                         else
                         {
-                            globalOffset = ent.Transform.Basis.Column1 * Constants.RUN_FORWARD_OFFSET;
+                            globalOffset = ent.Transform.Basis.Column1 * RUN_FORWARD_OFFSET;
                             globalOffset.Z += ent.Bf.BBMax.Z;
                             globalOffset += pos;
                             ent.CheckNextStep(globalOffset, nextFc);
@@ -1196,12 +1197,12 @@ namespace FreeRaider
                                 TR_ANIMATION.LaraWallSmashRight
                             }.Contains(ssAnim.CurrentAnimation))
                         {
-                            t = ent.ForwardSize + Constants.LARA_TRY_HANG_WALL_OFFSET;
+                            t = ent.ForwardSize + LARA_TRY_HANG_WALL_OFFSET;
                             globalOffset = ent.Transform.Basis.Column1 * t;
-                            globalOffset.Z += 0.5f * Constants.DEFAULT_CLIMB_UP_HEIGHT;
-                            climb = ent.CheckClimbability(globalOffset, nextFc, 0.5f * Constants.DEFAULT_CLIMB_UP_HEIGHT);
+                            globalOffset.Z += 0.5f * DEFAULT_CLIMB_UP_HEIGHT;
+                            climb = ent.CheckClimbability(globalOffset, nextFc, 0.5f * DEFAULT_CLIMB_UP_HEIGHT);
                             if (climb.EdgeHit &&
-                                climb.NextZSpace >= ent.Height - Constants.LARA_HANG_VERTICAL_EPSILON &&
+                                climb.NextZSpace >= ent.Height - LARA_HANG_VERTICAL_EPSILON &&
                                 pos.Z + ent.MaxStepUpHeight < nextFc.FloorPoint.Z &&
                                 pos.Z + 2944.0f >= nextFc.FloorPoint.Z &&
                                 nextFc.FloorNormale.Z >= ent.CriticalSlantZComponent)
@@ -1228,10 +1229,10 @@ namespace FreeRaider
                                 }
                             }
 
-                            globalOffset.Z += 0.5f * Constants.DEFAULT_CLIMB_UP_HEIGHT;
-                            climb = ent.CheckClimbability(globalOffset, nextFc, Constants.DEFAULT_CLIMB_UP_HEIGHT);
+                            globalOffset.Z += 0.5f * DEFAULT_CLIMB_UP_HEIGHT;
+                            climb = ent.CheckClimbability(globalOffset, nextFc, DEFAULT_CLIMB_UP_HEIGHT);
                             if (climb.EdgeHit &&
-                                climb.NextZSpace >= ent.Height - Constants.LARA_HANG_VERTICAL_EPSILON &&
+                                climb.NextZSpace >= ent.Height - LARA_HANG_VERTICAL_EPSILON &&
                                 pos.Z + ent.MaxStepUpHeight < nextFc.FloorPoint.Z &&
                                 pos.Z + 2944.0f >= nextFc.FloorPoint.Z)
                             {
@@ -1256,12 +1257,12 @@ namespace FreeRaider
                     }
                     else if (cmd.Move[0] == -1)
                     {
-                        move = ent.Transform.Basis.Column1 * -Constants.PENETRATION_TEST_OFFSET;
+                        move = ent.Transform.Basis.Column1 * -PENETRATION_TEST_OFFSET;
                         if (ent.CheckNextPenetration(move) == 0 || ent.Response.HorizontalCollide == 0x00)
                         {
                             if (cmd.Shift)
                             {
-                                globalOffset = ent.Transform.Basis.Column1 * -Constants.WALK_BACK_OFFSET;
+                                globalOffset = ent.Transform.Basis.Column1 * -WALK_BACK_OFFSET;
                                 globalOffset.Z += ent.Bf.BBMax.Z;
                                 globalOffset += pos;
                                 Character.GetHeightInfo(globalOffset, nextFc);
@@ -1291,10 +1292,10 @@ namespace FreeRaider
                     {
                         if (cmd.Shift)
                         {
-                            move = ent.Transform.Basis.Column0 * Constants.PENETRATION_TEST_OFFSET;
+                            move = ent.Transform.Basis.Column0 * PENETRATION_TEST_OFFSET;
                             if (ent.CheckNextPenetration(move) == 0 || ent.Response.HorizontalCollide == 0x00)
                             {
-                                globalOffset = ent.Transform.Basis.Column0 * Constants.RUN_FORWARD_OFFSET;
+                                globalOffset = ent.Transform.Basis.Column0 * RUN_FORWARD_OFFSET;
                                 globalOffset.Z += ent.Bf.BBMax.Z;
                                 if (resp.HorizontalCollide == 0 &&
                                     ent.CheckNextStep(globalOffset, nextFc).IsLittleStep())
@@ -1314,10 +1315,10 @@ namespace FreeRaider
                     {
                         if (cmd.Shift)
                         {
-                            move = ent.Transform.Basis.Column0 * -Constants.PENETRATION_TEST_OFFSET;
+                            move = ent.Transform.Basis.Column0 * -PENETRATION_TEST_OFFSET;
                             if (ent.CheckNextPenetration(move) == 0 || ent.Response.HorizontalCollide == 0x00)
                             {
-                                globalOffset = ent.Transform.Basis.Column0 * -Constants.RUN_FORWARD_OFFSET;
+                                globalOffset = ent.Transform.Basis.Column0 * -RUN_FORWARD_OFFSET;
                                 globalOffset.Z += ent.Bf.BBMax.Z;
                                 if (resp.HorizontalCollide == 0 &&
                                     ent.CheckNextStep(globalOffset, nextFc).IsLittleStep())
@@ -1357,7 +1358,7 @@ namespace FreeRaider
                     else if (cmd.Move[0] == 1)
                     {
                         ent.DirFlag = ENT_MOVE.MoveForward;
-                        move = ent.Transform.Basis.Column1 * Constants.PENETRATION_TEST_OFFSET;
+                        move = ent.Transform.Basis.Column1 * PENETRATION_TEST_OFFSET;
                         if (ent.CheckNextPenetration(move) == 0)
                         {
                             ssAnim.NextState = TR_STATE.LaraJumpForward;
@@ -1366,7 +1367,7 @@ namespace FreeRaider
                     else if (cmd.Move[0] == -1)
                     {
                         ent.DirFlag = ENT_MOVE.MoveBackward;
-                        move = ent.Transform.Basis.Column1 * -Constants.PENETRATION_TEST_OFFSET;
+                        move = ent.Transform.Basis.Column1 * -PENETRATION_TEST_OFFSET;
                         if (ent.CheckNextPenetration(move) == 0)
                         {
                             ssAnim.NextState = TR_STATE.LaraJumpBack;
@@ -1375,7 +1376,7 @@ namespace FreeRaider
                     else if (cmd.Move[1] == 1)
                     {
                         ent.DirFlag = ENT_MOVE.MoveRight;
-                        move = ent.Transform.Basis.Column0 * Constants.PENETRATION_TEST_OFFSET;
+                        move = ent.Transform.Basis.Column0 * PENETRATION_TEST_OFFSET;
                         if (ent.CheckNextPenetration(move) == 0)
                         {
                             ssAnim.NextState = TR_STATE.LaraJumpLeft;
@@ -1384,7 +1385,7 @@ namespace FreeRaider
                     else if (cmd.Move[1] == -1)
                     {
                         ent.DirFlag = ENT_MOVE.MoveLeft;
-                        move = ent.Transform.Basis.Column0 * -Constants.PENETRATION_TEST_OFFSET;
+                        move = ent.Transform.Basis.Column0 * -PENETRATION_TEST_OFFSET;
                         if (ent.CheckNextPenetration(move) == 0)
                         {
                             ssAnim.NextState = TR_STATE.LaraJumpRight;
@@ -1413,7 +1414,7 @@ namespace FreeRaider
                         ent.DirFlag = ENT_MOVE.MoveForward;
                         ent.UpdateCurrentSpeed(true);
                     }
-                    else if (ent.MoveType == MoveType.Underwater || ent.Speed.Z <= -Constants.FREE_FALL_SPEED_2)
+                    else if (ent.MoveType == MoveType.Underwater || ent.Speed.Z <= -FREE_FALL_SPEED_2)
                     {
                         ssAnim.NextState = TR_STATE.LaraFreefall;
                     }
@@ -1550,7 +1551,7 @@ namespace FreeRaider
                     #region Run and walk animations
 
                 case TR_STATE.LaraRunForward:
-                    globalOffset = ent.Transform.Basis.Column1 * Constants.RUN_FORWARD_OFFSET;
+                    globalOffset = ent.Transform.Basis.Column1 * RUN_FORWARD_OFFSET;
                     globalOffset.Z += ent.Bf.BBMax.Z;
                     nextStep = ent.CheckNextStep(globalOffset, nextFc);
                     ent.DirFlag = ENT_MOVE.MoveForward;
@@ -1599,7 +1600,7 @@ namespace FreeRaider
                     }
                     else if (resp.HorizontalCollide.HasFlagSig(0x01))
                     {
-                        globalOffset = ent.Transform.Basis.Column1 * Constants.RUN_FORWARD_OFFSET;
+                        globalOffset = ent.Transform.Basis.Column1 * RUN_FORWARD_OFFSET;
                         globalOffset.Z += 1024.0f;
                         if (ssAnim.CurrentAnimation == TR_ANIMATION.LaraStayToRun)
                         {
@@ -1653,7 +1654,7 @@ namespace FreeRaider
                     }
                     break;
                 case TR_STATE.LaraSprint:
-                    globalOffset = ent.Transform.Basis.Column1 * Constants.RUN_FORWARD_OFFSET;
+                    globalOffset = ent.Transform.Basis.Column1 * RUN_FORWARD_OFFSET;
                     ent.Lean(cmd, 12.0f);
                     globalOffset.Z += ent.Bf.BBMax.Z;
                     nextStep = ent.CheckNextStep(globalOffset, nextFc);
@@ -1731,7 +1732,7 @@ namespace FreeRaider
                     cmd.Rotation.X *= 0.4f;
                     ent.Lean(cmd, 0.0f);
 
-                    globalOffset = ent.Transform.Basis.Column1 * Constants.WALK_FORWARD_OFFSET;
+                    globalOffset = ent.Transform.Basis.Column1 * WALK_FORWARD_OFFSET;
                     globalOffset.Z += ent.Bf.BBMax.Z;
                     nextStep = ent.CheckNextStep(globalOffset, nextFc);
                     ent.DirFlag = ENT_MOVE.MoveForward;
@@ -1798,12 +1799,12 @@ namespace FreeRaider
 
                     if (ent.HeightInfo.Quicksand != QuicksandPosition.None)
                     {
-                        ent.CurrentSpeed = Math.Min(ent.CurrentSpeed, Constants.MAX_SPEED_QUICKSAND);
+                        ent.CurrentSpeed = Math.Min(ent.CurrentSpeed, MAX_SPEED_QUICKSAND);
                     }
 
                     if (cmd.Move[0] == 1)
                     {
-                        move = ent.Transform.Basis.Column1 * Constants.PENETRATION_TEST_OFFSET;
+                        move = ent.Transform.Basis.Column1 * PENETRATION_TEST_OFFSET;
                         ent.CheckNextPenetration(move);
                     }
 
@@ -1876,10 +1877,10 @@ namespace FreeRaider
 
                     if (ent.HeightInfo.Quicksand != QuicksandPosition.None)
                     {
-                        ent.CurrentSpeed = Math.Min(ent.CurrentSpeed, Constants.MAX_SPEED_QUICKSAND);
+                        ent.CurrentSpeed = Math.Min(ent.CurrentSpeed, MAX_SPEED_QUICKSAND);
                     }
 
-                    globalOffset = ent.Transform.Basis.Column1 * -Constants.WALK_BACK_OFFSET;
+                    globalOffset = ent.Transform.Basis.Column1 * -WALK_BACK_OFFSET;
                     globalOffset.Z += ent.Bf.BBMax.Z;
                     nextStep = ent.CheckNextStep(globalOffset, nextFc);
                     if (ent.MoveType == MoveType.FreeFalling)
@@ -1955,7 +1956,7 @@ namespace FreeRaider
                     }
                     else if (cmd.Move[1] == n && cmd.Shift)
                     {
-                        globalOffset = ent.Transform.Basis.Column0 * (Constants.RUN_FORWARD_OFFSET * n);
+                        globalOffset = ent.Transform.Basis.Column0 * (RUN_FORWARD_OFFSET * n);
                         globalOffset.Z += ent.Bf.BBMax.Z;
                         globalOffset += pos;
                         Character.GetHeightInfo(globalOffset, nextFc);
@@ -2063,14 +2064,14 @@ namespace FreeRaider
                         ent.DirFlag = ENT_MOVE.Stay;
                         ssAnim.AnimFlags = AnimControlFlags.LoopLastFrame; // We hold it (loop last frame)
 
-                        if (cmd.Move[0] == 1 && tf.HasFlagSig(Constants.TraverseForward))
+                        if (cmd.Move[0] == 1 && tf.HasFlagSig(TraverseForward))
                         {
                             // If player presses up, then push
                             ent.DirFlag = ENT_MOVE.MoveForward;
                             ssAnim.AnimFlags = AnimControlFlags.NormalControl;
                             ssAnim.NextState = TR_STATE.LaraPushablePush;
                         }
-                        else if (cmd.Move[0] == -1 && tf.HasFlagSig(Constants.TraverseBackward))
+                        else if (cmd.Move[0] == -1 && tf.HasFlagSig(TraverseBackward))
                         {
                             // If player presses down, then pull
                             ent.DirFlag = ENT_MOVE.MoveBackward;
@@ -2093,7 +2094,7 @@ namespace FreeRaider
                     ent.CamFollowCenter = 64;
                     i = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count;
 
-                    if (!cmd.Action || !(Constants.TraverseForward & ent.CheckTraverse(ent.TraversedObject)).ToBool())
+                    if (!cmd.Action || !(TraverseForward & ent.CheckTraverse(ent.TraversedObject)).ToBool())
                     {
                         ssAnim.NextState = TR_STATE.LaraStop;
                     }
@@ -2187,7 +2188,7 @@ namespace FreeRaider
                     ent.CamFollowCenter = 64;
                     i = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation].Frames.Count;
 
-                    if (!cmd.Action || !(Constants.TraverseBackward & ent.CheckTraverse(ent.TraversedObject)).ToBool())
+                    if (!cmd.Action || !(TraverseBackward & ent.CheckTraverse(ent.TraversedObject)).ToBool())
                     {
                         ssAnim.NextState = TR_STATE.LaraStop;
                     }
@@ -2305,9 +2306,9 @@ namespace FreeRaider
                     cmd.Rotation.X = 0.0f;
                     if (cmd.Action && ent.MoveType != MoveType.WallsClimb && ent.MoveType != MoveType.Climbing)
                     {
-                        t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
+                        t = LARA_TRY_HANG_WALL_OFFSET + LARA_HANG_WALL_DISTANCE;
                         globalOffset = ent.Transform.Basis.Column1 * t;
-                        globalOffset.Z += ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_EPSILON +
+                        globalOffset.Z += ent.Bf.BBMax.Z + LARA_HANG_VERTICAL_EPSILON +
                                           Global.EngineFrameTime * ent.Speed.Z;
                         climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
                         if (climb.EdgeHit)
@@ -2318,9 +2319,9 @@ namespace FreeRaider
                             ent.MoveType = MoveType.Climbing; // hang on
                             ent.Speed = Vector3.Zero;
 
-                            pos.X = climb.Point.X - Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.X;
-                            pos.Y = climb.Point.Y - Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.Y;
-                            pos.Z = climb.Point.Z - ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_OFFSET;
+                            pos.X = climb.Point.X - LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.X;
+                            pos.Y = climb.Point.Y - LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.Y;
+                            pos.Z = climb.Point.Z - ent.Bf.BBMax.Z + LARA_HANG_VERTICAL_OFFSET;
                         }
                         else
                         {
@@ -2329,8 +2330,8 @@ namespace FreeRaider
                             {
                                 // Fix the position to the TR metering step.
                                 ent.Transform.Origin.Z =
-                                    (float) Math.Floor(ent.Transform.Origin.Z / Constants.TR_METERING_STEP) *
-                                    Constants.TR_METERING_STEP;
+                                    (float) Math.Floor(ent.Transform.Origin.Z / TR_METERING_STEP) *
+                                    TR_METERING_STEP;
                                 ent.MoveType = MoveType.WallsClimb;
                                 ent.SetAnimation(TR_ANIMATION.LaraHangIdle, -1);
                                 break;
@@ -2383,7 +2384,7 @@ namespace FreeRaider
                     }
                     else
                     {
-                        if (ent.Speed.Z < -Constants.FREE_FALL_SPEED_2) // Next free fall stage
+                        if (ent.Speed.Z < -FREE_FALL_SPEED_2) // Next free fall stage
                         {
                             ent.MoveType = MoveType.FreeFalling;
                             ssAnim.NextState = TR_STATE.LaraFreefall;
@@ -2404,9 +2405,9 @@ namespace FreeRaider
 
                     if (cmd.Action && ent.MoveType == MoveType.FreeFalling)
                     {
-                        t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
+                        t = LARA_TRY_HANG_WALL_OFFSET + LARA_HANG_WALL_DISTANCE;
                         globalOffset = ent.Transform.Basis.Column1 * t;
-                        globalOffset.Z += ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_EPSILON +
+                        globalOffset.Z += ent.Bf.BBMax.Z + LARA_HANG_VERTICAL_EPSILON +
                                           Global.EngineFrameTime * ent.Speed.Z;
                         climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
                         if (climb.EdgeHit && climb.CanHang)
@@ -2441,7 +2442,7 @@ namespace FreeRaider
                         break;
                     }
 
-                    if (ent.Speed.Z < -Constants.FREE_FALL_SPEED_2)
+                    if (ent.Speed.Z < -FREE_FALL_SPEED_2)
                     {
                         ent.MoveType = MoveType.FreeFalling;
                         ssAnim.NextState = TR_STATE.LaraFreefall;
@@ -2522,9 +2523,9 @@ namespace FreeRaider
 
                     if (!resp.Killed && cmd.Action)
                     {
-                        t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
+                        t = LARA_TRY_HANG_WALL_OFFSET + LARA_HANG_WALL_DISTANCE;
                         globalOffset = ent.Transform.Basis.Column1 * t;
-                        globalOffset.Z += ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_EPSILON;
+                        globalOffset.Z += ent.Bf.BBMax.Z + LARA_HANG_VERTICAL_EPSILON;
                         climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
                         if (climb.CanHang)
                         {
@@ -2546,15 +2547,15 @@ namespace FreeRaider
                         if (cmd.Move[0] == 1)
                         {
                             if (climb.EdgeHit && climb.NextZSpace >= 512.0f &&
-                                (climb.NextZSpace < ent.Height - Constants.LARA_HANG_VERTICAL_EPSILON || cmd.Crouch))
+                                (climb.NextZSpace < ent.Height - LARA_HANG_VERTICAL_EPSILON || cmd.Crouch))
                             {
                                 climb.Point = climb.EdgePoint;
                                 ssAnim.NextState = TR_STATE.LaraClimbToCrawl; // Crawlspace climb
                             }
                             else if (climb.EdgeHit &&
-                                     climb.NextZSpace >= ent.Height - Constants.LARA_HANG_VERTICAL_EPSILON)
+                                     climb.NextZSpace >= ent.Height - LARA_HANG_VERTICAL_EPSILON)
                             {
-                                Sys.DebugLog(Constants.LOG_FILENAME, "Zspace = {0}", climb.NextZSpace);
+                                Sys.DebugLog(LOG_FILENAME, "Zspace = {0}", climb.NextZSpace);
                                 climb.Point = climb.EdgePoint;
                                 ssAnim.NextState = cmd.Shift ? TR_STATE.LaraHandstand : TR_STATE.LaraClimbing;
                                 // climb up
@@ -2562,10 +2563,10 @@ namespace FreeRaider
                             else
                             {
                                 pos.X = climb.Point.X -
-                                        Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.X;
+                                        LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.X;
                                 pos.Y = climb.Point.Y -
-                                        Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.Y;
-                                pos.Z = climb.Point.Z - ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_OFFSET;
+                                        LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.Y;
+                                pos.Z = climb.Point.Z - ent.Bf.BBMax.Z + LARA_HANG_VERTICAL_OFFSET;
                                 ent.Speed = Vector3.Zero;
                                 ssAnim.AnimFlags = AnimControlFlags.LoopLastFrame; // Disable shake
                             }
@@ -2581,7 +2582,7 @@ namespace FreeRaider
                         }
                         else if (cmd.Move[1] == -1)
                         {
-                            move = ent.Transform.Basis.Column0 * -Constants.PENETRATION_TEST_OFFSET;
+                            move = ent.Transform.Basis.Column0 * -PENETRATION_TEST_OFFSET;
                             if (ent.CheckNextPenetration(move) == 0 || ent.Response.HorizontalCollide == 0x00)
                                 // We only want Lara to shimmy when last frame is reached!
                             {
@@ -2595,7 +2596,7 @@ namespace FreeRaider
                         }
                         else if (cmd.Move[1] == 1)
                         {
-                            move = ent.Transform.Basis.Column0 * Constants.PENETRATION_TEST_OFFSET;
+                            move = ent.Transform.Basis.Column0 * PENETRATION_TEST_OFFSET;
                             if (ent.CheckNextPenetration(move) == 0 || ent.Response.HorizontalCollide == 0x00)
                                 // We only want Lara to shimmy when last frame is reached!
                             {
@@ -2610,9 +2611,9 @@ namespace FreeRaider
                         else
                         {
                             ssAnim.AnimFlags = AnimControlFlags.LoopLastFrame; // Disable shake
-                            pos.X = climb.Point.X - Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.X;
-                            pos.Y = climb.Point.Y - Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.Y;
-                            pos.Z = climb.Point.Z - ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_OFFSET;
+                            pos.X = climb.Point.X - LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.X;
+                            pos.Y = climb.Point.Y - LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.Y;
+                            pos.Z = climb.Point.Z - ent.Bf.BBMax.Z + LARA_HANG_VERTICAL_OFFSET;
                             ent.Speed = Vector3.Zero;
                         }
                     }
@@ -2650,9 +2651,9 @@ namespace FreeRaider
                     }
                     else if (cmd.Move[0] == 1)
                     {
-                        t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
+                        t = LARA_TRY_HANG_WALL_OFFSET + LARA_HANG_WALL_DISTANCE;
                         globalOffset = ent.Transform.Basis.Column1 * t;
-                        globalOffset.Z += ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_EPSILON;
+                        globalOffset.Z += ent.Bf.BBMax.Z + LARA_HANG_VERTICAL_EPSILON;
                         climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
                         if (climb.EdgeHit && climb.NextZSpace >= 512.0f)
                         {
@@ -2709,9 +2710,9 @@ namespace FreeRaider
 
                     if (cmd.Action && ent.Climb.WallHit != ClimbType.None)
                     {
-                        t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
+                        t = LARA_TRY_HANG_WALL_OFFSET + LARA_HANG_WALL_DISTANCE;
                         globalOffset = ent.Transform.Basis.Column1 * t;
-                        globalOffset.Z += ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_EPSILON;
+                        globalOffset.Z += ent.Bf.BBMax.Z + LARA_HANG_VERTICAL_EPSILON;
                         climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
                         if (climb.EdgeHit && climb.NextZSpace >= 512.0f)
                         {
@@ -2772,9 +2773,9 @@ namespace FreeRaider
                     }
                     else
                     {
-                        t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
+                        t = LARA_TRY_HANG_WALL_OFFSET + LARA_HANG_WALL_DISTANCE;
                         globalOffset = ent.Transform.Basis.Column1 * t;
-                        globalOffset.Z += Constants.LARA_HANG_SENSOR_Z + Constants.LARA_HANG_VERTICAL_EPSILON;
+                        globalOffset.Z += LARA_HANG_SENSOR_Z + LARA_HANG_VERTICAL_EPSILON;
                         climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
                         if (climb.EdgeHit)
                         {
@@ -2782,9 +2783,9 @@ namespace FreeRaider
                             ent.Angles.Z = climb.EdgeZAngle;
                             ent.UpdateTransform();
                             ent.MoveType = MoveType.Climbing; // hang on
-                            pos.X = climb.Point.X - Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.X;
-                            pos.Y = climb.Point.Y - Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.Y;
-                            pos.Z = climb.Point.Z - ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_OFFSET;
+                            pos.X = climb.Point.X - LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.X;
+                            pos.Y = climb.Point.Y - LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.Y;
+                            pos.Z = climb.Point.Z - ent.Bf.BBMax.Z + LARA_HANG_VERTICAL_OFFSET;
                             ent.Speed = Vector3.Zero;
                         }
                         else
@@ -2797,7 +2798,7 @@ namespace FreeRaider
 
                     if (cmd.Move[1] == -1)
                     {
-                        move = ent.Transform.Basis.Column0 * -Constants.PENETRATION_TEST_OFFSET;
+                        move = ent.Transform.Basis.Column0 * -PENETRATION_TEST_OFFSET;
                         if (ent.CheckNextPenetration(move) > 0 && ent.Response.HorizontalCollide != 0x00)
                         {
                             ssAnim.NextState = TR_STATE.LaraHang;
@@ -2831,9 +2832,9 @@ namespace FreeRaider
                     }
                     else
                     {
-                        t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
+                        t = LARA_TRY_HANG_WALL_OFFSET + LARA_HANG_WALL_DISTANCE;
                         globalOffset = ent.Transform.Basis.Column1 * t;
-                        globalOffset.Z += Constants.LARA_HANG_SENSOR_Z + Constants.LARA_HANG_VERTICAL_EPSILON;
+                        globalOffset.Z += LARA_HANG_SENSOR_Z + LARA_HANG_VERTICAL_EPSILON;
                         climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
                         if (climb.EdgeHit)
                         {
@@ -2841,9 +2842,9 @@ namespace FreeRaider
                             ent.Angles.Z = climb.EdgeZAngle;
                             ent.UpdateTransform();
                             ent.MoveType = MoveType.Climbing; // hang on
-                            pos.X = climb.Point.X - Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.X;
-                            pos.Y = climb.Point.Y - Constants.LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.Y;
-                            pos.Z = climb.Point.Z - ent.Bf.BBMax.Z + Constants.LARA_HANG_VERTICAL_OFFSET;
+                            pos.X = climb.Point.X - LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.X;
+                            pos.Y = climb.Point.Y - LARA_HANG_WALL_DISTANCE * ent.Transform.Basis.Column1.Y;
+                            pos.Z = climb.Point.Z - ent.Bf.BBMax.Z + LARA_HANG_VERTICAL_OFFSET;
                             ent.Speed = Vector3.Zero;
                         }
                         else
@@ -2856,7 +2857,7 @@ namespace FreeRaider
 
                     if (cmd.Move[1] == 1)
                     {
-                        move = ent.Transform.Basis.Column0 * Constants.PENETRATION_TEST_OFFSET;
+                        move = ent.Transform.Basis.Column0 * PENETRATION_TEST_OFFSET;
                         if (ent.CheckNextPenetration(move) > 0 && ent.Response.HorizontalCollide != 0x00)
                         {
                             ssAnim.NextState = TR_STATE.LaraHang;
@@ -2906,7 +2907,7 @@ namespace FreeRaider
                         ent.DirFlag = ENT_MOVE.MoveBackward;
                         ent.UpdateCurrentSpeed(true);
                     }
-                    else if (ent.Speed.Z <= -Constants.FREE_FALL_SPEED_2)
+                    else if (ent.Speed.Z <= -FREE_FALL_SPEED_2)
                     {
                         ssAnim.NextState = TR_STATE.LaraFreefall; // free falling
                     }
@@ -2938,13 +2939,13 @@ namespace FreeRaider
                     ent.Bt.NoFixBodyParts = BODY_PART.Hands | BODY_PART.Legs;
                     ent.Lean(cmd, 1.0f);
 
-                    if (((float) (int) ent.Speed.Z).IsBetween(-Constants.FREE_FALL_SPEED_CRITICAL - 100,
-                        -Constants.FREE_FALL_SPEED_CRITICAL))
+                    if (((float) (int) ent.Speed.Z).IsBetween(-FREE_FALL_SPEED_CRITICAL - 100,
+                        -FREE_FALL_SPEED_CRITICAL))
                     {
-                        ent.Speed.Z = -Constants.FREE_FALL_SPEED_CRITICAL - 101;
+                        ent.Speed.Z = -FREE_FALL_SPEED_CRITICAL - 101;
                         Audio.Send((uint) TR_AUDIO_SOUND.LaraScream, TR_AUDIO_EMITTER.Entity, (int) ent.ID); // Scream
                     }
-                    else if (ent.Speed.Z <= -Constants.FREE_FALL_SPEED_MAXSAFE)
+                    else if (ent.Speed.Z <= -FREE_FALL_SPEED_MAXSAFE)
                     {
                         // Reset these to zero so Lara is only falling downwards
                         ent.Speed.X = 0.0f;
@@ -2973,11 +2974,11 @@ namespace FreeRaider
                             ent.SetAnimation(TR_ANIMATION.LaraStayIdle, 0);
                             Audio.Kill((int) TR_AUDIO_SOUND.LaraScream, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
                         }
-                        else if (ent.Speed.Z <= -Constants.FREE_FALL_SPEED_MAXSAFE)
+                        else if (ent.Speed.Z <= -FREE_FALL_SPEED_MAXSAFE)
                         {
                             if (
                                 ent.ChangeParam(CharParameters.Health,
-                                    (ent.Speed.Z + Constants.FREE_FALL_SPEED_MAXSAFE) / 2) == 0)
+                                    (ent.Speed.Z + FREE_FALL_SPEED_MAXSAFE) / 2) == 0)
                             {
                                 resp.Killed = true;
                                 ent.SetAnimation(TR_ANIMATION.LaraLandingDeath, 0);
@@ -2988,7 +2989,7 @@ namespace FreeRaider
                                 ent.SetAnimation(TR_ANIMATION.LaraLandingHard, 0);
                             }
                         }
-                        else if (ent.Speed.Z <= -Constants.FREE_FALL_SPEED_2)
+                        else if (ent.Speed.Z <= -FREE_FALL_SPEED_2)
                         {
                             ent.SetAnimation(TR_ANIMATION.LaraLandingHard, 0);
                         }
@@ -3087,7 +3088,7 @@ namespace FreeRaider
                 case TR_STATE.LaraWaterDeath:
                     if (ent.MoveType != MoveType.OnWater)
                     {
-                        pos.Z = (Constants.TR_METERING_SECTORSIZE / 4) * Global.EngineFrameTime; // go to the air
+                        pos.Z = (TR_METERING_SECTORSIZE / 4) * Global.EngineFrameTime; // go to the air
                     }
                     break;
                 case TR_STATE.LaraUnderwaterForward:
@@ -3213,9 +3214,9 @@ namespace FreeRaider
                         {
                             if (ent.MoveType != MoveType.Climbing)
                             {
-                                t = Constants.LARA_TRY_HANG_WALL_OFFSET + Constants.LARA_HANG_WALL_DISTANCE;
+                                t = LARA_TRY_HANG_WALL_OFFSET + LARA_HANG_WALL_DISTANCE;
                                 globalOffset = ent.Transform.Basis.Column1 * t;
-                                globalOffset[2] += Constants.LARA_HANG_VERTICAL_EPSILON;
+                                globalOffset[2] += LARA_HANG_VERTICAL_EPSILON;
                                 climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
                                 if (climb.EdgeHit)
                                 {
@@ -3224,12 +3225,12 @@ namespace FreeRaider
                                 else
                                 {
                                     lowVerticalSpace = false;
-                                    globalOffset.Z += ent.MaxStepUpHeight + Constants.LARA_HANG_VERTICAL_EPSILON;
+                                    globalOffset.Z += ent.MaxStepUpHeight + LARA_HANG_VERTICAL_EPSILON;
                                     climb = ent.CheckClimbability(globalOffset, nextFc, 0.0f);
                                 }
 
                                 if (climb.EdgeHit &&
-                                    climb.NextZSpace >= ent.Height - Constants.LARA_HANG_VERTICAL_EPSILON)
+                                    climb.NextZSpace >= ent.Height - LARA_HANG_VERTICAL_EPSILON)
                                 {
                                     ent.DirFlag = ENT_MOVE.Stay;
                                     ent.MoveType = MoveType.Climbing;
@@ -3400,7 +3401,7 @@ namespace FreeRaider
                         ent.SetAnimation(TR_ANIMATION.LaraFreeFallForward, 0);
                     }
 
-                    move = ent.Transform.Basis.Column1 * Constants.PENETRATION_TEST_OFFSET;
+                    move = ent.Transform.Basis.Column1 * PENETRATION_TEST_OFFSET;
                     if (ent.CheckNextPenetration(move) > 0 && resp.HorizontalCollide != 0x00) // Smash into wall
                     {
                         ssAnim.NextState = TR_STATE.LaraStop;
@@ -3426,10 +3427,10 @@ namespace FreeRaider
                     }
                     else if (cmd.Move[0] == 1)
                     {
-                        move = ent.Transform.Basis.Column1 * Constants.PENETRATION_TEST_OFFSET;
+                        move = ent.Transform.Basis.Column1 * PENETRATION_TEST_OFFSET;
                         if (ent.CheckNextPenetration(move) == 0 || resp.HorizontalCollide == 0x00)
                         {
-                            globalOffset = ent.Transform.Basis.Column1 * Constants.CRAWL_FORWARD_OFFSET;
+                            globalOffset = ent.Transform.Basis.Column1 * CRAWL_FORWARD_OFFSET;
                             globalOffset.Z += 0.5f * (ent.Bf.BBMax.Z + ent.Bf.BBMin.Z);
                             globalOffset += pos;
                             Character.GetHeightInfo(globalOffset, nextFc);
@@ -3442,10 +3443,10 @@ namespace FreeRaider
                     }
                     else if (cmd.Move[0] == -1)
                     {
-                        move = ent.Transform.Basis.Column1 * -Constants.PENETRATION_TEST_OFFSET;
+                        move = ent.Transform.Basis.Column1 * -PENETRATION_TEST_OFFSET;
                         if (ent.CheckNextPenetration(move) == 0 || resp.HorizontalCollide == 0x00)
                         {
-                            globalOffset = ent.Transform.Basis.Column1 * -Constants.CRAWL_FORWARD_OFFSET;
+                            globalOffset = ent.Transform.Basis.Column1 * -CRAWL_FORWARD_OFFSET;
                             globalOffset.Z += 0.5f * (ent.Bf.BBMax.Z + ent.Bf.BBMin.Z);
                             globalOffset += pos;
                             Character.GetHeightInfo(globalOffset, nextFc);
@@ -3461,7 +3462,7 @@ namespace FreeRaider
                                 var temp = pos; // save entity position
                                 pos.X = nextFc.FloorPoint.X;
                                 pos.Y = nextFc.FloorPoint.Y;
-                                globalOffset = ent.Transform.Basis.Column1 * 0.5f * Constants.CRAWL_FORWARD_OFFSET;
+                                globalOffset = ent.Transform.Basis.Column1 * 0.5f * CRAWL_FORWARD_OFFSET;
                                 globalOffset.Z += 128.0f;
                                 currFc.FloorHit = nextFc.FloorHit;
                                 currFc.FloorPoint = nextFc.FloorPoint;
@@ -3498,14 +3499,14 @@ namespace FreeRaider
                     ent.DirFlag = ENT_MOVE.MoveForward;
                     ent.Bt.NoFixBodyParts = BODY_PART.Hands2 | BODY_PART.Hands3 | BODY_PART.Legs3;
                     cmd.Rotation.X *= 0.5f;
-                    move = ent.Transform.Basis.Column1 * Constants.PENETRATION_TEST_OFFSET;
+                    move = ent.Transform.Basis.Column1 * PENETRATION_TEST_OFFSET;
                     if (ent.CheckNextPenetration(move) > 0 && resp.HorizontalCollide != 0x00)
                     {
                         ent.DirFlag = ENT_MOVE.Stay;
                         ent.SetAnimation(TR_ANIMATION.LaraCrawlIdle, 0);
                         break;
                     }
-                    globalOffset = ent.Transform.Basis.Column1 * Constants.CRAWL_FORWARD_OFFSET;
+                    globalOffset = ent.Transform.Basis.Column1 * CRAWL_FORWARD_OFFSET;
                     globalOffset.Z += 0.5f * (ent.Bf.BBMax.Z + ent.Bf.BBMin.Z);
                     globalOffset += pos;
                     Character.GetHeightInfo(globalOffset, nextFc);
@@ -3524,14 +3525,14 @@ namespace FreeRaider
                     ent.DirFlag = ENT_MOVE.MoveForward; // TODO: Absurd? No, Core Design.
                     ent.Bt.NoFixBodyParts = BODY_PART.Hands2 | BODY_PART.Hands3 | BODY_PART.Legs3;
                     cmd.Rotation.X *= 0.5f;
-                    move = ent.Transform.Basis.Column1 * -Constants.PENETRATION_TEST_OFFSET;
+                    move = ent.Transform.Basis.Column1 * -PENETRATION_TEST_OFFSET;
                     if (ent.CheckNextPenetration(move) > 0 && resp.HorizontalCollide != 0x00)
                     {
                         ent.DirFlag = ENT_MOVE.Stay;
                         ent.SetAnimation(TR_ANIMATION.LaraCrawlIdle, 0);
                         break;
                     }
-                    globalOffset = ent.Transform.Basis.Column1 * -Constants.CRAWL_FORWARD_OFFSET;
+                    globalOffset = ent.Transform.Basis.Column1 * -CRAWL_FORWARD_OFFSET;
                     globalOffset.Z += 0.5f * (ent.Bf.BBMax.Z + ent.Bf.BBMin.Z);
                     globalOffset += pos;
                     Character.GetHeightInfo(globalOffset, nextFc);

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using OpenTK;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -80,11 +82,11 @@ namespace FreeRaider
                 {
                     var dist1 = currentPlane.Distance(currentVertex.Position);
                     // the split point in the plane
-                    if(Math.Abs(dist0) < Constants.SPLIT_EPSILON)
+                    if(Math.Abs(dist0) < SPLIT_EPSILON)
                     {
-                        if(prevPlane.Distance(prevVertex.Position) > -Constants.SPLIT_EPSILON
-                            && nextPlane.Distance(prevVertex.Position) > -Constants.SPLIT_EPSILON
-                            && Normal.Distance(prevVertex.Position) > -Constants.SPLIT_EPSILON)
+                        if(prevPlane.Distance(prevVertex.Position) > -SPLIT_EPSILON
+                            && nextPlane.Distance(prevVertex.Position) > -SPLIT_EPSILON
+                            && Normal.Distance(prevVertex.Position) > -SPLIT_EPSILON)
                         {
                             // Frustum-vertex intersection test is passed
                             return true;
@@ -92,13 +94,13 @@ namespace FreeRaider
                     }
 
                     // vertices from different sides of the plane (or on it)
-                    if(dist0 * dist1 < 0 && Math.Abs(dist1) >= Constants.SPLIT_EPSILON)
+                    if(dist0 * dist1 < 0 && Math.Abs(dist1) >= SPLIT_EPSILON)
                     {
                         // vector connecting vertices
                         dir = currentVertex.Position - prevVertex.Position;
                         // We are looking for the point of intersection
                         var T = currentPlane.RayIntersect(prevVertex.Position, dir);
-                        if(prevPlane.Distance(T) > -Constants.SPLIT_EPSILON && nextPlane.Distance(T) > -Constants.SPLIT_EPSILON)
+                        if(prevPlane.Distance(T) > -SPLIT_EPSILON && nextPlane.Distance(T) > -SPLIT_EPSILON)
                         {
                             // Frustum-ray intersection test is passed
                             return true;
@@ -106,7 +108,7 @@ namespace FreeRaider
                     }
 
                     // point is outside
-                    if(dist1 < -Constants.SPLIT_EPSILON)
+                    if(dist1 < -SPLIT_EPSILON)
                     {
                         ins = false;
                     }
@@ -352,7 +354,7 @@ namespace FreeRaider
             if (portal.DestRoom == null)
                 return null;
 
-            if (portal.Normal.Distance(render.Camera.Position) < Constants.SPLIT_EPSILON)
+            if (portal.Normal.Distance(render.Camera.Position) < SPLIT_EPSILON)
                 // non face or degenerate to the line portal
                 return null;
 
@@ -451,17 +453,17 @@ namespace FreeRaider
             {
                 dist[1] = splitPlane.Distance(nextVertex);
 
-                if(dist[1] > Constants.SPLIT_EPSILON)
+                if(dist[1] > SPLIT_EPSILON)
                 {
-                    if(dist[0] < -Constants.SPLIT_EPSILON)
+                    if(dist[0] < -SPLIT_EPSILON)
                     {
                         buf.Add(splitPlane.RayIntersect(currentVertex, nextVertex - currentVertex)); // Shifting
                     }
                     buf.Add(nextVertex); // Adding
                 }
-                else if(dist[1] < -Constants.SPLIT_EPSILON)
+                else if(dist[1] < -SPLIT_EPSILON)
                 {
-                    if(dist[0] > Constants.SPLIT_EPSILON)
+                    if(dist[0] > SPLIT_EPSILON)
                     {
                         buf.Add(splitPlane.RayIntersect(currentVertex, nextVertex - currentVertex));
                     }
@@ -485,7 +487,7 @@ namespace FreeRaider
             currentVertex = buf.Last();
             foreach (var nextVertex in buf)
             {
-                if(currentVertex.Distance2(nextVertex) > Constants.SPLIT_EPSILON.Square())
+                if(currentVertex.Distance2(nextVertex) > SPLIT_EPSILON.Square())
                 {
                     Vertices.Add(nextVertex);
                 }

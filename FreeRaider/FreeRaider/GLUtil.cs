@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
 using OpenTK.Graphics.OpenGL;
+using static FreeRaider.Constants;
 
 namespace FreeRaider
 {
@@ -21,7 +22,7 @@ namespace FreeRaider
                     return 0;
                 }
 
-                Sys.DebugLog(Constants.GL_LOG_FILENAME, "OpenGL Error: {0} (0x{0:X}}) in {1}:{2}", glErr, file, line);
+                Sys.DebugLog(GL_LOG_FILENAME, "OpenGL Error: {0} (0x{0:X}}) in {1}:{2}", glErr, file, line);
                 return 1;
 
                 /*switch(glErr)
@@ -64,7 +65,7 @@ namespace FreeRaider
 
             if (!(isProgram ^ isShader))
             {
-                Sys.DebugLog(Constants.GL_LOG_FILENAME, "Object {0} is neither a shader nor a program", obj);
+                Sys.DebugLog(GL_LOG_FILENAME, "Object {0} is neither a shader nor a program", obj);
                 return;
             }
 
@@ -73,8 +74,8 @@ namespace FreeRaider
             var infoLog = isProgram ? GL.GetProgramInfoLog(obj) : GL.GetShaderInfoLog(obj);
             if (!string.IsNullOrWhiteSpace(infoLog))
             {
-                Sys.DebugLog(Constants.GL_LOG_FILENAME, "GL InfoLog[{0}]:", infoLog.Length);
-                Sys.DebugLog(Constants.GL_LOG_FILENAME, infoLog);
+                Sys.DebugLog(GL_LOG_FILENAME, "GL InfoLog[{0}]:", infoLog.Length);
+                Sys.DebugLog(GL_LOG_FILENAME, infoLog);
             }
         }
 
@@ -82,13 +83,13 @@ namespace FreeRaider
         {
             var compileStatus = 0;
             GL.ShaderSource(shaderObj, source);
-            Sys.DebugLog(Constants.GL_LOG_FILENAME, "Source loaded");
+            Sys.DebugLog(GL_LOG_FILENAME, "Source loaded");
             GL.CompileShader(shaderObj);
-            Sys.DebugLog(Constants.GL_LOG_FILENAME, "Trying to compile");
+            Sys.DebugLog(GL_LOG_FILENAME, "Trying to compile");
             // check for OpenGL errors
             if(CheckOpenGLError() != 0)
             {
-                Sys.DebugLog(Constants.GL_LOG_FILENAME, "Compilation failed");
+                Sys.DebugLog(GL_LOG_FILENAME, "Compilation failed");
                 return false;
             }
             GL.GetShader(shaderObj, ShaderParameter.CompileStatus, out compileStatus);
@@ -96,12 +97,12 @@ namespace FreeRaider
 
             if (compileStatus == 0)
             {
-                Sys.DebugLog(Constants.GL_LOG_FILENAME, "Compilation failed");
+                Sys.DebugLog(GL_LOG_FILENAME, "Compilation failed");
                 return false;
             }
             else
             {
-                Sys.DebugLog(Constants.GL_LOG_FILENAME, "Compilation succeeded");
+                Sys.DebugLog(GL_LOG_FILENAME, "Compilation succeeded");
                 return true;
             }
         }
@@ -132,20 +133,20 @@ namespace FreeRaider
                 return false;
             }
 
-            Sys.DebugLog(Constants.GL_LOG_FILENAME, "Source loaded");
+            Sys.DebugLog(GL_LOG_FILENAME, "Source loaded");
             GL.CompileShader(shaderObj);
-            Sys.DebugLog(Constants.GL_LOG_FILENAME, "Trying to compile");
+            Sys.DebugLog(GL_LOG_FILENAME, "Trying to compile");
             GL.GetShader(shaderObj, ShaderParameter.CompileStatus, out compileStatus);
             PrintShaderInfoLog(shaderObj);
 
             if(compileStatus != 1)
             {
-                Sys.DebugLog(Constants.GL_LOG_FILENAME, "Compilation failed");
+                Sys.DebugLog(GL_LOG_FILENAME, "Compilation failed");
                 return false;
             }
             else
             {
-                Sys.DebugLog(Constants.GL_LOG_FILENAME, "Compilation succeeded");
+                Sys.DebugLog(GL_LOG_FILENAME, "Compilation succeeded");
                 return true;
             }
         }

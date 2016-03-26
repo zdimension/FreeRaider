@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using OpenTK;
+using static FreeRaider.Global;
+using static FreeRaider.Strings;
 
 namespace FreeRaider
 {
@@ -142,7 +144,7 @@ namespace FreeRaider
 
         private int getItemsTypeCount(MenuItemType type)
         {
-            return inventory.Count(i => Global.EngineWorld.GetBaseItemByID(i.ID)?.Type == type);
+            return inventory.Count(i => EngineWorld.GetBaseItemByID(i.ID)?.Type == type);
         }
 
         private void restoreItemAngle(float time)
@@ -245,20 +247,20 @@ namespace FreeRaider
             switch (itemsType)
             {
                 case MenuItemType.System:
-                    stringIndex = Strings.STR_GEN_OPTIONS_TITLE;
+                    stringIndex = STR_GEN_OPTIONS_TITLE;
                     break;
 
                 case MenuItemType.Quest:
-                    stringIndex = Strings.STR_GEN_ITEMS;
+                    stringIndex = STR_GEN_ITEMS;
                     break;
 
                 case MenuItemType.Supply:
                 default:
-                    stringIndex = Strings.STR_GEN_INVENTORY;
+                    stringIndex = STR_GEN_INVENTORY;
                     break;
             }
 
-            LabelTitle.Text = Global.EngineLua.GetString(stringIndex);
+            LabelTitle.Text = EngineLua.GetString(stringIndex);
         }
 
         public void Frame(float time);
@@ -270,7 +272,7 @@ namespace FreeRaider
                 var num = 0;
                 foreach (var i in inventory)
                 {
-                    var bi = Global.EngineWorld.GetBaseItemByID(i.ID);
+                    var bi = EngineWorld.GetBaseItemByID(i.ID);
                     if(bi == null || bi.Type != ItemsType)
                     {
                         continue;
@@ -294,7 +296,7 @@ namespace FreeRaider
 
                             if(i.Count > 1)
                             {
-                                var counter = Global.EngineLua.GetString(Strings.STR_GEN_MASK_INVHEADER);
+                                var counter = EngineLua.GetString(STR_GEN_MASK_INVHEADER);
                                 LabelItemName.Text = Helper.Format(counter, bi.Name, i.Count);
                             }
                         }

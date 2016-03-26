@@ -8,6 +8,8 @@ using FreeRaider.Loader;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -319,19 +321,19 @@ namespace FreeRaider
 
             if(render.drawBoxes)
             {
-                Global.DebugDrawer.SetColor(0.0f, 0.0f, 1.0f);
-                Global.DebugDrawer.DrawOBB(entity.OBB);
+                DebugDrawer.SetColor(0.0f, 0.0f, 1.0f);
+                DebugDrawer.DrawOBB(entity.OBB);
             }
 
             if(render.drawAxis)
             {
                 // If this happens, the lines after this will get drawn with random colors. I don't care.
-                Global.DebugDrawer.DrawAxis(1000.0f, entity.Transform);
+                DebugDrawer.DrawAxis(1000.0f, entity.Transform);
             }
 
             if(entity.Bf.Animations.Model != null && entity.Bf.Animations.Model.Animations.Any())
             {
-                Global.DebugDrawer.DrawSkeletalModelDebugLines(entity.Bf, entity.Transform, render);
+                DebugDrawer.DrawSkeletalModelDebugLines(entity.Bf, entity.Transform, render);
             }
 
             entity.WasRenderedLines = true;
@@ -339,10 +341,10 @@ namespace FreeRaider
 
         public void DrawSectorDebugLines(RoomSector rs)
         {
-            var bbMin = new Vector3(rs.Position.X - Constants.TR_METERING_SECTORSIZE / 2.0f,
-                rs.Position.Y - Constants.TR_METERING_SECTORSIZE / 2.0f, rs.Floor);
-            var bbMax = new Vector3(rs.Position.X + Constants.TR_METERING_SECTORSIZE / 2.0f,
-               rs.Position.Y + Constants.TR_METERING_SECTORSIZE / 2.0f, rs.Ceiling);
+            var bbMin = new Vector3(rs.Position.X - TR_METERING_SECTORSIZE / 2.0f,
+                rs.Position.Y - TR_METERING_SECTORSIZE / 2.0f, rs.Floor);
+            var bbMax = new Vector3(rs.Position.X + TR_METERING_SECTORSIZE / 2.0f,
+               rs.Position.Y + TR_METERING_SECTORSIZE / 2.0f, rs.Ceiling);
 
             DrawBBox(bbMin, bbMax, null);
         }
@@ -351,31 +353,31 @@ namespace FreeRaider
         {
             if(render.drawRoomBoxes)
             {
-                Global.DebugDrawer.SetColor(0.0f, 0.1f, 0.9f);
-                Global.DebugDrawer.DrawBBox(room.BBMin, room.BBMax, null);
+                DebugDrawer.SetColor(0.0f, 0.1f, 0.9f);
+                DebugDrawer.DrawBBox(room.BBMin, room.BBMax, null);
             }
 
             if(render.drawPortals)
             {
-                Global.DebugDrawer.SetColor(0.0f, 0.0f, 0.0f);
+                DebugDrawer.SetColor(0.0f, 0.0f, 0.0f);
                 foreach (var p in room.Portals)
                 {
-                    Global.DebugDrawer.DrawPortal(p);
+                    DebugDrawer.DrawPortal(p);
                 }
             }
 
             if(render.drawFrustums)
             {
-                Global.DebugDrawer.SetColor(1.0f, 0.0f, 0.0f);
+                DebugDrawer.SetColor(1.0f, 0.0f, 0.0f);
                 foreach (var frus in room.Frustum)
                 {
-                    Global.DebugDrawer.DrawFrustum(frus);
+                    DebugDrawer.DrawFrustum(frus);
                 }
             }
 
             if(!render.skipRoom && room.Mesh != null)
             {
-                Global.DebugDrawer.DrawMeshDebugLines(room.Mesh, room.Transform, new List<Vector3>(), new List<Vector3>(), render);
+                DebugDrawer.DrawMeshDebugLines(room.Mesh, room.Transform, new List<Vector3>(), new List<Vector3>(), render);
             }
 
             foreach (var sm in room.StaticMesh)
@@ -387,16 +389,16 @@ namespace FreeRaider
 
                 if(render.drawBoxes)
                 {
-                    Global.DebugDrawer.SetColor(0.0f, 1.0f, 0.1f);
-                    Global.DebugDrawer.DrawOBB(sm.OBB);
+                    DebugDrawer.SetColor(0.0f, 1.0f, 0.1f);
+                    DebugDrawer.DrawOBB(sm.OBB);
                 }
 
                 if(render.drawAxis)
                 {
-                    Global.DebugDrawer.DrawAxis(1000.0f, sm.Transform);
+                    DebugDrawer.DrawAxis(1000.0f, sm.Transform);
                 }
 
-                Global.DebugDrawer.DrawMeshDebugLines(sm.Mesh, sm.Transform, new List<Vector3>(), new List<Vector3>(), render);
+                DebugDrawer.DrawMeshDebugLines(sm.Mesh, sm.Transform, new List<Vector3>(), new List<Vector3>(), render);
 
                 sm.WasRenderedLines = 1;
             }
@@ -411,7 +413,7 @@ namespace FreeRaider
                         {
                             if(ent.OBB.IsVisibleInRoom(room, cam))
                             {
-                                Global.DebugDrawer.DrawEntityDebugLines(ent, render);
+                                DebugDrawer.DrawEntityDebugLines(ent, render);
                             }
                             ent.WasRenderedLines = true;
                         }
@@ -531,7 +533,7 @@ namespace FreeRaider
             }
 
             CleanList(); // clear old render list
-            Global.DebugDrawer = new RenderDebugDrawer();
+            DebugDrawer = new RenderDebugDrawer();
 
             // find room that contains camera
             var currRoom = Room.FindPosCogerrence(Camera.Position, Camera.CurrentRoom);
@@ -553,7 +555,7 @@ namespace FreeRaider
                     }
                 }
             }
-            else if(Global.ControlStates.NoClip) // camera is out of all rooms AND noclip is on
+            else if(ControlStates.NoClip) // camera is out of all rooms AND noclip is on
             {
                 foreach (var r in World.Rooms)
                 {
@@ -597,11 +599,11 @@ namespace FreeRaider
             }
 
             // Now, render transparency polygons
-            Global.RenderDynamicBsp = new DynamicBSP();
+            RenderDynamicBsp = new DynamicBSP();
             // First generate BSP from base room mesh - it has good for start splitter polygons
             foreach (var room in renderList.Where(room => room.Mesh != null && room.Mesh.TransparencyPolygons.Any()))
             {
-                Global.RenderDynamicBsp.AddNewPolygonList(room.Mesh.TransparentPolygons, room.Transform,
+                RenderDynamicBsp.AddNewPolygonList(room.Mesh.TransparentPolygons, room.Transform,
                     Camera.Frustum, Camera);
             }
 
@@ -612,7 +614,7 @@ namespace FreeRaider
                 {
                     if(sm.Mesh.TransparentPolygons.Any() && sm.OBB.IsVisibleInRoom(room, Camera))
                     {
-                        Global.RenderDynamicBsp.AddNewPolygonList(sm.Mesh.TransparentPolygons, sm.Transform, Camera.Frustum, Camera);
+                        RenderDynamicBsp.AddNewPolygonList(sm.Mesh.TransparentPolygons, sm.Transform, Camera.Frustum, Camera);
                     }
                 }
 
@@ -622,7 +624,7 @@ namespace FreeRaider
                     if(cont.ObjectType == OBJECT_TYPE.Entity)
                     {
                         var ent = (Entity) cont.Object;
-                        if (ent.Bf.Animations.Model.TransparencyFlags == Constants.MESH_HAS_TRANSPARENCY && ent.Visible &&
+                        if (ent.Bf.Animations.Model.TransparencyFlags == MESH_HAS_TRANSPARENCY && ent.Visible &&
                             ent.OBB.IsVisibleInRoom(room, Camera))
                         {
                             foreach (var bt in ent.Bf.BoneTags)
@@ -630,7 +632,7 @@ namespace FreeRaider
                                 if (bt.MeshBase.TransparencyPolygons.Any())
                                 {
                                     var tr = ent.Transform * bt.FullTransform;
-                                    Global.RenderDynamicBsp.AddNewPolygonList(
+                                    RenderDynamicBsp.AddNewPolygonList(
                                         bt.MeshBase.TransparentPolygons, tr, Camera.Frustum, Camera);
                                 }
                             }
@@ -639,21 +641,21 @@ namespace FreeRaider
                 }
             }
 
-            if(Global.EngineWorld.Character != null && Global.EngineWorld.Character.Bf.Animations.Model.TransparencyFlags == Constants.MESH_HAS_TRANSPARENCY)
+            if(EngineWorld.Character != null && EngineWorld.Character.Bf.Animations.Model.TransparencyFlags == MESH_HAS_TRANSPARENCY)
             {
-                var ent = Global.EngineWorld.Character;
+                var ent = EngineWorld.Character;
                 foreach (var bt in ent.Bf.BoneTags)
                 {
                     if (bt.MeshBase.TransparencyPolygons.Any())
                     {
                         var tr = ent.Transform * bt.FullTransform;
-                        Global.RenderDynamicBsp.AddNewPolygonList(
+                        RenderDynamicBsp.AddNewPolygonList(
                             bt.MeshBase.TransparentPolygons, tr, Camera.Frustum, Camera);
                     }
                 }
             }
 
-            if(Global.RenderDynamicBsp.Root.PolygonsFront.Any())
+            if(RenderDynamicBsp.Root.PolygonsFront.Any())
             {
                 var shader = ShaderManager.GetRoomShader(false, false);
                 GL.UseProgram(shader.Program);
@@ -662,7 +664,7 @@ namespace FreeRaider
                 GL.DepthMask(false);
                 GL.Disable(EnableCap.AlphaTest);
                 GL.Enable(EnableCap.Blend);
-                RenderBSPBackToFront(BlendingMode.Opaque, Global.RenderDynamicBsp.Root, shader);
+                RenderBSPBackToFront(BlendingMode.Opaque, RenderDynamicBsp.Root, shader);
                 GL.DepthMask(true);
                 GL.Disable(EnableCap.Blend);
             }
@@ -677,7 +679,7 @@ namespace FreeRaider
 
             if(World.Character != null)
             {
-                Global.DebugDrawer.DrawEntityDebugLines(World.Character, this);
+                DebugDrawer.DrawEntityDebugLines(World.Character, this);
             }
 
             // Render world debug information
@@ -687,30 +689,30 @@ namespace FreeRaider
                 tr.SetIdentity();
                 tr.Origin = Camera.Position + World.SkyBox.Animations[0].Frames[0].BoneTags[0].Offset;
                 tr.Rotation = World.SkyBox.Animations[0].Frames[0].BoneTags[0].QRotate;
-                Global.DebugDrawer.DrawMeshDebugLines(World.SkyBox.MeshTree[0].MeshBase, tr, new List<Vector3>(),
+                DebugDrawer.DrawMeshDebugLines(World.SkyBox.MeshTree[0].MeshBase, tr, new List<Vector3>(),
                     new List<Vector3>(), this);
             }
 
             foreach (var room in renderList)
             {
-                Global.DebugDrawer.DrawRoomDebugLines(room, this, Camera);
+                DebugDrawer.DrawRoomDebugLines(room, this, Camera);
             }
 
             if(drawColl)
             {
-                Global.BtEngineDynamicsWorld.DebugDrawWorld();
+                BtEngineDynamicsWorld.DebugDrawWorld();
             }
 
-            if(!Global.DebugDrawer.IsEmpty)
+            if(!DebugDrawer.IsEmpty)
             {
                 var shader = ShaderManager.GetDebugLineShader();
                 GL.UseProgram(shader.Program);
                 GL.Uniform1(shader.Sampler, 0);
                 GL.UniformMatrix4(shader.ModelViewProjection, false, ref Camera.GLViewProjMat);
-                GL.BindTexture(TextureTarget.Texture2D, Global.EngineWorld.Textures.Last());
+                GL.BindTexture(TextureTarget.Texture2D, EngineWorld.Textures.Last());
                 GL.PointSize(6.0f);
                 GL.LineWidth(3.0f);
-                Global.DebugDrawer.Render();
+                DebugDrawer.Render();
             }
         }
 
@@ -811,8 +813,8 @@ namespace FreeRaider
             renderList.Clear();
             renderList.Resize(listSize);
 
-            Camera = Global.EngineCamera;
-            Global.EngineCamera.CurrentRoom = null;
+            Camera = EngineCamera;
+            EngineCamera.CurrentRoom = null;
         }
 
         public void ResetWorld()
@@ -1171,7 +1173,7 @@ namespace FreeRaider
                             continue;
                         }
 
-                        var seq = Global.EngineWorld.AnimSequences[p.AnimID - 1];
+                        var seq = EngineWorld.AnimSequences[p.AnimID - 1];
 
                         var frame = (seq.CurrentFrame + p.FrameOffset) % seq.Frames.Count;
                         var tf = seq.Frames[frame];
@@ -1266,7 +1268,7 @@ namespace FreeRaider
         public void RenderBSPFrontToBack(BlendingMode currentTransparency, BSPNode root,
             UnlitTintedShaderDescription shader)
         {
-            var d = root.Plane.Distance(Global.EngineCamera.Position);
+            var d = root.Plane.Distance(EngineCamera.Position);
 
             if(d >= 0)
             {
@@ -1315,7 +1317,7 @@ namespace FreeRaider
         public void RenderBSPBackToFront(BlendingMode currentTransparency, BSPNode root,
             UnlitTintedShaderDescription shader)
         {
-            var d = root.Plane.Distance(Global.EngineCamera.Position);
+            var d = root.Plane.Distance(EngineCamera.Position);
 
             if (d >= 0)
             {
@@ -1364,7 +1366,7 @@ namespace FreeRaider
         public void RenderRoom(Room room, Matrix4 modelViewMatrix, Matrix4 modelViewProjectionMatrix, Matrix4 projection)
         {
             var needStencil = false;
-            if (Constants.STENCIL_FRUSTUM)
+            if (STENCIL_FRUSTUM)
             {
                 // start test stencil test code
                 if(room.Frustum.Any())
@@ -1375,7 +1377,7 @@ namespace FreeRaider
                     {
                         var shader = ShaderManager.GetStencilShader();
                         GL.UseProgram(shader.Program);
-                        GL.UniformMatrix4(shader.ModelViewProjection, false, ref Global.EngineCamera.GLViewProjMat);
+                        GL.UniformMatrix4(shader.ModelViewProjection, false, ref EngineCamera.GLViewProjMat);
                         GL.Enable(EnableCap.StencilTest);
                         GL.Clear(ClearBufferMask.StencilBufferBit);
                         GL.StencilFunc(StencilFunction.Never, 1, 0x00);
@@ -1427,7 +1429,7 @@ namespace FreeRaider
                 var shader = ShaderManager.GetRoomShader(room.LightMode == 1, room.Flags.HasFlagUns(1));
 
                 var tint = new float[4];
-                Global.EngineWorld.CalculateWaterTint(tint, true);
+                EngineWorld.CalculateWaterTint(tint, true);
                 GL.UseProgram(shader.Program);
 
                 GL.Uniform4(shader.TintMult, 1, tint);
@@ -1460,7 +1462,7 @@ namespace FreeRaider
                     // If this static mesh is in a water room
                     if(room.Flags.HasFlagUns(RoomFlag.Water))
                     {
-                        Global.EngineWorld.CalculateWaterTint(tint, false);
+                        EngineWorld.CalculateWaterTint(tint, false);
                     }
                     GL.Uniform4(ShaderManager.GetStaticMeshShader().TintMult, 1, tint);
                     RenderMesh(sm.Mesh);
@@ -1489,7 +1491,7 @@ namespace FreeRaider
                 }
             }
 
-            if(Constants.STENCIL_FRUSTUM)
+            if(STENCIL_FRUSTUM)
             {
                 if(needStencil)
                 {
@@ -1583,17 +1585,17 @@ namespace FreeRaider
 
             if(room.Flags.HasFlagUns(RoomFlag.Water))
             {
-                Global.EngineWorld.CalculateWaterTint(ambientComponent, false);
+                EngineWorld.CalculateWaterTint(ambientComponent, false);
             }
 
             var currentLightNumber = 0;
 
-            var positions = new float[Constants.MAX_NUM_LIGHTS * 3];
-            var colors = new float[Constants.MAX_NUM_LIGHTS * 4];
-            var innerRadiuses = new float[Constants.MAX_NUM_LIGHTS * 1];
-            var outerRadiuses = new float[Constants.MAX_NUM_LIGHTS * 1];
+            var positions = new float[MAX_NUM_LIGHTS * 3];
+            var colors = new float[MAX_NUM_LIGHTS * 4];
+            var innerRadiuses = new float[MAX_NUM_LIGHTS * 1];
+            var outerRadiuses = new float[MAX_NUM_LIGHTS * 1];
 
-            for (var i = 0; i < room.Lights.Count && currentLightNumber < Constants.MAX_NUM_LIGHTS; i++)
+            for (var i = 0; i < room.Lights.Count && currentLightNumber < MAX_NUM_LIGHTS; i++)
             {
                 var currentLight = room.Lights[i];
 
@@ -1609,7 +1611,7 @@ namespace FreeRaider
                     unsafe
                     {
                         fixed (float* ptr = colors)
-                            Global.EngineWorld.CalculateWaterTint(&ptr[currentLightNumber * 4],
+                            EngineWorld.CalculateWaterTint(&ptr[currentLightNumber * 4],
                                 false);
                     }
                 }

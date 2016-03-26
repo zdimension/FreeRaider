@@ -9,6 +9,8 @@ using FreeRaider.Loader;
 using LibSndFile;
 using OpenTK;
 using OpenTK.Audio.OpenAL;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -569,7 +571,7 @@ namespace FreeRaider
         /// <param name="buffer">Buffer</param>
         public void SetBuffer(int buffer)
         {
-            uint bufferID = Global.EngineWorld.AudioBuffers[buffer];
+            uint bufferID = EngineWorld.AudioBuffers[buffer];
 
             if(AL.IsSource(sourceIndex) && AL.IsBuffer(bufferID))
             {
@@ -669,7 +671,7 @@ namespace FreeRaider
             {
                 Audio.FXManager.LastRoomType = Audio.FXManager.CurrentRoomType;
                 Audio.FXManager.CurrentSlot = 
-                    ++Audio.FXManager.CurrentSlot > Constants.TR_AUDIO_MAX_SLOTS - 1
+                    ++Audio.FXManager.CurrentSlot > TR_AUDIO_MAX_SLOTS - 1
                     ? 0
                     : Audio.FXManager.CurrentSlot;
 
@@ -688,7 +690,7 @@ namespace FreeRaider
 
             // Assign global reverb FX to channel.
 
-            AL.Source(sourceIndex, ALSource3i.EfxAuxiliarySendFilter, (int)slot, 0, Constants.AL_FILTER_NULL);
+            AL.Source(sourceIndex, ALSource3i.EfxAuxiliarySendFilter, (int)slot, 0, AL_FILTER_NULL);
         }
 
         /// <summary>
@@ -698,8 +700,8 @@ namespace FreeRaider
         {
             // Remove any audio sends and direct filters from channel.
 
-            AL.Source(sourceIndex, ALSourcei.EfxDirectFilter, Constants.AL_FILTER_NULL);
-            AL.Source(sourceIndex, ALSource3i.EfxAuxiliarySendFilter, Constants.AL_EFFECTSLOT_NULL, 0, Constants.AL_FILTER_NULL);
+            AL.Source(sourceIndex, ALSourcei.EfxDirectFilter, AL_FILTER_NULL);
+            AL.Source(sourceIndex, ALSource3i.EfxAuxiliarySendFilter, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
         }
 
         /// <summary>
@@ -718,7 +720,7 @@ namespace FreeRaider
             }
             else
             {
-                AL.Source(sourceIndex, ALSourcei.EfxDirectFilter, Constants.AL_FILTER_NULL);
+                AL.Source(sourceIndex, ALSourcei.EfxDirectFilter, AL_FILTER_NULL);
                 isWater = false;
             }
         }
@@ -797,9 +799,9 @@ namespace FreeRaider
 
         public static int IsEffectPlaying(int effectID, int entityType, int entityID)
         {
-            for (var i = 0; i < Global.EngineWorld.AudioSources.Count; i++)
+            for (var i = 0; i < EngineWorld.AudioSources.Count; i++)
             {
-                var audioSource = Global.EngineWorld.AudioSources[i];
+                var audioSource = EngineWorld.AudioSources[i];
                 if ((entityType == -1 || audioSource.EmitterType == (TR_AUDIO_EMITTER) entityType) &&
                     (entityID == -1 || audioSource.EmitterID == entityID) &&
                     (effectID == -1 || audioSource.EffectIndex == effectID))
@@ -830,14 +832,14 @@ namespace FreeRaider
             {
                 case TR_AUDIO_EMITTER.Entity:
                     Entity ent = null;
-                    if ((ent = Global.EngineWorld.GetEntityByID((uint)EmitterID)) != null)
+                    if ((ent = EngineWorld.GetEntityByID((uint)EmitterID)) != null)
                     {
                         Position = ent.Transform.Origin;
                         Velocity = ent.Speed;
                     }
                     return;
                 case TR_AUDIO_EMITTER.SoundSource:
-                    Position = Global.EngineWorld.AudioEmitters[EmitterID].Position;
+                    Position = EngineWorld.AudioEmitters[EmitterID].Position;
                     return;
             }
         }
@@ -901,7 +903,7 @@ namespace FreeRaider
     {
         public StreamTrack()
         {
-            buffers = new uint[Constants.TR_AUDIO_STREAM_NUMBUFFERS];
+            buffers = new uint[TR_AUDIO_STREAM_NUMBUFFERS];
             AL.GenBuffers(buffers.Length, out buffers[0]); // Generate all buffers at once.
             
 
@@ -1015,7 +1017,7 @@ namespace FreeRaider
             // allocating them as long as Stream() routine returns false. Later, we use
             // this number for queuing buffers to source.
 
-            for(buffersToPlay = 0; buffersToPlay < Constants.TR_AUDIO_STREAM_NUMBUFFERS; buffersToPlay++)
+            for(buffersToPlay = 0; buffersToPlay < TR_AUDIO_STREAM_NUMBUFFERS; buffersToPlay++)
             {
                 if (!stream(buffersToPlay))
                 {
@@ -1105,20 +1107,20 @@ namespace FreeRaider
             {
                 // We check if damp condition is active, and if so, is it already at low-level or not.
 
-                if(DampActive && dampedVolume < Constants.TR_AUDIO_STREAM_DAMP_LEVEL)
+                if(DampActive && dampedVolume < TR_AUDIO_STREAM_DAMP_LEVEL)
                 {
-                    dampedVolume += Constants.TR_AUDIO_STREAM_DAMP_SPEED;
+                    dampedVolume += TR_AUDIO_STREAM_DAMP_SPEED;
 
                     // Clamp volume
-                    dampedVolume = dampedVolume.Clamp(0.0f, Constants.TR_AUDIO_STREAM_DAMP_LEVEL);
+                    dampedVolume = dampedVolume.Clamp(0.0f, TR_AUDIO_STREAM_DAMP_LEVEL);
                     changeGain = true;
                 }
                 else if(!DampActive && dampedVolume > 0) // If damp is not active, but it's still at low, restore it.
                 {
-                    dampedVolume -= Constants.TR_AUDIO_STREAM_DAMP_SPEED;
+                    dampedVolume -= TR_AUDIO_STREAM_DAMP_SPEED;
 
                     // Clamp volume
-                    dampedVolume = dampedVolume.Clamp(0.0f, Constants.TR_AUDIO_STREAM_DAMP_LEVEL);
+                    dampedVolume = dampedVolume.Clamp(0.0f, TR_AUDIO_STREAM_DAMP_LEVEL);
                     changeGain = true;
                 }
             }
@@ -1128,13 +1130,13 @@ namespace FreeRaider
                 switch(streamType)
                 {
                     case TR_AUDIO_STREAM_TYPE.Background:
-                        currentVolume -= Constants.TR_AUDIO_STREAM_CROSSFADE_BACKGROUND;
+                        currentVolume -= TR_AUDIO_STREAM_CROSSFADE_BACKGROUND;
                         break;
                     case TR_AUDIO_STREAM_TYPE.OneShot:
-                        currentVolume -= Constants.TR_AUDIO_STREAM_CROSSFADE_ONESHOT;
+                        currentVolume -= TR_AUDIO_STREAM_CROSSFADE_ONESHOT;
                         break;
                     case TR_AUDIO_STREAM_TYPE.Chat:
-                        currentVolume -= Constants.TR_AUDIO_STREAM_CROSSFADE_CHAT;
+                        currentVolume -= TR_AUDIO_STREAM_CROSSFADE_CHAT;
                         break;
                 }
 
@@ -1157,13 +1159,13 @@ namespace FreeRaider
                     switch (streamType)
                     {
                         case TR_AUDIO_STREAM_TYPE.Background:
-                            currentVolume += Constants.TR_AUDIO_STREAM_CROSSFADE_BACKGROUND;
+                            currentVolume += TR_AUDIO_STREAM_CROSSFADE_BACKGROUND;
                             break;
                         case TR_AUDIO_STREAM_TYPE.OneShot:
-                            currentVolume += Constants.TR_AUDIO_STREAM_CROSSFADE_ONESHOT;
+                            currentVolume += TR_AUDIO_STREAM_CROSSFADE_ONESHOT;
                             break;
                         case TR_AUDIO_STREAM_TYPE.Chat:
-                            currentVolume += Constants.TR_AUDIO_STREAM_CROSSFADE_CHAT;
+                            currentVolume += TR_AUDIO_STREAM_CROSSFADE_CHAT;
                             break;
                     }
 
@@ -1253,7 +1255,7 @@ namespace FreeRaider
             {
                 Audio.FXManager.LastRoomType = Audio.FXManager.CurrentRoomType;
                 Audio.FXManager.CurrentSlot =
-                    ++Audio.FXManager.CurrentSlot > Constants.TR_AUDIO_MAX_SLOTS - 1
+                    ++Audio.FXManager.CurrentSlot > TR_AUDIO_MAX_SLOTS - 1
                     ? 0
                     : Audio.FXManager.CurrentSlot;
 
@@ -1272,7 +1274,7 @@ namespace FreeRaider
 
             // Assign global reverb FX to channel.
 
-            AL.Source(source, ALSource3i.EfxAuxiliarySendFilter, (int)slot, 0, Constants.AL_FILTER_NULL);
+            AL.Source(source, ALSource3i.EfxAuxiliarySendFilter, (int)slot, 0, AL_FILTER_NULL);
         }
 
         /// <summary>
@@ -1282,8 +1284,8 @@ namespace FreeRaider
         {
             // Remove any audio sends and direct filters from channel.
 
-            AL.Source(source, ALSourcei.EfxDirectFilter, Constants.AL_FILTER_NULL);
-            AL.Source(source, ALSource3i.EfxAuxiliarySendFilter, Constants.AL_EFFECTSLOT_NULL, 0, Constants.AL_FILTER_NULL);
+            AL.Source(source, ALSourcei.EfxDirectFilter, AL_FILTER_NULL);
+            AL.Source(source, ALSource3i.EfxAuxiliarySendFilter, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
         }
 
         /// <summary>
@@ -1337,7 +1339,7 @@ namespace FreeRaider
         /// </summary>
         private bool loadWad(byte index, string filename)
         {
-            if (index >= Constants.TR_AUDIO_STREAM_WAD_COUNT)
+            if (index >= TR_AUDIO_STREAM_WAD_COUNT)
             {
                 // TODO: Warning: WAD out of bounds
                 return false;
@@ -1355,8 +1357,8 @@ namespace FreeRaider
 
             using (var br = new BinaryReader(wadFile))
             {
-                br.BaseStream.Position = index * Constants.TR_AUDIO_STREAM_WAD_NAMELENGTH;
-                var trackName = br.ParseString(Constants.TR_AUDIO_STREAM_WAD_NAMELENGTH);
+                br.BaseStream.Position = index * TR_AUDIO_STREAM_WAD_NAMELENGTH;
+                var trackName = br.ParseString(TR_AUDIO_STREAM_WAD_NAMELENGTH);
                 var length = br.ReadUInt32();
                 var offset = br.ReadUInt32();
                 br.BaseStream.Position = offset;
@@ -1520,8 +1522,8 @@ else
 
             // Set up effect slots, effects and filters.
 
-            FXManager.ALSlot = new uint[Constants.TR_AUDIO_MAX_SLOTS];
-            EffectsExtension.GenAuxiliaryEffectSlots(Constants.TR_AUDIO_MAX_SLOTS, out FXManager.ALSlot[0]);
+            FXManager.ALSlot = new uint[TR_AUDIO_MAX_SLOTS];
+            EffectsExtension.GenAuxiliaryEffectSlots(TR_AUDIO_MAX_SLOTS, out FXManager.ALSlot[0]);
 
             FXManager.ALEffect = new uint[(int) TR_AUDIO_FX.LastIndex];
             EffectsExtension.GenEffects((int) TR_AUDIO_FX.LastIndex, out FXManager.ALEffect[0]);
@@ -1546,7 +1548,7 @@ else
             Global.AudioSettings.EffectsInitialized = true;
         }
 
-        public static void Init(int numSources = Constants.TR_AUDIO_MAX_CHANNELS)
+        public static void Init(int numSources = TR_AUDIO_MAX_CHANNELS)
         {
             // FX should be inited first, as source constructor checks for FX slot to be created.
 
@@ -1554,12 +1556,12 @@ else
 
             // Generate new source array.
 
-            numSources -= Constants.TR_AUDIO_STREAM_NUMSOURCES; // Subtract sources reserved for music.
-            Global.EngineWorld.AudioSources.Resize(numSources);
+            numSources -= TR_AUDIO_STREAM_NUMSOURCES; // Subtract sources reserved for music.
+            EngineWorld.AudioSources.Resize(numSources);
 
             // Generate stream tracks array.
 
-            Global.EngineWorld.StreamTracks.Resize(Constants.TR_AUDIO_STREAM_NUMSOURCES);
+            EngineWorld.StreamTracks.Resize(TR_AUDIO_STREAM_NUMSOURCES);
 
             // Reset last room type used for assigning reverb.
 
@@ -1573,26 +1575,26 @@ else
 
             DeInitDelay();
 
-            Global.EngineWorld.AudioSources.Clear();
-            Global.EngineWorld.StreamTracks.Clear();
-            Global.EngineWorld.StreamTrackMap.Clear();
+            EngineWorld.AudioSources.Clear();
+            EngineWorld.StreamTracks.Clear();
+            EngineWorld.StreamTrackMap.Clear();
 
             // CRITICAL: You must delete all sources before deleting buffers!
 
-            AL.DeleteBuffers(Global.EngineWorld.AudioBuffers.ToArray());
-            Global.EngineWorld.AudioBuffers.Clear();
+            AL.DeleteBuffers(EngineWorld.AudioBuffers.ToArray());
+            EngineWorld.AudioBuffers.Clear();
 
-            Global.EngineWorld.AudioEffects.Clear();
-            Global.EngineWorld.AudioMap.Clear();
+            EngineWorld.AudioEffects.Clear();
+            EngineWorld.AudioMap.Clear();
 
             if(Global.AudioSettings.EffectsInitialized)
             {
-                for (var i = 0; i < Constants.TR_AUDIO_MAX_SLOTS; i++)
+                for (var i = 0; i < TR_AUDIO_MAX_SLOTS; i++)
                 {
                     var cur = FXManager.ALSlot[i];
                     if (cur != 0)
                     {
-                        EffectsExtension.AuxiliaryEffectSlot(cur, EfxAuxiliaryi.EffectslotEffect, Constants.AL_EFFECT_NULL);
+                        EffectsExtension.AuxiliaryEffectSlot(cur, EfxAuxiliaryi.EffectslotEffect, AL_EFFECT_NULL);
                         EffectsExtension.DeleteAuxiliaryEffectSlot(ref FXManager.ALSlot[i]);
                     }
                 }
@@ -1612,11 +1614,11 @@ else
 
             if(Global.AudioSettings.ListenerIsPlayer)
             {
-                UpdateListenerByEntity(Global.EngineWorld.Character);
+                UpdateListenerByEntity(EngineWorld.Character);
             }
             else
             {
-                UpdateListenerByCamera(Global.Renderer.Camera);
+                UpdateListenerByCamera(Renderer.Camera);
             }
         }
 
@@ -1626,9 +1628,9 @@ else
 
         public static int GetFreeSource()
         {
-            for (var i = 0; i < Global.EngineWorld.AudioSources.Count; i++)
+            for (var i = 0; i < EngineWorld.AudioSources.Count; i++)
             {
-                if (!Global.EngineWorld.AudioSources[i].IsActive)
+                if (!EngineWorld.AudioSources[i].IsActive)
                     return i;
             }
 
@@ -1642,13 +1644,13 @@ else
             switch (emitterType)
             {
                 case TR_AUDIO_EMITTER.Entity:
-                    var ent = Global.EngineWorld.GetEntityByID((uint)entityID);
+                    var ent = EngineWorld.GetEntityByID((uint)entityID);
                     if (ent == null) return false;
                     vec = ent.Transform.Origin;
                     break;
                 case TR_AUDIO_EMITTER.SoundSource:
-                    if ((uint) entityID + 1 > Global.EngineWorld.AudioEmitters.Count) return false;
-                    vec = Global.EngineWorld.AudioEmitters[entityID].Position;
+                    if ((uint) entityID + 1 > EngineWorld.AudioEmitters.Count) return false;
+                    vec = EngineWorld.AudioEmitters[entityID].Position;
                     break;
                 case TR_AUDIO_EMITTER.Global:
                     return true;
@@ -1666,9 +1668,9 @@ else
 
         public static int IsEffectPlaying(int effectID = -1, TR_AUDIO_EMITTER emitterType = TR_AUDIO_EMITTER.Unknown, int emitterID = -1)
         {
-            for (var i = 0; i < Global.EngineWorld.AudioSources.Count; i++)
+            for (var i = 0; i < EngineWorld.AudioSources.Count; i++)
             {
-                var c = Global.EngineWorld.AudioSources[i];
+                var c = EngineWorld.AudioSources[i];
                 if((effectID == -1 || effectID == c.EffectIndex) &&
                     (emitterType == TR_AUDIO_EMITTER.Unknown || emitterType == c.EmitterType) &&
                     (emitterID == -1 || emitterID == c.EmitterID))
@@ -1691,16 +1693,16 @@ else
 
             // If there are no audio buffers or effect index is wrong, don't process.
 
-            if (Global.EngineWorld.AudioBuffers.Count == 0 || effectID < 0) return TR_AUDIO_SEND.Ignored;
+            if (EngineWorld.AudioBuffers.Count == 0 || effectID < 0) return TR_AUDIO_SEND.Ignored;
 
             // Remap global engine effect ID to local effect ID.
 
-            if (effectID >= Global.EngineWorld.AudioMap.Count)
+            if (effectID >= EngineWorld.AudioMap.Count)
             {
                 return TR_AUDIO_SEND.NoSample; // Sound is out of bounds; stop.
             }
 
-            var realID = (int) Global.EngineWorld.AudioMap[(int) effectID];
+            var realID = (int) EngineWorld.AudioMap[(int) effectID];
 
             // Pre-step 1: if there is no effect associated with this ID, bypass audio send.
 
@@ -1710,7 +1712,7 @@ else
             }
             else
             {
-                effect = Global.EngineWorld.AudioEffects[realID];
+                effect = EngineWorld.AudioEffects[realID];
             }
 
             // Pre-step 2: check if sound non-looped and chance to play isn't zero,
@@ -1745,7 +1747,7 @@ else
             {
                 if (effect.Loop == LoopType.PingPong)
                 {
-                    Global.EngineWorld.AudioSources[sourceNumber].Stop();
+                    EngineWorld.AudioSources[sourceNumber].Stop();
                 }
                 else if (effect.Loop != LoopType.None) // Any other looping case (Wait / Loop).
                 {
@@ -1774,7 +1776,7 @@ else
                     bufferIndex = (int) effect.SampleIndex;
                 }
 
-                var source = Global.EngineWorld.AudioSources[sourceNumber];
+                var source = EngineWorld.AudioSources[sourceNumber];
 
                 source.SetBuffer(bufferIndex);
 
@@ -1821,7 +1823,7 @@ else
 
             if(playingSound != -1)
             {
-                Global.EngineWorld.AudioSources[playingSound].Stop();
+                EngineWorld.AudioSources[playingSound].Stop();
                 return TR_AUDIO_SEND.Processed;
             }
 
@@ -1833,7 +1835,7 @@ else
         /// </summary>
         public static void PauseAllSources()
         {
-            foreach (var audioSource in Global.EngineWorld.AudioSources.Where(audioSource => audioSource.IsActive))
+            foreach (var audioSource in EngineWorld.AudioSources.Where(audioSource => audioSource.IsActive))
             {
                 audioSource.Pause();
             }
@@ -1844,7 +1846,7 @@ else
         /// </summary>
         public static void StopAllSources()
         {
-            foreach (var audioSource in Global.EngineWorld.AudioSources)
+            foreach (var audioSource in EngineWorld.AudioSources)
             {
                 audioSource.Stop();
             }
@@ -1855,7 +1857,7 @@ else
         /// </summary>
         public static void ResumeAllSources()
         {
-            foreach (var audioSource in Global.EngineWorld.AudioSources.Where(audioSource => audioSource.IsActive))
+            foreach (var audioSource in EngineWorld.AudioSources.Where(audioSource => audioSource.IsActive))
             {
                 audioSource.Play();
             }
@@ -1866,18 +1868,18 @@ else
         /// </summary>
         public static void UpdateSources()
         {
-            if (Global.EngineWorld.AudioSources.Count == 0) return;
+            if (EngineWorld.AudioSources.Count == 0) return;
 
             var listenerPos = ListenerPosition;
             AL.GetListener(ALListener3f.Position, out listenerPos);
             ListenerPosition = listenerPos;
 
-            for (int i = 0; i < Global.EngineWorld.AudioEmitters.Count; i++)
+            for (int i = 0; i < EngineWorld.AudioEmitters.Count; i++)
             {
-                Send(Global.EngineWorld.AudioEmitters[i].SoundIndex, TR_AUDIO_EMITTER.SoundSource, i);
+                Send(EngineWorld.AudioEmitters[i].SoundIndex, TR_AUDIO_EMITTER.SoundSource, i);
             }
             
-            Global.EngineWorld.AudioSources.ForEach(x => x.Update());
+            EngineWorld.AudioSources.ForEach(x => x.Update());
         }
 
         /// <summary>
@@ -1890,7 +1892,7 @@ else
             AL.Listener(ALListenerfv.Orientation, ref cam.ViewDirection, ref cam.UpDirection);
             ALExt.Listener(ALListener3f.Position, cam.Position);
 
-            ALExt.Listener(ALListener3f.Velocity, (cam.Position - cam.PreviousPosition) / (float)Global.EngineFrameTime);
+            ALExt.Listener(ALListener3f.Velocity, (cam.Position - cam.PreviousPosition) / (float)EngineFrameTime);
             cam.PreviousPosition = cam.Position;
 
             if(cam.CurrentRoom != null)
@@ -1951,7 +1953,7 @@ else
                 var b2 = Pointer.Box(samplePointer, typeof (byte));
                 typeof(MBFIHelper).GetMethod("Ctor", BindingFlags.Public | BindingFlags.Static).Invoke(null, new [] {b1, b2, sampleSize});
 
-                using (var file = new SndFile(wavMem, Constants.SFM_READ, new SndFileInfo(), &wavMem))
+                using (var file = new SndFile(wavMem, SFM_READ, new SndFileInfo(), &wavMem))
                 {
                     var sfInfo = new SndFileInfo();
 
@@ -1983,7 +1985,7 @@ else
             }
             catch
             {
-                Sys.DebugLog(Constants.LOG_FILENAME, "Error: can't load sample {0} from sample block!", bufNumber);
+                Sys.DebugLog(LOG_FILENAME, "Error: can't load sample {0} from sample block!", bufNumber);
                 return -1;
             }
         }
@@ -2014,7 +2016,7 @@ else
             int numSamples, numSounds;
             string sampleNameMask;
 
-            if (Global.EngineLua.GetOverridedSamplesInfo(out numSamples, out numSounds, out sampleNameMask))
+            if (EngineLua.GetOverridedSamplesInfo(out numSamples, out numSounds, out sampleNameMask))
             {
                 var bufferCount = 0;
 
@@ -2024,7 +2026,7 @@ else
                     {
                         int sampleIndex;
                         int sampleCount;
-                        if(Global.EngineLua.GetOverridedSample(i, out sampleIndex, out sampleCount))
+                        if(EngineLua.GetOverridedSample(i, out sampleIndex, out sampleCount))
                         {
                             for(var j = 0; j < sampleCount; j++, bufferCount++)
                             {
@@ -2084,9 +2086,9 @@ else
         /// </summary>
         public static int GetFreeStream()
         {
-            for (var i = 0; i < Global.EngineWorld.StreamTracks.Count; i++)
+            for (var i = 0; i < EngineWorld.StreamTracks.Count; i++)
             {
-                var c = Global.EngineWorld.StreamTracks[i];
+                var c = EngineWorld.StreamTracks[i];
 
                 if (!c.IsPlaying && !c.IsActive) return i;
             }
@@ -2099,7 +2101,7 @@ else
         /// </summary>
         public static bool IsTrackPlaying(int trackID = -1)
         {
-            return Global.EngineWorld.StreamTracks.Any(x => x.IsPlaying && (trackID == -1 || x.IsTrack(trackID)));
+            return EngineWorld.StreamTracks.Any(x => x.IsPlaying && (trackID == -1 || x.IsTrack(trackID)));
         }
 
         /// <summary>
@@ -2108,17 +2110,17 @@ else
         public static bool TrackAlreadyPlayed(uint trackID, sbyte mask = 0)
         {
             if (mask == 0) return false; // No mask, play in any case.
-            if (trackID >= Global.EngineWorld.StreamTrackMap.Count) return true; // No such track, hence "already" played.
+            if (trackID >= EngineWorld.StreamTrackMap.Count) return true; // No such track, hence "already" played.
 
             mask &= 0x3F; // Clamp mask just in case.
 
-            if(Global.EngineWorld.StreamTrackMap[(int)trackID] == mask)
+            if(EngineWorld.StreamTrackMap[(int)trackID] == mask)
             {
                 return true; // Immediately return true, if flags are directly equal.
             }
             else
             {
-                var played = Global.EngineWorld.StreamTrackMap[(int) trackID] & mask;
+                var played = EngineWorld.StreamTrackMap[(int) trackID] & mask;
 
                 if(played == mask)
                 {
@@ -2126,7 +2128,7 @@ else
                 }
                 else
                 {
-                    Global.EngineWorld.StreamTrackMap[(int) trackID] |= (byte)mask;
+                    EngineWorld.StreamTrackMap[(int) trackID] |= (byte)mask;
                     return false; // Not yet played, set bits and return false.
                 }
             }
@@ -2139,7 +2141,7 @@ else
         {
             UpdateStreamsDamping();
 
-            Global.EngineWorld.StreamTracks.ForEach(x => x.Update());
+            EngineWorld.StreamTracks.ForEach(x => x.Update());
         }
 
         /// <summary>
@@ -2151,7 +2153,7 @@ else
             // NOT background. So we simply check this condition and set damp activity flag
             // if condition is met.
 
-            StreamTrack.DampActive = Global.EngineWorld.StreamTracks.Any(x => x.IsPlaying && !x.IsType(TR_AUDIO_STREAM_TYPE.Background));
+            StreamTrack.DampActive = EngineWorld.StreamTracks.Any(x => x.IsPlaying && !x.IsType(TR_AUDIO_STREAM_TYPE.Background));
         }
 
         /// <summary>
@@ -2179,7 +2181,7 @@ else
 
             foreach (
                 var c in
-                    Global.EngineWorld.StreamTracks.Where(
+                    EngineWorld.StreamTracks.Where(
                         c => c.IsPlaying && (c.IsType(streamType) || streamType == TR_AUDIO_STREAM_TYPE.Unknown)))
             {
                 res = true;
@@ -2198,7 +2200,7 @@ else
 
             foreach (
                 var c in
-                    Global.EngineWorld.StreamTracks.Where(
+                    EngineWorld.StreamTracks.Where(
                         c => c.IsPlaying && (c.IsType(streamType) || streamType == TR_AUDIO_STREAM_TYPE.Unknown)))
             {
                 res = true;
@@ -2222,7 +2224,7 @@ else
             // Don't even try to do anything with track, if its index is greater than overall amount of
             // soundtracks specified in a stream track map count (which is derived from script).
 
-            if(trackID >= Global.EngineWorld.StreamTrackMap.Count)
+            if(trackID >= EngineWorld.StreamTrackMap.Count)
             {
                 // TODO: Warning TrackID out of bounds
                 return TR_AUDIO_STREAMPLAY.WrongTrack;
@@ -2243,7 +2245,7 @@ else
             // "load_method" argument. Function itself returns false, if script wasn't found or
             // request was broken; in this case, we quit.
 
-            if(!Global.EngineLua.GetSoundtrack((int)trackID, filePath, loadMethod, streamType))
+            if(!EngineLua.GetSoundtrack((int)trackID, filePath, loadMethod, streamType))
             {
                 // TODO: Warning Track wrong index
                 return TR_AUDIO_STREAMPLAY.WrongTrack;
@@ -2286,7 +2288,7 @@ else
 
             // Finally - load our track.
 
-            if(!Global.EngineWorld.StreamTracks[targetStream].Load(filePath, (int)trackID, streamType, loadMethod))
+            if(!EngineWorld.StreamTracks[targetStream].Load(filePath, (int)trackID, streamType, loadMethod))
             {
                 // TODO: Warning Stream load error
                 return TR_AUDIO_STREAMPLAY.LoadError;
@@ -2294,7 +2296,7 @@ else
 
             // Try to play newly assigned and loaded track.
 
-            if (!Global.EngineWorld.StreamTracks[targetStream].Play(doFadeIn))
+            if (!EngineWorld.StreamTracks[targetStream].Play(doFadeIn))
             {
                 // TODO: Warning Stream play error
                 return TR_AUDIO_STREAMPLAY.PlayError;
@@ -2315,7 +2317,7 @@ else
             var err = AL.GetError();
             if(err != ALError.NoError)
             {
-                Sys.DebugLog(Constants.LOG_FILENAME, $"OpenAL error: {AL.GetErrorString(err)} / {errorMarker}");
+                Sys.DebugLog(LOG_FILENAME, $"OpenAL error: {AL.GetErrorString(err)} / {errorMarker}");
                 return true;
             }
             return false;
@@ -2326,7 +2328,7 @@ else
         /// </summary>
         public static void LogSndFileError(int code)
         {
-            Sys.DebugLog(Constants.LOG_FILENAME, SndFile.SfErrorNumber(code));
+            Sys.DebugLog(LOG_FILENAME, SndFile.SfErrorNumber(code));
         }
 
         #endregion
@@ -2335,7 +2337,7 @@ else
 
         public static float GetByteDepth(SndFileInfo sfInfo)
         {
-            switch ((SndFileSubFormat) (sfInfo.Format & Constants.SF_FORMAT_SUBMASK))
+            switch ((SndFileSubFormat) (sfInfo.Format & SF_FORMAT_SUBMASK))
             {
                 case SndFileSubFormat.PCM_S8:
                 case SndFileSubFormat.PCM_U8:
@@ -2458,7 +2460,7 @@ void Audio_LoadALExtFunctions(ALCdevice* device)
 
             while(IsTrackPlaying() && IsEffectPlaying() >= 0)
             {
-                if(sw.Elapsed.Seconds > Constants.TR_AUDIO_DEINIT_DELAY)
+                if(sw.Elapsed.Seconds > TR_AUDIO_DEINIT_DELAY)
                 {
                     // TODO: Handle "Audio deinit timeout reached! Something is wrong with the audio driver!"
                     break;

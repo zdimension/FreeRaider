@@ -1,4 +1,5 @@
 ﻿using OpenTK.Graphics.OpenGL;
+using static FreeRaider.Constants;
 
 namespace FreeRaider
 {
@@ -25,7 +26,7 @@ namespace FreeRaider
 
         private UnlitShaderDescription debugLine;
 
-        private LitShaderDescription[][] entityShader = Helper.RepeatValue(Constants.MAX_NUM_LIGHTS + 1,
+        private LitShaderDescription[][] entityShader = Helper.RepeatValue(MAX_NUM_LIGHTS + 1,
             () => new LitShaderDescription[2]);
         private GuiShaderDescription gui;
 
@@ -60,7 +61,7 @@ namespace FreeRaider
             // Entity prog
             var entityVertexShader = new ShaderStage(ShaderType.VertexShader, "shaders/entity.vsh");
             var entitySkinVertexShader = new ShaderStage(ShaderType.VertexShader, "shaders/entity_skin.vsh");
-            for (var i = 0; i < Constants.MAX_NUM_LIGHTS; i++)
+            for (var i = 0; i < MAX_NUM_LIGHTS; i++)
             {
                 var stream = "#define NUMBER_OF_LIGHTS " + i + "\n";
 
@@ -96,7 +97,7 @@ namespace FreeRaider
 
         public LitShaderDescription GetEntityShader(int numberOfLights, bool skin)
         {
-            Assert.That(numberOfLights <= Constants.MAX_NUM_LIGHTS);
+            Assert.That(numberOfLights <= MAX_NUM_LIGHTS);
 
             return entityShader[numberOfLights][skin ? 1 : 0];
         }

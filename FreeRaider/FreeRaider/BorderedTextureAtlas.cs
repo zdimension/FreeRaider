@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FreeRaider.Loader;
 using OpenTK.Graphics.OpenGL;
+using static FreeRaider.Constants;
 
 namespace FreeRaider
 {
@@ -318,7 +319,7 @@ namespace FreeRaider
                 resultPageWidth =
                     (uint)
                         Math.Min(maxTextureEdgeLength,
-                            Helper.NextPowerOf2((uint) (Math.Sqrt(areaSum) * Constants.Sqrt2)));
+                            Helper.NextPowerOf2((uint) (Math.Sqrt(areaSum) * Sqrt2)));
             }
             else
             {

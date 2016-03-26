@@ -1,5 +1,7 @@
 ﻿using BulletSharp;
 using OpenTK;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -169,12 +171,12 @@ namespace FreeRaider
         {
             var cont = new EngineContainer();
             var dbgR = 128.0f;
-            var v = Global.EngineCamera.Position;
-            var dir = Global.EngineCamera.ViewDirection;
+            var v = EngineCamera.Position;
+            var dir = EngineCamera.ViewDirection;
             var localInertia = Vector3.Zero;
 
             var cshape = new SphereShape(dbgR);
-            cshape.Margin = Constants.COLLISION_MARGIN_DEFAULT;
+            cshape.Margin = COLLISION_MARGIN_DEFAULT;
 
             var startTransform = new Transform();
             startTransform.SetIdentity();
@@ -183,9 +185,9 @@ namespace FreeRaider
             cshape.CalculateLocalInertia(12.0f, out localInertia);
             var motionState = new DefaultMotionState((Matrix4)startTransform);
             var body = new RigidBody(new RigidBodyConstructionInfo(12.0f, motionState, cshape, localInertia));
-            Global.BtEngineDynamicsWorld.AddRigidBody(body);
+            BtEngineDynamicsWorld.AddRigidBody(body);
             body.LinearVelocity = dir * 6000;
-            cont.Room = Room.FindPosCogerrence(newPos, Global.EngineCamera.CurrentRoom);
+            cont.Room = Room.FindPosCogerrence(newPos, EngineCamera.CurrentRoom);
             cont.ObjectType = OBJECT_TYPE.BulletMisc; // bullet have to destroy this user pointer
             body.UserObject = cont;
             body.CcdMotionThreshold = dbgR; // disable tunneling effect
@@ -194,14 +196,14 @@ namespace FreeRaider
 
         public static void SecondaryMouseDown()
         {
-            var from = Global.EngineCamera.Position;
-            var to = from + Global.EngineCamera.ViewDirection * 32768.0f;
+            var from = EngineCamera.Position;
+            var to = from + EngineCamera.ViewDirection * 32768.0f;
 
-            var camCont = new EngineContainer {Room = Global.EngineCamera.CurrentRoom};
+            var camCont = new EngineContainer {Room = EngineCamera.CurrentRoom};
 
             var cbc = new BtEngineClosestRayResultCallback(camCont);
             //cbc.CollisionFilterMask = CollisionFilterGroups.StaticFilter | CollisionFilterGroups.KinematicFilter;
-            Global.BtEngineDynamicsWorld.RayTest(from, to, cbc);
+            BtEngineDynamicsWorld.RayTest(from, to, cbc);
             if(cbc.HasHit)
             {
                 var castRay = new float[6];
@@ -228,12 +230,12 @@ namespace FreeRaider
                         c0.Room = null;
                         c0 = null;
 
-                        Global.BtEngineDynamicsWorld.RemoveCollisionObject(obj);
+                        BtEngineDynamicsWorld.RemoveCollisionObject(obj);
                         obj.Dispose();
                     }
                     else
                     {
-                        Global.LastContainer = c0;
+                        LastContainer = c0;
                     }
                 }
             }
@@ -255,7 +257,7 @@ namespace FreeRaider
         {
             for(var i = 0; i < (int)ACTIONS.LastIndex; i++)
             {
-                Global.ControlMapper.ActionMap[i].AlreadyPressed = Global.ControlMapper.ActionMap[i].State;
+                ControlMapper.ActionMap[i].AlreadyPressed = ControlMapper.ActionMap[i].State;
             }
         }
 

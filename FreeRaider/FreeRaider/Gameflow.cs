@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -44,7 +46,7 @@ namespace FreeRaider
 
             var completed = true;
 
-            for(var i = 0; i < Constants.GF_MAX_ACTIONS; i++)
+            for(var i = 0; i < GF_MAX_ACTIONS; i++)
             {
                 completed = false;
 
@@ -54,7 +56,7 @@ namespace FreeRaider
                         // Switch level only when fade is complete AND all streams / sounds are unloaded!
                         if(Gui.FadeCheck(FaderType.LoadScreen) == FaderStatus.Complete && !Audio.IsTrackPlaying())
                         {
-                            var t = Global.EngineLua.Call("getNextLevel", GameID, LevelID, actions[i].Operand);
+                            var t = EngineLua.Call("getNextLevel", GameID, LevelID, actions[i].Operand);
                             CurrentLevelPath = (string)t[0];
                             currentLevelName = (string) t[1];
                             LevelID = (uint) t[2];
@@ -84,7 +86,7 @@ namespace FreeRaider
         /// </summary>
         public bool Send(GF_OP opcode, int operand = -1)
         {
-            for (var i = 0; i < Constants.GF_MAX_ACTIONS; i++)
+            for (var i = 0; i < GF_MAX_ACTIONS; i++)
             {
                 if(actions[i].Opcode == GF_OP.NoEntry)
                 {
@@ -97,7 +99,7 @@ namespace FreeRaider
             return false;
         }
 
-        public bool[] SecretsTriggerMap = new bool[Constants.GF_MAX_SECRETS + 1];
+        public bool[] SecretsTriggerMap = new bool[GF_MAX_SECRETS + 1];
 
         public string CurrentLevelPath { get; set; }
 
@@ -110,7 +112,7 @@ namespace FreeRaider
 
         private bool nextAction;
 
-        private GameflowAction[] actions = new GameflowAction[Constants.GF_MAX_ACTIONS + 1];
+        private GameflowAction[] actions = new GameflowAction[GF_MAX_ACTIONS + 1];
     }
 
     public enum GF_OP : sbyte

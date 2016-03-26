@@ -4,6 +4,8 @@ using System.Linq;
 using BulletSharp;
 using FreeRaider.Loader;
 using OpenTK;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -290,8 +292,8 @@ namespace FreeRaider
             if (OwnerRoom.BaseRoom != null)
             {
                 var r = OwnerRoom.BaseRoom;
-                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / Constants.TR_METERING_SECTORSIZE);
-                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / Constants.TR_METERING_SECTORSIZE);
+                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / TR_METERING_SECTORSIZE);
+                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / TR_METERING_SECTORSIZE);
                 if (ind_x.IsBetween(0, r.SectorsX - 1) && ind_y.IsBetween(0, r.SectorsY - 1))
                 {
                     return r.Sectors[ind_x * r.SectorsY + ind_y];
@@ -305,8 +307,8 @@ namespace FreeRaider
             if (OwnerRoom.AlternateRoom != null)
             {
                 var r = OwnerRoom.AlternateRoom;
-                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / Constants.TR_METERING_SECTORSIZE);
-                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / Constants.TR_METERING_SECTORSIZE);
+                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / TR_METERING_SECTORSIZE);
+                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / TR_METERING_SECTORSIZE);
                 if (ind_x.IsBetween(0, r.SectorsX - 1) && ind_y.IsBetween(0, r.SectorsY - 1))
                 {
                     return r.Sectors[ind_x * r.SectorsY + ind_y];
@@ -319,9 +321,9 @@ namespace FreeRaider
         {
             if (PortalToRoom >= 0)
             {
-                Room r = Global.EngineWorld.Rooms[PortalToRoom];
-                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / Constants.TR_METERING_SECTORSIZE);
-                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / Constants.TR_METERING_SECTORSIZE);
+                Room r = EngineWorld.Rooms[PortalToRoom];
+                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / TR_METERING_SECTORSIZE);
+                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / TR_METERING_SECTORSIZE);
                 if (ind_x.IsBetween(0, r.SectorsX - 1) && ind_y.IsBetween(0, r.SectorsY - 1))
                 {
                     return r.Sectors[ind_x * r.SectorsY + ind_y];
@@ -334,7 +336,7 @@ namespace FreeRaider
         {
             if (PortalToRoom >= 0)
             {
-                Room r = Global.EngineWorld.Rooms[PortalToRoom];
+                Room r = EngineWorld.Rooms[PortalToRoom];
                 if (OwnerRoom.BaseRoom != null && OwnerRoom.AlternateRoom != null)
                 {
                     r = r.AlternateRoom;
@@ -343,8 +345,8 @@ namespace FreeRaider
                 {
                     r = r.BaseRoom;
                 }
-                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / Constants.TR_METERING_SECTORSIZE);
-                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / Constants.TR_METERING_SECTORSIZE);
+                var ind_x = (int) ((Position.X - r.Transform.Origin.X) / TR_METERING_SECTORSIZE);
+                var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / TR_METERING_SECTORSIZE);
                 if (ind_x.IsBetween(0, r.SectorsX - 1) && ind_y.IsBetween(0, r.SectorsY - 1))
                 {
                     return r.Sectors[ind_x * r.SectorsY + ind_y];
@@ -618,7 +620,7 @@ namespace FreeRaider
         {
             if (AlternateRoom != null && Active)
             {
-                Global.Renderer.CleanList();
+                Renderer.CleanList();
                 Disable();
                 AlternateRoom.Disable();
                 SwapPortals(AlternateRoom);
@@ -631,7 +633,7 @@ namespace FreeRaider
         {
             if (BaseRoom != null && Active)
             {
-                Global.Renderer.CleanList();
+                Renderer.CleanList();
                 Disable();
                 BaseRoom.Disable();
                 SwapPortals(BaseRoom);
@@ -652,7 +654,7 @@ namespace FreeRaider
 
         public void SwapPortals(Room dest)
         {
-            foreach (Room r in Global.EngineWorld.Rooms)
+            foreach (Room r in EngineWorld.Rooms)
             {
                 foreach (Portal p in r.Portals)
                 {
@@ -692,7 +694,7 @@ namespace FreeRaider
 
         public void BuildOverlappedRoomsList()
         {
-            OverlappedRoomList = Global.EngineWorld.Rooms.Where(IsOverlapped).ToList();
+            OverlappedRoomList = EngineWorld.Rooms.Where(IsOverlapped).ToList();
         }
 
         public bool IsJoined(Room r2)
@@ -965,7 +967,7 @@ namespace FreeRaider
 
         public void Empty()
         {
-            Global.LastContainer = null;
+            LastContainer = null;
 
         }
 

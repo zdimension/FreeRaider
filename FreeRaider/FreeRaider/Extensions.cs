@@ -12,6 +12,7 @@ using LibSndFile;
 using OpenTK;
 using OpenTK.Audio.OpenAL;
 using OpenTK.Graphics;
+using static FreeRaider.Constants;
 
 namespace FreeRaider
 {
@@ -662,7 +663,7 @@ namespace FreeRaider
 
         public static bool FuzzyZero(this Vector3 v)
         {
-            return v.LengthSquared < Constants.SIMD_EPSILON; // TODO: Replace by float.Epsilon
+            return v.LengthSquared < SIMD_EPSILON; // TODO: Replace by float.Epsilon
         }
 
         public static void CopyToArray(this Vector3 v, float[] target, int index)

@@ -4,6 +4,8 @@ using System.Linq;
 using FreeRaider.Loader;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -56,7 +58,7 @@ namespace FreeRaider
 
         private int visibleLines = 40;
 
-        private float spacing = Constants.CON_MIN_LINE_INTERVAL;
+        private float spacing = CON_MIN_LINE_INTERVAL;
 
         /// <summary>
         /// Current cursor position, in symbols
@@ -95,14 +97,14 @@ namespace FreeRaider
         public void Init()
         {
             // log size check
-            if(historyLines.Count > Constants.CON_MAX_LOG)
-                historyLines.Resize(Constants.CON_MAX_LOG);
+            if(historyLines.Count > CON_MAX_LOG)
+                historyLines.Resize(CON_MAX_LOG);
 
             // spacing check
-            spacing = spacing.Clamp(Constants.CON_MIN_LINE_INTERVAL, Constants.CON_MAX_LINE_INTERVAL);
+            spacing = spacing.Clamp(CON_MIN_LINE_INTERVAL, CON_MAX_LINE_INTERVAL);
 
             // linesize check
-            LineSize = LineSize.Clamp(Constants.CON_MIN_LINE_SIZE, Constants.CON_MAX_LINE_SIZE);
+            LineSize = LineSize.Clamp(CON_MIN_LINE_SIZE, CON_MAX_LINE_SIZE);
 
             inited = true;
         }
@@ -121,8 +123,8 @@ namespace FreeRaider
         {
             backgroundColor = new[] {1.0f, 0.9f, 0.7f, 0.4f};
 
-            spacing = Constants.CON_MIN_LINE_INTERVAL;
-            LineSize = Constants.CON_MIN_LINE_SIZE;
+            spacing = CON_MIN_LINE_INTERVAL;
+            LineSize = CON_MIN_LINE_SIZE;
 
             BlinkPeriod = 0.5f;
         }
@@ -130,7 +132,7 @@ namespace FreeRaider
         public void SetLineInterval(float interval)
         {
             if (!inited || Global.FontManager == null ||
-                !interval.IsBetween(Constants.CON_MIN_LINE_INTERVAL, Constants.CON_MAX_LINE_INTERVAL))
+                !interval.IsBetween(CON_MIN_LINE_INTERVAL, CON_MAX_LINE_INTERVAL))
                 return; // nothing to do
 
             inited = false;
@@ -152,7 +154,7 @@ namespace FreeRaider
 
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
 
-            TextShaderDescription shader = Global.Renderer.ShaderManager.GetTextShader();
+            TextShaderDescription shader = Renderer.ShaderManager.GetTextShader();
             GL.UseProgram(shader.Program);
             GL.Uniform1(shader.Sampler, 0);
             var screenSize = new float[] {Global.ScreenInfo.W, Global.ScreenInfo.H};
@@ -189,7 +191,7 @@ namespace FreeRaider
         {
             if(BlinkPeriod != 0)
             {
-                blinkTime += Global.EngineFrameTime;
+                blinkTime += EngineFrameTime;
                 if(blinkTime > BlinkPeriod)
                 {
                     blinkTime = 0;
@@ -240,7 +242,7 @@ namespace FreeRaider
                 case Key.Up:
                 case Key.Down:
                     if (historyLines.Count == 0) break;
-                    Audio.Send((uint)Global.EngineLua.GetGlobalSound((int)TR_AUDIO_SOUND_GLOBALID.MenuPage));
+                    Audio.Send((uint)EngineLua.GetGlobalSound((int)TR_AUDIO_SOUND_GLOBALID.MenuPage));
                     if (k == Key.Up && historyPos < historyLines.Count)
                         historyPos++;
                     else if (k == Key.Down && historyPos > 0)
@@ -398,13 +400,13 @@ namespace FreeRaider
 
         public void Warning(int warnStringIndex, params object[] args)
         {
-            var fmt = Global.EngineLua.GetSysNotify(warnStringIndex);
+            var fmt = EngineLua.GetSysNotify(warnStringIndex);
             AddLine(Helper.Format(fmt, args), FontStyle.ConsoleWarning);
         }
 
         public void Notify(int notifyStringIndex, params object[] args)
         {
-            var fmt = Global.EngineLua.GetSysNotify(notifyStringIndex);
+            var fmt = EngineLua.GetSysNotify(notifyStringIndex);
             AddLine(Helper.Format(fmt, args), FontStyle.ConsoleNotify);
         }
 
@@ -434,7 +436,7 @@ namespace FreeRaider
             }
             set
             {
-                if (value.IsBetween(Constants.CON_MIN_LINE_INTERVAL, Constants.CON_MAX_LINE_INTERVAL)) spacing = value;
+                if (value.IsBetween(CON_MIN_LINE_INTERVAL, CON_MAX_LINE_INTERVAL)) spacing = value;
             }
         }
 
@@ -443,7 +445,7 @@ namespace FreeRaider
         /// <summary>
         /// Console line size
         /// </summary>
-        public ushort LineSize { get; set; } = Constants.CON_MAX_LINE_SIZE;
+        public ushort LineSize { get; set; } = CON_MAX_LINE_SIZE;
 
         public int VisibleLines
         {

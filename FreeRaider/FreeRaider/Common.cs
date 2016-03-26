@@ -2,6 +2,7 @@
 using System.Drawing.Imaging;
 using OpenTK.Graphics.OpenGL;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -27,7 +28,7 @@ namespace FreeRaider
             var viewport = new int[4];
             GL.GetInteger(GetPName.Viewport, viewport);
 
-            var fname = "screen_" + Global.ScreenshotCount + ".png";
+            var fname = "screen_" + ScreenshotCount + ".png";
 
             var width = viewport[2];
             var height = viewport[3];
@@ -40,7 +41,7 @@ namespace FreeRaider
 
             bmp.Save(fname, ImageFormat.Png);
 
-            Global.ScreenshotCount++;
+            ScreenshotCount++;
         }
     }
 }

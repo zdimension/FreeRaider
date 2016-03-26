@@ -5,6 +5,8 @@ using System.Threading;
 using BulletSharp;
 using OpenTK;
 using SharpFont;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -223,7 +225,7 @@ namespace FreeRaider
         /// </summary>
         public Vector3 Speed;
 
-        public float SpeedMult = Constants.TR_FRAME_RATE;
+        public float SpeedMult = TR_FRAME_RATE;
 
         /// <summary>
         /// Linear inertia
@@ -321,7 +323,7 @@ namespace FreeRaider
             foreach (var ghost in Bt.GhostObjects)
             {
                 ghost.UserObject = null;
-                Global.BtEngineDynamicsWorld.RemoveCollisionObject(ghost);
+                BtEngineDynamicsWorld.RemoveCollisionObject(ghost);
             }
             Bt.GhostObjects.Clear();
 
@@ -343,7 +345,7 @@ namespace FreeRaider
                         }
                         body.CollisionShape = null;
 
-                        Global.BtEngineDynamicsWorld.RemoveRigidBody(body);
+                        BtEngineDynamicsWorld.RemoveRigidBody(body);
                     }
                 }
                 Bt.BtBody.Clear();
@@ -373,10 +375,10 @@ namespace FreeRaider
             Bt.LastCollisions.Clear();
             for(var i = 0; i < Bf.BoneTags.Count; i++)
             {
-                var box = Constants.COLLISION_GHOST_VOLUME_COEFFICIENT *
+                var box = COLLISION_GHOST_VOLUME_COEFFICIENT *
                           (Bf.BoneTags[i].MeshBase.BBMax - Bf.BoneTags[i].MeshBase.BBMin);
                 Bt.Shapes.Add(new BoxShape(box));
-                Bt.Shapes.Last().Margin = Constants.COLLISION_MARGIN_DEFAULT;
+                Bt.Shapes.Last().Margin = COLLISION_MARGIN_DEFAULT;
                 Bf.BoneTags[i].MeshBase.Radius = Math.Min(Math.Min(box.X, box.Y), box.Z);
 
                 var pcg = new PairCachingGhostObject();
@@ -390,7 +392,7 @@ namespace FreeRaider
                 pcg.CollisionFlags |= CollisionFlags.NoContactResponse | CollisionFlags.CharacterObject;
                 pcg.UserObject = Self;
                 pcg.CollisionShape = Bt.Shapes.Last();
-                Global.BtEngineDynamicsWorld.AddCollisionObject(pcg, CollisionFilterGroups.CharacterFilter, CollisionFilterGroups.AllFilter);
+                BtEngineDynamicsWorld.AddCollisionObject(pcg, CollisionFilterGroups.CharacterFilter, CollisionFilterGroups.AllFilter);
                 Bt.GhostObjects.Add(pcg);
 
                 Bt.LastCollisions.Add(null);
@@ -425,7 +427,7 @@ namespace FreeRaider
             {
                 if(b != null && !b.IsInWorld)
                 {
-                    Global.BtEngineDynamicsWorld.AddRigidBody(b);
+                    BtEngineDynamicsWorld.AddRigidBody(b);
                 }
             }
         }
@@ -436,7 +438,7 @@ namespace FreeRaider
             {
                 if (b != null && b.IsInWorld)
                 {
-                    Global.BtEngineDynamicsWorld.RemoveRigidBody(b);
+                    BtEngineDynamicsWorld.RemoveRigidBody(b);
                 }
             }
         }
@@ -506,7 +508,7 @@ namespace FreeRaider
                             break;
                     }
 
-                    Global.BtEngineDynamicsWorld.AddRigidBody(Bt.BtBody[i], CollisionFilterGroups.KinematicFilter, CollisionFilterGroups.AllFilter);
+                    BtEngineDynamicsWorld.AddRigidBody(Bt.BtBody[i], CollisionFilterGroups.KinematicFilter, CollisionFilterGroups.AllFilter);
                     Bt.BtBody.Last().UserObject = Self;
                 }
             }
@@ -636,13 +638,13 @@ namespace FreeRaider
                     if(activator.CallbackFlags.HasFlag(ENTITY_CALLBACK.Collision))
                     {
                         // Activator and entity IDs are swapped in case of collision callback.
-                        Global.EngineLua.ExecEntity((int)ENTITY_CALLBACK.Collision, (int)activator.ID, (int)ID);
+                        EngineLua.ExecEntity((int)ENTITY_CALLBACK.Collision, (int)activator.ID, (int)ID);
                     }
                 }
                 else if(CallbackFlags.HasFlag(ENTITY_CALLBACK.RoomCollision) && type == OBJECT_TYPE.RoomBase)
                 {
                     var activator = (Room) cont.Object;
-                    Global.EngineLua.ExecEntity((int)ENTITY_CALLBACK.RoomCollision, (int)ID, (int)activator.ID);
+                    EngineLua.ExecEntity((int)ENTITY_CALLBACK.RoomCollision, (int)ID, (int)activator.ID);
                 }
             }
         }
@@ -880,8 +882,8 @@ namespace FreeRaider
         {
             Angles = Angles.WrapAngle();
 
-            Helper.SetEulerZYX(ref Transform.Basis, Angles.Y * Constants.RadPerDeg, Angles.Z * Constants.RadPerDeg,
-                Angles.X * Constants.RadPerDeg);
+            Helper.SetEulerZYX(ref Transform.Basis, Angles.Y * RadPerDeg, Angles.Z * RadPerDeg,
+                Angles.X * RadPerDeg);
 
             FixPenetrations(Vector3.Zero);
         }
@@ -917,7 +919,7 @@ namespace FreeRaider
 
         public void AddOverrideAnim(int modelID)
         {
-            var sm = Global.EngineWorld.GetModelByID((uint)modelID);
+            var sm = EngineWorld.GetModelByID((uint)modelID);
 
             if(sm != null && sm.MeshCount == Bf.BoneTags.Count)
             {
@@ -936,7 +938,7 @@ namespace FreeRaider
                 ssAnim.CurrentFrame = 0;
                 ssAnim.CurrentAnimation = TR_ANIMATION.LaraRun;
                 ssAnim.NextFrame = 0;
-                ssAnim.Period = 1.0f / Constants.TR_FRAME_RATE;
+                ssAnim.Period = 1.0f / TR_FRAME_RATE;
             }
         }
 
@@ -965,7 +967,7 @@ namespace FreeRaider
 
             if(anotherModel >= 0)
             {
-                var model = Global.EngineWorld.GetModelByID((uint) anotherModel);
+                var model = EngineWorld.GetModelByID((uint) anotherModel);
                 if (model == null || (int) animation >= model.Animations.Count)
                     return;
                 Bf.Animations.Model = model;
@@ -976,7 +978,7 @@ namespace FreeRaider
             Bf.Animations.Lerp = 0.0f;
             frame %= anim.Frames.Count;
             frame = frame >= 0 ? frame : anim.Frames.Count - 1 + frame;
-            Bf.Animations.Period = 1.0f / Constants.TR_FRAME_RATE;
+            Bf.Animations.Period = 1.0f / TR_FRAME_RATE;
 
             Bf.Animations.LastState = anim.StateID;
             Bf.Animations.NextState = anim.StateID;
@@ -1029,20 +1031,20 @@ namespace FreeRaider
             {
                 if(Bt.BtJoints[i] != null)
                 {
-                    Global.BtEngineDynamicsWorld.RemoveConstraint(Bt.BtJoints[i]);
+                    BtEngineDynamicsWorld.RemoveConstraint(Bt.BtJoints[i]);
                     Bt.BtJoints[i] = null;
                 }
             }
 
             for(var i = 0; i < Bf.BoneTags.Count; i++)
             {
-                Global.BtEngineDynamicsWorld.RemoveRigidBody(Bt.BtBody[i]);
+                BtEngineDynamicsWorld.RemoveRigidBody(Bt.BtBody[i]);
                 Bt.BtBody[i].SetMassProps(0, Vector3.Zero);
-                Global.BtEngineDynamicsWorld.AddRigidBody(Bt.BtBody[i], CollisionFilterGroups.KinematicFilter, CollisionFilterGroups.AllFilter);
+                BtEngineDynamicsWorld.AddRigidBody(Bt.BtBody[i], CollisionFilterGroups.KinematicFilter, CollisionFilterGroups.AllFilter);
                 if(i < Bt.GhostObjects.Count && Bt.GhostObjects[i] != null)
                 {
-                    Global.BtEngineDynamicsWorld.RemoveCollisionObject(Bt.GhostObjects[i]);
-                    Global.BtEngineDynamicsWorld.AddCollisionObject(Bt.GhostObjects[i], CollisionFilterGroups.CharacterFilter, CollisionFilterGroups.AllFilter);
+                    BtEngineDynamicsWorld.RemoveCollisionObject(Bt.GhostObjects[i]);
+                    BtEngineDynamicsWorld.AddCollisionObject(Bt.GhostObjects[i], CollisionFilterGroups.CharacterFilter, CollisionFilterGroups.AllFilter);
                 }
             }
 
@@ -1131,7 +1133,7 @@ namespace FreeRaider
 
         public Vector3 ApplyGravity(float time)
         {
-            var gravityAcceleration = Global.BtEngineDynamicsWorld.Gravity;
+            var gravityAcceleration = BtEngineDynamicsWorld.Gravity;
             var gravitySpeed = gravityAcceleration * time;
             var move = (Speed + gravitySpeed / 2) * time;
             Speed += gravitySpeed;
@@ -1204,10 +1206,10 @@ namespace FreeRaider
             Vector3 aabb_min, aabb_max, t;
 
             ghost.CollisionShape.GetAabb(ghost.WorldTransform, out aabb_min, out aabb_max);
-            Global.BtEngineDynamicsWorld.Broadphase.SetAabb(ghost.BroadphaseHandle, aabb_min, aabb_max,
-                Global.BtEngineDynamicsWorld.Dispatcher);
-            Global.BtEngineDynamicsWorld.Dispatcher.DispatchAllCollisionPairs(ghost.OverlappingPairCache,
-                Global.BtEngineDynamicsWorld.DispatchInfo, Global.BtEngineDynamicsWorld.Dispatcher);
+            BtEngineDynamicsWorld.Broadphase.SetAabb(ghost.BroadphaseHandle, aabb_min, aabb_max,
+                BtEngineDynamicsWorld.Dispatcher);
+            BtEngineDynamicsWorld.Dispatcher.DispatchAllCollisionPairs(ghost.OverlappingPairCache,
+                BtEngineDynamicsWorld.DispatchInfo, BtEngineDynamicsWorld.Dispatcher);
 
             correction = Vector3.Zero;
             var numPairs = ghost.OverlappingPairCache.NumOverlappingPairs;

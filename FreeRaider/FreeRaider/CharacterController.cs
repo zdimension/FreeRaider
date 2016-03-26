@@ -5,6 +5,8 @@ using BulletSharp;
 using OpenTK;
 using OpenTK.Graphics.ES20;
 using SharpFont;
+using static FreeRaider.Constants;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -273,7 +275,7 @@ namespace FreeRaider
 
         public HeightInfo()
         {
-            Sp.Margin = Constants.COLLISION_MARGIN_DEFAULT;
+            Sp.Margin = COLLISION_MARGIN_DEFAULT;
         }
     }
 
@@ -411,22 +413,22 @@ namespace FreeRaider
 
         public sbyte CamFollowCenter = 0;
 
-        public float MinStepUpHeight = Constants.DEFAULT_MIN_STEP_UP_HEIGHT;
+        public float MinStepUpHeight = DEFAULT_MIN_STEP_UP_HEIGHT;
 
-        public float MaxStepUpHeight = Constants.DEFAULT_MAX_STEP_UP_HEIGHT;
+        public float MaxStepUpHeight = DEFAULT_MAX_STEP_UP_HEIGHT;
 
-        public float MaxClimbHeight = Constants.DEFAULT_CLIMB_UP_HEIGHT;
+        public float MaxClimbHeight = DEFAULT_CLIMB_UP_HEIGHT;
 
-        public float FallDownHeight = Constants.DEFAULT_FALL_DOWN_HEIGHT;
+        public float FallDownHeight = DEFAULT_FALL_DOWN_HEIGHT;
 
-        public float CriticalSlantZComponent = Constants.DEFAULT_CRITICAL_SLANT_Z_COMPONENT;
+        public float CriticalSlantZComponent = DEFAULT_CRITICAL_SLANT_Z_COMPONENT;
 
-        public float CriticalWallComponent = Constants.DEFAULT_CRITICAL_WALL_COMPONENT;
+        public float CriticalWallComponent = DEFAULT_CRITICAL_WALL_COMPONENT;
 
         /// <summary>
         /// Climbing sensor radius
         /// </summary>
-        public float ClimbR = Constants.DEFAULT_CHARACTER_CLIMB_R;
+        public float ClimbR = DEFAULT_CHARACTER_CLIMB_R;
 
         /// <summary>
         /// Offset for climbing calculation
@@ -436,19 +438,19 @@ namespace FreeRaider
         /// <summary>
         /// Base character height
         /// </summary>
-        public float Height = Constants.CHARACTER_BASE_HEIGHT;
+        public float Height = CHARACTER_BASE_HEIGHT;
 
         /// <summary>
         /// Water depth that enable wade walk
         /// </summary>
-        public float WadeDepth = Constants.DEFAULT_CHARACTER_WADE_DEPTH;
+        public float WadeDepth = DEFAULT_CHARACTER_WADE_DEPTH;
 
         /// <summary>
         /// Depth offset for starting to swim
         /// </summary>
-        public float SwimDepth = Constants.DEFAULT_CHARACTER_SWIM_DEPTH;
+        public float SwimDepth = DEFAULT_CHARACTER_SWIM_DEPTH;
 
-        public SphereShape Sphere = new SphereShape(Constants.CHARACTER_BASE_RADIUS);
+        public SphereShape Sphere = new SphereShape(CHARACTER_BASE_RADIUS);
 
         public SphereShape ClimbSensor;
 
@@ -465,10 +467,10 @@ namespace FreeRaider
         public Character(uint id)
             : base(id)
         {
-            Sphere.Margin = Constants.COLLISION_MARGIN_DEFAULT;
+            Sphere.Margin = COLLISION_MARGIN_DEFAULT;
 
             ClimbSensor = new SphereShape(ClimbR);
-            ClimbSensor.Margin = Constants.COLLISION_MARGIN_DEFAULT;
+            ClimbSensor.Margin = COLLISION_MARGIN_DEFAULT;
 
             RayCb = new BtEngineClosestRayResultCallback(Self, true);
             RayCb.CollisionFilterMask = CollisionFilterGroups.StaticFilter | CollisionFilterGroups.KinematicFilter;
@@ -483,7 +485,7 @@ namespace FreeRaider
 
         ~Character()
         {
-            if (Self.Room != null && this != Global.EngineWorld.Character)
+            if (Self.Room != null && this != EngineWorld.Character)
             {
                 Self.Room.RemoveEntity(this);
             }
@@ -1195,7 +1197,7 @@ namespace FreeRaider
         {
             Gui.NotifierStart(itemID);
 
-            var item = Global.EngineWorld.GetBaseItemByID(itemID);
+            var item = EngineWorld.GetBaseItemByID(itemID);
             if (item == null)
                 return 0;
 
@@ -1338,7 +1340,7 @@ namespace FreeRaider
             to.Z -= 4096.0f;
             cb.ClosestHitFraction = 1.0f;
             cb.CollisionObject = null;
-            Global.BtEngineDynamicsWorld.RayTest(from, to, cb);
+            BtEngineDynamicsWorld.RayTest(from, to, cb);
             fc.FloorHit = cb.HasHit;
             if (fc.FloorHit)
             {
@@ -1351,7 +1353,7 @@ namespace FreeRaider
             to.Z += 4096.0f;
             cb.ClosestHitFraction = 1.0f;
             cb.CollisionObject = null;
-            Global.BtEngineDynamicsWorld.RayTest(from, to, cb);
+            BtEngineDynamicsWorld.RayTest(from, to, cb);
             fc.CeilingHit = cb.HasHit;
             if (fc.CeilingHit)
             {
@@ -1377,7 +1379,7 @@ namespace FreeRaider
             if (HeightInfo.FloorHit && nfc.FloorHit)
             {
                 delta = nfc.FloorPoint.Z - HeightInfo.FloorPoint.Z;
-                if (Math.Abs(delta) < Constants.SPLIT_EPSILON)
+                if (Math.Abs(delta) < SPLIT_EPSILON)
                 {
                     from.Z = HeightInfo.FloorPoint.Z;
                     ret = StepType.Horizontal;
@@ -1448,7 +1450,7 @@ namespace FreeRaider
             to.Y = from.Y;
             HeightInfo.Cb.ClosestHitFraction = 1.0f;
             HeightInfo.Cb.CollisionObject = null;
-            Global.BtEngineDynamicsWorld.RayTest(from, to, HeightInfo.Cb);
+            BtEngineDynamicsWorld.RayTest(from, to, HeightInfo.Cb);
             if (HeightInfo.Cb.HasHit)
             {
                 ret = StepType.UpImpossible;
@@ -1526,7 +1528,7 @@ namespace FreeRaider
                 t2.Origin = to;
                 nfc.Ccb.ClosestHitFraction = 1.0f;
                 nfc.Ccb.HitCollisionObject = null;
-                Global.BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) t1, (Matrix4) t2, nfc.Ccb);
+                BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) t1, (Matrix4) t2, nfc.Ccb);
                 if (nfc.Ccb.HasHit)
                 {
                     if (nfc.Ccb.HitNormalWorld.Z >= 0.1f)
@@ -1555,7 +1557,7 @@ namespace FreeRaider
                     t2.Origin = to;
                     nfc.Ccb.ClosestHitFraction = 1.0f;
                     nfc.Ccb.HitCollisionObject = null;
-                    Global.BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) t1, (Matrix4) t2, nfc.Ccb);
+                    BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) t1, (Matrix4) t2, nfc.Ccb);
                     if (nfc.Ccb.HasHit)
                     {
                         upFounded = 1;
@@ -1649,7 +1651,7 @@ namespace FreeRaider
             ret.Up.X = 0.0f;
             ret.Up.Y = 0.0f;
             ret.Up.Z = 1.0f;
-            ret.EdgeZAngle = (float) Math.Atan2(n2.X, -n2.Y) * Constants.DegPerRad;
+            ret.EdgeZAngle = (float) Math.Atan2(n2.X, -n2.Y) * DegPerRad;
             ret.EdgeTanXY.X = -n2.Y;
             ret.EdgeTanXY.Y = n2.X;
             ret.EdgeTanXY.Z = 0.0f;
@@ -1706,7 +1708,7 @@ namespace FreeRaider
             tr2.SetIdentity();
             tr2.Origin = to;
 
-            Global.BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) tr1, (Matrix4) tr2, ccb);
+            BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) tr1, (Matrix4) tr2, ccb);
             if (!ccb.HasHit)
             {
                 return ret;
@@ -1746,7 +1748,7 @@ namespace FreeRaider
                 tr1.Origin = from;
                 tr2.SetIdentity();
                 tr2.Origin = to;
-                Global.BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) tr1, (Matrix4) tr2, ccb);
+                BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) tr1, (Matrix4) tr2, ccb);
                 if (ccb.HasHit)
                 {
                     ret.WallHit = ClimbType.FullBody;
@@ -1842,11 +1844,11 @@ namespace FreeRaider
                     if (Angles.Z < 180.0f)
                     {
                         Angles.Z = Math.Max(0.0f,
-                            Angles.Z - (Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime);
+                            Angles.Z - (Math.Abs(Angles.Z) + leanCoeff) / 2 * EngineFrameTime);
                     }
                     else
                     {
-                        Angles.Z += (360 - Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime;
+                        Angles.Z += (360 - Math.Abs(Angles.Z) + leanCoeff) / 2 * EngineFrameTime;
                         if (Angles.Z < 180.0f) Angles.Z = 0.0f;
                     }
                 }
@@ -1858,17 +1860,17 @@ namespace FreeRaider
                     if (Angles.Z < maxLean) // Approaching from center
                     {
                         Angles.Z = Math.Min(maxLean,
-                            Angles.Z + (Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime);
+                            Angles.Z + (Math.Abs(Angles.Z) + leanCoeff) / 2 * EngineFrameTime);
                     }
                     else if (Angles.Z > 180.0f) // Approaching from left
                     {
-                        Angles.Z += (360 - Math.Abs(Angles.Z) + leanCoeff * 2) / 2 * Global.EngineFrameTime;
+                        Angles.Z += (360 - Math.Abs(Angles.Z) + leanCoeff * 2) / 2 * EngineFrameTime;
                         if (Angles.Z < 180.0f) Angles.Z = 0.0f;
                     }
                     else // Reduce previous lean
                     {
                         Angles.Z = Math.Max(0.0f,
-                            Angles.Z - (Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime);
+                            Angles.Z - (Math.Abs(Angles.Z) + leanCoeff) / 2 * EngineFrameTime);
                     }
                 }
             }
@@ -1879,16 +1881,16 @@ namespace FreeRaider
                     if (Angles.Z > negLean) // Reduce previous lean
                     {
                         Angles.Z = Math.Max(negLean,
-                            Angles.Z - (360.0f - Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime);
+                            Angles.Z - (360.0f - Math.Abs(Angles.Z) + leanCoeff) / 2 * EngineFrameTime);
                     }
                     else if (Angles.Z > 180.0f) // Approaching from right
                     {
-                        Angles.Z -= (Math.Abs(Angles.Z) + leanCoeff * 2) / 2 * Global.EngineFrameTime;
+                        Angles.Z -= (Math.Abs(Angles.Z) + leanCoeff * 2) / 2 * EngineFrameTime;
                         if (Angles.Z < 0.0f) Angles.Z += 360.0f;
                     }
                     else // Approaching from center
                     {
-                        Angles.Z += (360.0f - Math.Abs(Angles.Z) + leanCoeff) / 2 * Global.EngineFrameTime;
+                        Angles.Z += (360.0f - Math.Abs(Angles.Z) + leanCoeff) / 2 * EngineFrameTime;
                         if (Angles.Z > 360.0f) Angles.Z -= 360.0f;
                     }
                 }
@@ -1911,14 +1913,14 @@ namespace FreeRaider
                 {
                     if (InertiaLinear < maxSpeed)
                     {
-                        InertiaLinear = Math.Min(maxSpeed, InertiaLinear + maxSpeed * accel * Global.EngineFrameTime);
+                        InertiaLinear = Math.Min(maxSpeed, InertiaLinear + maxSpeed * accel * EngineFrameTime);
                     }
                 }
                 else
                 {
                     if (InertiaLinear > 0.0f)
                     {
-                        InertiaLinear = Math.Max(0.0f, InertiaLinear - maxSpeed * accel * Global.EngineFrameTime);
+                        InertiaLinear = Math.Max(0.0f, InertiaLinear - maxSpeed * accel * EngineFrameTime);
                     }
                 }
 
@@ -1961,7 +1963,7 @@ namespace FreeRaider
                         else
                         {
                             InertiaAngular[axis] = Math.Min(maxAngle,
-                                InertiaAngular[axis] + maxAngle * accel * Global.EngineFrameTime);
+                                InertiaAngular[axis] + maxAngle * accel * EngineFrameTime);
                         }
                     }
                     else
@@ -1973,7 +1975,7 @@ namespace FreeRaider
                         else
                         {
                             InertiaAngular[axis] = Math.Max(-maxAngle,
-                                InertiaAngular[axis] - maxAngle * accel * Global.EngineFrameTime);
+                                InertiaAngular[axis] - maxAngle * accel * EngineFrameTime);
                         }
                     }
                 }
@@ -1994,15 +1996,15 @@ namespace FreeRaider
             Response.HorizontalCollide = 0x00;
             Response.VerticalCollide = 0x00;
 
-            var rot = GetInertiaAngular(1.0f, Constants.ROT_SPEED_FREEFALL, 0);
+            var rot = GetInertiaAngular(1.0f, ROT_SPEED_FREEFALL, 0);
             Angles.X += rot;
             Angles.Y = 0.0f;
 
             UpdateTransform(); // apply rotations
 
-            var move = ApplyGravity(Global.EngineFrameTime);
-            Speed.Z = Math.Max(-Constants.FREE_FALL_SPEED_MAXIMUM, Speed.Z);
-            Speed = Speed.Rotate(Vector3.UnitZ, rot * Constants.RadPerDeg);
+            var move = ApplyGravity(EngineFrameTime);
+            Speed.Z = Math.Max(-FREE_FALL_SPEED_MAXIMUM, Speed.Z);
+            Speed = Speed.Rotate(Vector3.UnitZ, rot * RadPerDeg);
 
             UpdateCurrentHeight();
 
@@ -2015,7 +2017,7 @@ namespace FreeRaider
                     Speed.Y = 0.0f;
                 }
 
-                if (Global.EngineWorld.EngineVersion < Loader.Engine.TR2)
+                if (EngineWorld.EngineVersion < Loader.Engine.TR2)
                     // Lara cannot wade in < TRII so when floor < transition level she has to swim
                 {
                     if(!HeightInfo.Water || CurrentSector.Floor <= HeightInfo.TransitionLevel)
@@ -2107,7 +2109,7 @@ namespace FreeRaider
             var t = CurrentSpeed * SpeedMult;
             Response.VerticalCollide |= 0x01;
 
-            Angles.X += GetInertiaAngular(1.0f, Constants.ROT_SPEED_MONKEYSWING, 0);
+            Angles.X += GetInertiaAngular(1.0f, ROT_SPEED_MONKEYSWING, 0);
             Angles.Y = 0.0f;
             Angles.Z = 0.0f;
             UpdateTransform(); // apply rotations
@@ -2134,7 +2136,7 @@ namespace FreeRaider
             }
 
             Speed = spd;
-            var move = spd * Global.EngineFrameTime;
+            var move = spd * EngineFrameTime;
             move.Z = 0.0f;
 
             GhostUpdate();
@@ -2176,7 +2178,7 @@ namespace FreeRaider
                 return 2;
             }
 
-            Angles.X = (float) (Math.Atan2(climb.N.X, -climb.N.Y) * Constants.DegPerRad);
+            Angles.X = (float) (Math.Atan2(climb.N.X, -climb.N.Y) * DegPerRad);
             UpdateTransform();
             pos.X = climb.Point.X - Transform.Basis.Column1.X * Bf.BBMax.Y;
             pos.Y = climb.Point.Y - Transform.Basis.Column1.Y * Bf.BBMax.Y;
@@ -2203,7 +2205,7 @@ namespace FreeRaider
                 spd /= t;
             }
             Speed = spd * CurrentSpeed * SpeedMult;
-            var move = Speed * Global.EngineFrameTime;
+            var move = Speed * EngineFrameTime;
 
             GhostUpdate();
             UpdateCurrentHeight();
@@ -2264,7 +2266,7 @@ namespace FreeRaider
             Response.Slide = SlideType.None;
 
             Speed = spd;
-            var move = spd * Global.EngineFrameTime;
+            var move = spd * EngineFrameTime;
 
             GhostUpdate();
             pos += move;
@@ -2296,12 +2298,12 @@ namespace FreeRaider
 
             // Calculate current speed.
 
-            var t = GetInertiaLinear(Constants.MAX_SPEED_UNDERWATER, Constants.INERTIA_SPEED_UNDERWATER, Command.Jump);
+            var t = GetInertiaLinear(MAX_SPEED_UNDERWATER, INERTIA_SPEED_UNDERWATER, Command.Jump);
 
             if (!Response.Killed) // Block controls if Lara is dead.
             {
-                Angles.X += GetInertiaLinear(1.0f, Constants.ROT_SPEED_UNDERWATER, false);
-                Angles.Y -= GetInertiaLinear(1.0f, Constants.ROT_SPEED_UNDERWATER, true);
+                Angles.X += GetInertiaLinear(1.0f, ROT_SPEED_UNDERWATER, false);
+                Angles.Y -= GetInertiaLinear(1.0f, ROT_SPEED_UNDERWATER, true);
                 Angles.Z = 0.0f;
 
                 if (Angles.Y.IsBetween(70.0f, 180.0f, false)) // Underwater angle limiter.
@@ -2319,7 +2321,7 @@ namespace FreeRaider
                 Speed = spd;
             }
 
-            var move = spd * Global.EngineFrameTime;
+            var move = spd * EngineFrameTime;
 
             GhostUpdate();
             pos += move;
@@ -2362,13 +2364,13 @@ namespace FreeRaider
             if (c1.X > 0.9f)
             {
                 obj_s =
-                    ch_s.OwnerRoom.GetSectorRaw(new Vector3(ch_s.Position.X + Constants.TR_METERING_SECTORSIZE,
+                    ch_s.OwnerRoom.GetSectorRaw(new Vector3(ch_s.Position.X + TR_METERING_SECTORSIZE,
                         ch_s.Position.Y, 0.0f));
             }
             else if (c1.X < -0.9f)
             {
                 obj_s =
-                    ch_s.OwnerRoom.GetSectorRaw(new Vector3(ch_s.Position.X - Constants.TR_METERING_SECTORSIZE,
+                    ch_s.OwnerRoom.GetSectorRaw(new Vector3(ch_s.Position.X - TR_METERING_SECTORSIZE,
                         ch_s.Position.Y, 0.0f));
             }
             // OY move case
@@ -2376,13 +2378,13 @@ namespace FreeRaider
             {
                 obj_s =
                     ch_s.OwnerRoom.GetSectorRaw(new Vector3(ch_s.Position.X,
-                        ch_s.Position.Y + Constants.TR_METERING_SECTORSIZE, 0.0f));
+                        ch_s.Position.Y + TR_METERING_SECTORSIZE, 0.0f));
             }
             else if (c1.Y < -0.9f)
             {
                 obj_s =
                     ch_s.OwnerRoom.GetSectorRaw(new Vector3(ch_s.Position.X,
-                        ch_s.Position.Y - Constants.TR_METERING_SECTORSIZE, 0.0f));
+                        ch_s.Position.Y - TR_METERING_SECTORSIZE, 0.0f));
             }
 
             if (obj_s != null)
@@ -2495,7 +2497,7 @@ namespace FreeRaider
                     }
                     else
                     {
-                        SetParam(CharParameters.Air, Constants.PARAM_ABSOLUTE_MAX);
+                        SetParam(CharParameters.Air, PARAM_ABSOLUTE_MAX);
                     }
 
                     ChangeParam(CharParameters.Stamina,
@@ -2586,7 +2588,7 @@ namespace FreeRaider
         // overrided == 0x04: add mesh to slot in disarmed state;
         public int SetWeaponModel(int weaponModel, int armed)
         {
-            var sm = Global.EngineWorld.GetModelByID((uint) weaponModel);
+            var sm = EngineWorld.GetModelByID((uint) weaponModel);
 
             var bm = Bf.Animations.Model;
             if (sm != null && Bf.BoneTags.Count == sm.MeshCount && sm.Animations.Count >= 4)
@@ -2657,15 +2659,15 @@ namespace FreeRaider
                 return 0x00;
             }
 
-            if (Math.Abs(floor - f0) < 1.1f && rs.Ceiling - rs.Floor >= Constants.TR_METERING_SECTORSIZE)
+            if (Math.Abs(floor - f0) < 1.1f && rs.Ceiling - rs.Floor >= TR_METERING_SECTORSIZE)
             {
                 return 0x01;
             }
 
             var cb = new BtEngineClosestRayResultCallback(container);
-            var from = new Vector3(rs.Position.X, rs.Position.Y, floor + Constants.TR_METERING_SECTORSIZE * 0.5f);
-            var to = new Vector3(rs.Position.X, rs.Position.Y, floor - Constants.TR_METERING_SECTORSIZE * 0.5f);
-            Global.BtEngineDynamicsWorld.RayTest(from, to, cb);
+            var from = new Vector3(rs.Position.X, rs.Position.Y, floor + TR_METERING_SECTORSIZE * 0.5f);
+            var to = new Vector3(rs.Position.X, rs.Position.Y, floor - TR_METERING_SECTORSIZE * 0.5f);
+            BtEngineDynamicsWorld.RayTest(from, to, cb);
             if (cb.HasHit)
             {
                 Vector3 v;
