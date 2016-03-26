@@ -231,7 +231,7 @@ namespace FreeRaider
                 {
                     Global.EngineWorld.Character.ProcessSector();
                     Global.EngineWorld.Character.UpdateParams();
-                    Global.EngineWorld.Character.CheckCollisionCallback();   // FIXME: Must do it for ALL interactive entities!
+                    Global.EngineWorld.Character.CheckCollisionCallbacks();   // FIXME: Must do it for ALL interactive entities!
                 }
 
                 LoopEntities(Global.EngineWorld.EntityTree);
@@ -268,11 +268,228 @@ namespace FreeRaider
             Global.EngineWorld.UpdateAnimTextures();
         }
 
-        public static void Prepare();
+        public static void Prepare()
+        {
+            if(Global.EngineWorld.Character != null)
+            {
+                // Set character values to default.
 
-        public static void LevelTransition(ushort levelIndex);
+                Global.EngineWorld.Character.SetParamMaximum(CharParameters.Health, Constants.LARA_PARAM_HEALTH_MAX);
+                Global.EngineWorld.Character.SetParam(CharParameters.Health, Constants.LARA_PARAM_HEALTH_MAX);
+                Global.EngineWorld.Character.SetParamMaximum(CharParameters.Air, Constants.LARA_PARAM_AIR_MAX);
+                Global.EngineWorld.Character.SetParam(CharParameters.Air, Constants.LARA_PARAM_AIR_MAX);
+                Global.EngineWorld.Character.SetParamMaximum(CharParameters.Stamina, Constants.LARA_PARAM_STAMINA_MAX);
+                Global.EngineWorld.Character.SetParam(CharParameters.Stamina, Constants.LARA_PARAM_STAMINA_MAX);
+                Global.EngineWorld.Character.SetParamMaximum(CharParameters.Warmth, Constants.LARA_PARAM_WARMTH_MAX);
+                Global.EngineWorld.Character.SetParam(CharParameters.Warmth, Constants.LARA_PARAM_WARMTH_MAX);
+                Global.EngineWorld.Character.SetParamMaximum(CharParameters.Poison, Constants.LARA_PARAM_POISON_MAX);
+                Global.EngineWorld.Character.SetParam(CharParameters.Poison, 0);
 
-        public static void ApplyControls(Entity ent);
+                // Set character statistics to default.
+
+                Global.EngineWorld.Character.Statistics.Distance = 0.0f;
+                Global.EngineWorld.Character.Statistics.AmmoUsed = 0;
+                Global.EngineWorld.Character.Statistics.Hits = 0;
+                Global.EngineWorld.Character.Statistics.Kills = 0;
+                Global.EngineWorld.Character.Statistics.MedipacksUsed = 0;
+                Global.EngineWorld.Character.Statistics.SavesUsed = 0;
+                Global.EngineWorld.Character.Statistics.SecretsGame = 0;
+                Global.EngineWorld.Character.Statistics.SecretsLevel = 0;
+            }
+            else if(Global.EngineWorld.Rooms.Count > 0)
+            {
+                // If there is no character present, move default camera position to
+                // the first room (useful for TR1-3 cutscene levels).
+
+                Global.EngineCamera.Position = Global.EngineWorld.Rooms[0].BBMax;
+            }
+
+            // Set gameflow parameters to default.
+            // Reset secret trigger map.
+
+            Global.GameflowManager.SecretsTriggerMap = new bool[Constants.GF_MAX_SECRETS + 1];
+        }
+
+        public static void LevelTransition(ushort levelIndex)
+        {
+            var filePath = Global.EngineLua.GetLoadingScreen(levelIndex);
+            Gui.FadeAssignPic(FaderType.LoadScreen, filePath);
+            Gui.FadeStart(FaderType.LoadScreen, FaderDir.Out);
+
+            Audio.EndStreams();
+        }
+
+        public static void ApplyControls(Entity ent)
+        {
+            // Keyboard move logic
+
+            var moveLogic = new[]
+            {
+                Global.ControlStates.MoveForward.Sub(Global.ControlStates.MoveBackward),
+                Global.ControlStates.MoveRight.Sub(Global.ControlStates.MoveLeft),
+                Global.ControlStates.MoveUp.Sub(Global.ControlStates.MoveDown)
+            };
+
+            // Keyboard look logic
+
+            var lookLogic = new Vector3
+                (
+                Global.ControlStates.LookLeft.Sub(Global.ControlStates.LookRight),
+                Global.ControlStates.LookDown.Sub(Global.ControlStates.LookUp),
+                Global.ControlStates.LookRollRight.Sub(Global.ControlStates.LookRollLeft)
+                );
+
+            // APPLY CONTROLS
+
+            Global.CamAngles += 2.2f * Global.EngineFrameTime * lookLogic;
+
+            // FIXME: Duplicate code - do we need cam control with no world??
+            if (Global.Renderer.World == null)
+            {
+                if (Global.ControlMapper.UseJoy)
+                {
+                    // TODO: Useless check? (if it's not zero, do nothing, if it's zero, multiply it, but if it's zero, it won't substract so check for zero is useless)
+                    if (Global.ControlMapper.JoyLookX != 0)
+                    {
+                        Global.CamAngles.X -= 0.015f * Global.EngineFrameTime * Global.ControlMapper.JoyLookX;
+                    }
+                    if (Global.ControlMapper.JoyLookX != 0)
+                    {
+                        Global.CamAngles.X -= 0.015f * Global.EngineFrameTime * Global.ControlMapper.JoyLookX;
+                    }
+                }
+
+                if (Global.ControlStates.MouseLook)
+                {
+                    Global.CamAngles.X -= 0.015f * Global.ControlStates.LookAxisX;
+                    Global.CamAngles.Y -= 0.015f * Global.ControlStates.LookAxisY;
+                    Global.ControlStates.LookAxisX = Global.ControlStates.LookAxisY = 0.0f;
+                }
+
+                Global.Renderer.Camera.SetRotation(Global.CamAngles);
+                var dist = Global.ControlStates.FreeLookSpeed * Global.EngineFrameTime;
+                if (Global.ControlStates.StateWalk) dist *= 0.3f;
+                Global.Renderer.Camera.MoveAlong(dist * moveLogic[0]);
+                Global.Renderer.Camera.MoveStrafe(dist * moveLogic[1]);
+                Global.Renderer.Camera.MoveVertical(dist * moveLogic[2]);
+
+                return;
+            }
+
+            if (Global.ControlMapper.UseJoy)
+            {
+                // TODO: Useless check? (if it's not zero, do nothing, if it's zero, multiply it, but if it's zero, it won't substract so check for zero is useless)
+                if (Global.ControlMapper.JoyLookX != 0)
+                {
+                    Global.CamAngles.X -= Global.EngineFrameTime * Global.ControlMapper.JoyLookX;
+                }
+                if (Global.ControlMapper.JoyLookX != 0)
+                {
+                    Global.CamAngles.X -= Global.EngineFrameTime * Global.ControlMapper.JoyLookX;
+                }
+            }
+
+            if (Global.ControlStates.MouseLook)
+            {
+                Global.CamAngles.X -= 0.015f * Global.ControlStates.LookAxisX;
+                Global.CamAngles.Y -= 0.015f * Global.ControlStates.LookAxisY;
+                Global.ControlStates.LookAxisX = Global.ControlStates.LookAxisY = 0.0f;
+            }
+
+            if(Global.ControlStates.FreeLook || !(ent is Character))
+            {
+                var dist = Global.ControlStates.FreeLookSpeed * Global.EngineFrameTime;
+                if (Global.ControlStates.StateWalk) dist *= 0.3f;
+                Global.Renderer.Camera.SetRotation(Global.CamAngles);
+                Global.Renderer.Camera.MoveAlong(dist * moveLogic[0]);
+                Global.Renderer.Camera.MoveStrafe(dist * moveLogic[1]);
+                Global.Renderer.Camera.MoveVertical(dist * moveLogic[2]);
+                Global.Renderer.Camera.CurrentRoom = Room.FindPosCogerrence(Global.Renderer.Camera.Position,
+                    Global.Renderer.Camera.CurrentRoom);
+            }
+            else if(Global.ControlStates.NoClip)
+            {
+                var dist = Global.ControlStates.FreeLookSpeed * Global.EngineFrameTime;
+                if (Global.ControlStates.StateWalk) dist *= 0.3f;
+                Global.Renderer.Camera.SetRotation(Global.CamAngles);
+                Global.Renderer.Camera.MoveAlong(dist * moveLogic[0]);
+                Global.Renderer.Camera.MoveStrafe(dist * moveLogic[1]);
+                Global.Renderer.Camera.MoveVertical(dist * moveLogic[2]);
+                Global.Renderer.Camera.CurrentRoom = Room.FindPosCogerrence(Global.Renderer.Camera.Position,
+                    Global.Renderer.Camera.CurrentRoom);
+
+                ent.Angles.X = Global.CamAngles.X * Constants.DegPerRad;
+                var pos = Global.Renderer.Camera.Position +
+                          Global.Renderer.Camera.ViewDirection * Global.ControlStates.CamDistance;
+                pos.Z -= 512.0f;
+                ent.Transform.Origin = pos;
+                ent.UpdateTransform();
+            }
+            else
+            {
+                var ch = (Character) ent;
+                // Apply controls to Lara
+                ch.Command.Action = Global.ControlStates.StateAction;
+                ch.Command.ReadyWeapon = Global.ControlStates.DoDrawWeapon;
+                ch.Command.Jump = Global.ControlStates.DoJump;
+                ch.Command.Shift = Global.ControlStates.StateWalk;
+
+                ch.Command.Roll = (Global.ControlStates.MoveForward && Global.ControlStates.MoveBackward) ||
+                                  Global.ControlStates.DoRoll;
+
+                // New commands only for TR3 and above
+                ch.Command.Sprint = Global.ControlStates.StateSprint;
+                ch.Command.Crouch = Global.ControlStates.StateCrouch;
+                
+                if(Global.ControlStates.UseSmallMedipack)
+                {
+                    if(ch.GetItemsCount((uint)ITEM.SmallMedipack) > 0 && ch.ChangeParam(CharParameters.Health, 250))
+                    {
+                        ch.SetParam(CharParameters.Poison, 0);
+                        ch.RemoveItem((uint) ITEM.SmallMedipack, 1);
+                        Audio.Send((uint) TR_AUDIO_SOUND.Medipack);
+                    }
+
+                    Global.ControlStates.UseSmallMedipack = !Global.ControlStates.UseSmallMedipack;
+                }
+
+                if (Global.ControlStates.UseBigMedipack)
+                {
+                    if (ch.GetItemsCount((uint)ITEM.LargeMedipack) > 0 && ch.ChangeParam(CharParameters.Health, Constants.LARA_PARAM_HEALTH_MAX))
+                    {
+                        ch.SetParam(CharParameters.Poison, 0);
+                        ch.RemoveItem((uint)ITEM.LargeMedipack, 1);
+                        Audio.Send((uint)TR_AUDIO_SOUND.Medipack);
+                    }
+
+                    Global.ControlStates.UseBigMedipack = !Global.ControlStates.UseBigMedipack;
+                }
+
+                // TODO: Useless check for zero?
+                if(Global.ControlMapper.UseJoy && Global.ControlMapper.JoyMoveX != 0)
+                {
+                    ch.Command.Rotation.X = -2 * Constants.DegPerRad * Global.EngineFrameTime *
+                                            Global.ControlMapper.JoyMoveX;
+                }
+                else
+                {
+                    ch.Command.Rotation.X = -2 * Constants.DegPerRad * Global.EngineFrameTime * moveLogic[1];
+                }
+
+                // TODO: Useless check for zero?
+                if (Global.ControlMapper.UseJoy && Global.ControlMapper.JoyMoveY != 0)
+                {
+                    ch.Command.Rotation.Y = -2 * Constants.DegPerRad * Global.EngineFrameTime *
+                                            Global.ControlMapper.JoyMoveY;
+                }
+                else
+                {
+                    ch.Command.Rotation.Y = -2 * Constants.DegPerRad * Global.EngineFrameTime * moveLogic[0];
+                }
+
+                ch.Command.Move = moveLogic;
+            }
+        }
 
         public static void UpdateAllEntities(Dictionary<uint, Entity> entities)
         {
@@ -297,7 +514,7 @@ namespace FreeRaider
                 Global.EngineLua.LoopEntity((int) entity.ID);
 
                 if(entity.TypeFlags.HasFlag(ENTITY_TYPE.CollCheck))
-                    entity.CheckCollisionCallback();
+                    entity.CheckCollisionCallbacks();
             }
         }
 
@@ -359,7 +576,175 @@ namespace FreeRaider
             return cb.HasHit;
         }
 
-        public static void Cam_FollowEntity(Camera cam, Entity ent, float dx, float dz);
+        public static void Cam_FollowEntity(Camera cam, Entity ent, float dx, float dz)
+        {
+            var cameraFrom = new Transform();
+            var cameraTo = new Transform();
+
+            // Reset to initial
+            cameraFrom.SetIdentity();
+            cameraTo.SetIdentity();
+
+            var cb = ent.CallbackForCamera();
+
+            var camPos = cam.Position;
+
+            // Basic camera override, completely placeholder until a system classic-like is created
+            if (!Global.ControlStates.MouseLook) // If mouse look is off
+            {
+                var currentAngle = Global.CamAngles.X * Constants.RadPerDeg; // Current is the current cam angle
+                var targetAngle = ent.Angles.X * Constants.RadPerDeg;
+                    // Target is the target angle which is the entity's angle itself
+                var rotSpeed = 2.0f; // Speed of rotation
+
+                // TODO FIX
+                // If Lara is in a specific state we want to rotate -75 deg or +75 deg depending on camera collision
+                if(ent.Bf.Animations.LastState == TR_STATE.LaraReach)
+                {
+                    if(cam.TargetDir == TR_CAM_TARG.Back)
+                    {
+                        var camPos2 = camPos;
+                        cameraFrom.Origin = camPos2;
+                        camPos2.X += (float) (Math.Sin((ent.Angles.X - 90.0f) * Constants.RadPerDeg) *
+                                              Global.ControlStates.CamDistance);
+                        camPos2.Y -= (float) (Math.Cos((ent.Angles.X - 90.0f) * Constants.RadPerDeg) *
+                                              Global.ControlStates.CamDistance);
+                        cameraTo.Origin = camPos2;
+
+                        // If collided we want to go right otherwise stay left
+                        if(Cam_HasHit(cb, cameraFrom, cameraTo))
+                        {
+                            camPos2 = camPos;
+                            cameraFrom.Origin = camPos2;
+                            camPos2.X += (float)(Math.Sin((ent.Angles.X + 90.0f) * Constants.RadPerDeg) *
+                                             Global.ControlStates.CamDistance);
+                            camPos2.Y -= (float)(Math.Cos((ent.Angles.X + 90.0f) * Constants.RadPerDeg) *
+                                                  Global.ControlStates.CamDistance);
+                            cameraTo.Origin = camPos2;
+
+                            // If collided we want to go to back else right
+                            cam.TargetDir = Cam_HasHit(cb, cameraFrom, cameraTo) ? TR_CAM_TARG.Back : TR_CAM_TARG.Right;
+                        }
+                        else
+                        {
+                            cam.TargetDir = TR_CAM_TARG.Left;
+                        }
+                    }
+                }
+                else if(ent.Bf.Animations.LastState == TR_STATE.LaraJumpBack)
+                {
+                    cam.TargetDir = TR_CAM_TARG.Front;
+                }
+                // ReSharper disable once RedundantCheckBeforeAssignment
+                else if(cam.TargetDir != TR_CAM_TARG.Back)
+                {
+                    cam.TargetDir = TR_CAM_TARG.Back; // Reset to back
+                }
+
+                // If target mis-matches current we need to update the camera's angle to reach target!
+                if (currentAngle != targetAngle)
+                {
+                    switch (cam.TargetDir)
+                    {
+                        case TR_CAM_TARG.Back:
+                            targetAngle = ent.Angles.X * Constants.RadPerDeg;
+                            break;
+                        case TR_CAM_TARG.Front:
+                            targetAngle = (ent.Angles.X - 180.0f) * Constants.RadPerDeg;
+                            break;
+                        case TR_CAM_TARG.Left:
+                            targetAngle = (ent.Angles.X - 75.0f) * Constants.RadPerDeg;
+                            break;
+                        case TR_CAM_TARG.Right:
+                            targetAngle = (ent.Angles.X + 75.0f) * Constants.RadPerDeg;
+                            break;
+                        default:
+                            targetAngle = ent.Angles.X * Constants.RadPerDeg; // Same as TR_CAM_TARG_BACK (default pos)
+                            break;
+                    }
+
+                    var dAngle = Global.CamAngles.X - targetAngle;
+                    if (dAngle > Constants.Rad90)
+                    {
+                        dAngle -= 1 * Constants.RadPerDeg;
+                    }
+                    else
+                    {
+                        dAngle += 1 * Constants.RadPerDeg;
+                    }
+                    Global.CamAngles.X =
+                        (float)
+                            ((Global.CamAngles.X +
+                              Math.Atan2(Math.Sin(currentAngle - dAngle), Math.Cos(currentAngle + dAngle)) *
+                              Global.EngineFrameTime * rotSpeed) % Constants.Rad360); // Update camera's angle
+                }
+            }
+
+            camPos = ent.CamPosForFollowing(dz);
+
+            // Code to manage screen shaking effects
+            if(Global.Renderer.Camera.ShakeTime > 0.0f && Global.Renderer.Camera.ShakeValue > 0.0f)
+            {
+                camPos = camPos.AddF((Helper.CPPRand() % Math.Abs(Global.Renderer.Camera.ShakeValue) -
+                                     Global.Renderer.Camera.ShakeValue / 2.0f) * Global.Renderer.Camera.ShakeTime);
+                Global.Renderer.Camera.ShakeTime = Global.Renderer.Camera.ShakeTime < 0.0f
+                    ? 0.0f
+                    : Global.Renderer.Camera.ShakeTime - Global.EngineFrameTime;
+            }
+
+            cameraFrom.Origin = camPos;
+            camPos.Z += dz;
+            cameraTo.Origin = camPos;
+            if(Cam_HasHit(cb, cameraFrom, cameraTo))
+            {
+                Helper.SetInterpolate3(out camPos, cameraFrom.Origin, cameraTo.Origin, cb.ClosestHitFraction);
+                camPos += cb.HitNormalWorld * 2.0f;
+            }
+
+            if(dx != 0.0f)
+            {
+                cameraFrom.Origin = camPos;
+                camPos += dx * cam.RightDirection;
+                cameraTo.Origin = camPos;
+                if (Cam_HasHit(cb, cameraFrom, cameraTo))
+                {
+                    Helper.SetInterpolate3(out camPos, cameraFrom.Origin, cameraTo.Origin, cb.ClosestHitFraction);
+                    camPos += cb.HitNormalWorld * 2.0f;
+                }
+
+                cameraFrom.Origin = camPos;
+
+                var cosAy = Math.Cos(Global.CamAngles.Y);
+                var camDx = Math.Sin(Global.CamAngles.X) * cosAy;
+                var camDy = -Math.Cos(Global.CamAngles.X) * cosAy;
+                var camDz = -Math.Sin(Global.CamAngles.Y);
+                camPos.X += (float) (camDx * Global.ControlStates.CamDistance);
+                camPos.Y += (float) (camDy * Global.ControlStates.CamDistance);
+                camPos.Z += (float) (camDz * Global.ControlStates.CamDistance);
+
+                cameraTo.Origin = camPos;
+                if (Cam_HasHit(cb, cameraFrom, cameraTo))
+                {
+                    Helper.SetInterpolate3(out camPos, cameraFrom.Origin, cameraTo.Origin, cb.ClosestHitFraction);
+                    camPos += cb.HitNormalWorld * 2.0f;
+                }
+            }
+
+            // Update cam pos
+            cam.Position = camPos;
+
+            // Modify cam pos for quicksand rooms
+            cam.CurrentRoom = Room.FindPosCogerrence(cam.Position - new Vector3(0, 0, 128), cam.CurrentRoom);
+            if(cam.CurrentRoom != null && cam.CurrentRoom.Flags.HasFlagUns(RoomFlag.Quicksand))
+            {
+                var pos = cam.Position;
+                pos.Z = cam.CurrentRoom.BBMax.Z + 2.0f * 64.0f;
+                cam.Position = pos;
+            }
+
+            cam.SetRotation(Global.CamAngles);
+            cam.CurrentRoom = Room.FindPosCogerrence(cam.Position, cam.CurrentRoom);
+        }
     }
 
     public class luaFuncs

@@ -2486,7 +2486,7 @@ namespace FreeRaider
 
                     if (HeightInfo.Quicksand == QuicksandPosition.Drowning && MoveType == MoveType.OnFloor)
                     {
-                        if (ChangeParam(CharParameters.Air, -3.0f) == 0)
+                        if (!ChangeParam(CharParameters.Air, -3.0f))
                             ChangeParam(CharParameters.Health, -3.0f);
                     }
                     else if (HeightInfo.Quicksand == QuicksandPosition.Sinking)
@@ -2510,9 +2510,9 @@ namespace FreeRaider
                     break;
 
                 case MoveType.Underwater:
-                    if (ChangeParam(CharParameters.Air, -1.0f) == 0)
+                    if (!ChangeParam(CharParameters.Air, -1.0f))
                     {
-                        if (ChangeParam(CharParameters.Health, -3.0f) == 0)
+                        if (!ChangeParam(CharParameters.Health, -3.0f))
                         {
                             Response.Killed = true;
                         }
@@ -2532,13 +2532,13 @@ namespace FreeRaider
             return Parameters.Param[(int) parameter];
         }
 
-        public int SetParam(CharParameters parameter, float value)
+        public bool SetParam(CharParameters parameter, float value)
         {
             if (parameter >= CharParameters.Sentinel)
-                return 0;
+                return false;
 
             if (value == Parameters.Param[(int) parameter])
-                return 0;
+                return false;
 
             var maximum = Parameters.Maximum[(int) parameter];
 
@@ -2546,19 +2546,19 @@ namespace FreeRaider
             else if (value > maximum) value = maximum;
 
             Parameters.Param[(int) parameter] = value;
-            return 1;
+            return true;
         }
 
-        public int ChangeParam(CharParameters parameter, float value)
+        public bool ChangeParam(CharParameters parameter, float value)
         {
             if (parameter >= CharParameters.Sentinel)
-                return 0;
+                return false;
 
             var maximum = Parameters.Maximum[(int) parameter];
             var current = Parameters.Param[(int) parameter];
 
             if (current == maximum && value > 0)
-                return 0;
+                return false;
 
             current += value;
 
@@ -2566,7 +2566,7 @@ namespace FreeRaider
 
             Parameters.Param[(int) parameter] = current;
 
-            return 1;
+            return false;
         }
 
         public int SetParamMaximum(CharParameters parameter, float maxValue)

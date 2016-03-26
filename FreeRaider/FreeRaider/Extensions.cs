@@ -690,6 +690,21 @@ namespace FreeRaider
         {
             return b ? trueStr : falseStr;
         }
+
+        public static Vector3 AddF(this Vector3 v, float f)
+        {
+            return new Vector3(v.X + f, v.Y + f, v.Z + f);
+        }
+
+        public static int ToI(this bool b)
+        {
+            return b ? 1 : 0;
+        }
+
+        public static sbyte Sub(this bool b, bool c)
+        {
+            return (sbyte) (b.ToI() - c.ToI());
+        }
     }
 
     public partial class Constants

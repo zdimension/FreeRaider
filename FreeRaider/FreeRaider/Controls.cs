@@ -192,7 +192,52 @@ namespace FreeRaider
             body.CcdSweptSphereRadius = dbgR;
         }
 
-        public static void SecondaryMouseDown();
+        public static void SecondaryMouseDown()
+        {
+            var from = Global.EngineCamera.Position;
+            var to = from + Global.EngineCamera.ViewDirection * 32768.0f;
+
+            var camCont = new EngineContainer {Room = Global.EngineCamera.CurrentRoom};
+
+            var cbc = new BtEngineClosestRayResultCallback(camCont);
+            //cbc.CollisionFilterMask = CollisionFilterGroups.StaticFilter | CollisionFilterGroups.KinematicFilter;
+            Global.BtEngineDynamicsWorld.RayTest(from, to, cbc);
+            if(cbc.HasHit)
+            {
+                var castRay = new float[6];
+
+                Vector3 place;
+                Helper.SetInterpolate3(out place, from, to, cbc.ClosestHitFraction);
+                place.CopyToArray(castRay, 0);
+                (place + 100.0f * cbc.HitNormalWorld).CopyToArray(castRay, 3);
+
+                var c0 = (EngineContainer) cbc.CollisionObject.UserObject;
+                if(c0 != null)
+                {
+                    if(c0.ObjectType == OBJECT_TYPE.BulletMisc)
+                    {
+                        var obj = cbc.CollisionObject;
+                        var body = RigidBody.Upcast(obj);
+                        body?.MotionState?.Dispose();
+                        body?.CollisionShape?.Dispose();
+
+                        if(body != null)
+                        {
+                            body.UserObject = null;
+                        }
+                        c0.Room = null;
+                        c0 = null;
+
+                        Global.BtEngineDynamicsWorld.RemoveCollisionObject(obj);
+                        obj.Dispose();
+                    }
+                    else
+                    {
+                        Global.LastContainer = c0;
+                    }
+                }
+            }
+        }
 
         public static void Key(int button, bool state);
 
@@ -206,7 +251,13 @@ namespace FreeRaider
 
         public static void JoyRumble(float power, int time);
 
-        public static void RefreshStates();
+        public static void RefreshStates()
+        {
+            for(var i = 0; i < (int)ACTIONS.LastIndex; i++)
+            {
+                Global.ControlMapper.ActionMap[i].AlreadyPressed = Global.ControlMapper.ActionMap[i].State;
+            }
+        }
 
         public static void InitGlobals();
     }

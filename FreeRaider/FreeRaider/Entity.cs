@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using BulletSharp;
 using OpenTK;
+using SharpFont;
 
 namespace FreeRaider
 {
@@ -272,36 +275,364 @@ namespace FreeRaider
 
         public void CreateGhosts()
         {
-            
+            if (Bf.Animations.Model == null || Bf.Animations.Model.MeshCount <= 0)
+                return;
+
+            Bt.ManifoldArray = new AlignedManifoldArray();
+            Bt.Shapes.Clear();
+            Bt.GhostObjects.Clear();
+            Bt.LastCollisions.Clear();
+            for(var i = 0; i < Bf.BoneTags.Count; i++)
+            {
+                var box = Constants.COLLISION_GHOST_VOLUME_COEFFICIENT *
+                          (Bf.BoneTags[i].MeshBase.BBMax - Bf.BoneTags[i].MeshBase.BBMin);
+                Bt.Shapes.Add(new BoxShape(box));
+                Bt.Shapes.Last().Margin = Constants.COLLISION_MARGIN_DEFAULT;
+                Bf.BoneTags[i].MeshBase.Radius = Math.Min(Math.Min(box.X, box.Y), box.Z);
+
+                var pcg = new PairCachingGhostObject();
+
+                pcg.SetIgnoreCollisionCheck(Bt.BtBody[i], true);
+
+                var gltr = Transform * Bf.BoneTags[i].FullTransform;
+                gltr.Origin = gltr * Bf.BoneTags[i].MeshBase.Center;
+
+                pcg.WorldTransform = (Matrix4)gltr;
+                pcg.CollisionFlags |= CollisionFlags.NoContactResponse | CollisionFlags.CharacterObject;
+                pcg.UserObject = Self;
+                pcg.CollisionShape = Bt.Shapes.Last();
+                Global.BtEngineDynamicsWorld.AddCollisionObject(pcg, CollisionFilterGroups.CharacterFilter, CollisionFilterGroups.AllFilter);
+                Bt.GhostObjects.Add(pcg);
+
+                Bt.LastCollisions.Add(null);
+            }
         }
 
-        public void Enable();
+        public void Enable()
+        {
+            if(!Enabled)
+            {
+                EnableCollision();
+                Enabled = Active = Visible = true;
+            }
+        }
 
-        public void Disable();
+        public void Disable()
+        {
+            if (Enabled)
+            {
+                DisableCollision();
+                Enabled = Active = Visible = false;
+            }
+        }
 
-        public void EnableCollision();
+        /// <summary>
+        /// This function enables collision for entity in all cases except NULL models.
+        /// If collision models does not exists, function will create them.
+        /// </summary>
+        public void EnableCollision()
+        {
+            foreach (var b in Bt.BtBody)
+            {
+                if(b != null && !b.IsInWorld)
+                {
+                    Global.BtEngineDynamicsWorld.AddRigidBody(b);
+                }
+            }
+        }
 
-        public void DisableCollision();
+        public void DisableCollision()
+        {
+            foreach (var b in Bt.BtBody)
+            {
+                if (b != null && b.IsInWorld)
+                {
+                    Global.BtEngineDynamicsWorld.RemoveRigidBody(b);
+                }
+            }
+        }
 
-        public void GenRigidBody();
+        public void GenRigidBody()
+        {
+            if (Bf.Animations.Model == null || Self.CollisionType == COLLISION_TYPE.None)
+                return;
 
-        public void GhostUpdate();
+            Bt.BtBody.Clear();
+
+            for(var i = 0; i < Bf.BoneTags.Count; i++)
+            {
+                var mesh = Bf.Animations.Model.MeshTree[i].MeshBase;
+                CollisionShape cshape;
+                switch(Self.CollisionShape)
+                {
+                    case COLLISION_SHAPE.Sphere:
+                        cshape = CollisionShapeHelper.CSfromSphere(mesh.Radius);
+                        break;
+
+                    case COLLISION_SHAPE.TrimeshConvex:
+                        cshape = CollisionShapeHelper.CSfromMesh(mesh, true, true, false);
+                        break;
+
+                    case COLLISION_SHAPE.Trimesh:
+                        cshape = CollisionShapeHelper.CSfromMesh(mesh, true, true, true);
+                        break;
+
+                    case COLLISION_SHAPE.Box:
+                    default:
+                        cshape = CollisionShapeHelper.CSfromBBox(mesh.BBMin, mesh.BBMax, true, true);
+                        break;
+                }
+
+                Bt.BtBody.Add(null);
+
+                if(cshape != null)
+                {
+                    var localInertia = Vector3.Zero;
+                    if (Self.CollisionShape != COLLISION_SHAPE.Trimesh)
+                        cshape.CalculateLocalInertia(0.0f, out localInertia);
+
+                    var startTransform = Transform * Bf.BoneTags[i].FullTransform;
+                    var motionState = new DefaultMotionState((Matrix4)startTransform);
+                    Bt.BtBody[Bt.BtBody.Count - 1] = new RigidBody(new RigidBodyConstructionInfo(0.0f, motionState, cshape, localInertia));
+
+                    CollisionFlags cf = CollisionFlags.None;
+                    switch (Self.CollisionType)
+                    {
+                        case COLLISION_TYPE.Kinematic:
+                            Bt.BtBody.Last().CollisionFlags |= CollisionFlags.KinematicObject;
+                            break;
+
+                        case COLLISION_TYPE.Ghost:
+                            Bt.BtBody.Last().CollisionFlags |= CollisionFlags.NoContactResponse;
+                            break;
+
+                        case COLLISION_TYPE.Actor:
+                        case COLLISION_TYPE.Vehicle:
+                            Bt.BtBody.Last().CollisionFlags |= CollisionFlags.CharacterObject;
+                            break;
+
+                        case COLLISION_TYPE.Static:
+                        default:
+                            Bt.BtBody.Last().CollisionFlags |= CollisionFlags.StaticObject;
+                            break;
+                    }
+
+                    Global.BtEngineDynamicsWorld.AddRigidBody(Bt.BtBody[i], CollisionFilterGroups.KinematicFilter, CollisionFilterGroups.AllFilter);
+                    Bt.BtBody.Last().UserObject = Self;
+                }
+            }
+        }
+
+        public void GhostUpdate()
+        {
+            if (Bt.GhostObjects.Count == 0)
+                return;
+
+            Assert.That(Bt.GhostObjects.Count == Bf.BoneTags.Count);
+
+            if(TypeFlags.HasFlag(ENTITY_TYPE.Dynamic))
+            {
+                for(var i = 0; i < Bf.BoneTags.Count; i++)
+                {
+                    var tr = Transform * Bf.BoneTags[i].FullTransform;
+                    var v = Bf.Animations.Model.MeshTree[i].MeshBase.Center;
+                    var pos = tr * v;
+                    tr.Origin = pos;
+                    Bt.GhostObjects[i].WorldTransform = (Matrix4)tr;
+                }
+            }
+            else
+            {
+                for (var i = 0; i < Bf.BoneTags.Count; i++)
+                {
+                    var tr = (Transform)Bt.BtBody[i].WorldTransform;
+                    tr.Origin = Bf.Animations.Model.MeshTree[i].MeshBase.Center;
+                    Bt.GhostObjects[i].WorldTransform = (Matrix4)tr;
+                }
+            }
+        }
 
         public void UpdateCurrentCollisions();
 
-        public int GetPenetrationFixVector(out Vector3 reaction, bool hasMove);
+        public int GetPenetrationFixVector(out Vector3 reaction, bool hasMove)
+        {
+            reaction = Vector3.Zero;
+            if (Bt.GhostObjects.Count == 0 || Bt.NoFixAll)
+                return 0;
 
-        public void CheckCollisionCallback();
+            Assert.That(Bt.GhostObjects.Count == Bf.BoneTags.Count);
 
-        public bool WasCollisionBodyParts(uint partsFlags);
+            var origPos = Transform.Origin;
+            var ret = 0;
+            for (var i = 0; i < Bf.Animations.Model.CollisionMap.Count; i++)
+            {
+                var m = Bf.Animations.Model.CollisionMap[i];
+                var btag = Bf.BoneTags[m];
 
-        public void CleanCollisionAllBodyParts();
+                if (btag.BodyPart.HasFlagUns(Bt.NoFixBodyParts))
+                {
+                    continue;
+                }
 
-        public void CleanCollisionBodyParts(uint partsFlags);
+                // antitunneling condition for main body parts, needs only in move case: ((move != NULL) && (btag->body_part & (BODY_PART_BODY_LOW | BODY_PART_BODY_UPPER)))
+                Vector3 from;
+                if (btag.Parent == null ||
+                    (hasMove && btag.BodyPart.HasFlagUns(BODY_PART.BodyLow | BODY_PART.BodyUpper)))
+                {
+                    from = ((Transform) Bt.GhostObjects[m].WorldTransform).Origin;
+                    from += Transform.Origin - origPos;
+                }
+                else
+                {
+                    var parentFrom = btag.Parent.FullTransform * btag.Parent.MeshBase.Center;
+                    from = Transform * parentFrom;
+                }
 
-        public CollisionObject GetRemoveCollisionBodyParts(uint partsFlags, uint currFlag);
+                var tr = Transform * btag.FullTransform;
+                var to = tr * btag.MeshBase.Center;
+                var curr = from;
+                var move = to - from;
+                var moveLen = move.Length;
+                if (i == 0 && moveLen > 1024.0f)
+                {
+                    break;
+                }
+                var iter = (int) (4.0f * moveLen / btag.MeshBase.Radius + 1);
+                move /= iter;
 
-        public void UpdateRoomPos();
+                for(var j = 0; j <= iter; j++)
+                {
+                    tr.Origin = curr;
+                    var trCurrent = tr;
+                    Bt.GhostObjects[m].WorldTransform = (Matrix4) trCurrent;
+                    Vector3 tmp;
+                    if(StaticFuncs.GhostGetPenetrationFixVector(Bt.GhostObjects[m], Bt.ManifoldArray, out tmp).ToBool())
+                    {
+                        Transform.Origin += tmp;
+                        curr += tmp;
+                        from += tmp;
+                        ret++;
+                    }
+                    curr += move;
+                }
+            }
+            reaction = Transform.Origin - origPos;
+            Transform.Origin = origPos;
+
+            return ret;
+        }
+
+        public void CheckCollisionCallbacks()
+        {
+            if (Bt.GhostObjects.Count == 0)
+                return;
+
+            CollisionObject cobj;
+            uint currFlag;
+            UpdateCurrentCollisions();
+            while((cobj = GetRemoveCollisionBodyParts(0xFFFFFFFF, out currFlag)) != null)
+            {
+                // do callbacks here:
+                var type = OBJECT_TYPE.None;
+                var cont = (EngineContainer) cobj.UserObject;
+                if(cont != null)
+                {
+                    type = cont.ObjectType;
+                }
+
+                if(type == OBJECT_TYPE.Entity)
+                {
+                    var activator = (Entity) cont.Object;
+
+                    if(activator.CallbackFlags.HasFlag(ENTITY_CALLBACK.Collision))
+                    {
+                        // Activator and entity IDs are swapped in case of collision callback.
+                        Global.EngineLua.ExecEntity((int)ENTITY_CALLBACK.Collision, (int)activator.ID, (int)ID);
+                    }
+                }
+                else if(CallbackFlags.HasFlag(ENTITY_CALLBACK.RoomCollision) && type == OBJECT_TYPE.RoomBase)
+                {
+                    var activator = (Room) cont.Object;
+                    Global.EngineLua.ExecEntity((int)ENTITY_CALLBACK.RoomCollision, (int)ID, (int)activator.ID);
+                }
+            }
+        }
+
+        public bool WasCollisionBodyParts(uint partsFlags)
+        {
+            return Bt.LastCollisions.Count != 0 && Bf.BoneTags.Where((t, i) => t.BodyPart.HasFlagUns(partsFlags) && Bt.LastCollisions[i].Obj.Count > 0).Any();
+        }
+
+        public void CleanCollisionAllBodyParts()
+        {
+            foreach (var coll in Bt.LastCollisions)
+            {
+                coll.Obj.Clear();
+            }
+        }
+
+        public void CleanCollisionBodyParts(uint partsFlags)
+        {
+            if (Bt.LastCollisions.Count == 0)
+                return;
+
+            for (var i = 0; i < Bf.BoneTags.Count; i++)
+            {
+                if(Bf.BoneTags[i].BodyPart.HasFlagUns(partsFlags))
+                {
+                    Bt.LastCollisions[i].Obj.Clear();
+                }
+            }
+        }
+
+        public CollisionObject GetRemoveCollisionBodyParts(uint partsFlags, out uint currFlag)
+        {
+            currFlag = 0x00;
+            if (Bt.LastCollisions.Count == 0)
+                return null;
+
+            for (var i = 0; i < Bf.BoneTags.Count; i++)
+            {
+                if (Bf.BoneTags[i].BodyPart.HasFlagUns(partsFlags))
+                {
+                    var cn = Bt.LastCollisions[i];
+                    if(cn.Obj.Count > 0)
+                    {
+                        currFlag = Bf.BoneTags[i].BodyPart;
+                        var res = cn.Obj.Last();
+                        cn.Obj.RemoveAt(cn.Obj.Count - 1);
+                        return res;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public void UpdateRoomPos()
+        {
+            var pos = GetRoomPos();
+            var newRoom = Room.FindPosCogerrence(pos, Self.Room);
+            if(newRoom == null)
+            {
+                CurrentSector = null;
+                return;
+            }
+
+            var newSector = newRoom.GetSectorXYZ(pos);
+            newRoom = newSector.OwnerRoom;
+            
+            TransferToRoom(newRoom);
+
+            Self.Room = newRoom;
+            LastSector = CurrentSector;
+
+            if(CurrentSector != newSector)
+            {
+                TriggerLayout &= ~ENTITY_TLAYOUT.SectorStatus; // Reset sector status.
+                CurrentSector = newSector;
+            }
+        }
 
         public void UpdateRigidBody(bool force);
 
@@ -357,14 +688,42 @@ namespace FreeRaider
 
         public bool DeleteRagdoll();
 
-        public virtual void FixPenetrations(Vector3 move);
+        public virtual void FixPenetrations(Vector3 move)
+        {
+            if (Bt.GhostObjects.Count == 0)
+                return;
+
+            if(TypeFlags.HasFlag(ENTITY_TYPE.Dynamic))
+            {
+                return;
+            }
+
+            if(Bt.NoFixAll)
+            {
+                GhostUpdate();
+                return;
+            }
+
+            Vector3 reaction;
+            GetPenetrationFixVector(out reaction, move != Vector3.Zero);
+            Transform.Origin += reaction;
+
+            GhostUpdate();
+        }
 
         public virtual Vector3 GetRoomPos()
         {
             return Transform * ((Bf.BBMin + Bf.BBMax) / 2);
         }
 
-        public virtual void TransferToRoom(Room room);
+        public virtual void TransferToRoom(Room room)
+        {
+            if(Self.Room != null && !Self.Room.IsOverlapped(room))
+            {
+                Self.Room.RemoveEntity(this);
+                room?.AddEntity(this);
+            }
+        }
 
         public virtual void FrameImpl(float time, short frame, ENTITY_ANIM state)
         {
@@ -387,7 +746,12 @@ namespace FreeRaider
         {
         }
 
-        public virtual BtEngineClosestConvexResultCallback CallbackForCamera();
+        public virtual BtEngineClosestConvexResultCallback CallbackForCamera()
+        {
+            var cb = new BtEngineClosestConvexResultCallback(Self);
+            cb.CollisionFilterMask = CollisionFilterGroups.StaticFilter | CollisionFilterGroups.KinematicFilter;
+            return cb;
+        }
 
         public virtual Vector3 CamPosForFollowing(float dz)
         {
@@ -413,8 +777,73 @@ namespace FreeRaider
 
     public partial class StaticFuncs
     {
+        /// <summary>
+        /// It is from bullet_character_controller
+        /// </summary>
         public static int GhostGetPenetrationFixVector(PairCachingGhostObject ghost, AlignedManifoldArray manifoldArray,
-           Vector3 correction);
+            out Vector3 correction)
+        {
+            // Here we must refresh the overlapping paircache as the penetrating movement itself or the
+            // previous recovery iteration might have used setWorldTransform and pushed us into an object
+            // that is not in the previous cache contents from the last timestep, as will happen if we
+            // are pushed into a new AABB overlap. Unhandled this means the next convex sweep gets stuck.
+            //
+            // Do this by calling the broadphase's setAabb with the moved AABB, this will update the broadphase
+            // paircache and the ghostobject's internal paircache at the same time.    /BW
+
+            var ret = 0;
+            var pairArray = ghost.OverlappingPairCache.OverlappingPairArray;
+            Vector3 aabb_min, aabb_max, t;
+
+            ghost.CollisionShape.GetAabb(ghost.WorldTransform, out aabb_min, out aabb_max);
+            Global.BtEngineDynamicsWorld.Broadphase.SetAabb(ghost.BroadphaseHandle, aabb_min, aabb_max,
+                Global.BtEngineDynamicsWorld.Dispatcher);
+            Global.BtEngineDynamicsWorld.Dispatcher.DispatchAllCollisionPairs(ghost.OverlappingPairCache,
+                Global.BtEngineDynamicsWorld.DispatchInfo, Global.BtEngineDynamicsWorld.Dispatcher);
+
+            correction = Vector3.Zero;
+            var numPairs = ghost.OverlappingPairCache.NumOverlappingPairs;
+            for (var i = 0; i < numPairs; i++)
+            {
+                manifoldArray.Clear();
+                // do not use commented code: it prevents to collision skips.
+                //var pair = pairArray[i];
+                //var collisionPair = Global.BtEngineDynamicsWorld.PairCache.FindPair(pair.Proxy0, pair.Proxy1);
+                var collisionPair = pairArray[i];
+
+                if(collisionPair == null)
+                {
+                    continue;
+                }
+
+                collisionPair.Algorithm?.GetAllContactManifolds(manifoldArray);
+
+                foreach (var manifold in manifoldArray)
+                {
+                    var directionSign = manifold.Body0 == ghost ? -1.0f : 1.0f;
+                    var cont0 = (EngineContainer) manifold.Body0.UserObject;
+                    var cont1 = (EngineContainer) manifold.Body1.UserObject;
+                    if(cont0.CollisionType == COLLISION_TYPE.Ghost && cont1.CollisionType == COLLISION_TYPE.Ghost)
+                    {
+                        continue;
+                    }
+                    for(var k = 0; k < manifold.NumContacts; k++)
+                    {
+                        var pt = manifold.GetContactPoint(k);
+                        var dist = pt.Distance;
+
+                        if(dist < 0.0f)
+                        {
+                            t = pt.NormalWorldOnB * dist * directionSign;
+                            correction += t;
+                            ret++;
+                        }
+                    }
+                }
+            }
+
+            return ret;
+        }
 
         public static StateChange Anim_FindStateChangeByAnim(AnimationFrame anim, int stateChangeAnim);
 
