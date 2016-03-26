@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using OpenTK;
+using OpenTK.Graphics;
 
 namespace FreeRaider
 {
@@ -16,6 +17,26 @@ namespace FreeRaider
             set { Helper.SetRotation(ref Basis, value); }
         }
 
+        public Transform Inverse
+        {
+            get
+            {
+                var inv = Basis;
+                inv.Transpose();
+                return new Transform(inv, inv.MultiplyByVector(-Origin));
+            }
+        }
+
+        public Transform()
+        {
+        }
+
+        public Transform(Matrix3 m, Vector3 c)
+        {
+            Basis = m;
+            Origin = c;
+        }
+
         public static Vector3 operator * (Transform t, Vector3 x)
         {
             return x.Dot3(t.Basis.Row0, t.Basis.Row1, t.Basis.Row2) + t.Origin;
@@ -24,6 +45,16 @@ namespace FreeRaider
         public static Vector3 operator *(Vector3 x, Transform t)
         {
             return t * x;
+        }
+
+        public static Transform operator *(Transform a, Matrix4 b)
+        {
+            return a * (Transform) b;
+        }
+
+        public static Matrix4 operator *(Matrix4 a, Transform b)
+        {
+            return a * (Matrix4) b;
         }
 
         public static Transform operator *(Transform a, Transform b)

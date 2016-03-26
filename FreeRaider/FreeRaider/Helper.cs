@@ -193,6 +193,14 @@ namespace FreeRaider
             mat.Row2 = new Vector3(m20, m21, m22);
         }
 
+        /// <summary>
+        /// WARNING: XYZ!
+        /// </summary>
+        public static void SetEulerZYX(ref Matrix3 mat, Vector3 euler)
+        {
+            SetEulerZYX(ref mat, euler.X, euler.Y, euler.Z);
+        }
+
         public static void SetEulerZYX(ref Matrix3 mat, float eulerX, float eulerY, float eulerZ)
         {
             var ci = (float) Math.Cos(eulerX);
@@ -326,6 +334,16 @@ namespace FreeRaider
             mat.Row0 = new Vector3(m[0], m[4], m[8]);
             mat.Row1 = new Vector3(m[1], m[5], m[9]);
             mat.Row2 = new Vector3(m[2], m[6], m[10]);
+        }
+
+        public static Vector3 Vec3Min(Vector3 a, Vector3 b)
+        {
+            return new Vector3(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y), Math.Min(a.Z, b.Z));
+        }
+
+        public static Vector3 Vec3Max(Vector3 a, Vector3 b)
+        {
+            return new Vector3(Math.Max(a.X, b.X), Math.Max(a.Y, b.Y), Math.Max(a.Z, b.Z));
         }
     }
 

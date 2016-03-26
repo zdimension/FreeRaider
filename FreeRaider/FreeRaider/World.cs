@@ -177,7 +177,7 @@ namespace FreeRaider
 
         public ushort Count { get; set; }
 
-        public char[] Name { get; set; }
+        public string Name { get; set; }
 
         public SSBoneFrame BoneFrame { get; set; }
     }

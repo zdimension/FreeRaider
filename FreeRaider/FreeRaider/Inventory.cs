@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using OpenTK;
 
 namespace FreeRaider
 {
@@ -237,11 +238,82 @@ namespace FreeRaider
             NextState = InventoryState.Disabled;
         }
 
-        public void SetTitle(MenuItemType itemsType);
+        public void SetTitle(MenuItemType itemsType)
+        {
+            var stringIndex = 0;
+
+            switch (itemsType)
+            {
+                case MenuItemType.System:
+                    stringIndex = Strings.STR_GEN_OPTIONS_TITLE;
+                    break;
+
+                case MenuItemType.Quest:
+                    stringIndex = Strings.STR_GEN_ITEMS;
+                    break;
+
+                case MenuItemType.Supply:
+                default:
+                    stringIndex = Strings.STR_GEN_INVENTORY;
+                    break;
+            }
+
+            LabelTitle.Text = Global.EngineLua.GetString(stringIndex);
+        }
 
         public void Frame(float time);
 
-        public void Render();
+        public void Render()
+        {
+            if(CurrentState != InventoryState.Disabled && inventory != null && inventory.Count > 0 && Global.FontManager != null)
+            {
+                var num = 0;
+                foreach (var i in inventory)
+                {
+                    var bi = Global.EngineWorld.GetBaseItemByID(i.ID);
+                    if(bi == null || bi.Type != ItemsType)
+                    {
+                        continue;
+                    }
+
+                    var matrix = new Transform();
+                    matrix.SetIdentity();
+                    VMath.Mat4_Translate(matrix, 0.0f, 0.0f, -baseRingRadius * 2.0f);
+                    //VMath.Mat4_RotateX(matrix, 25.0f);
+                    VMath.Mat4_RotateX(matrix, 25.0f + ringVerticalAngle);
+                    var ang = ringAngleStep * (-itemsOffset + num) + ringAngle;
+                    VMath.Mat4_RotateY(matrix, ang);
+                    VMath.Mat4_Translate(matrix, 0.0f, verticalOffset, ringRadius);
+                    VMath.Mat4_RotateX(matrix, -90.0f);
+                    VMath.Mat4_RotateZ(matrix, 90.0f);
+                    if(num == itemsOffset)
+                    {
+                        if(bi.Name[0] != 0)
+                        {
+                            LabelItemName.Text = bi.Name;
+
+                            if(i.Count > 1)
+                            {
+                                var counter = Global.EngineLua.GetString(Strings.STR_GEN_MASK_INVHEADER);
+                                LabelItemName.Text = Helper.Format(counter, bi.Name, i.Count);
+                            }
+                        }
+                        VMath.Mat4_RotateZ(matrix, 90.0f + itemAngle - ang);
+                        Gui.Item_Frame(bi.BoneFrame, 0.0f); // here will be time != 0 for using items animation
+                    }
+                    else
+                    {
+                        VMath.Mat4_RotateZ(matrix, 90.0f - ang);
+                        Gui.Item_Frame(bi.BoneFrame, 0.0f);
+                    }
+                    VMath.Mat4_Translate(matrix, -0.5f * bi.BoneFrame.Centre);
+                    VMath.Mat4_Scale(matrix, 0.7f, 0.7f, 0.7f);
+                    Gui.RenderItem(bi.BoneFrame, 0.0f, matrix);
+
+                    num++;
+                }
+            }
+        }
     }
 
     public partial class Global

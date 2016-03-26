@@ -503,6 +503,11 @@ namespace FreeRaider
             return value - 360.0f * i;
         }
 
+        public static Vector3 WrapAngle(this Vector3 v)
+        {
+            return new Vector3(v.X.WrapAngle(), v.Y.WrapAngle(), v.Z.WrapAngle());
+        }
+
         public static Vector3 GetColumn(this Matrix3 mat, int column)
         {
             switch (column)

@@ -51,7 +51,10 @@ namespace FreeRaider
     {
         public Vector3 Position;
 
-        public float[] Color = new float[4];
+        /// <summary>
+        /// Length 4
+        /// </summary>
+        public float[] Color;
 
         public Vector3 Normal;
     }
@@ -1161,7 +1164,7 @@ namespace FreeRaider
         /// <summary>
         /// "switch to" animation
         /// </summary>
-        public ushort NextAnim;
+        public TR_ANIMATION NextAnim;
 
         /// <summary>
         /// "switch to" frame
@@ -1219,7 +1222,7 @@ namespace FreeRaider
 
         public uint NumAnimCommands;
 
-        public ushort StateID;
+        public TR_STATE StateID;
 
         /// <summary>
         /// Frame data
