@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using BulletSharp;
+using NLua;
+using NLua.Exceptions;
 using OpenTK;
 using SharpFont;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
+using static FreeRaider.StaticFuncs;
 
 namespace FreeRaider
 {
@@ -543,7 +547,63 @@ namespace FreeRaider
             }
         }
 
-        public void UpdateCurrentCollisions();
+        public void UpdateCurrentCollisions()
+        {
+            if (Bt.GhostObjects.Count == 0)
+                return;
+
+            Assert.That(Bt.GhostObjects.Count == Bf.BoneTags.Count);
+
+            for(var i = 0; i < Bf.BoneTags.Count; i++)
+            {
+                var ghost = Bt.GhostObjects[i];
+                var cn = Bt.LastCollisions[i];
+
+                cn.Obj.Clear();
+                var tr = Transform * Bf.BoneTags[i].FullTransform;
+                var v = Bf.Animations.Model.MeshTree[i].MeshBase.Center;
+                var origTr = ghost.WorldTransform;
+                var _wt = tr.Clone();
+                var pos = tr * v;
+                _wt.Origin = pos;
+                ghost.WorldTransform = (Matrix4) _wt;
+
+                var pairArray = ghost.OverlappingPairCache.OverlappingPairArray;
+                Vector3 aabb_min, aabb_max;
+
+                ghost.CollisionShape.GetAabb(ghost.WorldTransform, out aabb_min, out aabb_max);
+                BtEngineDynamicsWorld.Broadphase.SetAabb(ghost.BroadphaseHandle, aabb_min, aabb_max, BtEngineDynamicsWorld.Dispatcher);
+                BtEngineDynamicsWorld.Dispatcher.DispatchAllCollisionPairs(ghost.OverlappingPairCache,
+                    BtEngineDynamicsWorld.DispatchInfo, BtEngineDynamicsWorld.Dispatcher);
+
+                var numPairs = ghost.OverlappingPairCache.NumOverlappingPairs;
+                for(var j = 0; j < numPairs; j++)
+                {
+                    Bt.ManifoldArray.Clear();
+                    var collisionPair = pairArray[j];
+
+                    collisionPair?.Algorithm?.GetAllContactManifolds(Bt.ManifoldArray);
+
+                    foreach (var manifold in Bt.ManifoldArray)
+                    {
+                        for(var c = 0; c < manifold.NumContacts; c++)
+                        {
+                            if(manifold.GetContactPoint(c).Distance < 0.0f)
+                            {
+                                var u = manifold.Body0;
+                                if(Self == u.UserObject)
+                                {
+                                    u = manifold.Body1;
+                                }
+                                cn.Obj.Add(u);
+                                break;
+                            }
+                        }
+                    }
+                }
+                ghost.WorldTransform = origTr;
+            }
+        }
 
         public int GetPenetrationFixVector(out Vector3 reaction, bool hasMove)
         {
@@ -597,7 +657,7 @@ namespace FreeRaider
                     var trCurrent = tr;
                     Bt.GhostObjects[m].WorldTransform = (Matrix4) trCurrent;
                     Vector3 tmp;
-                    if(StaticFuncs.GhostGetPenetrationFixVector(Bt.GhostObjects[m], Bt.ManifoldArray, out tmp).ToBool())
+                    if(GhostGetPenetrationFixVector(Bt.GhostObjects[m], Bt.ManifoldArray, out tmp).ToBool())
                     {
                         Transform.Origin += tmp;
                         curr += tmp;
@@ -790,9 +850,20 @@ namespace FreeRaider
             RebuildBV();
         }
 
-        public void RebuildBV();
+        /// <summary>
+        /// The function rebuild / renew entity's BV
+        /// </summary>
+        public void RebuildBV()
+        {
+            if(Bf.Animations.Model != null)
+            {
+                // get current BB from animation
+                OBB.Rebuild(Bf.BBMin, Bf.BBMax);
+                OBB.DoTransform();
+            }
+        }
 
-        public int GetAnimDispatchCase(uint id)
+        public int GetAnimDispatchCase(TR_STATE id)
         {
             var anim = Bf.Animations.Model.Animations[(int) Bf.Animations.CurrentAnimation];
 
@@ -876,7 +947,67 @@ namespace FreeRaider
         /// <summary>
         /// Process frame + trying to change state
         /// </summary>
-        public ENTITY_ANIM Frame(float time);
+        public ENTITY_ANIM Frame(float time)
+        {
+            short frame;
+            TR_ANIMATION anim;
+            var ret = ENTITY_ANIM.None;
+
+            if (TypeFlags.HasFlag(ENTITY_TYPE.Dynamic) || !Active || !Enabled || Bf.Animations.Model == null ||
+                (Bf.Animations.Model.Animations.Count == 1 && Bf.Animations.Model.Animations[0].Frames.Count == 1))
+            {
+                return ENTITY_ANIM.None;
+            }
+
+            if(Bf.Animations.AnimFlags.HasFlag(AnimControlFlags.Lock)) return ENTITY_ANIM.NewFrame; // penetration fix will be applyed in Character.Move... functions
+
+            var ssAnim = Bf.Animations;
+
+            GhostUpdate();
+
+            Bf.Animations.Lerp = 0.0f;
+            var stc = Anim_FindStateChangeByID(Bf.Animations.Model.Animations[(int) Bf.Animations.CurrentAnimation],
+                Bf.Animations.NextState);
+            GetNextFrame(Bf, time, stc, out frame, out anim, Bf.Animations.AnimFlags);
+            if(Bf.Animations.CurrentAnimation != anim)
+            {
+                Bf.Animations.LastAnimation = Bf.Animations.CurrentAnimation;
+
+                ret = ENTITY_ANIM.NewAnim;
+                DoAnimCommands(Bf.Animations, (int)ret);
+                doAnimMove(ref anim, ref frame);
+
+                SetAnimation(anim, frame);
+                stc = Anim_FindStateChangeByID(Bf.Animations.Model.Animations[(int) Bf.Animations.CurrentAnimation],
+                    Bf.Animations.NextState);
+            }
+            else if(Bf.Animations.CurrentFrame != frame)
+            {
+                if(Bf.Animations.CurrentFrame == 0)
+                {
+                    Bf.Animations.LastAnimation = Bf.Animations.CurrentAnimation;
+                }
+
+                ret = ENTITY_ANIM.NewFrame;
+                DoAnimCommands(Bf.Animations, (int)ret);
+                doAnimMove(ref anim, ref frame);
+            }
+
+            Bf.Animations.FrameTime = time;
+
+            var t = (long)(Bf.Animations.FrameTime / Bf.Animations.Period);
+            var dt = Bf.Animations.FrameTime - t * Bf.Animations.Period;
+            Bf.Animations.FrameTime = frame * Bf.Animations.Period + dt;
+            Bf.Animations.Lerp = dt / Bf.Animations.Period;
+            GetNextFrame(Bf, Bf.Animations.Period, stc, out Bf.Animations.NextFrame, out Bf.Animations.NextAnimation, ssAnim.AnimFlags);
+
+            FrameImpl(time, frame, ret);
+
+            UpdateCurrentBoneFrame(Bf, Transform);
+            FixPenetrations(Vector3.Zero);
+
+            return ret;
+        }
 
         public virtual void UpdateTransform()
         {
@@ -942,18 +1073,236 @@ namespace FreeRaider
             }
         }
 
-        public void CheckActivators();
+        public void CheckActivators()
+        {
+            if (Self.Room == null)
+                return;
+
+            var ppos = Transform.Origin + Transform.Basis.Column1 * Bf.BBMax.Y;
+            foreach (var cont in Self.Room.Containers)
+            {
+                if (cont.ObjectType != OBJECT_TYPE.Entity || cont.Object == null)
+                    continue;
+
+                var e = (Entity) cont.Object;
+                if (!e.Enabled)
+                    continue;
+
+                if(e.TypeFlags.HasFlag(ENTITY_TYPE.Interactive))
+                {
+                    if(e != this && OBB.OBB_Test(e, this) == 1)
+                    {
+                        EngineLua.ExecEntity((int)ENTITY_CALLBACK.Activate, (int)e.ID, (int)ID);
+                    }
+                }
+                else if (e.TypeFlags.HasFlag(ENTITY_TYPE.Pickable))
+                {
+                    var r = e.ActivationRadius;
+                    r *= r;
+                    var v = Transform.Origin;
+                    if (e != this
+                        && ((v.X - ppos.X) * (v.X - ppos.X) + (v.Y - ppos.Y) * (v.Y - ppos.Y) < r)
+                        && (v.Z + 32.0 > Transform.Origin.Z + Bf.BBMin.Z)
+                        && (v.Z - 32.0 < Transform.Origin.Z + Bf.BBMax.Z))
+                    {
+                        EngineLua.ExecEntity((int)ENTITY_CALLBACK.Activate, (int)e.ID, (int)ID);
+                    }
+                }
+            }
+        }
 
         public virtual Substance GetSubstanceState()
         {
             return Substance.None;
         }
 
-        public static void UpdateCurrentBoneFrame(SSBoneFrame bf, Transform etr);
+        public static void UpdateCurrentBoneFrame(SSBoneFrame bf, Transform etr)
+        {
+            var btag = bf.BoneTags[0];
+            var model = bf.Animations.Model;
 
-        public void DoAnimCommands(SSAnimation ssAnim, int changing);
+            var nextBf = model.Animations[(int) bf.Animations.NextAnimation].Frames[bf.Animations.NextFrame];
+            var currBf = model.Animations[(int) bf.Animations.CurrentAnimation].Frames[bf.Animations.CurrentFrame];
 
-        public void ProcessSector();
+            var tr = Vector3.Zero;
+            var cmd_tr = Vector3.Zero;
+            if (etr != null && currBf.Command.HasFlagUns(ANIM_CMD.Move))
+            {
+                tr = etr.Basis.MultiplyByVector(currBf.Move);
+                cmd_tr = tr * bf.Animations.Lerp;
+            }
+
+            bf.BBMax = currBf.BBMax.Lerp(nextBf.BBMax, bf.Animations.Lerp) + cmd_tr;
+            bf.BBMin = currBf.BBMin.Lerp(nextBf.BBMin, bf.Animations.Lerp) + cmd_tr;
+            bf.Centre = currBf.Centre.Lerp(nextBf.Centre, bf.Animations.Lerp) + cmd_tr;
+            bf.Position = currBf.Position.Lerp(nextBf.Position, bf.Animations.Lerp) + cmd_tr;
+
+            var next_btag = nextBf.BoneTags[0];
+            var src_btag = currBf.BoneTags[0];
+            for (var k = 0;
+                k < currBf.BoneTags.Count;
+                k++, btag = bf.BoneTags[k], src_btag = currBf.BoneTags[k], next_btag = nextBf.BoneTags[k])
+            {
+                btag.Offset = src_btag.Offset.Lerp(next_btag.Offset, bf.Animations.Lerp);
+                btag.Transform.Origin = btag.Offset;
+                btag.Transform.Origin.Z = 1.0f;
+                if(k == 0)
+                {
+                    btag.Transform.Origin += bf.Position;
+                    btag.QRotate = Quaternion.Slerp(src_btag.QRotate, next_btag.QRotate, bf.Animations.Lerp);
+                }
+                else
+                {
+                    var ov_src_btag = src_btag;
+                    var ov_next_btag = next_btag;
+                    var ov_lerp = bf.Animations.Lerp;
+                    for (var ov_anim = bf.Animations.Next; ov_anim != null; ov_anim = ov_anim.Next)
+                    {
+                        if (ov_anim.Model != null && ov_anim.Model.MeshTree[k].ReplaceAnim != 0)
+                        {
+                            var ov_curr_bf =
+                                ov_anim.Model.Animations[(int) ov_anim.CurrentAnimation].Frames[ov_anim.CurrentFrame];
+                            var ov_next_bf =
+                                ov_anim.Model.Animations[(int) ov_anim.NextAnimation].Frames[ov_anim.NextFrame];
+                            ov_src_btag = ov_curr_bf.BoneTags[k];
+                            ov_next_btag = ov_next_bf.BoneTags[k];
+                            ov_lerp = ov_anim.Lerp;
+                            break;
+                        }
+                    }
+                    btag.QRotate = Quaternion.Slerp(ov_src_btag.QRotate, ov_next_btag.QRotate, ov_lerp);
+                }
+                btag.Transform.Rotation = btag.QRotate;
+            }
+
+            // build absolute coordinate matrix system
+            btag = bf.BoneTags[0];
+            btag.FullTransform = btag.Transform;
+            btag = bf.BoneTags[1];
+            for(var k = 1; k < currBf.BoneTags.Count; k++, btag = bf.BoneTags[k])
+            {
+                btag.FullTransform = btag.Parent.FullTransform * btag.Transform;
+            }
+        }
+
+        public void DoAnimCommands(SSAnimation ssAnim, int changing)
+        {
+            if (EngineWorld.AnimCommands.Count == 0 || ssAnim.Model == null)
+            {
+                return; // If no anim commands
+            }
+
+            var af = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation];
+            if (af.NumAnimCommands.IsBetween(1, 255))
+            {
+                Assert.That(af.AnimCommand < EngineWorld.AnimCommands.Count);
+                var pointer = (int) af.AnimCommand;
+
+                for (var i = 0; i < af.NumAnimCommands; i++)
+                {
+                    Assert.That(pointer < EngineWorld.AnimCommands.Count);
+                    var command = (TR_ANIMCOMMAND) EngineWorld.AnimCommands[pointer];
+                    pointer++;
+                    switch (command)
+                    {
+                        case TR_ANIMCOMMAND.SetPosition:
+                            // This command executes ONLY at the end of animation.
+                            pointer += 3; // Parse through 3 operands.
+                            break;
+
+                        case TR_ANIMCOMMAND.JumpDistance:
+                            // This command executes ONLY at the end of animation.
+                            pointer += 2; // Parse through 2 operands.
+                            break;
+
+                        case TR_ANIMCOMMAND.EmptyHands:
+                            // FIXME: Behaviour is yet to be discovered.
+                            break;
+
+                        case TR_ANIMCOMMAND.Kill:
+                            // This command executes ONLY at the end of animation.
+                            if (ssAnim.CurrentFrame == af.Frames.Count - 1)
+                            {
+                                Kill();
+                            }
+
+                            break;
+
+                        case TR_ANIMCOMMAND.PlaySound:
+                            if (ssAnim.CurrentFrame == EngineWorld.AnimCommands[pointer + 0])
+                            {
+                                var soundIndex = EngineWorld.AnimCommands[pointer + 1] & 0x3FFF;
+
+                                // Quick workaround for TR3 quicksand.
+                                if (GetSubstanceState().IsAnyOf(Substance.QuicksandConsumed, Substance.QuicksandShallow))
+                                {
+                                    soundIndex = 18;
+                                }
+
+                                if (EngineWorld.AnimCommands[pointer + 1].HasFlagSig(TR_ANIMCOMMAND_CONDITION.Water))
+                                {
+                                    if (GetSubstanceState() == Substance.WaterShallow)
+                                        Audio.Send((uint) soundIndex, TR_AUDIO_EMITTER.Entity, (int) ID);
+                                }
+                                else if (EngineWorld.AnimCommands[pointer + 1].HasFlagSig(TR_ANIMCOMMAND_CONDITION.Land))
+                                {
+                                    if (GetSubstanceState() != Substance.WaterShallow)
+                                        Audio.Send((uint) soundIndex, TR_AUDIO_EMITTER.Entity, (int) ID);
+                                }
+                                else
+                                {
+                                    Audio.Send((uint) soundIndex, TR_AUDIO_EMITTER.Entity, (int) ID);
+                                }
+                            }
+                            pointer += 2;
+                            break;
+
+                        case TR_ANIMCOMMAND.PlayEffect:
+                            if (ssAnim.CurrentFrame == EngineWorld.AnimCommands[pointer + 0])
+                            {
+                                var effectID = EngineWorld.AnimCommands[pointer + 1] & 0x3FFF;
+                                if (effectID > 0)
+                                    EngineLua.ExecEffect(effectID, (int) ID);
+                            }
+                            pointer += 2;
+                            break;
+                    }
+                }
+            }
+        }
+
+        public void ProcessSector()
+        {
+            if (CurrentSector == null) return;
+
+            // Calculate both above and below sectors for further usage.
+            // Sector below is generally needed for getting proper trigger index,
+            // as many triggers tend to be called from the lowest room in a row
+            // (e.g. first trapdoor in The Great Wall, etc.)
+            // Sector above primarily needed for paranoid cases of monkeyswing.
+
+            Assert.That(CurrentSector != null); // TODO: Useless?
+            var lowestSector = CurrentSector.GetLowestSector();
+            Assert.That(lowestSector != null);
+
+            ProcessSectorImpl();
+
+            // If entity either marked as trigger activator (Lara) or heavytrigger activator (other entities),
+            // we try to execute a trigger for this sector.
+
+            if(TypeFlags.HasFlag(ENTITY_TYPE.TriggerActivator) || TypeFlags.HasFlag(ENTITY_TYPE.HeavyTriggerActivator))
+            {
+                // Look up trigger function table and run trigger if it exists.
+                try
+                {
+                    (EngineLua["tlist_RunTrigger"] as LuaFunction)?.Call(lowestSector.TrigIndex, Bf.Animations.Model.ID == 0 ? ActivatorType.Lara : ActivatorType.Misc, ID); // TODO: Maybe cast to int before calling?
+                }
+                catch(LuaException e)
+                {
+                    Sys.DebugLog(LUA_LOG_FILENAME, "{0}", e.Message);
+                }
+            }
+        }
 
         public void SetAnimation(TR_ANIMATION animation, int frame = 0, int anotherModel = -1)
         {
@@ -1020,7 +1369,161 @@ namespace FreeRaider
         {
         }
 
-        public bool CreateRagdoll(RDSetup setup);
+        public bool CreateRagdoll(RDSetup setup)
+        {
+            // No entity, setup or body count overflow - bypass function.
+
+            if (setup == null || setup.BodySetup.Count > Bf.BoneTags.Count)
+            {
+                return false;
+            }
+
+            var result = true;
+
+            // If ragdoll already exists, overwrite it with new one.
+
+            if (Bt.BtJoints.Count > 0)
+            {
+                result = DeleteRagdoll();
+            }
+
+            // Setup bodies.
+            Bt.BtJoints.Clear();
+            // update current character animation and full fix body to avoid starting ragdoll partially inside the wall or floor...
+            UpdateCurrentBoneFrame(Bf, Transform);
+            Bt.NoFixAll = false;
+            Bt.NoFixBodyParts = 0x00000000;
+#if NOPE
+            int map_size = m_bf.animations.model->collision_map.size();             // does not works, strange...
+            m_bf.animations.model->collision_map.size() = m_bf.animations.model->mesh_count;
+            fixPenetrations(nullptr);
+            m_bf.animations.model->collision_map.size() = map_size;
+#else
+            FixPenetrations(Vector3.Zero);
+#endif
+
+            for(var i = 0; i < setup.BodySetup.Count; i++)
+            {
+                // TODO: First check useless?
+                if(i >= Bf.BoneTags.Count || Bt.BtBody[i] == null)
+                {
+                    result = false;
+                    continue; // If body is absent, return false and bypass this body setup.
+                }
+
+                var inertia = Vector3.Zero;
+                var mass = setup.BodySetup[i].Mass;
+
+                BtEngineDynamicsWorld.RemoveRigidBody(Bt.BtBody[i]);
+
+                Bt.BtBody[i].CollisionShape.CalculateLocalInertia(mass, out inertia);
+                Bt.BtBody[i].SetMassProps(mass, inertia);
+
+                Bt.BtBody[i].UpdateInertiaTensor();
+                Bt.BtBody[i].ClearForces();
+
+                Bt.BtBody[i].LinearFactor = Vector3.One;
+                Bt.BtBody[i].AngularFactor = Vector3.One;
+
+                Bt.BtBody[i].SetDamping(setup.BodySetup[i].Damping[0], setup.BodySetup[i].Damping[1]);
+                Bt.BtBody[i].Restitution = setup.BodySetup[i].Restitution;
+                Bt.BtBody[i].Friction = setup.BodySetup[i].Friction;
+
+                Bt.BtBody[i].SetSleepingThresholds(RD_DEFAULT_SLEEPING_THRESHOLD, RD_DEFAULT_SLEEPING_THRESHOLD);
+
+                if(Bf.BoneTags[i].Parent == null)
+                {
+                    var r = GetInnerBBRadius(Bf.BoneTags[i].MeshBase.BBMin, Bf.BoneTags[i].MeshBase.BBMax);
+                    Bt.BtBody[i].CcdMotionThreshold = 0.8f * r;
+                    Bt.BtBody[i].CcdSweptSphereRadius = r;
+                }
+            }
+
+            UpdateRigidBody(true);
+            for(var i = 0; i < Bf.BoneTags.Count; i++)
+            {
+                BtEngineDynamicsWorld.AddRigidBody(Bt.BtBody[i]);
+                Bt.BtBody[i].Activate();
+                Bt.BtBody[i].LinearVelocity = Speed;
+                if (i < Bt.GhostObjects.Count && Bt.GhostObjects[i] != null)
+                {
+                    BtEngineDynamicsWorld.RemoveCollisionObject(Bt.GhostObjects[i]);
+                    BtEngineDynamicsWorld.AddCollisionObject(Bt.GhostObjects[i], CollisionFilterGroups.None, CollisionFilterGroups.None);
+                }
+            }
+
+            // Setup constraints.
+            Bt.BtJoints.Resize(setup.JointSetup.Count);
+
+            for(var i = 0; i < setup.JointSetup.Count; i++)
+            {
+                if(setup.JointSetup[i].BodyIndex >= Bf.BoneTags.Count || Bt.BtBody[setup.JointSetup[i].BodyIndex] == null)
+                {
+                    result = false;
+                    break; // If body 1 or body 2 are absent, return false and bypass this joint.
+                }
+
+                var localA = new Transform();
+                var localB = new Transform();
+                var btB = Bf.BoneTags[setup.JointSetup[i].BodyIndex];
+                var btA = btB.Parent;
+                if(btA == null)
+                {
+                    result = false;
+                    break;
+                }
+#if NOPE        
+                localA.setFromOpenGLMatrix(btB->transform);
+                localB.setIdentity();
+#else
+                Helper.SetEulerZYX(ref localA.Basis, setup.JointSetup[i].Body1Angle);
+                //localA.Origin = setup.JointSetup[i].Body1Offset;
+                localA.Origin = btB.Transform.Origin;
+
+                Helper.SetEulerZYX(ref localB.Basis, setup.JointSetup[i].Body2Angle);
+                //localB.Origin = setup.JointSetup[i].Body2Offset;
+                localB.Origin = Vector3.Zero;
+#endif
+
+                switch(setup.JointSetup[i].JointType)
+                {
+                    case RDJointSetup.Type.Point:
+                        Bt.BtJoints[i] = new Point2PointConstraint(Bt.BtBody[btA.Index], Bt.BtBody[btB.Index],
+                            localA.Origin, localB.Origin);
+                        break;
+
+                        case RDJointSetup.Type.Hinge:
+                        var hingeC = new HingeConstraint(Bt.BtBody[btA.Index], Bt.BtBody[btB.Index], (Matrix4) localA,
+                            (Matrix4) localB);
+                        hingeC.SetLimit(setup.JointSetup[i].JointLimit[0], setup.JointSetup[i].JointLimit[1], 0.9f, 0.3f, 0.3f);
+                        Bt.BtJoints[i] = hingeC;
+                        break;
+
+                    case RDJointSetup.Type.Cone:
+                        var coneC = new ConeTwistConstraint(Bt.BtBody[btA.Index], Bt.BtBody[btB.Index], (Matrix4)localA,
+                            (Matrix4)localB);
+                        coneC.SetLimit(setup.JointSetup[i].JointLimit[0], setup.JointSetup[i].JointLimit[1], setup.JointSetup[i].JointLimit[2], 0.9f, 0.3f, 0.7f);
+                        Bt.BtJoints[i] = coneC;
+                        break;
+                }
+
+                Bt.BtJoints[i].SetParam(ConstraintParam.StopCfm, setup.JointCfm, -1);
+                Bt.BtJoints[i].SetParam(ConstraintParam.StopErp, setup.JointErp, -1);
+
+                Bt.BtJoints[i].DebugDrawSize = 64.0f;
+                BtEngineDynamicsWorld.AddConstraint(Bt.BtJoints[i], true);
+            }
+
+            if(!result)
+            {
+                DeleteRagdoll(); // PARANOID: Clean up the mess, if something went wrong.
+            }
+            else
+            {
+                TypeFlags |= ENTITY_TYPE.Dynamic;
+            }
+            return result;
+        }
 
         public bool DeleteRagdoll()
         {
@@ -1260,7 +1763,7 @@ namespace FreeRaider
             return stateChangeAnim >= 0 ? anim.StateChange.FirstOrDefault(x => x.AnimDispatch.Any(y => y.NextAnim == stateChangeAnim)) : null;
         }
 
-        public static StateChange Anim_FindStateChangeByID(AnimationFrame anim, uint id)
+        public static StateChange Anim_FindStateChangeByID(AnimationFrame anim, TR_STATE id)
         {
             return anim.StateChange.FirstOrDefault(x => x.ID == id);
         }

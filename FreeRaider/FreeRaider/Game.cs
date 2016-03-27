@@ -9,6 +9,7 @@ using NLua.Exceptions;
 using OpenTK;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
+using static FreeRaider.StaticFuncs;
 
 namespace FreeRaider
 {
@@ -255,7 +256,7 @@ namespace FreeRaider
                     EngineWorld.Character.Frame(EngineFrameTime);
                     EngineWorld.Character.ApplyCommands();
                     EngineWorld.Character.Frame(0.0f);
-                    StaticFuncs.Cam_FollowEntity(Renderer.Camera, EngineWorld.Character, 16.0f, 128.0f);
+                    Cam_FollowEntity(Renderer.Camera, EngineWorld.Character, 16.0f, 128.0f);
                 }
             }
 

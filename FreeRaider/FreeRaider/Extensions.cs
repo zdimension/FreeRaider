@@ -711,6 +711,11 @@ namespace FreeRaider
         {
             return (sbyte) (b.ToI() - c.ToI());
         }
+
+        public static float XxYy(this Vector3 a, Vector3 b)
+        {
+            return a.X * b.X + a.Y * b.Y;
+        }
     }
 
     public partial class Constants

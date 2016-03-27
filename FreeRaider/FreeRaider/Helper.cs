@@ -4,7 +4,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using AT.MIN;
 using FreeRaider.Loader;
 using Ionic.Zlib;
 using OpenTK;
@@ -284,7 +286,10 @@ namespace FreeRaider
 
         public static string Format(string format, params object[] args)
         {
-            return string.Format(format, args);
+            if (Regex.IsMatch(format, @"(?:[^{}])({\d})(?:[^}])"))
+                return string.Format(format, args);
+            else
+                return Tools.sprintf(format, args);
         }
 
         public static void Swap<T>(ref T a, ref T b)

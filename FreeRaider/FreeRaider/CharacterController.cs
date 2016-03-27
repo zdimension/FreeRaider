@@ -7,6 +7,7 @@ using OpenTK.Graphics.ES20;
 using SharpFont;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
+using static FreeRaider.StaticFuncs;
 
 namespace FreeRaider
 {
@@ -1984,7 +1985,168 @@ namespace FreeRaider
             return Math.Abs(InertiaAngular[axis]) * Command.Rotation[axis];
         }
 
-        public int MoveOnFloor();
+        public int MoveOnFloor()
+        {
+            // init height info structure
+            Response.HorizontalCollide = 0x00;
+            Response.VerticalCollide = 0x00;
+            // First of all - get information about floor and ceiling!!!
+            UpdateCurrentHeight();
+            if (HeightInfo.FloorHit && HeightInfo.FloorPoint.Z + 1.0f >= Transform.Origin.Z + Bf.BBMin.Z)
+            {
+                var cont = (EngineContainer) HeightInfo.FloorObject.UserObject;
+                if (cont != null && cont.ObjectType == OBJECT_TYPE.Entity)
+                {
+                    var e = (Entity) cont.Object;
+                    if (e.CallbackFlags.HasFlag(ENTITY_CALLBACK.Stand))
+                    {
+                        EngineLua.ExecEntity((int) ENTITY_CALLBACK.Stand, (int) e.ID, (int) ID);
+                    }
+                }
+            }
+
+            var position = Transform.Origin;
+            var speed = Vector3.Zero;
+
+            // check move type
+            if (HeightInfo.FloorHit || Response.VerticalCollide.HasFlagSig(0x01))
+            {
+                if (HeightInfo.FloorPoint.Z + FallDownHeight < position.Z)
+                {
+                    MoveType = MoveType.FreeFalling;
+                    speed.Z = 0.0f;
+                    return -1; // nothing to do here
+                }
+                else
+                {
+                    Response.VerticalCollide |= 0x01;
+                }
+
+                var floorNormal = HeightInfo.FloorNormale;
+                if (floorNormal.Z.IsBetween(0.02f, CriticalSlantZComponent, false))
+                {
+                    floorNormal.Z = -floorNormal.Z;
+                    speed = floorNormal * SpeedMult * DEFAULT_CHARACTER_SLIDE_SPEED_MULT; // slide down direction
+                    var zAngle = (float) Math.Atan2(floorNormal.X, -floorNormal.Y) * DegPerRad;
+                        // from -180 deg to +180 deg
+                    var t = floorNormal.XxYy(Transform.Basis.Column1);
+                    if (t >= 0.0f)
+                    {
+                        // front forward slide down
+                        Response.Slide = SlideType.Front;
+                        Angles.X = zAngle + 180.0f;
+                    }
+                    else
+                    {
+                        // back forward slide down
+                        Response.Slide = SlideType.Back;
+                        Angles.X = zAngle;
+                    }
+                    UpdateTransform();
+                    Response.VerticalCollide |= 0x01;
+                }
+                else // no slide - free to walk
+                {
+                    var fullSpeed = CurrentSpeed * SpeedMult;
+                    Response.VerticalCollide |= 0x01;
+
+                    Angles.X += GetInertiaAngular(1.0f, ROT_SPEED_LAND, 0);
+
+                    UpdateTransform(); // apply rotations
+
+                    if (DirFlag.HasFlag(ENT_MOVE.MoveForward))
+                    {
+                        speed = Transform.Basis.Column1 * fullSpeed;
+                    }
+                    else if (DirFlag.HasFlag(ENT_MOVE.MoveBackward))
+                    {
+                        speed = Transform.Basis.Column1 * -fullSpeed;
+                    }
+                    else if (DirFlag.HasFlag(ENT_MOVE.MoveLeft))
+                    {
+                        speed = Transform.Basis.Column0 * -fullSpeed;
+                    }
+                    else if (DirFlag.HasFlag(ENT_MOVE.MoveRight))
+                    {
+                        speed = Transform.Basis.Column0 * fullSpeed;
+                    }
+                    else
+                    {
+                        //DirFlag = ENT_MOVE.MoveForward;
+                    }
+                    Response.Slide = SlideType.None;
+                }
+            }
+            else // no hit to the floor
+            {
+                Response.Slide = SlideType.None;
+                Response.VerticalCollide = 0x00;
+                MoveType = MoveType.FreeFalling;
+                Speed.Z = 0.0f;
+                return -1; // nothing to do here
+            }
+
+            // now move normally
+            Speed = speed;
+            var positionDelta = speed * EngineFrameTime;
+            var distance = positionDelta.Length;
+
+            var normMoveXy = new Vector3(positionDelta.X, positionDelta.Y, 0.0f);
+            var normMoveXyLen = normMoveXy.Length;
+            if (normMoveXyLen > 0.2f * distance)
+            {
+                normMoveXy /= normMoveXyLen;
+            }
+            else
+            {
+                normMoveXy = Vector3.Zero;
+            }
+
+            GhostUpdate();
+            position += positionDelta;
+            FixPenetrations(positionDelta);
+            if(HeightInfo.FloorHit)
+            {
+                if(HeightInfo.FloorPoint.Z + FallDownHeight > position.Z)
+                {
+                    var dzToLand = EngineFrameTime * 2400.0f; // FIXME: magick
+                    if(position.Z > HeightInfo.FloorPoint.Z + dzToLand)
+                    {
+                        position.Z -= dzToLand;
+                        FixPenetrations(Vector3.Zero);
+                    }
+                    else if(position.Z > HeightInfo.FloorPoint.Z)
+                    {
+                        position.Z = HeightInfo.FloorPoint.Z;
+                        FixPenetrations(Vector3.Zero);
+                    }
+                }
+                else
+                {
+                    MoveType = MoveType.FreeFalling;
+                    Speed.Z = 0.0f;
+                    UpdateRoomPos();
+                    return 2;
+                }
+                if(position.Z < HeightInfo.FloorPoint.Z && !Bt.NoFixAll)
+                {
+                    position.Z = HeightInfo.FloorPoint.Z;
+                    FixPenetrations(Vector3.Zero);
+                    Response.VerticalCollide |= 0x01;
+                }
+            }
+            else if(!Response.VerticalCollide.HasFlagSig(0x01))
+            {
+                MoveType = MoveType.FreeFalling;
+                Speed.Z = 0.0f;
+                UpdateRoomPos();
+                return 2;
+            }
+
+            UpdateRoomPos();
+
+            return 1;
+        }
 
         public int FreeFalling()
         {
@@ -2344,7 +2506,80 @@ namespace FreeRaider
             return 1;
         }
 
-        public int MoveOnWater();
+        public int MoveOnWater()
+        {
+            Vector3 spd;
+            var pos = Transform.Origin;
+
+            Response.Slide = SlideType.None;
+            Response.Lean = LeanType.None;
+
+            Response.HorizontalCollide = 0x00;
+            Response.VerticalCollide = 0x00;
+
+            Angles.X += GetInertiaAngular(1.0f, ROT_SPEED_ONWATER, 0);
+            Angles.Y = 0.0f;
+            Angles.Z = 0.0f;
+            UpdateTransform(); // apply rotations
+
+            // Calculate current speed.
+
+            var t = GetInertiaLinear(MAX_SPEED_ONWATER, INERTIA_SPEED_ONWATER,
+                Math.Abs(Command.Move[0]) != 0 || Math.Abs(Command.Move[1]) != 0);
+
+            if(DirFlag.HasFlag(ENT_MOVE.MoveForward) && Command.Move[0] == 1)
+            {
+                spd = Transform.Basis.Column1 * t;
+            }
+            else if (DirFlag.HasFlag(ENT_MOVE.MoveBackward) && Command.Move[0] == -1)
+            {
+                spd = Transform.Basis.Column1 * -t;
+            }
+            else if (DirFlag.HasFlag(ENT_MOVE.MoveLeft) && Command.Move[1] == -1)
+            {
+                spd = Transform.Basis.Column0 * -t;
+            }
+            else if (DirFlag.HasFlag(ENT_MOVE.MoveRight) && Command.Move[1] == 1)
+            {
+                spd = Transform.Basis.Column0 * t;
+            }
+            else
+            {
+                GhostUpdate();
+                FixPenetrations(Vector3.Zero);
+                UpdateRoomPos();
+                if(HeightInfo.Water)
+                {
+                    pos.Z = HeightInfo.TransitionLevel;
+                }
+                else
+                {
+                    MoveType = MoveType.OnFloor;
+                    return 2;
+                }
+                return 1;
+            }
+
+            // Prepare to moving
+            Speed = spd;
+            var move = spd * EngineFrameTime;
+            GhostUpdate();
+            pos += move;
+            FixPenetrations(move); // get horizontal collide
+
+            UpdateRoomPos();
+            if (HeightInfo.Water)
+            {
+                pos.Z = HeightInfo.TransitionLevel;
+            }
+            else
+            {
+                MoveType = MoveType.OnFloor;
+                return 2;
+            }
+
+            return 1;
+        }
 
         public int FindTraverse()
         {
@@ -2411,7 +2646,176 @@ namespace FreeRaider
             return 0;
         }
 
-        public int CheckTraverse(Entity obj);
+        /// <param name="obj">Traversed object</param>
+        public int CheckTraverse(Entity obj)
+        {
+            var ch_s = Self.Room.GetSectorRaw(Transform.Origin);
+            var obj_s = obj.Self.Room.GetSectorRaw(obj.Transform.Origin);
+
+            if (obj_s == ch_s)
+            {
+                // OX move case
+                if (Transform.Basis.Column1.X > 0.8f)
+                {
+                    ch_s =
+                        obj_s.OwnerRoom.GetSectorRaw(new Vector3(obj_s.Position.X - TR_METERING_SECTORSIZE,
+                            obj_s.Position.Y, 0.0f));
+                }
+                else if (Transform.Basis.Column1.X < -0.8f)
+                {
+                    ch_s =
+                        obj_s.OwnerRoom.GetSectorRaw(new Vector3(obj_s.Position.X + TR_METERING_SECTORSIZE,
+                            obj_s.Position.Y, 0.0f));
+                }
+                // OY move case
+                else if (Transform.Basis.Column1.Y > 0.8f)
+                {
+                    ch_s =
+                        obj_s.OwnerRoom.GetSectorRaw(new Vector3(obj_s.Position.X,
+                            obj_s.Position.Y - TR_METERING_SECTORSIZE, 0.0f));
+                }
+                else if (Transform.Basis.Column1.Y < -0.8f)
+                {
+                    ch_s =
+                        obj_s.OwnerRoom.GetSectorRaw(new Vector3(obj_s.Position.X,
+                            obj_s.Position.Y + TR_METERING_SECTORSIZE, 0.0f));
+                }
+                ch_s = ch_s.CheckPortalPointer();
+            }
+
+            if(ch_s == null || obj_s == null)
+            {
+                return TraverseNone;
+            }
+
+            var floor = Transform.Origin.Z;
+            if(ch_s.Floor != obj_s.Floor || Sector_AllowTraverse(ch_s, floor, Self) == 0x00 || Sector_AllowTraverse(obj_s, floor, obj.Self) == 0x00)
+            {
+                return TraverseNone;
+            }
+
+            var cb = new BtEngineClosestRayResultCallback(obj.Self);
+            var v0 = new Vector3(obj_s.Position.X, obj_s.Position.Y, floor + TR_METERING_SECTORSIZE * 0.5f);
+            var v1 = new Vector3(obj_s.Position.X, obj_s.Position.Y, floor + TR_METERING_SECTORSIZE * 2.5f);
+            BtEngineDynamicsWorld.RayTest(v0, v1, cb);
+            if(cb.HasHit)
+            {
+                var cont = (EngineContainer) cb.CollisionObject.UserObject;
+                if (cont != null && cont.ObjectType == OBJECT_TYPE.Entity &&
+                    ((Entity) cont.Object).TypeFlags.HasFlag(ENTITY_TYPE.Traverse))
+                {
+                    return TraverseNone;
+                }
+            }
+
+            var ret = TraverseNone;
+            RoomSector next_s = null;
+
+            // PUSH MOVE CHECK
+            // OX move case
+            if (Transform.Basis.Column1.X > 0.8f)
+            {
+                next_s =
+                    obj_s.OwnerRoom.GetSectorRaw(new Vector3(obj_s.Position.X + TR_METERING_SECTORSIZE,
+                        obj_s.Position.Y, 0.0f));
+            }
+            else if (Transform.Basis.Column1.X < -0.8f)
+            {
+                next_s =
+                    obj_s.OwnerRoom.GetSectorRaw(new Vector3(obj_s.Position.X - TR_METERING_SECTORSIZE,
+                        obj_s.Position.Y, 0.0f));
+            }
+            // OY move case
+            else if (Transform.Basis.Column1.Y > 0.8f)
+            {
+                next_s =
+                    obj_s.OwnerRoom.GetSectorRaw(new Vector3(obj_s.Position.X,
+                        obj_s.Position.Y + TR_METERING_SECTORSIZE, 0.0f));
+            }
+            else if (Transform.Basis.Column1.Y < -0.8f)
+            {
+                next_s =
+                    obj_s.OwnerRoom.GetSectorRaw(new Vector3(obj_s.Position.X,
+                        obj_s.Position.Y - TR_METERING_SECTORSIZE, 0.0f));
+            }
+
+            next_s = next_s?.CheckPortalPointer();
+
+            if(next_s != null && Sector_AllowTraverse(next_s, floor, Self) == 0x01)
+            {
+                var from = new Transform();
+                from.SetIdentity();
+                from.Origin = new Vector3(obj_s.Position.X, obj_s.Position.Y, floor + 0.5f * TR_METERING_SECTORSIZE);
+
+                var to = new Transform();
+                to.SetIdentity();
+                to.Origin = new Vector3(next_s.Position.X, next_s.Position.Y, floor + 0.5f * TR_METERING_SECTORSIZE);
+
+                var sp = new SphereShape(COLLISION_TRAVERSE_TEST_RADIUS * TR_METERING_SECTORSIZE);
+                sp.Margin = COLLISION_MARGIN_DEFAULT;
+                var ccb = new BtEngineClosestConvexResultCallback(obj.Self);
+                BtEngineDynamicsWorld.ConvexSweepTest(sp, (Matrix4)from, (Matrix4)to, ccb);
+
+                if(!ccb.HasHit)
+                {
+                    ret |= TraverseForward;
+                }
+            }
+
+            // PUSH MOVE CHECK
+            next_s = null;
+            // OX move case
+            if (Transform.Basis.Column1.X > 0.8f)
+            {
+                next_s =
+                    ch_s.OwnerRoom.GetSectorRaw(new Vector3(ch_s.Position.X - TR_METERING_SECTORSIZE,
+                        ch_s.Position.Y, 0.0f));
+            }
+            else if (Transform.Basis.Column1.X < -0.8f)
+            {
+                next_s =
+                    ch_s.OwnerRoom.GetSectorRaw(new Vector3(ch_s.Position.X + TR_METERING_SECTORSIZE,
+                        ch_s.Position.Y, 0.0f));
+            }
+            // OY move case
+            else if (Transform.Basis.Column1.Y > 0.8f)
+            {
+                next_s =
+                    ch_s.OwnerRoom.GetSectorRaw(new Vector3(ch_s.Position.X,
+                        ch_s.Position.Y - TR_METERING_SECTORSIZE, 0.0f));
+            }
+            else if (Transform.Basis.Column1.Y < -0.8f)
+            {
+                next_s =
+                    ch_s.OwnerRoom.GetSectorRaw(new Vector3(ch_s.Position.X,
+                        ch_s.Position.Y + TR_METERING_SECTORSIZE, 0.0f));
+            }
+
+            next_s = next_s?.CheckPortalPointer();
+
+            if (next_s != null && Sector_AllowTraverse(next_s, floor, Self) == 0x01)
+            {
+                var from = new Transform();
+                from.SetIdentity();
+                from.Origin = new Vector3(ch_s.Position.X, ch_s.Position.Y, floor + 0.5f * TR_METERING_SECTORSIZE);
+
+                var to = new Transform();
+                to.SetIdentity();
+                to.Origin = new Vector3(next_s.Position.X, next_s.Position.Y, floor + 0.5f * TR_METERING_SECTORSIZE);
+
+                var sp = new SphereShape(COLLISION_TRAVERSE_TEST_RADIUS * TR_METERING_SECTORSIZE);
+                sp.Margin = COLLISION_MARGIN_DEFAULT;
+                var ccb = new BtEngineClosestConvexResultCallback(Self);
+                BtEngineDynamicsWorld.ConvexSweepTest(sp, (Matrix4)from, (Matrix4)to, ccb);
+
+                if (!ccb.HasHit)
+                {
+                    ret |= TraverseBackward;
+                }
+            }
+
+            return ret;
+        }
 
         /// <summary>
         /// Main character frame function

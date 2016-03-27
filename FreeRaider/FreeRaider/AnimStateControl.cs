@@ -1592,7 +1592,7 @@ namespace FreeRaider
                              nextStep == StepType.UpBig)
                     {
                         ent.DirFlag = ENT_MOVE.Stay;
-                        i = ent.GetAnimDispatchCase(2); // Select correct anim dispatch.
+                        i = ent.GetAnimDispatchCase(TR_STATE.LaraStop); // Select correct anim dispatch.
                         ent.SetAnimation(i == 0 ? TR_ANIMATION.LaraRunUpStepRight : TR_ANIMATION.LaraRunUpStepLeft,
                             0);
                         pos.Z = nextFc.FloorPoint.Z;
@@ -1612,7 +1612,7 @@ namespace FreeRaider
 
                             if (cmd.Move[0] == 1)
                             {
-                                i = ent.GetAnimDispatchCase(2);
+                                i = ent.GetAnimDispatchCase(TR_STATE.LaraStop);
                                 ent.SetAnimation(
                                     i == 1 ? TR_ANIMATION.LaraWallSmashLeft : TR_ANIMATION.LaraWallSmashRight, 0);
                             }
@@ -1698,7 +1698,7 @@ namespace FreeRaider
                     {
                         Controls.JoyRumble(200.0f, 200);
                         ent.SetAnimation(
-                            ent.GetAnimDispatchCase(2) == 1
+                            ent.GetAnimDispatchCase(TR_STATE.LaraStop) == 1
                                 ? TR_ANIMATION.LaraWallSmashLeft
                                 : TR_ANIMATION.LaraWallSmashRight, 0);
                         ent.UpdateCurrentSpeed(false);
@@ -1756,7 +1756,7 @@ namespace FreeRaider
                         // Climb up or down
 
                         ent.DirFlag = ENT_MOVE.Stay;
-                        i = ent.GetAnimDispatchCase(2);
+                        i = ent.GetAnimDispatchCase(TR_STATE.LaraStop);
                         if (nextStep == StepType.DownBig)
                         {
                             ent.SetAnimation(i == 1 ? TR_ANIMATION.LaraWalkDownRight : TR_ANIMATION.LaraWalkDownLeft, 0);
@@ -2976,9 +2976,8 @@ namespace FreeRaider
                         }
                         else if (ent.Speed.Z <= -FREE_FALL_SPEED_MAXSAFE)
                         {
-                            if (
-                                ent.ChangeParam(CharParameters.Health,
-                                    (ent.Speed.Z + FREE_FALL_SPEED_MAXSAFE) / 2) == 0)
+                            if (!ent.ChangeParam(CharParameters.Health,
+                                (ent.Speed.Z + FREE_FALL_SPEED_MAXSAFE) / 2))
                             {
                                 resp.Killed = true;
                                 ent.SetAnimation(TR_ANIMATION.LaraLandingDeath, 0);

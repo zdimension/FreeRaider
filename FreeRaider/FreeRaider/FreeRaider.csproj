@@ -120,6 +120,7 @@
     <Compile Include="Script.cs" />
     <Compile Include="ShaderDescription.cs" />
     <Compile Include="ShaderManager.cs" />
+    <Compile Include="Sprintf.cs" />
     <Compile Include="Strings.cs" />
     <Compile Include="System.cs" />
     <Compile Include="Transform.cs" />

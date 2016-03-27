@@ -37,6 +37,11 @@ namespace FreeRaider
             Origin = c;
         }
 
+        public Transform Clone()
+        {
+            return new Transform(Basis, Origin);
+        }
+
         public static Vector3 operator * (Transform t, Vector3 x)
         {
             return x.Dot3(t.Basis.Row0, t.Basis.Row1, t.Basis.Row2) + t.Origin;

@@ -16,7 +16,7 @@ namespace FreeRaider
         public enum Type
         {
             Point = 0,
-            Hinde = 1,
+            Hinge = 1,
             Cone = 2
         }
 

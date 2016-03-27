@@ -9,6 +9,7 @@ using OpenTK.Graphics.ES30;
 using VertexAttribPointerType = OpenTK.Graphics.OpenGL.VertexAttribPointerType;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
+using static FreeRaider.StaticFuncs;
 
 namespace FreeRaider
 {
@@ -1186,7 +1187,7 @@ namespace FreeRaider
 
     public class StateChange
     {
-        public uint ID;
+        public TR_STATE ID;
 
         public List<AnimDispatch> AnimDispatch;
     }
@@ -1411,7 +1412,7 @@ namespace FreeRaider
                     k < treeTag.MeshSkin.Vertices.Count;
                     k++, v = treeTag.MeshSkin.Vertices[++vI], ch = treeTag.MeshSkin.MatrixIndices[++chI])
                 {
-                    var rv = StaticFuncs.FindVertexInMesh(treeTag.MeshBase, v.Position);
+                    var rv = FindVertexInMesh(treeTag.MeshBase, v.Position);
                     if (rv != null)
                     {
                         ch.I = 0;
@@ -1428,7 +1429,7 @@ namespace FreeRaider
                         var prevTreeTag = MeshTree[prevTreeTagI];
                         for (var l = 0; l < MeshCount; l++, prevTreeTag = MeshTree[++prevTreeTagI])
                         {
-                            rv = StaticFuncs.FindVertexInMesh(prevTreeTag.MeshBase, tv);
+                            rv = FindVertexInMesh(prevTreeTag.MeshBase, tv);
                             if (rv != null)
                             {
                                 ch.I = 0;

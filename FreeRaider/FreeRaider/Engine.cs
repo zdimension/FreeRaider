@@ -14,6 +14,7 @@ using OpenTK.Graphics.OpenGL;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
 using static FreeRaider.Strings;
+using static FreeRaider.StaticFuncs;
 
 namespace FreeRaider
 {
@@ -690,7 +691,7 @@ namespace FreeRaider
             }
 
             EngineFrameTime = time;
-            StaticFuncs.FPSCycle(time);
+            FPSCycle(time);
 
             Game.Frame(time);
             GameflowManager.Do();
@@ -839,7 +840,7 @@ namespace FreeRaider
 
             loader.Load();
 
-            StaticFuncs.TR_GenWorld(EngineWorld, loader);
+            TR_GenWorld(EngineWorld, loader);
 
             ConsoleInfo.Instance.Notify(SYSNOTE_LOADED_PC_LEVEL);
             ConsoleInfo.Instance.Notify(SYSNOTE_ENGINE_VERSION, loader.Version, GetLevelName(name));
