@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using NLua;
 using OpenTK;
+using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -81,8 +83,8 @@ namespace FreeRaider
         /// </summary>
         public float JointErp;
 
-        public List<RDJointSetup> JointSetup =new List<RDJointSetup>();
-        
+        public List<RDJointSetup> JointSetup = new List<RDJointSetup>();
+
         public List<RDBodySetup> BodySetup = new List<RDBodySetup>();
 
         /// <summary>
@@ -90,7 +92,70 @@ namespace FreeRaider
         /// </summary>
         public string HitFunc;
 
-        public bool GetSetup(int ragdollIndex);
+        public bool GetSetup(int ragdollIndex)
+        {
+            var rds2 = (EngineLua["getRagdollSetup"] as LuaFunction).Call(ragdollIndex)[0];
+            if (!(rds2 is LuaTable))
+                return false;
+            dynamic rds = (LuaTable) rds2;
+
+            HitFunc = rds["hit_callback"];
+
+            JointSetup.Resize((int) rds["joint_count"]);
+
+            BodySetup.Resize((int) rds["body_count"]);
+
+            JointCfm = rds["joint_cfm"];
+            JointErp = rds["joint_erp"];
+
+            for (var i = 0; i < BodySetup.Count; i++)
+            {
+                var b = rds["body"][i + 1];
+                BodySetup[i].Mass = b["mass"];
+                BodySetup[i].Restitution = b["restitution"];
+                BodySetup[i].Friction = b["friction"];
+                var damp = b["damping"];
+                if (damp is LuaTable)
+                {
+                    BodySetup[i].Damping[0] = damp[1];
+                    BodySetup[i].Damping[1] = damp[2];
+                }
+            }
+
+            for (var i = 0; i < JointSetup.Count; i++)
+            {
+                var j = rds["joint"][i + 1];
+                JointSetup[i].BodyIndex = j["body_index"];
+                JointSetup[i].JointType = (RDJointSetup.Type) j["joint_type"];
+                if(j["body1_offset"] is LuaTable)
+                {
+                    for (var k = 0; k < 3; k++)
+                        JointSetup[i].Body1Offset[k] = j["body1_offset"][k + 1];
+                }
+                if (j["body2_offset"] is LuaTable)
+                {
+                    for (var k = 0; k < 3; k++)
+                        JointSetup[i].Body2Offset[k] = j["body2_offset"][k + 1];
+                }
+                if (j["body1_angle"] is LuaTable)
+                {
+                    for (var k = 0; k < 3; k++)
+                        JointSetup[i].Body1Angle[k] = j["body1_angle"][k + 1];
+                }
+                if (j["body2_angle"] is LuaTable)
+                {
+                    for (var k = 0; k < 3; k++)
+                        JointSetup[i].Body2Angle[k] = j["body2_angle"][k + 1];
+                }
+                if (j["joint_limit"] is LuaTable)
+                {
+                    for (var k = 0; k < 3; k++)
+                        JointSetup[i].JointLimit[k] = j["joint_limit"][k + 1];
+                }
+            }
+
+            return true;
+        }
 
         public void ClearSetup()
         {

@@ -210,4 +210,70 @@ namespace FreeRaider
             Frustum.Planes = ClipPlanes.Take(4).ToList();
         }
     }
+
+    /// <summary>
+    /// Static camera / sink structure.
+    /// </summary>
+    public class StatCameraSink
+    {
+        public float X;
+
+        public float Y;
+
+        public float Z;
+
+        /// <summary>
+        /// Room for camera, strength for sink.
+        /// </summary>
+        public ushort RoomOrStrength;
+
+        /// <summary>
+        /// Flag for camera, zone for sink.
+        /// </summary>
+        public ushort FlagOrZone;
+    }
+
+    /// <summary>
+    /// Flyby camera structure.
+    /// </summary>
+    public class FlybyCamera
+    {
+        /// <summary>
+        /// Camera position vector
+        /// </summary>
+        public Vector3 Cam;
+
+        /// <summary>
+        /// Target orientation vector
+        /// </summary>
+        public Vector3 Target;
+
+        public float Fov;
+
+        public float Roll;
+
+        public float Speed;
+
+        /// <summary>
+        /// Sequence number to which camera belongs
+        /// </summary>
+        public uint Sequence;
+
+        /// <summary>
+        /// Index in sequence
+        /// </summary>
+        public uint Index;
+
+        /// <summary>
+        /// How much to sit there
+        /// </summary>
+        public uint Timer;
+
+        public uint RoomID;
+
+        /// <summary>
+        /// See TRLE manual
+        /// </summary>
+        public ushort Flags;
+    }
 }

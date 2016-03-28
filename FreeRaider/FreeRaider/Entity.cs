@@ -461,20 +461,20 @@ namespace FreeRaider
                 switch(Self.CollisionShape)
                 {
                     case COLLISION_SHAPE.Sphere:
-                        cshape = CollisionShapeHelper.CSfromSphere(mesh.Radius);
+                        cshape = BT_CSfromSphere(mesh.Radius);
                         break;
 
                     case COLLISION_SHAPE.TrimeshConvex:
-                        cshape = CollisionShapeHelper.CSfromMesh(mesh, true, true, false);
+                        cshape = BT_CSfromMesh(mesh, true, true, false);
                         break;
 
                     case COLLISION_SHAPE.Trimesh:
-                        cshape = CollisionShapeHelper.CSfromMesh(mesh, true, true, true);
+                        cshape = BT_CSfromMesh(mesh, true, true, true);
                         break;
 
                     case COLLISION_SHAPE.Box:
                     default:
-                        cshape = CollisionShapeHelper.CSfromBBox(mesh.BBMin, mesh.BBMax, true, true);
+                        cshape = BT_CSfromBBox(mesh.BBMin, mesh.BBMax, true, true);
                         break;
                 }
 

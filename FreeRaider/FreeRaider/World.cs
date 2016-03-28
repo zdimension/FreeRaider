@@ -159,9 +159,16 @@ namespace FreeRaider
 
     public partial class Constants
     {
-        public const int FlipmapMax = 32;
-        public const int ActivationMask_OR = 0;
-        public const int ActivationMask_XOR = 1;
+        // Maximum number of flipmaps specifies how many flipmap indices to store. Usually,
+        // TR1-3 doesn't contain flipmaps above 10, while in TR4-5 number of flipmaps could
+        // be as much as 14-16. To make sure flipmap array will be suitable for all game
+        // versions, it is set to 32.
+        public const int FLIPMAX_MAX_NUMBER = 32;
+
+        // Activation mask operation can be either XOR (for switch triggers) or OR (for any
+        // other types of triggers).
+        public const int AMASK_OP_OR = 0;
+        public const int AMASK_OP_XOR = 1;
     }
 
     public partial class Global

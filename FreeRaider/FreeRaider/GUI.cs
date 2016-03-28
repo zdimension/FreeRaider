@@ -2680,14 +2680,14 @@ namespace FreeRaider
 
             bf.Animations.Lerp = 0;
             stc = Anim_FindStateChangeByID(bf.Animations.Model.Animations[(int)bf.Animations.CurrentAnimation],
-                (uint) bf.Animations.NextState);
+                bf.Animations.NextState);
             Entity.GetNextFrame(bf, time, stc, out frame, out anim, AnimControlFlags.NormalControl);
             if(anim != bf.Animations.CurrentAnimation)
             {
                 bf.Animations.LastAnimation = bf.Animations.CurrentAnimation;
                 stc =
                     Anim_FindStateChangeByID(bf.Animations.Model.Animations[(int)bf.Animations.CurrentAnimation],
-                        (uint) bf.Animations.NextState);
+                        bf.Animations.NextState);
             }
             else if(frame != bf.Animations.CurrentFrame)
             {

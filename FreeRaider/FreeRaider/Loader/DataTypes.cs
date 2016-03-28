@@ -2062,24 +2062,14 @@ namespace FreeRaider.Loader
     public struct SpriteSequence
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SpriteSequence"/> class.
-        /// </summary>
-        public SpriteSequence(int spriteId, short negativeLength, short offset)
-        {
-            SpriteID = spriteId;
-            NegativeLength = negativeLength;
-            Offset = offset;
-        }
-
-        /// <summary>
         /// Sprite identifier 
         /// </summary>
-        public int SpriteID;
+        public int ObjectID;
 
         /// <summary>
         /// Negative of 'how many sprites are in this sequence'
         /// </summary>
-        public short NegativeLength;
+        public short Length;
 
         /// <summary>
         /// Where (in sprite texture list) this sequence starts
@@ -2095,8 +2085,8 @@ namespace FreeRaider.Loader
         {
             return new SpriteSequence
             {
-                SpriteID = br.ReadInt32(),
-                NegativeLength = (short)-br.ReadInt16(),
+                ObjectID = br.ReadInt32(),
+                Length = (short)-br.ReadInt16(),
                 Offset = br.ReadInt16()
             };
         } 

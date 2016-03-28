@@ -117,6 +117,8 @@ namespace FreeRaider
 
         private int nextItemsCount;
 
+        private MenuItemType currentItemsType;
+
         private int currentItemsCount;
 
         private int itemsOffset;
@@ -172,7 +174,7 @@ namespace FreeRaider
         {
             CurrentState = InventoryState.Disabled;
             NextState = InventoryState.Disabled;
-            ItemsType = MenuItemType.System;
+            currentItemsType = MenuItemType.System;
             currentItemsCount = 0;
             itemsOffset = 0;
             nextItemsCount = 0;
@@ -231,8 +233,6 @@ namespace FreeRaider
 
         public InventoryState NextState { get; set; }
 
-        public MenuItemType ItemsType { get; }
-
         public void SetInventory(List<InventoryNode> i)
         {
             inventory = i.ToList();
@@ -263,7 +263,280 @@ namespace FreeRaider
             LabelTitle.Text = EngineLua.GetString(stringIndex);
         }
 
-        public void Frame(float time);
+        public MenuItemType SetItemsType(MenuItemType type)
+        {
+            if(inventory == null || inventory.Count == 0)
+            {
+                currentItemsType = type;
+                return type;
+            }
+
+            var count = getItemsTypeCount(type);
+            if(count == 0)
+            {
+                foreach (var i in inventory)
+                {
+                    var bi = EngineWorld.GetBaseItemByID(i.ID);
+                    if(bi != null)
+                    {
+                        type = bi.Type;
+                        count = getItemsTypeCount(currentItemsType);
+                        break;
+                    }
+                }
+            }
+
+            if(count > 0)
+            {
+                currentItemsCount = count;
+                currentItemsType = type;
+                ringAngleStep = 360.0f / currentItemsCount;
+                itemsOffset %= count;
+                ringTime = 0.0f;
+                ringAngle = 0.0f;
+                return type;
+            }
+
+            return MenuItemType.Invalid;
+        }
+
+        public void Frame(float time)
+        {
+            if(inventory == null || inventory.Count == 0)
+            {
+                CurrentState = InventoryState.Disabled;
+                NextState = InventoryState.Disabled;
+                return;
+            }
+
+            switch(CurrentState)
+            {
+                case InventoryState.RLeft:
+                    ringTime += time;
+                    ringAngle = ringAngleStep * ringTime / ringRotatePeriod;
+                    NextState = InventoryState.RLeft;
+                    if(ringTime >= ringRotatePeriod)
+                    {
+                        ringTime = 0.0f;
+                        ringAngle = 0.0f;
+                        NextState = InventoryState.Idle;
+                        CurrentState = InventoryState.Idle;
+                        itemsOffset--;
+                        if(itemsOffset < 0)
+                        {
+                            itemsOffset = currentItemsCount - 1;
+                        }
+                    }
+                    restoreItemAngle(time);
+                    break;
+
+                case InventoryState.RRight:
+                    ringTime += time;
+                    ringAngle = -ringAngleStep * ringTime / ringRotatePeriod;
+                    NextState = InventoryState.RRight;
+                    if (ringTime >= ringRotatePeriod)
+                    {
+                        ringTime = 0.0f;
+                        ringAngle = 0.0f;
+                        NextState = InventoryState.Idle;
+                        CurrentState = InventoryState.Idle;
+                        itemsOffset++;
+                        if (itemsOffset >= currentItemsCount)
+                        {
+                            itemsOffset = 0;
+                        }
+                    }
+                    restoreItemAngle(time);
+                    break;
+
+                case InventoryState.Idle:
+                    ringTime = 0.0f;
+                    switch(NextState)
+                    {
+                        default:
+                        case InventoryState.Idle:
+                            itemTime += time;
+                            itemAngle = 360.0f * itemTime / itemRotatePeriod;
+                            if(itemTime >= itemRotatePeriod)
+                            {
+                                itemTime = 0.0f;
+                                itemAngle = 0.0f;
+                            }
+                            LabelItemName.Show = true;
+                            LabelTitle.Show = true;
+                            break;
+
+                        case InventoryState.Closed:
+                            Audio.Send((uint) EngineLua.GetGlobalSound((int) TR_AUDIO_SOUND_GLOBALID.MenuClose));
+                            LabelItemName.Show = false;
+                            LabelTitle.Show = false;
+                            CurrentState = NextState;
+                            break;
+
+                        case InventoryState.RLeft:
+                        case InventoryState.RRight:
+                            Audio.Send((uint) TR_AUDIO_SOUND.MenuRotate);
+                            LabelItemName.Show = false;
+                            CurrentState = NextState;
+                            itemTime = 0.0f;
+                            break;
+
+                        case InventoryState.Up:
+                            nextItemsCount = getItemsTypeCount(StaticFuncs.NextItemType(currentItemsType));
+                            if(nextItemsCount > 0)
+                            {
+                                CurrentState = NextState;
+                                ringTime = 0.0f;
+                            }
+                            else
+                            {
+                                NextState = InventoryState.Idle;
+                            }
+                            LabelItemName.Show = false;
+                            LabelTitle.Show = false;
+                            break;
+
+                        case InventoryState.Down:
+                            nextItemsCount = getItemsTypeCount(StaticFuncs.PreviousItemType(currentItemsType));
+                            if (nextItemsCount > 0)
+                            {
+                                CurrentState = NextState;
+                                ringTime = 0.0f;
+                            }
+                            else
+                            {
+                                NextState = InventoryState.Idle;
+                            }
+                            LabelItemName.Show = false;
+                            LabelTitle.Show = false;
+                            break;
+                    }
+                    break;
+
+                case InventoryState.Disabled:
+                    if(NextState == InventoryState.Open)
+                    {
+                        if(SetItemsType(currentItemsType) != MenuItemType.Invalid)
+                        {
+                            Audio.Send((uint) EngineLua.GetGlobalSound((int) TR_AUDIO_SOUND_GLOBALID.MenuOpen));
+                            CurrentState = InventoryState.Open;
+                            ringAngle = 180.0f;
+                            ringVerticalAngle = 180.0f;
+                        }
+                    }
+                    break;
+
+                case InventoryState.Up:
+                    CurrentState = InventoryState.Up;
+                    NextState = InventoryState.Up;
+                    ringTime += time;
+                    if(ringTime < ringRotatePeriod)
+                    {
+                        restoreItemAngle(time);
+                        ringRadius = baseRingRadius * (ringRotatePeriod - ringTime) / ringRotatePeriod;
+                        verticalOffset = -baseRingRadius * ringTime / ringRotatePeriod;
+                        ringAngle += 180.0f * time / ringRotatePeriod;
+                    }
+                    else if(ringTime < 2.0f * ringRotatePeriod)
+                    {
+                        if(ringTime - time <= ringRotatePeriod)
+                        {
+                            ringRadius = 0.0f;
+                            verticalOffset = baseRingRadius;
+                            ringAngleStep = 360.0f / nextItemsCount;
+                            ringAngle = 180.0f;
+                            currentItemsType = StaticFuncs.NextItemType(currentItemsType);
+                            currentItemsCount = nextItemsCount;
+                            itemsOffset = 0;
+                            SetTitle(currentItemsType);
+                        }
+                        ringRadius = baseRingRadius * (ringTime - ringRotatePeriod) / ringRotatePeriod;
+                        verticalOffset -= baseRingRadius * time / ringRotatePeriod;
+                        ringAngle -= 180.0f * time / ringRotatePeriod;
+                    }
+                    else
+                    {
+                        NextState = InventoryState.Idle;
+                        CurrentState = InventoryState.Idle;
+                        ringAngle = 0.0f;
+                        verticalOffset = 0.0f;
+                    }
+                    break;
+
+                case InventoryState.Down:
+                    CurrentState = InventoryState.Down;
+                    NextState = InventoryState.Down;
+                    ringTime += time;
+                    if (ringTime < ringRotatePeriod)
+                    {
+                        restoreItemAngle(time);
+                        ringRadius = baseRingRadius * (ringRotatePeriod - ringTime) / ringRotatePeriod;
+                        verticalOffset = baseRingRadius * ringTime / ringRotatePeriod;
+                        ringAngle += 180.0f * time / ringRotatePeriod;
+                    }
+                    else if (ringTime < 2.0f * ringRotatePeriod)
+                    {
+                        if (ringTime - time <= ringRotatePeriod)
+                        {
+                            ringRadius = 0.0f;
+                            verticalOffset = -baseRingRadius;
+                            ringAngleStep = 360.0f / nextItemsCount;
+                            ringAngle = 180.0f;
+                            currentItemsType = StaticFuncs.PreviousItemType(currentItemsType);
+                            currentItemsCount = nextItemsCount;
+                            itemsOffset = 0;
+                            SetTitle(currentItemsType);
+                        }
+                        ringRadius = baseRingRadius * (ringTime - ringRotatePeriod) / ringRotatePeriod;
+                        verticalOffset += baseRingRadius * time / ringRotatePeriod;
+                        ringAngle -= 180.0f * time / ringRotatePeriod;
+                    }
+                    else
+                    {
+                        NextState = InventoryState.Idle;
+                        CurrentState = InventoryState.Idle;
+                        ringAngle = 0.0f;
+                        verticalOffset = 0.0f;
+                    }
+                    break;
+
+                case InventoryState.Open:
+                    ringTime += time;
+                    ringRadius = baseRingRadius * ringTime / ringRotatePeriod;
+                    ringAngle -= 180.0f * time / ringRotatePeriod;
+                    ringVerticalAngle -= 180.0f * time / ringRotatePeriod;
+                    if(ringTime >= ringRotatePeriod)
+                    {
+                        CurrentState = InventoryState.Idle;
+                        CurrentState = InventoryState.Idle;
+                        ringVerticalAngle = 0.0f;
+
+                        ringRadius = baseRingRadius;
+                        ringTime = 0.0f;
+                        ringAngle = 0.0f;
+                        verticalOffset = 0.0f;
+                        SetTitle(MenuItemType.Supply);
+                    }
+                    break;
+
+                case InventoryState.Closed:
+                    ringTime += time;
+                    ringRadius = baseRingRadius * (ringRotatePeriod - ringTime) / ringRotatePeriod;
+                    ringAngle += 180.0f * time / ringRotatePeriod;
+                    ringVerticalAngle += 180.0f * time / ringRotatePeriod;
+                    if (ringTime >= ringRotatePeriod)
+                    {
+                        CurrentState = InventoryState.Disabled;
+                        CurrentState = InventoryState.Disabled;
+                        ringVerticalAngle = 0.0f;
+                        ringTime = 0.0f;
+                        LabelTitle.Show = false;
+                        ringRadius = baseRingRadius;
+                        currentItemsType = MenuItemType.Supply;
+                    }
+                    break;
+            }
+        }
 
         public void Render()
         {
@@ -273,7 +546,7 @@ namespace FreeRaider
                 foreach (var i in inventory)
                 {
                     var bi = EngineWorld.GetBaseItemByID(i.ID);
-                    if(bi == null || bi.Type != ItemsType)
+                    if(bi == null || bi.Type != currentItemsType)
                     {
                         continue;
                     }

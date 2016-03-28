@@ -1489,9 +1489,9 @@ namespace FreeRaider
         }
     }
 
-    public class CollisionShapeHelper
+    public partial class StaticFuncs
     {
-        public static CollisionShape CSfromSphere(float radius)
+        public static CollisionShape BT_CSfromSphere(float radius)
         {
             if (radius == 0) return null;
 
@@ -1501,7 +1501,7 @@ namespace FreeRaider
             return ret;
         }
 
-        public static CollisionShape CSfromBBox(Vector3 bbMin, Vector3 bbMax, bool useCompression, bool buildBvh)
+        public static CollisionShape BT_CSfromBBox(Vector3 bbMin, Vector3 bbMax, bool useCompression, bool buildBvh)
         {
             var trimesh = new TriangleMesh();
             var cnt = 0;
@@ -1536,7 +1536,7 @@ namespace FreeRaider
             return ret;
         }
 
-        public static CollisionShape CSfromMesh(BaseMesh mesh, bool useCompression, bool buildBvh,
+        public static CollisionShape BT_CSfromMesh(BaseMesh mesh, bool useCompression, bool buildBvh,
             bool isStatic = true)
         {
             var cnt = 0;
@@ -1574,7 +1574,7 @@ namespace FreeRaider
             return ret;
         }
 
-        public static CollisionShape CSfromHeightmap(List<RoomSector> heightmap, List<SectorTween> tweens,
+        public static CollisionShape BT_CSfromHeightmap(List<RoomSector> heightmap, List<SectorTween> tweens,
             bool useCompression, bool buildBvh)
         {
             var cnt = 0;

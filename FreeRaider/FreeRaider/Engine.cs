@@ -727,9 +727,15 @@ namespace FreeRaider
 
         #region Debug functions
 
-        public static void PrimaryMouseDown();
+        public static void PrimaryMouseDown()
+        {
+            // No implementation in OpenTomb
+        }
 
-        public static void SecondaryMouseDown();
+        public static void SecondaryMouseDown()
+        {
+            // No implementation in OpenTomb
+        }
 
         public static void ShowDebugInfo()
         {
