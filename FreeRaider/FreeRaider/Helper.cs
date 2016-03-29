@@ -250,6 +250,18 @@ namespace FreeRaider
                 xz - wy, yz + wx, 1.0f - (xx + yy));
         }
 
+        public static void CopyEx(Array dest, int idx, Array src, int num)
+        {
+            Array.Copy(src, 0, dest, 0, num);
+        }
+
+        public static void CopyEx(Array dest, int idx, Vector3 src, int num = 3)
+        {
+            dest.SetValue(src.X, idx + 0);
+            dest.SetValue(src.Y, idx + 1);
+            dest.SetValue(src.Z, idx + 2);
+        }
+
         public static void ListCopy<T>(List<T> sourceArray, List<T> destinationArray,
             int length)
         {

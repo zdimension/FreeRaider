@@ -2372,16 +2372,16 @@ namespace FreeRaider
                 {
                     new VertexArrayAttribute((int) GuiShaderDescription.VertexAttribs.Position, 2,
                         VertexAttribPointerType.Float, false, RectanglePositionBuffer,
-                        Marshal.SizeOf(new float[2]), 0),
+                        2 * sizeof(float), 0),
                     new VertexArrayAttribute((int) GuiShaderDescription.VertexAttribs.Color, 4,
-                        VertexAttribPointerType.Float, false, RectangleColorBuffer, Marshal.SizeOf(new float[4]),
+                        VertexAttribPointerType.Float, false, RectangleColorBuffer,4 * sizeof(float),
                         0)
                 };
                 RectangleArray = new VertexArray(0, attribs);
             }
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, RectangleColorBuffer);
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) (Marshal.SizeOf(new float[4]) * 4), IntPtr.Zero,
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) (4 * sizeof(float) * 4), IntPtr.Zero,
                 BufferUsageHint.StreamDraw);
             unsafe
             {

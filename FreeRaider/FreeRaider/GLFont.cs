@@ -510,7 +510,7 @@ namespace FreeRaider
 
                 for (;*ch != 0;)
                 {
-                    var p = FontBuffer.ResizeAndMap(Marshal.SizeOf(new float[32]));
+                    var p = FontBuffer.ResizeAndMap(32 * sizeof(float));
 
                     byte* nch2 = Helper.UTF8ToUTF32(nch, &next_utf32);
 

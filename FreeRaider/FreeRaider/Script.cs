@@ -106,7 +106,7 @@ namespace FreeRaider.Script
 
         protected void CheckStack();
 
-        private NLua.Lua state;
+        public NLua.Lua state;
 
         private static int print(NLua.Lua state);
 

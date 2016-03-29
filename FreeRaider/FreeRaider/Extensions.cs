@@ -716,6 +716,17 @@ namespace FreeRaider
         {
             return a.X * b.X + a.Y * b.Y;
         }
+
+        public static void Clear(this Array arr)
+        {
+            Array.Clear(arr, 0, arr.Length);
+        }
+
+        public static long GetSize<T>(this T[] arr)
+            where T : struct
+        {
+            return arr.Length * Marshal.SizeOf(typeof(T));
+        }
     }
 
     public partial class Constants

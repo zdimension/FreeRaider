@@ -849,7 +849,7 @@ namespace FreeRaider
             TR_GenWorld(EngineWorld, loader);
 
             ConsoleInfo.Instance.Notify(SYSNOTE_LOADED_PC_LEVEL);
-            ConsoleInfo.Instance.Notify(SYSNOTE_ENGINE_VERSION, loader.Version, GetLevelName(name));
+            ConsoleInfo.Instance.Notify(SYSNOTE_ENGINE_VERSION, loader.GameVersion, GetLevelName(name));
             ConsoleInfo.Instance.Notify(SYSNOTE_NUM_ROOMS, EngineWorld.Rooms.Count);
 
             return true;

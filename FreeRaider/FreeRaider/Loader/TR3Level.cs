@@ -11,10 +11,6 @@ namespace FreeRaider.Loader
 
     public class TR3Level : Level
     {
-        public TR3Level(BinaryReader br, Engine ver) : base(br, ver)
-        {
-        }
-
         public TR3Level(BinaryReader br, TRGame ver) : base(br, ver)
         {
         }

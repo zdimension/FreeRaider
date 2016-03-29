@@ -158,9 +158,9 @@ namespace FreeRaider
                     var attribs = new[]
                     {
                         new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.Position, 3,
-                            VertexAttribPointerType.Float, false, glBuffer, Marshal.SizeOf(new float[6]), 0),
+                            VertexAttribPointerType.Float, false, glBuffer, 6 * sizeof(float), 0),
                         new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.Color, 3,
-                            VertexAttribPointerType.Float, false, glBuffer, Marshal.SizeOf(new float[6]), Marshal.SizeOf(new float[3]))
+                            VertexAttribPointerType.Float, false, glBuffer, 6 * sizeof(float), 3 * sizeof(float))
                     };
                     vertexArray = new VertexArray(0, attribs);
                 }
@@ -1158,7 +1158,7 @@ namespace FreeRaider
                 // Respecify the tex coord buffer
                 GL.BindBuffer(BufferTarget.ArrayBuffer, mesh.AnimatedVBOTexCoordArray);
                 // Tell OpenGL to discard the old values
-                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(mesh.AnimatedVertices.Count * Marshal.SizeOf(new float[2])), IntPtr.Zero, BufferUsageHint.StreamDraw);
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(mesh.AnimatedVertices.Count * 2 * sizeof(float)), IntPtr.Zero, BufferUsageHint.StreamDraw);
 
                 unsafe
                 {
@@ -1388,7 +1388,7 @@ namespace FreeRaider
                         var attribs = new[]
                         {
                             new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.Position, 3,
-                                VertexAttribPointerType.Float, false, stencilVBO, Marshal.SizeOf(new float[3]), 0),
+                                VertexAttribPointerType.Float, false, stencilVBO, 3 * sizeof(float), 0),
                         };
 
                         var array = new VertexArray(0, attribs);

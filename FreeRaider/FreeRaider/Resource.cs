@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Runtime.InteropServices;
 using BulletSharp;
 using FreeRaider.Loader;
 using NLua;
+using NLua.Exceptions;
 using OpenTK;
+using OpenTK.Graphics.OpenGL;
 using static FreeRaider.Global;
 using static FreeRaider.Constants;
 
@@ -92,7 +96,117 @@ namespace FreeRaider
                 Res_GenRoomSpritesBuffer(r);
         }
 
-        public static void Res_GenRoomSpritesBuffer(Room room);
+        public static void Res_GenRoomSpritesBuffer(Room room)
+        {
+            // Find the number of different texture pages used and the number of non-null sprites
+            var highestTexturePageFound = 0;
+            var actualSpritesFound = 0;
+            foreach (var sp in room.Sprites)
+            {
+                if (sp.Sprite != null)
+                {
+                    actualSpritesFound++;
+                    highestTexturePageFound = Math.Max(highestTexturePageFound, (int) sp.Sprite.Texture);
+                }
+            }
+            if (actualSpritesFound == 0)
+            {
+                room.SpriteBuffer = null;
+                return;
+            }
+
+            room.SpriteBuffer = new SpriteBuffer();
+            room.SpriteBuffer.NumTexturePages = (uint) highestTexturePageFound + 1;
+            room.SpriteBuffer.ElementCountPerTexture.Resize((int) room.SpriteBuffer.NumTexturePages);
+
+            // First collect indices on a per-texture basis
+            var elementsForTexture = new ushort[highestTexturePageFound + 1][];
+
+            var spriteData = new float[actualSpritesFound * 4 * 7];
+
+            var writeIndex = 0;
+            foreach (var roomSprite in room.Sprites)
+            {
+                if (roomSprite.Sprite != null)
+                {
+                    var vertexStart = writeIndex;
+                    // top right
+                    Array.Copy(roomSprite.Position.ToArray(), 0, spriteData, writeIndex * 7 + 0, 3);
+                    Array.Copy(roomSprite.Sprite.TexCoord, 0, spriteData, writeIndex * 7 + 3, 2);
+                    spriteData[writeIndex * 7 + 5] = roomSprite.Sprite.Right;
+                    spriteData[writeIndex * 7 + 6] = roomSprite.Sprite.Top;
+
+                    writeIndex++;
+
+                    // top left
+                    Array.Copy(roomSprite.Position.ToArray(), 0, spriteData, writeIndex * 7 + 0, 3);
+                    Array.Copy(roomSprite.Sprite.TexCoord, 2, spriteData, writeIndex * 7 + 3, 2);
+                    spriteData[writeIndex * 7 + 5] = roomSprite.Sprite.Left;
+                    spriteData[writeIndex * 7 + 6] = roomSprite.Sprite.Top;
+
+                    writeIndex++;
+
+                    // bottom left
+                    Array.Copy(roomSprite.Position.ToArray(), 0, spriteData, writeIndex * 7 + 0, 3);
+                    Array.Copy(roomSprite.Sprite.TexCoord, 4, spriteData, writeIndex * 7 + 3, 2);
+                    spriteData[writeIndex * 7 + 5] = roomSprite.Sprite.Left;
+                    spriteData[writeIndex * 7 + 6] = roomSprite.Sprite.Bottom;
+
+                    writeIndex++;
+
+                    // bottom right
+                    Array.Copy(roomSprite.Position.ToArray(), 0, spriteData, writeIndex * 7 + 0, 3);
+                    Array.Copy(roomSprite.Sprite.TexCoord, 4, spriteData, writeIndex * 7 + 3, 2);
+                    spriteData[writeIndex * 7 + 5] = roomSprite.Sprite.Right;
+                    spriteData[writeIndex * 7 + 6] = roomSprite.Sprite.Bottom;
+
+                    writeIndex++;
+
+                    // Assign indices
+                    var texture = (int) roomSprite.Sprite.Texture;
+                    var start = room.SpriteBuffer.ElementCountPerTexture[texture];
+                    var s = (int) start;
+                    var newElementCount = start + 6;
+                    room.SpriteBuffer.ElementCountPerTexture[texture] = newElementCount;
+                    elementsForTexture[texture] = new ushort[(int) newElementCount];
+
+                    elementsForTexture[texture][s + 0] = (ushort) (vertexStart + 0);
+                    elementsForTexture[texture][s + 1] = (ushort) (vertexStart + 1);
+                    elementsForTexture[texture][s + 2] = (ushort) (vertexStart + 2);
+                    elementsForTexture[texture][s + 3] = (ushort) (vertexStart + 2);
+                    elementsForTexture[texture][s + 4] = (ushort) (vertexStart + 3);
+                    elementsForTexture[texture][s + 5] = (ushort) (vertexStart + 0);
+                }
+            }
+
+            var elements = elementsForTexture.SelectMany(x => x).ToArray(); // TODO: Maybe won't work as expected
+            elementsForTexture.Clear();
+
+            // Now load into OpenGL
+            var arrayBuffer = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, arrayBuffer);
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) (7 * sizeof (float) * 4 * actualSpritesFound),
+                spriteData, BufferUsageHint.StaticDraw);
+            spriteData.Clear();
+
+            var elementBuffer = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, elementBuffer);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr) elements.GetSize(),
+                elements, BufferUsageHint.StaticDraw);
+            elements.Clear();
+
+            var attribs = new[]
+            {
+                new VertexArrayAttribute((int) SpriteShaderDescription.VertexAttribs.Position, 3,
+                    VertexAttribPointerType.Float, false, (uint) arrayBuffer, 7 * sizeof (float), 0),
+                new VertexArrayAttribute((int) SpriteShaderDescription.VertexAttribs.TexCoord, 2,
+                    VertexAttribPointerType.Float, false, (uint) arrayBuffer, 7 * sizeof (float), 3 * sizeof (float)),
+                new VertexArrayAttribute((int) SpriteShaderDescription.VertexAttribs.CornerOffset, 2,
+                    VertexAttribPointerType.Float, false, (uint) arrayBuffer, 7 * sizeof (float), 5 * sizeof (float))
+            };
+
+            room.SpriteBuffer.Data = new VertexArray((uint)elementBuffer, attribs);
+        }
 
         public static void Res_GenRoomCollision(World world)
         {
@@ -264,9 +378,51 @@ namespace FreeRaider
 
         public static List<SectorTween> Res_Sector_GenTweens(Room room); 
 
-        public static void Res_Sector_FixHeights(RoomSector sector);
+        public static void Res_Sector_FixHeights(RoomSector sector)
+        {
+            if(sector.Floor == TR_METERING_WALLHEIGHT)
+            {
+                sector.FloorPenetrationConfig = TR_PENETRATION_CONFIG.Wall;
+            }
+            if(sector.Ceiling == TR_METERING_WALLHEIGHT)
+            {
+                sector.CeilingPenetrationConfig = TR_PENETRATION_CONFIG.Wall;
+            }
 
-        public static bool Res_Poly_SetAnimTexture(Polygon polygon, uint texIndex, World world);
+            // Fix non-material crevices
+
+            for(var i = 0; i < 4; i++)
+            {
+                if (sector.CeilingCorners[i].Z == sector.FloorCorners[i].Z)
+                    sector.CeilingCorners[i].Z += LARA_HANG_VERTICAL_EPSILON;
+            }
+        }
+
+        /// <summary>
+        /// Assign animated texture to a polygon.
+        /// </summary>
+        public static bool Res_Poly_SetAnimTexture(Polygon polygon, uint texIndex, World world)
+        {
+            polygon.AnimID = 0; // Reset to 0 by default
+
+            for (var i = 0; i < world.AnimSequences.Count; i++)
+            {
+                for (var j = 0; j < world.AnimSequences[i].Frames.Count; j++)
+                {
+                    if(world.AnimSequences[i].FrameList[j] == texIndex)
+                    {
+                        // If we have found assigned texture ID in animation texture lists,
+                        // we assign corresponding animation sequence to this polygon,
+                        // additionally specifying frame offset.
+                        polygon.AnimID = (ushort)(i + 1); // Animation sequence ID.
+                        polygon.FrameOffset = (ushort)j; // Animation frame offset.
+                        return true;
+                    }
+                }
+            }
+
+            return false; // No such TexInfo found in animation textures lists.
+        }
 
         /// <summary>
         /// Fix start-up room states.
@@ -317,10 +473,23 @@ namespace FreeRaider
         /// <summary>
         /// Create entity function from script, if exists.
         /// </summary>
-        /// <param name="ent"></param>
-        public static void Res_SetEntityFunction(Entity ent);
+        public static void Res_SetEntityFunction(Entity ent)
+        {
+            if(ent.Bf.Animations.Model != null)
+            {
+                var funcName = EngineLua.Call("getEntityFunction", (int) EngineWorld.EngineVersion,
+                    ent.Bf.Animations.Model.ID)[0] as string;
+                if(funcName != null)
+                    Res_CreateEntityFunc(EngineLua, funcName, (int)ent.ID);
+            }
+        }
 
-        public static void Res_CreateEntityFunc(Script.ScriptEngine lua, string func_name, int entity_id);
+        public static void Res_CreateEntityFunc(Script.ScriptEngine lua, string func_name, int entity_id)
+        {
+            if(((LuaTable)lua["entity_funcs"])[entity_id] == null)
+                lua.state.NewTable("entity_funcs." + entity_id);
+            ((LuaFunction) lua[func_name + "_init"]).Call(entity_id);
+        }
 
         public static void Res_GenEntityFunctions(Dictionary<uint, Entity> entities)
         {
@@ -330,13 +499,59 @@ namespace FreeRaider
 
         // Assign pickup functions to previously created base items.
 
-        public static void Res_EntityToItem(Dictionary<uint, BaseItem> map);
+        public static void Res_EntityToItem(Dictionary<uint, BaseItem> map)
+        {
+            foreach (var item in map.Values)
+            {
+                foreach (var ent in from room in EngineWorld.Rooms
+                                    from cont in room.Containers
+                                    where cont.ObjectType == OBJECT_TYPE.Entity
+                                    select (Entity) cont.Object
+                                    into ent
+                                    where ent.Bf.Animations.Model.ID == item.WorldModelId
+                                    select ent)
+                {
+                    if (((LuaTable) EngineLua["entity_funcs"])[ent.ID] == null)
+                        EngineLua.state.NewTable("entity_funcs." + ent.ID);
+
+                    ((LuaFunction) EngineLua["pickup_init"]).Call(ent.ID, item.ID);
+
+                    ent.DisableCollision();
+                }
+            }
+        }
 
         // Functions setting parameters from configuration scripts.
 
-        public static void Res_SetEntityProperties(Entity ent);
+        public static void Res_SetEntityProperties(Entity ent)
+        {
+            if(ent.Bf.Animations.Model != null && EngineLua["getEntityModelProperties"] is LuaFunction)
+            {
+                var tmp = EngineLua.Call("getEntityModelProperties", (int) EngineWorld.EngineVersion,
+                    ent.Bf.Animations.Model.ID);
+                ent.Self.CollisionType = (COLLISION_TYPE) tmp[0];
+                ent.Self.CollisionShape = (COLLISION_SHAPE) tmp[1];
+                var flg = (ENTITY_TYPE) tmp[2];
 
-        public static void Res_SetStaticMeshProperties(StaticMesh r_static);
+                ent.Visible = !ent.Visible;
+                ent.TypeFlags |= flg;
+            }
+        }
+
+        public static void Res_SetStaticMeshProperties(StaticMesh r_static)
+        {
+            var tmp = EngineLua.Call("getStaticMeshProperties", r_static.ObjectID);
+            var collisionType = (COLLISION_TYPE) tmp[0];
+            var collisionShape = (COLLISION_SHAPE) tmp[1];
+            var hide = (bool) tmp[2];
+
+            if(collisionType > 0)
+            {
+                r_static.Self.CollisionType = collisionType;
+                r_static.Self.CollisionShape = collisionShape;
+                r_static.Hide = hide;
+            }
+        }
 
         // Check if entity index was already processed (needed to remove dublicated activation calls).
         // If entity is not processed, add its index into lookup table.
@@ -363,11 +578,100 @@ namespace FreeRaider
 
         // Open autoexec.
 
-        public static void Res_AutoexecOpen(TRGame engine_version);
+        public static void Res_AutoexecOpen(TRGame engine_version)
+        {
+            var tempScriptName = Engine.GetAutoexecName(engine_version);
+
+            if(Engine.FileFound(tempScriptName))
+            {
+                try
+                {
+                    EngineLua.DoFile(tempScriptName);
+                }
+                catch(LuaException e)
+                {
+                    Sys.DebugLog(LUA_LOG_FILENAME, "{0}", e.Message);
+                }
+            }
+        }
 
         // Functions generating native OpenTomb structs from legacy TR structs.
 
-        public static void TR_GenWorld(World world, Level tr);
+        public static void TR_GenWorld(World world, Level tr)
+        {
+            world.EngineVersion = Helper.GameToEngine(tr.GameVersion);
+
+            Res_AutoexecOpen(tr.GameVersion); // Open and do preload autoexec.
+            EngineLua.Call("autoexec_PreLoad");
+            Gui.DrawLoadScreen(150);
+
+            Res_GenRBTrees(world);
+            Gui.DrawLoadScreen(200);
+
+            TR_GenTextures(world, tr);
+            Gui.DrawLoadScreen(300);
+
+            TR_GenAnimCommands(world, tr);
+            Gui.DrawLoadScreen(310);
+
+            TR_GenAnimTextures(world, tr);
+            Gui.DrawLoadScreen(320);
+
+            TR_GenMeshes(world, tr);
+            Gui.DrawLoadScreen(400);
+
+            TR_GenSprites(world, tr);
+            Gui.DrawLoadScreen(420);
+
+            TR_GenBoxes(world, tr);
+            Gui.DrawLoadScreen(440);
+
+            TR_GenCameras(world, tr);
+            Gui.DrawLoadScreen(460);
+
+            TR_GenRooms(world, tr);
+            Gui.DrawLoadScreen(500);
+
+            Res_GenRoomFlipMap(world);
+            Gui.DrawLoadScreen(520);
+
+            TR_GenSkeletalModels(world, tr);
+            Gui.DrawLoadScreen(600);
+
+            TR_GenEntities(world, tr);
+            Gui.DrawLoadScreen(650);
+
+            Res_GenBaseItems(world);
+            Gui.DrawLoadScreen(680);
+
+            Res_GenSpritesBuffer(world); // Should be done ONLY after TR_GenEntities.
+            Gui.DrawLoadScreen(700);
+
+            TR_GenRoomProperties(world, tr);
+            Gui.DrawLoadScreen(750);
+
+            Res_GenRoomCollision(world);
+            Gui.DrawLoadScreen(800);
+
+            TR_GenSamples(world, tr);
+            Gui.DrawLoadScreen(850);
+
+            world.SkyBox = Res_GetSkybox(world, world.EngineVersion);
+            Gui.DrawLoadScreen(860);
+
+            Res_GenEntityFunctions(world.EntityTree);
+            Gui.DrawLoadScreen(910);
+
+            Res_GenVBOs(world);
+            Gui.DrawLoadScreen(950);
+
+            EngineLua.DoFile("scripts/autoexec.lua"); // Postload autoexec.
+            EngineLua.Call("autoexec_PostLoad");
+            Gui.DrawLoadScreen(960);
+
+            Res_FixRooms(world); // Fix initial room states
+            Gui.DrawLoadScreen(970);
+        }
 
         public static bool SetAnimTexture(Polygon polygon, uint texIndex, World world)
         {
@@ -457,7 +761,84 @@ namespace FreeRaider
             }
         }
 
-        public static void TR_GenTextures(World world, Level tr);
+        public static void TR_GenTextures(World world, Level tr)
+        {
+            var borderSize = Renderer.Settings.TextureBorder.Clamp(0, 64);
+
+            world.TextureAtlas = new BorderedTextureAtlas(
+                borderSize, 
+                Renderer.Settings.SaveTextureMemory, 
+                tr.Textures,
+                tr.ObjectTextures, 
+                tr.SpriteTextures);
+
+            world.Textures.Resize((int)world.TextureAtlas.NumAtlasPages + 1);
+
+            GL.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
+            GL.PixelZoom(1, 1);
+            unsafe
+            {
+                var tmp = world.Textures.ToArray();
+                fixed(uint* ptr = tmp)
+                    world.TextureAtlas.CreateTextures(ptr, 1);
+            }
+
+            // white texture data for coloured polygons and debug lines.
+            var whtx = new[]
+            {
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+            };
+
+            // Select mipmap mode
+            switch(Renderer.Settings.MipmapMode)
+            {
+                case 0:
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapNearest);
+                    break;
+
+                case 1:
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapNearest);
+                    break;
+
+                case 2:
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
+                    break;
+
+                case 3:
+                default:
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+                    break;
+            }
+
+            // Set mipmaps number
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, Renderer.Settings.Mipmaps);
+
+            // Set anisotropy degree
+            GL.TexParameter(TextureTarget.Texture2D,
+                (TextureParameterName) ExtTextureFilterAnisotropic.TextureMaxAnisotropyExt, Renderer.Settings.Anisotropy);
+
+            // Read lod bias
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureLodBias, Renderer.Settings.LodBias);
+
+            GL.BindTexture(TextureTarget.Texture2D, world.Textures.Last()); // solid color =)
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
+                (int) TextureMagFilter.Linear);
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 4, 4, 0, PixelFormat.Rgba,
+                PixelType.UnsignedByte, whtx);
+            GL.TexImage2D(TextureTarget.Texture2D, 1, PixelInternalFormat.Rgba, 2, 2, 0, PixelFormat.Rgba,
+             PixelType.UnsignedByte, whtx);
+            GL.TexImage2D(TextureTarget.Texture2D, 2, PixelInternalFormat.Rgba, 1, 1, 0, PixelFormat.Rgba,
+             PixelType.UnsignedByte, whtx);
+            //GL.Disable(EnableCap.Texture2D); // Why it is here? It is blocking loading screen.
+        }
 
         public static void TR_GenAnimCommands(World world, Level tr)
         {
@@ -466,7 +847,14 @@ namespace FreeRaider
 
         public static void TR_GenAnimTextures(World world, Level tr);
 
-        public static void TR_GenRooms(World world, Level tr);
+        public static void TR_GenRooms(World world, Level tr)
+        {
+            world.Rooms.Resize(tr.Rooms.Length, () => new Room());
+            for (var i = 0; i < world.Rooms.Count; i++)
+            {
+                TR_GenRoom(i, world.Rooms[i], world, tr);
+            }
+        }
 
         public static void TR_GenRoom(int room_index, Room room, World world, Level tr);
 

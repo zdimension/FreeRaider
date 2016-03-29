@@ -6,20 +6,18 @@ namespace FreeRaider.Loader
 {
     public abstract class Level
     {
-        public Engine Version { get; }
+        public TRGame GameVersion { get; }
+
+        public Engine EngineVersion { get; }
 
         protected BinaryReader reader;
 
 
-        protected Level(BinaryReader br, Engine ver)
-        {
-            Version = ver;
-            reader = br;
-        }
-
         protected Level(BinaryReader br, TRGame ver)
-            : this(br, Helper.GameToEngine(ver))
         {
+            GameVersion = ver;
+            EngineVersion = Helper.GameToEngine(ver);
+            reader = br;
         }
 
         public bool IsDemoOrUb { get; set; }
@@ -127,7 +125,7 @@ namespace FreeRaider.Loader
 
                 reader.BaseStream.Position = pos + dataPos;
 
-                Meshes[i] = Mesh.Read(reader, Version);
+                Meshes[i] = Mesh.Read(reader, EngineVersion);
 
                 for (var j = 0; j < numMeshIndices; j++)
                 {
@@ -152,10 +150,10 @@ namespace FreeRaider.Loader
             Moveables = new Moveable[numMoveables];
             for (uint i = 0; i < numMoveables; i++)
             {
-                Moveables[i] = Moveable.Read(reader, Version);
+                Moveables[i] = Moveable.Read(reader, EngineVersion);
 
                 // Disable unused skybox polygons
-                if (Version == Engine.TR3 && Moveables[i].ObjectID == 355)
+                if (EngineVersion == Engine.TR3 && Moveables[i].ObjectID == 355)
                 {
                     var arr = Meshes[MeshIndices[Moveables[i].StartingMesh]].ColouredRectangles;
                     Array.Resize(ref arr, 16);

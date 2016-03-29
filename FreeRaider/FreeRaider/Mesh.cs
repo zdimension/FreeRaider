@@ -233,7 +233,7 @@ namespace FreeRaider
             VBOVertexArray = (uint) GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, VBOVertexArray);
             var vsa = Vertices.Select(x => x.ToStruct()).ToArray();
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) (Marshal.SizeOf(typeof (VertexStruct)) * vsa.Length), vsa,
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) vsa.GetSize(), vsa,
                 BufferUsageHint.StaticDraw);
 
             // Store additional skinning information
@@ -301,7 +301,7 @@ namespace FreeRaider
                 AnimatedVBOTexCoordArray = (uint) GL.GenBuffer();
                 GL.BindBuffer(BufferTarget.ArrayBuffer, AnimatedVBOTexCoordArray);
                 GL.BufferData(BufferTarget.ArrayBuffer,
-                    (IntPtr) (Marshal.SizeOf(new float[2]) * AnimatedVertices.Count),
+                    (IntPtr) (2 * sizeof(float) * AnimatedVertices.Count),
                     IntPtr.Zero, BufferUsageHint.StreamDraw);
 
                 var attribs2 = new[]
@@ -319,7 +319,7 @@ namespace FreeRaider
                         Marshal.SizeOf(typeof (AnimatedVertex)),
                         (int) Marshal.OffsetOf(typeof (AnimatedVertex), "Normal")),
                     new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.TexCoord, 2,
-                        VertexAttribPointerType.Float, false, AnimatedVBOTexCoordArray, Marshal.SizeOf(new float[2]), 0)
+                        VertexAttribPointerType.Float, false, AnimatedVBOTexCoordArray, 2 * sizeof(float), 0)
                 };
                 AnimatedVertexArray = new VertexArray(AnimatedVBOIndexArray, attribs2);
             }

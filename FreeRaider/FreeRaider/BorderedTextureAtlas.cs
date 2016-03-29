@@ -297,9 +297,9 @@ namespace FreeRaider
         public BorderedTextureAtlas(
             int border,
             bool conserveMemory,
-            List<DWordTexture> pages,
-            List<ObjectTexture> objectTextures,
-            List<SpriteTexture> spriteTextures)
+            IEnumerable<DWordTexture> pages,
+            IEnumerable<ObjectTexture> objectTextures,
+            IEnumerable<SpriteTexture> spriteTextures)
         {
             borderWidth = border;
             resultPageWidth = 0;
