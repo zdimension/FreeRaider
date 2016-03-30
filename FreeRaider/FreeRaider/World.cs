@@ -938,7 +938,46 @@ namespace FreeRaider
                 return EngineWorld.FindRoomByPosition(newPos);
             }
 
+            if (room.Active && newPos.X.IsBetween(room.BBMin.X, room.BBMax.X, IB.aIbE) &&
+                newPos.Y.IsBetween(room.BBMin.Y, room.BBMax.Y, IB.aIbE))
+            {
+                if(newPos.Z.IsBetween(room.BBMin.Z, room.BBMax.Z, IB.aIbE))
+                {
+                    return room;
+                }
+                else if(newPos.Z >= room.BBMax.Z)
+                {
+                    var origSector = room.GetSectorRaw(newPos);
+                    if(origSector.SectorAbove != null)
+                    {
+                        return origSector.SectorAbove.OwnerRoom.CheckFlip();
+                    }
+                }
+                else if (newPos.Z < room.BBMin.Z)
+                {
+                    var origSector = room.GetSectorRaw(newPos);
+                    if (origSector.SectorBelow != null)
+                    {
+                        return origSector.SectorBelow.OwnerRoom.CheckFlip();
+                    }
+                }
+            }
 
+            var newSector = room.GetSectorRaw(newPos);
+            if(newSector != null && newSector.PortalToRoom >= 0)
+            {
+                return EngineWorld.Rooms[newSector.PortalToRoom].CheckFlip();
+            }
+
+            foreach (var r in room.NearRoomList)
+            {
+                if(r.Active && newPos.IsBetween(r.BBMin, r.BBMax, IB.aIbE))
+                {
+                    return r;
+                }
+            }
+
+            return EngineWorld.FindRoomByPosition(newPos);
         }
     }
 
@@ -1035,7 +1074,63 @@ namespace FreeRaider
         /// </summary>
         public List<byte> StreamTrackMap { get; set; }
 
-        public void UpdateAnimTextures();
+        /// <summary>
+        /// This function is used for updating global animated texture frame
+        /// </summary>
+        public void UpdateAnimTextures()
+        {
+            foreach (var seq in AnimSequences)
+            {
+                if(seq.FrameLock)
+                {
+                    continue;
+                }
+
+                seq.FrameTime += EngineFrameTime;
+                if(seq.FrameTime >= seq.FrameRate)
+                {
+                    var j = (int) (seq.FrameTime / seq.FrameRate);
+                    seq.FrameTime -= j * seq.FrameRate;
+
+                    switch((TR_ANIMTEXTURE)seq.AnimType)
+                    {
+                        case TR_ANIMTEXTURE.Reverse:
+                            if(seq.ReverseDirection)
+                            {
+                                if(seq.CurrentFrame == 0)
+                                {
+                                    seq.CurrentFrame++;
+                                    seq.ReverseDirection = false;
+                                }
+                                else if(seq.CurrentFrame > 0)
+                                {
+                                    seq.CurrentFrame--;
+                                }
+                            }
+                            else
+                            {
+                                if (seq.CurrentFrame == seq.Frames.Count - 1)
+                                {
+                                    seq.CurrentFrame--;
+                                    seq.ReverseDirection = true;
+                                }
+                                else if (seq.CurrentFrame < seq.Frames.Count - 1)
+                                {
+                                    seq.CurrentFrame++;
+                                }
+                                seq.CurrentFrame %= (ushort)seq.Frames.Count; // PARANOID
+                            }
+                            break;
+
+                        case TR_ANIMTEXTURE.Forward: // inversed in polygon anim. texture frames
+                        case TR_ANIMTEXTURE.Backward:
+                            seq.CurrentFrame++;
+                            seq.CurrentFrame %= (ushort)seq.Frames.Count;
+                            break;
+                    }
+                }
+            }
+        }
 
         public unsafe void CalculateWaterTint(float[] tint, bool fixedColour)
         {

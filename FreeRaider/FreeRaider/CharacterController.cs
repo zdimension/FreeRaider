@@ -2023,7 +2023,7 @@ namespace FreeRaider
                 }
 
                 var floorNormal = HeightInfo.FloorNormale;
-                if (floorNormal.Z.IsBetween(0.02f, CriticalSlantZComponent, false))
+                if (floorNormal.Z.IsBetween(0.02f, CriticalSlantZComponent, IB.aEbE))
                 {
                     floorNormal.Z = -floorNormal.Z;
                     speed = floorNormal * SpeedMult * DEFAULT_CHARACTER_SLIDE_SPEED_MULT; // slide down direction
@@ -2468,11 +2468,11 @@ namespace FreeRaider
                 Angles.Y -= GetInertiaLinear(1.0f, ROT_SPEED_UNDERWATER, true);
                 Angles.Z = 0.0f;
 
-                if (Angles.Y.IsBetween(70.0f, 180.0f, false)) // Underwater angle limiter.
+                if (Angles.Y.IsBetween(70.0f, 180.0f, IB.aEbE)) // Underwater angle limiter.
                 {
                     Angles.Y = 70.0f;
                 }
-                else if (Angles.Y.IsBetween(180.0f, 270.0f, false))
+                else if (Angles.Y.IsBetween(180.0f, 270.0f, IB.aEbE))
                 {
                     Angles.Y = 270.0f;
                 }

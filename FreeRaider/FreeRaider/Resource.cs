@@ -475,7 +475,7 @@ namespace FreeRaider
                 var minY = Math.Min(s1.Position.Y, s2.Position.Y);
                 var maxY = Math.Max(s1.Position.Y, s2.Position.Y);
 
-                if(s1.Position.X.IsBetween(minX, maxX, false) && p.Centre.Y.IsBetween(minY, maxY, false))
+                if(s1.Position.X.IsBetween(minX, maxX, IB.aEbE) && p.Centre.Y.IsBetween(minY, maxY, IB.aEbE))
                 {
                     return true;
                 }
@@ -487,7 +487,7 @@ namespace FreeRaider
                 var minX = Math.Min(s1.Position.X, s2.Position.X);
                 var maxX = Math.Max(s1.Position.X, s2.Position.X);
 
-                if (p.Centre.X.IsBetween(minX, maxX, false) && s1.Position.Y.IsBetween(minY, maxY, false))
+                if (p.Centre.X.IsBetween(minX, maxX, IB.aEbE) && s1.Position.Y.IsBetween(minY, maxY, IB.aEbE))
                 {
                     return true;
                 }

@@ -3434,7 +3434,7 @@ namespace FreeRaider
                             globalOffset += pos;
                             Character.GetHeightInfo(globalOffset, nextFc);
                             if (nextFc.FloorPoint.Z.IsBetween(pos.Z - ent.MinStepUpHeight, pos.Z + ent.MinStepUpHeight,
-                                false))
+                                IB.aEbE))
                             {
                                 ssAnim.NextState = TR_STATE.LaraCrawlForward; // In TR4+, first state is crawlspace jump
                             }
@@ -3450,7 +3450,7 @@ namespace FreeRaider
                             globalOffset += pos;
                             Character.GetHeightInfo(globalOffset, nextFc);
                             if (nextFc.FloorPoint.Z.IsBetween(pos.Z - ent.MinStepUpHeight, pos.Z + ent.MinStepUpHeight,
-                                false))
+                                IB.aEbE))
                             {
                                 ent.DirFlag = ENT_MOVE.MoveBackward;
                                 ssAnim.NextState = TR_STATE.LaraCrawlBack;
@@ -3548,7 +3548,7 @@ namespace FreeRaider
                 case TR_STATE.LaraCrawlTurnLeft:
                     ent.DirFlag = ENT_MOVE.MoveForward;
                     ent.Bt.NoFixBodyParts = BODY_PART.Hands2 | BODY_PART.Hands3 | BODY_PART.Legs3;
-                    cmd.Rotation.X *= ((int) ssAnim.CurrentFrame).IsBetween(3, 14, false) ? 1.0f : 0.0f;
+                    cmd.Rotation.X *= ((int) ssAnim.CurrentFrame).IsBetween(3, 14, IB.aEbE) ? 1.0f : 0.0f;
 
                     if (cmd.Move[1] != -1 || resp.Killed)
                     {
@@ -3558,7 +3558,7 @@ namespace FreeRaider
                 case TR_STATE.LaraCrawlTurnRight:
                     ent.DirFlag = ENT_MOVE.MoveForward;
                     ent.Bt.NoFixBodyParts = BODY_PART.Hands2 | BODY_PART.Hands3 | BODY_PART.Legs3;
-                    cmd.Rotation.X *= ssAnim.CurrentFrame.IsBetween(3, 14, false) ? 1.0f : 0.0f;
+                    cmd.Rotation.X *= ssAnim.CurrentFrame.IsBetween(3, 14, IB.aEbE) ? 1.0f : 0.0f;
 
                     if (cmd.Move[1] != 1 || resp.Killed)
                     {
@@ -3568,7 +3568,7 @@ namespace FreeRaider
                 case TR_STATE.LaraCrouchTurnLeft:
                 case TR_STATE.LaraCrouchTurnRight:
                     ent.Bt.NoFixBodyParts = BODY_PART.Hands2 | BODY_PART.Hands3 | BODY_PART.Legs3;
-                    cmd.Rotation.X *= ssAnim.CurrentFrame.IsBetween(3, 23, false) ? 0.6f : 0.0f;
+                    cmd.Rotation.X *= ssAnim.CurrentFrame.IsBetween(3, 23, IB.aEbE) ? 0.6f : 0.0f;
 
                     if (cmd.Move[1] == 0 || resp.Killed)
                     {

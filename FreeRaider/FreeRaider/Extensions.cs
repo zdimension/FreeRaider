@@ -214,7 +214,8 @@ namespace FreeRaider
             return Convert.ChangeType(obj, t);
         }
 
-        public static bool IsBetween<T, Tc1, Tc2>(this T f, Tc1 a, Tc2 b, bool inclusive = true, bool reorder = true)
+        /// <param name="inclusive"></param>
+        public static bool IsBetween<T, Tc1, Tc2>(this T f, Tc1 a, Tc2 b, IB inclusive = IB.aIbI, bool reorder = true)
             where T : IComparable
             where Tc1 : IConvertible, IComparable
             where Tc2 : IConvertible, IComparable
@@ -229,8 +230,10 @@ namespace FreeRaider
             var fc = f.CompareTo(c);
             var fd = f.CompareTo(d);
 
-            if (inclusive) return fc >= 0 && fd <= 0;
-            return fc == 1 && fd == -1;
+            var oa = inclusive.HasFlagSig(1) ? fc >= 0 : fc > 0;
+            var ob = inclusive.HasFlagSig(2) ? fd <= 0 : fd < 0;
+
+            return oa && ob;
         }
 
         public static T GenericMin<T>(T a, T b)
@@ -270,7 +273,7 @@ namespace FreeRaider
             return f > c & f < d;
         }*/
 
-        public static bool IsBetween(this Vector3 v, Vector3 a, Vector3 b, bool inclusive = true, bool reorder = true)
+        public static bool IsBetween(this Vector3 v, Vector3 a, Vector3 b, IB inclusive = IB.aIbI, bool reorder = true)
         {
             return v.X.IsBetween(a.X, b.X, inclusive, reorder)
                    && v.Y.IsBetween(a.Y, b.Y, inclusive, reorder)
@@ -739,5 +742,14 @@ namespace FreeRaider
         /// TODO: Replace by float.Epsilon
         /// </summary>
         public const float SIMD_EPSILON = FLT_EPSILON;
+    }
+
+    [Flags]
+    public enum IB
+    {
+        aIbI = 3,
+        aEbI = 6,
+        aIbE = 9,
+        aEbE = 12
     }
 }
