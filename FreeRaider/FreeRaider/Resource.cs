@@ -398,6 +398,104 @@ namespace FreeRaider
             }
         }
 
+        public static void GenerateAnimCommandsTransform(SkeletalModel model)
+        {
+            if(EngineWorld.AnimCommands.Count == 0)
+            {
+                return;
+            }
+            //Sys.DebugLog("anim_transform.txt", "MODEL[{0}]", model.ID);
+            for (var anim = 0; anim < model.Animations.Count; anim++)
+            {
+                if(model.Animations[anim].NumAnimCommands > 255)
+                {
+                    continue; // If no anim commands or current anim has more than 255 (according to TRosettaStone).
+                }
+
+                var af = model.Animations[anim];
+                if (af.NumAnimCommands == 0)
+                    continue;
+
+                Assert.That(af.AnimCommand < EngineWorld.AnimCommands.Count);
+                var ac = (int) af.AnimCommand;
+
+                for (var i = 0; i < af.NumAnimCommands; i++)
+                {
+                    var command = EngineWorld.AnimCommands[ac];
+                    ac++;
+                    switch((TR_ANIMCOMMAND)command)
+                    {
+                        case TR_ANIMCOMMAND.SetPosition:
+                            // This command executes ONLY at the end of animation.
+                            af.Frames.Last().Move.X = EngineWorld.AnimCommands[ac + 0]; // x = x
+                            af.Frames.Last().Move.Z = -EngineWorld.AnimCommands[ac + 1]; // z = -y
+                            af.Frames.Last().Move.Y = EngineWorld.AnimCommands[ac + 2]; // y = z
+                            af.Frames.Last().Command |= (ushort)ANIM_CMD.Move;
+                            ac += 3;
+                            break;
+
+                        case TR_ANIMCOMMAND.JumpDistance:
+                            af.Frames.Last().V_Vertical= EngineWorld.AnimCommands[ac + 0];
+                            af.Frames.Last().V_Horizontal = -EngineWorld.AnimCommands[ac + 1];
+                            af.Frames.Last().Command |= (ushort) ANIM_CMD.Jump;
+                            ac += 2;
+                            break;
+
+                        case TR_ANIMCOMMAND.EmptyHands:
+                            break;
+
+                        case TR_ANIMCOMMAND.Kill:
+                            break;
+
+                        case TR_ANIMCOMMAND.PlaySound:
+                            ac += 2;
+                            break;
+
+                        case TR_ANIMCOMMAND.PlayEffect:
+                            switch(EngineWorld.AnimCommands[ac + 1] & 0x3FFF)
+                            {
+                                case (int)TR_EFFECT.ChangeDirection:
+                                    af.Frames.Last().Command |= (ushort) ANIM_CMD.ChangeDirection;
+                                    ConsoleInfo.Instance.Printf("ROTATE: anim = {0}, frame = {1} of {2}", anim, EngineWorld.AnimCommands[ac + 0], af.Frames.Count);
+                                    break;
+                            }
+                            ac += 2;
+                            break;
+                    }
+                }
+            }
+        }
+
+        public static bool TR_IsSectorsIn2SideOfPortal(RoomSector s1, RoomSector s2, Portal p)
+        {
+            if(s1.Position.X == s2.Position.X && s1.Position.Y != s2.Position.Y && Math.Abs(p.Normal.Normal.Y) > 0.99f)
+            {
+                var minX = p.Vertices.Min(x => x.X);
+                var maxX = p.Vertices.Max(x => x.X);
+                var minY = Math.Min(s1.Position.Y, s2.Position.Y);
+                var maxY = Math.Max(s1.Position.Y, s2.Position.Y);
+
+                if(s1.Position.X.IsBetween(minX, maxX, false) && p.Centre.Y.IsBetween(minY, maxY, false))
+                {
+                    return true;
+                }
+            }
+            else if (s1.Position.X != s2.Position.X && s1.Position.Y == s2.Position.Y && Math.Abs(p.Normal.Normal.X) > 0.99f)
+            {
+                var minY = p.Vertices.Min(x => x.Y);
+                var maxY = p.Vertices.Max(x => x.Y);
+                var minX = Math.Min(s1.Position.X, s2.Position.X);
+                var maxX = Math.Max(s1.Position.X, s2.Position.X);
+
+                if (p.Centre.X.IsBetween(minX, maxX, false) && s1.Position.Y.IsBetween(minY, maxY, false))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>
         /// Assign animated texture to a polygon.
         /// </summary>
@@ -706,7 +804,151 @@ namespace FreeRaider
             }
         }
 
-        public static void TR_GenMesh(World world, int mesh_index, BaseMesh mesh, Level tr);
+        public static void TR_GenMesh(World world, int mesh_index, BaseMesh mesh, Level tr)
+        {
+            var texMask = world.EngineVersion == Loader.Engine.TR4 ? TextureIndexMaskTr4 : TextureIndexMask;
+
+            /* TR WAD FORMAT DOCUMENTATION!
+             * tr4_face[3,4]_t:
+             * flipped texture & 0x8000 (1 bit  ) - horizontal flipping.
+             * shape texture   & 0x7000 (3 bits ) - texture sample shape.
+             * index texture   & $0FFF  (12 bits) - texture sample index.
+             *
+             * if bit [15] is set, as in ( texture and $8000 ), it indicates that the texture
+             * sample must be flipped horizontally prior to be used.
+             * Bits [14..12] as in ( texture and $7000 ), are used to store the texture
+             * shape, given by: ( texture and $7000 ) shr 12.
+             * The valid values are: 0, 2, 4, 6, 7, as assigned to a square starting from
+             * the top-left corner and going clockwise: 0, 2, 4, 6 represent the positions
+             * of the square angle of the triangles, 7 represents a quad.
+             */
+
+            var trMesh = tr.Meshes[mesh_index];
+            mesh.ID = (uint)mesh_index;
+            mesh.Center.X = trMesh.Centre.X;
+            mesh.Center.Y = trMesh.Centre.Z;
+            mesh.Center.Z = trMesh.Centre.Y;
+            mesh.Radius = trMesh.CollisionSize;
+            mesh.TexturePageCount = world.TextureAtlas.NumAtlasPages + 1;
+
+            mesh.Vertices.Resize(trMesh.Vertices.Length);
+            for (var i = 0; i < mesh.Vertices.Count; i++)
+            {
+                mesh.Vertices[i].Position = TR_vertex_to_arr(trMesh.Vertices[i]);
+                mesh.Vertices[i].Normal = Vector3.Zero; // paranoid
+            }
+            
+            mesh.FindBB();
+
+            mesh.Polygons.Clear();
+
+            // textured triangles
+            foreach (var face3 in trMesh.TexturedTriangles)
+            {
+                var p = new Polygon();
+
+                var tex = tr.ObjectTextures[face3.Texture & texMask];
+
+                p.DoubleSide = Convert.ToBoolean(face3.Texture >> 15); // CORRECT, BUT WRONG IN TR3-5
+
+                SetAnimTexture(p, (uint)face3.Texture & texMask, world);
+
+                p.BlendMode = face3.Lighting.HasFlagUns(0x01) ? BlendingMode.Multiply : tex.TransparencyFlags;
+
+                tr_accumulateNormals(trMesh, mesh, 3, face3.Vertices, p);
+                tr_setupTexturedFace(trMesh, mesh, face3.Vertices, p);
+
+                world.TextureAtlas.GetCoordinates((uint) face3.Texture & texMask, false, p);
+
+                mesh.Polygons.Add(p);
+            }
+
+            // coloured triangles
+            foreach (var face3 in trMesh.ColouredTriangles)
+            {
+                var p = new Polygon();
+
+                //var col = face3.Texture & 0xff; // TODO: Useless
+                p.TexIndex = (ushort)world.TextureAtlas.NumAtlasPages;
+                p.BlendMode = BlendingMode.Opaque;
+                p.AnimID = 0;
+
+                tr_accumulateNormals(trMesh, mesh, 3, face3.Vertices, p);
+                tr_setupTexturedFace(trMesh, mesh, face3.Vertices, p);
+
+                mesh.Polygons.Add(p);
+            }
+
+            // textured triangles
+            foreach (var face4 in trMesh.ColouredRectangles)
+            {
+                var p = new Polygon();
+
+                var tex = tr.ObjectTextures[face4.Texture & texMask];
+
+                p.DoubleSide = Convert.ToBoolean(face4.Texture >> 15); // CORRECT, BUT WRONG IN TR3-5
+
+                SetAnimTexture(p, (uint)face4.Texture & texMask, world);
+
+                p.BlendMode = face4.Lighting.HasFlagUns(0x01) ? BlendingMode.Multiply : tex.TransparencyFlags;
+
+                tr_accumulateNormals(trMesh, mesh, 4, face4.Vertices, p);
+                tr_setupTexturedFace(trMesh, mesh, face4.Vertices, p);
+
+                world.TextureAtlas.GetCoordinates((uint)face4.Texture & texMask, false, p);
+
+                mesh.Polygons.Add(p);
+            }
+
+            // coloured rectangles
+            foreach (var face4 in trMesh.ColouredRectangles)
+            {
+                var p = new Polygon();
+
+                //var col = face4.Texture & 0xff; // TODO: Useless
+                p.TexIndex = (ushort)world.TextureAtlas.NumAtlasPages;
+                p.BlendMode = BlendingMode.Opaque;
+                p.AnimID = 0;
+
+                tr_accumulateNormals(trMesh, mesh, 4, face4.Vertices, p);
+                tr_setupTexturedFace(trMesh, mesh, face4.Vertices, p);
+
+                mesh.Polygons.Add(p);
+            }
+
+            // let us normalise normals %)
+            foreach (var v in mesh.Vertices)
+            {
+                v.Normal = v.Normal.SafeNormalize();
+            }
+
+            // triangles
+            var j = 0;
+            for (var i = 0; i < trMesh.TexturedTriangles.Length; i++, j++)
+            {
+                tr_copyNormals(mesh.Polygons[j], mesh, trMesh.TexturedTriangles[i].Vertices);
+            }
+
+            for (var i = 0; i < trMesh.ColouredTriangles.Length; i++, j++)
+            {
+                tr_copyNormals(mesh.Polygons[j], mesh, trMesh.ColouredTriangles[i].Vertices);
+            }
+
+            // triangles
+            for (var i = 0; i < trMesh.TexturedRectangles.Length; i++, j++)
+            {
+                tr_copyNormals(mesh.Polygons[j], mesh, trMesh.TexturedRectangles[i].Vertices);
+            }
+
+            for (var i = 0; i < trMesh.ColouredRectangles.Length; i++, j++)
+            {
+                tr_copyNormals(mesh.Polygons[j], mesh, trMesh.ColouredRectangles[i].Vertices);
+            }
+
+            mesh.Vertices.Clear();
+            mesh.GenFaces();
+            mesh.PolySortInMesh();
+        }
 
         public static void TR_GenSkeletalModels(World world, Level tr)
         {
@@ -726,7 +968,163 @@ namespace FreeRaider
 
         public static void TR_GenSkeletalModel(World world, int model_id, SkeletalModel model, Level tr);
 
-        public static void TR_GenEntities(World world, Level tr);
+        public static void TR_GenEntities(World world, Level tr)
+        {
+            for (var i = 0; i < tr.Items.Length; i++)
+            {
+                var trItem = tr.Items[i];
+                var entity = trItem.ObjectID == 0 ? new Character((uint) i) : new Entity((uint) i);
+                entity.Transform.Origin.X = trItem.Position.X;
+                entity.Transform.Origin.Y = -trItem.Position.Z;
+                entity.Transform.Origin.Z = trItem.Position.Y;
+                entity.Angles.X = trItem.Rotation;
+                entity.Angles.Y = 0;
+                entity.Angles.Z = 0;
+                entity.UpdateTransform();
+                entity.Self.Room = trItem.Room.IsBetween(0, world.Rooms.Count - 1) ? world.Rooms[trItem.Room] : null;
+
+                entity.TriggerLayout = (ENTITY_TLAYOUT)trItem.ActivationMash; // FIXME: Ignore INVISIBLE and CLEAR BODY flags for a moment.
+                entity.OCB = trItem.ObjectCodeBit;
+                entity.Timer = 0.0f;
+
+                entity.Self.CollisionType = COLLISION_TYPE.Kinematic;
+                entity.Self.CollisionShape = COLLISION_SHAPE.TrimeshConvex;
+                entity.MoveType = MoveType.StaticPos;
+                entity.InertiaLinear = 0.0f;
+                entity.InertiaAngular = Vector2.Zero;
+
+                entity.Bf.Animations.Model = world.GetModelByID((uint)trItem.ObjectID);
+
+                if(entity.Bf.Animations.Model == null)
+                {
+                    var id = EngineLua.Call("getOverridedID", Helper.GameToEngine(tr.GameVersion), trItem.ObjectID)[0];
+                    entity.Bf.Animations.Model = world.GetModelByID((uint) id);
+                }
+
+                var replaceAnimId = (uint)EngineLua.Call("getOverridedAnim", Helper.GameToEngine(tr.GameVersion), trItem.ObjectID)[0];
+                if(replaceAnimId > 0)
+                {
+                    var replaceAnimModel = world.GetModelByID(replaceAnimId);
+                    var tmp = entity.Bf.Animations.Model.Animations;
+                    entity.Bf.Animations.Model.Animations = replaceAnimModel.Animations;
+                    replaceAnimModel.Animations = tmp;
+                }
+
+                if(entity.Bf.Animations.Model == null)
+                {
+                    // SPRITE LOADING
+                    var sp = world.GetSpriteByID((uint)trItem.ObjectID);
+                    if(sp != null && entity.Self.Room != null)
+                    {
+                        var rsp = new RoomSprite();
+                        rsp.Sprite = sp;
+                        rsp.Position = entity.Transform.Origin;
+                        rsp.WasRendered = false;
+                        entity.Self.Room.Sprites.Add(rsp);
+                    }
+
+                    continue; // that entity has no model. may be it is a some trigger or look at object
+                }
+
+                if(tr.GameVersion < TRGame.TR2 && trItem.ObjectID == 83) // FIXME: brutal magick hardcode! ;-)
+                {
+                    // skip PSX save model
+                    continue;
+                }
+
+                entity.Bf.FromModel(entity.Bf.Animations.Model);
+
+                if(trItem.ObjectID == 0) // Lara is unical model
+                {
+                    var lara = (Character) entity;
+                    Assert.That(lara != null);
+
+                    lara.MoveType = MoveType.OnFloor;
+                    world.Character = lara;
+                    lara.Self.CollisionType = COLLISION_TYPE.Actor;
+                    lara.Self.CollisionShape = COLLISION_SHAPE.TrimeshConvex;
+                    lara.TypeFlags |= ENTITY_TYPE.TriggerActivator;
+                    SkeletalModel LM;
+
+                    EngineLua.Set("player", lara.ID);
+
+                    switch (Helper.GameToEngine(tr.GameVersion))
+                    {
+                        case Loader.Engine.TR1:
+                            if (GameflowManager.LevelID == 0)
+                            {
+                                LM = world.GetModelByID((uint) TR_ITEM_LARA.AlternateTR1);
+                                if (LM != null)
+                                {
+                                    // In TR1, Lara has unified head mesh for all her alternate skins.
+                                    // Hence, we copy all meshes except head, to prevent Potato Raider bug.
+                                    SkeletonCopyMeshes(world.SkeletalModels[0].MeshTree, LM.MeshTree,
+                                        world.SkeletalModels[0].MeshCount - 1);
+                                }
+                            }
+                            break;
+
+                        case Loader.Engine.TR3:
+                            LM = world.GetModelByID((uint) TR_ITEM_LARA.TR3);
+                            if (LM != null)
+                            {
+                                SkeletonCopyMeshes(world.SkeletalModels[0].MeshTree, LM.MeshTree,
+                                    world.SkeletalModels[0].MeshCount);
+                                var tmp = world.GetModelByID(11); // moto / quadro cycle animations
+                                if (tmp != null)
+                                {
+                                    SkeletonCopyMeshes(tmp.MeshTree, LM.MeshTree, world.SkeletalModels[0].MeshCount);
+                                }
+                            }
+                            break;
+
+                        case Loader.Engine.TR4:
+                        case Loader.Engine.TR5:
+                            LM = world.GetModelByID((uint)TR_ITEM_LARA.TR4_5); // base skeleton meshes
+                            if (LM != null)
+                            {
+                                SkeletonCopyMeshes(world.SkeletalModels[0].MeshTree, LM.MeshTree,
+                                    world.SkeletalModels[0].MeshCount);
+                            }
+                            LM = world.GetModelByID((uint)TR_ITEM_LARA.Joints_TR4_5); // skin skeleton meshes
+                            if (LM != null)
+                            {
+                                SkeletonCopyMeshes2(world.SkeletalModels[0].MeshTree, LM.MeshTree,
+                                    world.SkeletalModels[0].MeshCount);
+                            }
+                            world.SkeletalModels[0].FillSkinnedMeshMap();
+                            break;
+
+                        case Loader.Engine.Unknown:
+                            break;
+                    }
+
+                    for (var j = 0; j < lara.Bf.BoneTags.Count; j++)
+                    {
+                        lara.Bf.BoneTags[j].MeshBase = lara.Bf.Animations.Model.MeshTree[j].MeshBase;
+                        lara.Bf.BoneTags[j].MeshSkin = lara.Bf.Animations.Model.MeshTree[j].MeshSkin;
+                        lara.Bf.BoneTags[i].MeshSlot = null;
+                    }
+
+                    world.Character.SetAnimation(TR_ANIMATION.LaraStayIdle, 0);
+                    lara.GenRigidBody();
+                    lara.CreateGhosts();
+                    lara.Height = 768.0f;
+                    lara.StateFunc = AnimStateControl.StateControlLara;
+
+                    continue;
+                }
+
+                entity.SetAnimation(TR_ANIMATION.LaraRun, 0); // Set zero animation and zero frame
+
+                Res_SetEntityProperties(entity);
+                entity.RebuildBV();
+                entity.GenRigidBody();
+
+                entity.Self.Room.AddEntity(entity);
+                world.AddEntity(entity);
+            }
+        }
 
         public static void TR_GenSprites(World world, Level tr)
         {
@@ -1064,7 +1462,74 @@ namespace FreeRaider
 
         public static int TR_Sector_TranslateFloorData(RoomSector sector, Level tr);
 
-        public static void TR_Sector_Calculate(World world, Level tr, long room_index);
+        public static void TR_Sector_Calculate(World world, Level tr, int room_index)
+        {
+            var room = world.Rooms[room_index];
+            var trRoom = tr.Rooms[room_index];
+
+            // Sectors loading
+
+            for (var i = 0; i < room.Sectors.Count; i++)
+            {
+                var sector = room.Sectors[i];
+
+                // Let us fill pointers to sectors above and sectors below
+
+                var rp = trRoom.Sectors[i].RoomBelow;
+                sector.SectorBelow = null;
+                if (rp < world.Rooms.Count && rp != 255)
+                {
+                    sector.SectorBelow = world.Rooms[rp].GetSectorRaw(sector.Position);
+                }
+                rp = trRoom.Sectors[i].RoomAbove;
+                sector.SectorBelow = null;
+                if (rp < world.Rooms.Count && rp != 255)
+                {
+                    sector.SectorAbove = world.Rooms[rp].GetSectorRaw(sector.Position);
+                }
+
+                RoomSector nearSector = null;
+
+                // OX
+                if (sector.IndexY.IsBetween(0, room.SectorsY - 1, false) && sector.IndexX == 0)
+                {
+                    nearSector = room.Sectors[i + room.SectorsY];
+                }
+                if (sector.IndexY.IsBetween(0, room.SectorsY - 1, false) && sector.IndexX == room.SectorsX - 1)
+                {
+                    nearSector = room.Sectors[i - room.SectorsY];
+                }
+                // OX
+                if (sector.IndexX.IsBetween(0, room.SectorsX - 1, false) && sector.IndexY == 0)
+                {
+                    nearSector = room.Sectors[i + 1];
+                }
+                if (sector.IndexX.IsBetween(0, room.SectorsX - 1, false) && sector.IndexY == room.SectorsY - 1)
+                {
+                    nearSector = room.Sectors[i - 1];
+                }
+
+                if (nearSector != null && sector.PortalToRoom >= 0)
+                {
+                    foreach (var p in room.Portals)
+                    {
+                        if(p.Normal.Normal.Z.IsBetween(-0.01, 0.01f, false))
+                        {
+                            var dst = p.DestRoom?.GetSectorRaw(sector.Position);
+                            var origDst = EngineWorld.Rooms[sector.PortalToRoom].GetSectorRaw(sector.Position);
+
+                            if (dst != null && dst.PortalToRoom < 0 && dst.Floor != TR_METERING_WALLHEIGHT &&
+                                dst.Ceiling != TR_METERING_WALLHEIGHT && sector.PortalToRoom != p.DestRoom.ID &&
+                                dst.Floor < origDst.Floor && TR_IsSectorsIn2SideOfPortal(nearSector, dst, p))
+                            {
+                                sector.PortalToRoom = (int)p.DestRoom.ID;
+                                origDst = dst; // TODO: What's the point of that?
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         public static void tr_setupRoomVertices(World world, Level tr, Loader.Room tr_room, BaseMesh mesh,
             int numCorners, ushort[] vertices, ushort masked_texture, Polygon p)
@@ -1160,3 +1625,4 @@ namespace FreeRaider
         }
     }
 }
+

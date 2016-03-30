@@ -184,7 +184,8 @@ namespace FreeRaider
                 v /= abs[maxIndex];
                 return v /= v.Length;
             }
-            return v = new Vector3(1.0f, 0.0f, 0.0f);
+            v = new Vector3(1.0f, 0.0f, 0.0f);
+            return v;
         }
 
         public static Vector3 Absolute(this Vector3 v)
@@ -227,6 +228,7 @@ namespace FreeRaider
             }
             var fc = f.CompareTo(c);
             var fd = f.CompareTo(d);
+
             if (inclusive) return fc >= 0 && fd <= 0;
             return fc == 1 && fd == -1;
         }

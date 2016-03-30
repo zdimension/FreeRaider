@@ -73,6 +73,7 @@
     <Compile Include="Loader\TR5Level.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Sprintf.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

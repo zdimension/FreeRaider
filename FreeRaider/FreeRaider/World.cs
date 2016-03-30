@@ -6,6 +6,7 @@ using FreeRaider.Loader;
 using OpenTK;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
+using static FreeRaider.StaticFuncs;
 
 namespace FreeRaider
 {
@@ -740,12 +741,46 @@ namespace FreeRaider
                 foreach(var sm in StaticMesh)
                 {
                     RigidBody body = null;
-                    if((body = sm.Body) != null)
+                    if((body = sm.BtBody) != null)
                     {
-                        if(body.MotionState.)
+                        if(body.MotionState != null)
+                        {
+                            body.MotionState.Dispose();
+                            body.MotionState = null;
+                        }
+                        body.CollisionShape = null;
+
+                        BtEngineDynamicsWorld.RemoveRigidBody(body);
+                        body.Dispose();
+                        body = null;
+                        sm.BtBody = null;
+                    }
+
+                    if(sm.Self != null)
+                    {
+                        sm.Self.Room = null;
+                        sm.Self = null;
                     }
                 }
                 StaticMesh.Clear();
+            }
+
+            if(BtBody != null)
+            {
+                BtBody.UserObject = null;
+                if(BtBody.MotionState != null)
+                {
+                    BtBody.MotionState.Dispose();
+                    BtBody.MotionState = null;
+                }
+                if(BtBody.CollisionShape != null)
+                {
+                    BtBody.CollisionShape.Dispose();
+                    BtBody.CollisionShape = null;
+                }
+
+                BtEngineDynamicsWorld.RemoveRigidBody(BtBody);
+                BtBody = null;
             }
 
             Sectors.Clear();
@@ -755,6 +790,8 @@ namespace FreeRaider
             Sprites.Clear();
 
             Lights.Clear();
+
+            Self = null;
         }
 
         public void AddEntity(Entity entity)
@@ -825,9 +862,84 @@ namespace FreeRaider
             return ret;
         }
 
-        public void GenMesh(World world, uint roomID, Level tr);
+        public void GenMesh(World world, uint roomID, Level tr)
+        {
+            var texMask = world.EngineVersion == Loader.Engine.TR4 ? TextureIndexMaskTr4 : TextureIndexMask;
 
-        public static Room FindPosCogerrence(Vector3 newPos, Room room);
+            var trRoom = tr.Rooms[roomID];
+
+            if(trRoom.Triangles.Length == 0 && trRoom.Rectangles.Length == 0)
+            {
+                Mesh = null;
+                return;
+            }
+
+            Mesh = new BaseMesh();
+            Mesh.ID = roomID;
+            Mesh.TexturePageCount = world.TextureAtlas.NumAtlasPages + 1;
+            Mesh.UsesVertexColors = true; // This is implicitly true on room meshes
+
+            Mesh.Vertices.Resize(trRoom.Vertices.Length);
+            for (var i = 0; i < Mesh.Vertices.Count; i++)
+            {
+                Mesh.Vertices[i].Position = TR_vertex_to_arr(trRoom.Vertices[i].Vertex);
+                Mesh.Vertices[i].Normal = Vector3.Zero; // paranoid
+            }
+
+            Mesh.FindBB();
+
+            Mesh.Polygons.Resize(trRoom.Triangles.Length + trRoom.Rectangles.Length);
+            var p = 0;
+
+            // triangles
+            for (var i = 0; i < trRoom.Triangles.Length; i++, p++)
+            {
+                tr_setupRoomVertices(world, tr, trRoom, Mesh, 3, trRoom.Triangles[i].Vertices,
+                    (ushort)(trRoom.Triangles[i].Texture & texMask), Mesh.Polygons[p]);
+                Mesh.Polygons[p].DoubleSide = Convert.ToBoolean(trRoom.Triangles[i].Texture & 0x8000);
+            }
+
+            // rectangles
+            for (var i = 0; i < trRoom.Rectangles.Length; i++, p++)
+            {
+                tr_setupRoomVertices(world, tr, trRoom, Mesh, 4, trRoom.Rectangles[i].Vertices,
+                    (ushort)(trRoom.Rectangles[i].Texture & texMask), Mesh.Polygons[p]);
+                Mesh.Polygons[p].DoubleSide = Convert.ToBoolean(trRoom.Rectangles[i].Texture & 0x8000);
+            }
+
+            // let us normalise normals %)
+            foreach (var v in Mesh.Vertices)
+            {
+                v.Normal = v.Normal.SafeNormalize();
+            }
+
+            p = 0;
+            // triangles
+            for (var i = 0; i < trRoom.Triangles.Length; i++, p++)
+            {
+                tr_copyNormals(Mesh.Polygons[p], Mesh, trRoom.Triangles[i].Vertices);
+            }
+
+            // rectangles
+            for (var i = 0; i < trRoom.Rectangles.Length; i++, p++)
+            {
+                tr_copyNormals(Mesh.Polygons[p], Mesh, trRoom.Rectangles[i].Vertices);
+            }
+
+            Mesh.Vertices.Clear();
+            Mesh.GenFaces();
+            Mesh.PolySortInMesh();
+        }
+
+        public static Room FindPosCogerrence(Vector3 newPos, Room room)
+        {
+            if(room == null)
+            {
+                return EngineWorld.FindRoomByPosition(newPos);
+            }
+
+
+        }
     }
 
     public class FlipInfo

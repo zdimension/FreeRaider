@@ -5,7 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 
-namespace FreeRaider.Loader
+namespace FreeRaider
 {
     public partial class Constants
     {
@@ -15,12 +15,16 @@ namespace FreeRaider.Loader
 
         public const ushort TextureFlippedMask = 0x8000;
     }
+}
 
+namespace FreeRaider.Loader
+{
     public class LevelParseException : Exception
     {
         public long Position;
 
-        public LevelParseException(Exception e, long pos = -1) : base("At position: " + (pos == -1 ? "Unknown" : pos.ToString()), e)
+        public LevelParseException(Exception e, long pos = -1)
+            : base("At position: " + (pos == -1 ? "Unknown" : pos.ToString()), e)
         {
             Position = pos;
         }
@@ -30,7 +34,8 @@ namespace FreeRaider.Loader
     {
         public long Position;
 
-        public ScriptParseException(Exception e, long pos = -1) : base("At position " + (pos == -1 ? "Unknown" : pos.ToString()) + ": " + e.Message, e)
+        public ScriptParseException(Exception e, long pos = -1)
+            : base("At position " + (pos == -1 ? "Unknown" : pos.ToString()) + ": " + e.Message, e)
         {
             Position = pos;
         }
@@ -612,8 +617,10 @@ namespace FreeRaider.Loader
         /// Initializes a new instance of the <see cref="Light"/> class.
         /// </summary>
         public Light(byte lightType, Vertex position, ByteColor color, float intensity = 0.0f, ushort intensity1 = 0,
-            ushort intensity2 = 0, uint fade1 = 0, uint fade2 = 0, byte unknown = 255, float hotspot = 0.0f, float falloff= 0.0f, float length= 0.0f,
-            float cutoff = 0.0f, Vertex direction = default(Vertex), Vertex position2 = default(Vertex), Vertex direction2 = default(Vertex), float radInput = 0.0f, float radOutput = 0.0f, float range = 0.0f)
+            ushort intensity2 = 0, uint fade1 = 0, uint fade2 = 0, byte unknown = 255, float hotspot = 0.0f,
+            float falloff = 0.0f, float length = 0.0f,
+            float cutoff = 0.0f, Vertex direction = default(Vertex), Vertex position2 = default(Vertex),
+            Vertex direction2 = default(Vertex), float radInput = 0.0f, float radOutput = 0.0f, float range = 0.0f)
         {
             this.lightType = lightType;
             Position = position;
@@ -772,7 +779,7 @@ namespace FreeRaider.Loader
             }
             else if (ver > Engine.TR3)
             {
-                if(ver == Engine.TR4)
+                if (ver == Engine.TR4)
                 {
                     ret.Color = ByteColor.Read(br, Engine.TR1);
                     ret.lightType = br.ReadByte();
@@ -873,7 +880,8 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Initializes a new instance of the <see cref="Layer"/> class.
         /// </summary>
-        public Layer(ushort numVertices, ushort unknownL1, ushort unknownL2, ushort numRectangles, ushort numTriangles, ushort unknownL3, BoundingBox boundingBox, uint unknownL4, uint unknownL5, uint unknownL6)
+        public Layer(ushort numVertices, ushort unknownL1, ushort unknownL2, ushort numRectangles, ushort numTriangles,
+            ushort unknownL3, BoundingBox boundingBox, uint unknownL4, uint unknownL5, uint unknownL6)
         {
             NumVertices = numVertices;
             Unknown_l1 = unknownL1;
@@ -891,16 +899,20 @@ namespace FreeRaider.Loader
         /// Number of vertices in this layer
         /// </summary>
         public ushort NumVertices;
+
         public ushort Unknown_l1;
         public ushort Unknown_l2;
+
         /// <summary>
         /// Number of rectangles in this layer
         /// </summary>
         public ushort NumRectangles;
+
         /// <summary>
         /// Number of triangles in this layer
         /// </summary>
         public ushort NumTriangles;
+
         public ushort Unknown_l3;
 
         /// <summary>
@@ -930,11 +942,11 @@ namespace FreeRaider.Loader
             if (filler != 0)
                 Cerr.Write("Layer.Read: Expected 0, Found " + filler);
             var filler2 = br.ReadUInt16();
-            if(filler2 != 0)
+            if (filler2 != 0)
                 Cerr.Write("Layer.Read: Expected 0, Found " + filler2);
             ret.BoundingBox = BoundingBox.Read(br);
             var filler3 = br.ReadUInt32();
-            if(filler3 != 0)
+            if (filler3 != 0)
                 Cerr.Write("Layer.Read: Expected 0, Found 0x" + filler3.ToString("X8"));
             ret.Unknown_l4 = br.ReadUInt32();
             ret.Unknown_l5 = br.ReadUInt32();
@@ -989,7 +1001,9 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Initializes a new instance of the <see cref="RoomVertex"/> class.
         /// </summary>
-        public RoomVertex(Vertex vertex, short lighting1, SpecialRenderingEffects attributes = SpecialRenderingEffects.Normal, short lighting2 = 0, Vertex normal = default(Vertex), FloatColor color = default(FloatColor))
+        public RoomVertex(Vertex vertex, short lighting1,
+            SpecialRenderingEffects attributes = SpecialRenderingEffects.Normal, short lighting2 = 0,
+            Vertex normal = default(Vertex), FloatColor color = default(FloatColor))
         {
             Vertex = vertex;
             Lighting1 = lighting1;
@@ -1042,7 +1056,7 @@ namespace FreeRaider.Loader
                 if (ver >= Engine.TR2)
                 {
                     ret.Attributes = (SpecialRenderingEffects) br.ReadUInt16();
-                    ret.Lighting2 = ver >= Engine.TR3 ? br.ReadInt16() : (short)((8191 - br.ReadInt16()) << 2);  
+                    ret.Lighting2 = ver >= Engine.TR3 ? br.ReadInt16() : (short) ((8191 - br.ReadInt16()) << 2);
                 }
                 else
                 {
@@ -1056,13 +1070,13 @@ namespace FreeRaider.Loader
                         ret.Lighting1 / 32768.0f);
                 else if (ver == Engine.TR2)
                     ret.Color = new FloatColor(
-                        ret.Lighting2 / 32768.0f, 
+                        ret.Lighting2 / 32768.0f,
                         ret.Lighting2 / 32768.0f,
                         ret.Lighting2 / 32768.0f);
                 else if (ver == Engine.TR3)
                     ret.Color = new FloatColor(
                         ((ret.Lighting2 & 0x7C00) >> 10) / 62.0f,
-                        ((ret.Lighting2 & 0x03E0) >> 5) / 62.0f, 
+                        ((ret.Lighting2 & 0x03E0) >> 5) / 62.0f,
                         (ret.Lighting2 & 0x001F) / 62.0f);
                 else if (ver == Engine.TR4)
                     ret.Color = new FloatColor(
@@ -1079,7 +1093,8 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Initializes a new instance of the <see cref="RoomStaticMesh"/> class.
         /// </summary>
-        public RoomStaticMesh(Vertex position, float rotation, short intensity1, short intensity2, ushort objectId, FloatColor tint)
+        public RoomStaticMesh(Vertex position, float rotation, short intensity1, short intensity2, ushort objectId,
+            FloatColor tint)
         {
             Position = position;
             Rotation = rotation;
@@ -1135,12 +1150,12 @@ namespace FreeRaider.Loader
             rsm.ObjectID = br.ReadUInt16();
 
             if (rsm.Intensity1 >= 0)
-                rsm.Intensity1 = (short)((8191 - rsm.Intensity1) << 2);
+                rsm.Intensity1 = (short) ((8191 - rsm.Intensity1) << 2);
 
             if (rsm.Intensity2 >= 0)
-                rsm.Intensity2 = (short)((8191 - rsm.Intensity2) << 2);
+                rsm.Intensity2 = (short) ((8191 - rsm.Intensity2) << 2);
 
-            if(ver < Engine.TR3)
+            if (ver < Engine.TR3)
             {
                 var c = rsm.Intensity2 / 16384.0f;
                 rsm.Tint = new FloatColor(c, c, c);
@@ -1364,7 +1379,7 @@ namespace FreeRaider.Loader
                     Cerr.Write("Room.Read[TR5]: numStaticMeshes > 512");
 
                 r.ReverbInfo = (ReverbInfo) br.ReadByte();
-                r.AlternateGroup = (sbyte)br.ReadByte();
+                r.AlternateGroup = (sbyte) br.ReadByte();
                 r.WaterScheme = (byte) br.ReadUInt16();
 
                 var filler1 = br.ReadUInt32();
@@ -1396,7 +1411,7 @@ namespace FreeRaider.Loader
                 r.Unknown_R3 = br.ReadUInt32();
 
                 var separator7 = br.ReadUInt32();
-                if(separator7 != 0 && separator7 != 0xCDCDCDCD)
+                if (separator7 != 0 && separator7 != 0xCDCDCDCD)
                     Cerr.Write("Room.Read[TR5]: separator7: Expected 0xCDCDCDCD, Found 0x" + separator7.ToString("X8"));
 
                 r.Unknown_R4a = br.ReadUInt16();
@@ -1432,7 +1447,7 @@ namespace FreeRaider.Loader
 
                 var numTriangles = br.ReadUInt32();
                 if (numTriangles == 0xCDCDCDCD) numTriangles = 0;
-                if(numTriangles > 512)
+                if (numTriangles > 512)
                     Cerr.Write("Room.Read[TR5]: numTriangles > 512");
                 r.Triangles = new Triangle[numTriangles];
 
@@ -1448,7 +1463,7 @@ namespace FreeRaider.Loader
 
                 var lightSize = br.ReadUInt32();
                 var numLights2 = br.ReadUInt32();
-                if(numLights2 != numLights)
+                if (numLights2 != numLights)
                     throw new ArgumentException("Room.Read[TR5]: Room.numLights2 != Room.numLights", nameof(numLights2));
 
                 r.Unknown_R6 = br.ReadUInt32();
@@ -1461,11 +1476,12 @@ namespace FreeRaider.Loader
                 var verticesOffset = br.ReadUInt32();
                 var polyOffset = br.ReadUInt32();
                 var polyOffset2 = br.ReadUInt32();
-                if(polyOffset != polyOffset2)
-                    throw new ArgumentException("Room.Read[TR5]: Room.polyOffset2 != Room.polyOffset", nameof(polyOffset2));
+                if (polyOffset != polyOffset2)
+                    throw new ArgumentException("Room.Read[TR5]: Room.polyOffset2 != Room.polyOffset",
+                        nameof(polyOffset2));
 
                 var verticesSize = br.ReadUInt32();
-                if(verticesSize % 28 != 0)
+                if (verticesSize % 28 != 0)
                     throw new ArgumentException(
                         "Room.Read[TR5]: verticesSize has wrong value: " + verticesSize, nameof(verticesSize));
 
@@ -1696,7 +1712,7 @@ namespace FreeRaider.Loader
         /// List of coloured triangles
         /// </summary>
         public Triangle[] ColouredTriangles;
-        
+
         /// <summary>
         /// Reads a <see cref="Mesh"/>
         /// </summary>
@@ -1721,7 +1737,7 @@ namespace FreeRaider.Loader
             ret.TexturedRectangles = br.ReadArray(br.ReadInt16(), () => QuadFace.Read(br, ver));
             ret.TexturedTriangles = br.ReadArray(br.ReadInt16(), () => Triangle.Read(br, ver));
 
-            if(ver < Engine.TR4)
+            if (ver < Engine.TR4)
             {
                 ret.ColouredRectangles = br.ReadArray(br.ReadInt16(), () => QuadFace.Read(br, ver));
                 ret.ColouredTriangles = br.ReadArray(br.ReadInt16(), () => Triangle.Read(br, ver));
@@ -1779,7 +1795,7 @@ namespace FreeRaider.Loader
             ret.VisibilityBox = new[]
             {
                 new Vertex(br.ReadInt16(), br.ReadInt16(), -br.ReadInt16()),
-                new Vertex(-br.ReadInt16(), -br.ReadInt16(), -br.ReadInt16()) 
+                new Vertex(-br.ReadInt16(), -br.ReadInt16(), -br.ReadInt16())
             };
 
             ret.CollisionBox = new[]
@@ -1875,11 +1891,11 @@ namespace FreeRaider.Loader
                 FrameOffset = br.ReadUInt32(),
                 AnimationIndex = br.ReadUInt16()
             };
-            
-            if(ver == Engine.TR5)
+
+            if (ver == Engine.TR5)
             {
                 var filler = br.ReadUInt16();
-                if(filler != 0xFFEF)
+                if (filler != 0xFFEF)
                     Cerr.Write("Moveable.Read[TR5]: filler: Expected 0xFFEF, Found 0x" + filler.ToString("X4"));
             }
 
@@ -1930,7 +1946,7 @@ namespace FreeRaider.Loader
         /// </summary>
         public ushort Flags;
 
-        public ushort ActivationMash => (ushort)((Flags & 0x3e00) >> 9);
+        public ushort ActivationMash => (ushort) ((Flags & 0x3e00) >> 9);
 
         /// <summary>
         /// Determines if the <see cref="Item"/> is initially invisible
@@ -1951,21 +1967,21 @@ namespace FreeRaider.Loader
             ret.Room = br.ReadInt16();
             ret.Position = Vertex.Read32(br);
             ret.Rotation = br.ReadUInt16() / 16384.0f * -90;
-            ret.Intensity1 = (short)br.ReadUInt16();
+            ret.Intensity1 = (short) br.ReadUInt16();
 
             if (ver < Engine.TR3)
                 if (ret.Intensity1 >= 0)
-                    ret.Intensity1 = (short)((8191 - ret.Intensity1) << 2);
+                    ret.Intensity1 = (short) ((8191 - ret.Intensity1) << 2);
 
 
             if (ver == Engine.TR2 || ver == Engine.TR3)
                 ret.Intensity2 = (short) br.ReadUInt16(); // TODO: Cast ushort to short? weird
             else
-                ret.Intensity2 = ret.Intensity1; 
+                ret.Intensity2 = ret.Intensity1;
 
-            if(ver == Engine.TR2)
+            if (ver == Engine.TR2)
                 if (ret.Intensity2 >= 0)
-                    ret.Intensity2 = (short)((8191 - ret.Intensity2) << 2);
+                    ret.Intensity2 = (short) ((8191 - ret.Intensity2) << 2);
 
 
             if (ver < Engine.TR4)
@@ -1974,7 +1990,7 @@ namespace FreeRaider.Loader
             }
             else
             {
-                ret.ObjectCodeBit = (short)br.ReadUInt16();
+                ret.ObjectCodeBit = (short) br.ReadUInt16();
             }
 
             ret.Flags = br.ReadUInt16();
@@ -2014,7 +2030,7 @@ namespace FreeRaider.Loader
             var ret = new SpriteTexture();
 
             ret.Tile = br.ReadUInt16();
-            
+
             var tx = br.ReadByte();
             var ty = br.ReadByte();
             var tw = br.ReadUInt16();
@@ -2024,20 +2040,20 @@ namespace FreeRaider.Loader
             var tright = br.ReadInt16();
             var tbottom = br.ReadInt16();
 
-            if(ver < Engine.TR4)
+            if (ver < Engine.TR4)
             {
                 if (ret.Tile > 64)
                     Cerr.Write("SpriteTexture.Read[" + ver + "]: SpriteTexture.Tile > 64");
 
                 ret.X0 = tx;
                 ret.Y0 = ty;
-                ret.X1 = (short)(tx + tw / 256.0f);
-                ret.Y1 = (short)(ty + th / 256.0f);
+                ret.X1 = (short) (tx + tw / 256.0f);
+                ret.Y1 = (short) (ty + th / 256.0f);
 
                 ret.LeftSide = tleft;
                 ret.RightSide = tright;
-                ret.TopSide = (short)-tbottom;
-                ret.BottomSide = (short)-ttop;
+                ret.TopSide = (short) -tbottom;
+                ret.BottomSide = (short) -ttop;
             }
             else
             {
@@ -2050,7 +2066,7 @@ namespace FreeRaider.Loader
                 ret.Y1 = ttop;
 
                 ret.LeftSide = tx;
-                ret.RightSide = (short)(tx + tw / 256.0f);
+                ret.RightSide = (short) (tx + tw / 256.0f);
                 ret.BottomSide = ty;
                 ret.TopSide = (short) (ty + th / 256.0f);
             }
@@ -2086,10 +2102,10 @@ namespace FreeRaider.Loader
             return new SpriteSequence
             {
                 ObjectID = br.ReadInt32(),
-                Length = (short)-br.ReadInt16(),
+                Length = (short) -br.ReadInt16(),
                 Offset = br.ReadInt16()
             };
-        } 
+        }
     }
 
     public struct Animation
@@ -2168,7 +2184,7 @@ namespace FreeRaider.Loader
             ret.Speed = br.ReadInt32();
             ret.Acceleration = br.ReadInt32();
 
-            if(ver >= Engine.TR4)
+            if (ver >= Engine.TR4)
             {
                 ret.SpeedLateral = br.ReadInt32();
                 ret.AccelerationLateral = br.ReadInt32();
@@ -2290,8 +2306,8 @@ namespace FreeRaider.Loader
         public static Box Read(BinaryReader br, Engine ver = Engine.Unknown)
         {
             var ret = new Box();
-            
-            if(ver >= Engine.TR2)
+
+            if (ver >= Engine.TR2)
             {
                 ret.Zmin = (uint) (1024 * br.ReadByte()); // todo: opentomb multiplies by -1024
                 ret.Zmax = (uint) (1024 * br.ReadByte());
@@ -2397,14 +2413,17 @@ namespace FreeRaider.Loader
         /// Normal playback (0)
         /// </summary>
         None,
+
         /// <summary>
         /// Looped (2 in TR1, 3 in other games), meaning the sound will be looped until strictly stopped by an engine event
         /// </summary>
         Forward,
+
         /// <summary>
         /// One-shot rewound (1 in TR1/TR2, 2 in other games), meaning the sound will be rewound if triggered again
         /// </summary>
         PingPong,
+
         /// <summary>
         /// One-shot wait mode (only present above TR2, value 1), meaning the same sound will be ignored until current one stops
         /// </summary>
@@ -2442,14 +2461,14 @@ namespace FreeRaider.Loader
 
         public LoopType GetLoopType(Engine ver = Engine.Unknown)
         {
-            switch(Characteristics & 3)
+            switch (Characteristics & 3)
             {
                 case 1:
                     return ver < Engine.TR3 ? LoopType.PingPong : LoopType.Wait;
                 case 2:
                     return ver == Engine.TR1 ? LoopType.Forward : LoopType.PingPong;
                 case 3:
-                    if(ver >= Engine.TR3) return LoopType.Forward;
+                    if (ver >= Engine.TR3) return LoopType.Forward;
                     break;
             }
             return LoopType.None;
@@ -2458,7 +2477,7 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Number of sound samples in this group. If there are more than one samples, then engine will select one to play based on randomizer (for example, listen to Lara footstep sounds).
         /// </summary>
-        public byte SampleCount => (byte)((Characteristics >> 2) & 0x0f);
+        public byte SampleCount => (byte) ((Characteristics >> 2) & 0x0f);
 
         /// <summary>
         /// Randomize pitch. When this flag is set, sound pitch will be slightly varied with each playback event.
@@ -2484,8 +2503,8 @@ namespace FreeRaider.Loader
             var ret = new SoundDetails();
 
             ret.Sample = br.ReadUInt16();
-            
-            if(ver < Engine.TR3)
+
+            if (ver < Engine.TR3)
             {
                 ret.Volume = br.ReadUInt16();
                 ret.Chance = br.ReadUInt16();
@@ -2537,7 +2556,7 @@ namespace FreeRaider.Loader
             ret.Ycoordinate = br.ReadSByte();
             ret.Ypixel = br.ReadByte();
 
-            if(ver >= Engine.TR4)
+            if (ver >= Engine.TR4)
             {
                 if (ret.Xcoordinate == 0)
                     ret.Xcoordinate = 1;
@@ -2593,6 +2612,7 @@ namespace FreeRaider.Loader
         /// Used for “line particles”, such as gun sparks, water drops and laser beams. Possibly was also used for debug purposes.
         /// </summary>
         Wireframe = 6,
+
         /// <summary>
         /// Forced alpha value.<br/>
         /// It’s ordinary alpha-tested face, but alpha value for this face is overridden with global variable.<br/>
@@ -2663,13 +2683,13 @@ namespace FreeRaider.Loader
                 if (ret.TileAndFlag > 64)
                     Cerr.Write("ObjectTexture.Read[" + ver + "]: TileAndFlag > 64");
 
-                if((ret.TileAndFlag & (1 << 15)) != 0)
+                if ((ret.TileAndFlag & (1 << 15)) != 0)
                     Cerr.Write("ObjectTexture.Read[" + ver + "]: TileAndFlag has top bit set");
             }
 
             ret.Vertices = br.ReadArray(4, () => ObjectTextureVertex.Read(br, ver));
 
-            if(ver >= Engine.TR4)
+            if (ver >= Engine.TR4)
             {
                 ret.OriginalU = br.ReadUInt32();
                 ret.OriginalV = br.ReadUInt32();
@@ -2678,11 +2698,11 @@ namespace FreeRaider.Loader
                 ret.Height = br.ReadUInt32();
             }
 
-            if(ver == Engine.TR5)
+            if (ver == Engine.TR5)
             {
                 var filler = br.ReadUInt16();
 
-                if(filler != 0)
+                if (filler != 0)
                     Cerr.Write("ObjectTexture.Read[TR5]: filler: Expected 0, Found 0x" + filler.ToString("X4"));
             }
 
@@ -2703,9 +2723,9 @@ namespace FreeRaider.Loader
         public Vertex Position;
 
         public short Room;
-        
+
         public ushort Flag;
-        
+
         /// <summary>
         /// Reads a <see cref="Camera"/>
         /// </summary>
@@ -2714,23 +2734,23 @@ namespace FreeRaider.Loader
         public static Camera Read(BinaryReader br)
         {
             var ret = new Camera();
-            
+
             ret.Position = Vertex.Read32(br, false);
-            
+
             ret.Room = br.ReadInt16();
             ret.Flag = br.ReadUInt16();
-            
+
             return ret;
         }
     }
-    
+
     public struct FlybyCamera
     {
         /// <summary>
         /// Camera position
         /// </summary>
         public Vertex Position;
-        
+
         /// <summary>
         /// Camera target
         /// </summary>

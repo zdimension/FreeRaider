@@ -1467,11 +1467,27 @@ namespace FreeRaider
             return ret;
         }
 
+        public static void SkeletonCopyMeshes(List<MeshTreeTag> dst, List<MeshTreeTag> src, int tagsCount)
+        {
+            for (var i = 0; i < tagsCount; i++)
+            {
+                dst[i].MeshBase = src[i].MeshBase;
+            }
+        }
+
         public static void SkeletonCopyMeshes(MeshTreeTag[] dst, MeshTreeTag[] src, int tagsCount)
         {
             for (var i = 0; i < tagsCount; i++)
             {
                 dst[i].MeshBase = src[i].MeshBase;
+            }
+        }
+
+        public static void SkeletonCopyMeshes2(List<MeshTreeTag> dst, List<MeshTreeTag> src, int tagsCount)
+        {
+            for (var i = 0; i < tagsCount; i++)
+            {
+                dst[i].MeshSkin = src[i].MeshBase;
             }
         }
 

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using AT.MIN;
 using FreeRaider.Loader;
 using NLua;
 
@@ -9,19 +11,57 @@ namespace FreeRaider.TestApp
     {
         static void Main(string[] args)
         {
-            var state = new Lua();
-            state.DoString(@"
-    function ScriptFunc (val1, val2)
-        if val1 > val2 then
-            return val1 + 1
-        else
-            return val2 - 1
-        end
-    end
-    ");
-            var scriptFunc = state["ScriptFunc"] as LuaFunction;
-            var res = (scriptFunc.Call(3, 5).First());
-            Console.WriteLine(res + " " + res.GetType().Name);
+            /*var state = new Lua();
+            state.DoString(@"abc = nil");
+           state.NewTable("abc");
+           state.NewTable("abc.ab");
+           state.NewTable("abc.3");
+           state.NewTable("abc.'g'");
+            var g = ((LuaTable) state["abc"]);
+            var d = g.Keys.Cast<dynamic>().ToDictionary(x => x, x => g.Values.Cast<dynamic>().ToList()[g.Keys.Cast<dynamic>().ToList().IndexOf(x)]);
+
+            Console.WriteLine(string.Join(", ", d.Select(x => x.Key + " : " + x.Value)));*/
+
+            long t1 = 0;
+            long t2 = 0;
+
+            var f1 = "{0} {1:0.00}";
+            var f2 = "%s %.2f";
+
+            var s1 = "aBcDeF123";
+            var fl1 = 123.456789f;
+
+            DateTime n;
+            TimeSpan d1, d2;
+
+
+            for (var k = 0; k < 10; k++)
+            {
+                n = DateTime.Now;
+
+                for (var i = 0; i < 10000; i++)
+                {
+                    var g = string.Format(f1, s1, fl1);
+                }
+
+                d1 = DateTime.Now - n;
+
+                t1 += d1.Ticks;
+
+                n = DateTime.Now;
+
+                for (var i = 0; i < 10000; i++)
+                {
+                    var g = Tools.sprintf(f2, s1, fl1);
+                }
+
+                d2 = DateTime.Now - n;
+
+                t2 += d2.Ticks;
+            }
+
+            Console.WriteLine(new TimeSpan(t1 / 10));
+            Console.WriteLine(new TimeSpan(t2 / 10));
 
             // multiple tests
 

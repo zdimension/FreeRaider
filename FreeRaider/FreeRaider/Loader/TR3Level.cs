@@ -2,13 +2,15 @@
 using System.IO;
 using System.Linq;
 
-namespace FreeRaider.Loader
+namespace FreeRaider
 {
     public partial class Constants
     {
         public const int TR_AUDIO_MAP_SIZE_TR3 = 370;
     }
-
+}
+namespace FreeRaider.Loader
+{
     public class TR3Level : Level
     {
         public TR3Level(BinaryReader br, TRGame ver) : base(br, ver)
