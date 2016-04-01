@@ -106,17 +106,17 @@ namespace FreeRaider
         Wind = 0x0020,
         Unknown2 = 0x0040,
 
-        //@FIXME: Find what it means!!! Always set by Dxtre3d.
+        // FIXME: Find what it means!!! Always set by Dxtre3d.
         NoLensflare = 0x0080, // In TR4-5. Was quicksand in TR3.
         Mist = 0x0100,
 
-        //@FIXME: Unknown meaning in TR1!!!
+        // FIXME: Unknown meaning in TR1!!!
         Caustics = 0x0200,
         Unknown3 = 0x0400,
         Damage = 0x0800,
 
-        //@FIXME: Is it really damage (D)?
-        Poison = 0x1000 //@FIXME: Is it really poison (P)?
+        // FIXME: Is it really damage (D)?
+        Poison = 0x1000 // FIXME: Is it really poison (P)?
     }
 
     public enum RoomLightMode : byte
@@ -540,7 +540,7 @@ namespace FreeRaider
         public Vector3 BBMax { get; set; }
 
         /// <summary>
-        /// GL transformation matrix TODO: it's a btTransform
+        /// GL transformation matrix
         /// </summary>
         public Transform Transform { get; set; }
 
@@ -590,14 +590,14 @@ namespace FreeRaider
 
             if (BtBody != null)
             {
-                // TODO: World.cpp, L815
+                BtEngineDynamicsWorld.AddRigidBody(BtBody);
             }
 
             foreach (var sm in StaticMesh)
             {
                 if (sm.BtBody != null)
                 {
-                    // TODO: World.cpp, L822
+                    BtEngineDynamicsWorld.AddRigidBody(sm.BtBody);
                 }
             }
 
@@ -610,14 +610,14 @@ namespace FreeRaider
 
             if (BtBody != null)
             {
-                // TODO: World.cpp, L850
+                BtEngineDynamicsWorld.RemoveRigidBody(BtBody);
             }
 
             foreach (var sm in StaticMesh)
             {
                 if (sm.BtBody != null)
                 {
-                    // TODO: World.cpp, L857
+                   BtEngineDynamicsWorld.RemoveRigidBody(sm.BtBody);
                 }
             }
 
@@ -874,10 +874,12 @@ namespace FreeRaider
                 return;
             }
 
-            Mesh = new BaseMesh();
-            Mesh.ID = roomID;
-            Mesh.TexturePageCount = world.TextureAtlas.NumAtlasPages + 1;
-            Mesh.UsesVertexColors = true; // This is implicitly true on room meshes
+            Mesh = new BaseMesh
+            {
+                ID = roomID,
+                TexturePageCount = world.TextureAtlas.NumAtlasPages + 1,
+                UsesVertexColors = true // This is implicitly true on room meshes
+            };
 
             Mesh.Vertices.Resize(trRoom.Vertices.Length);
             for (var i = 0; i < Mesh.Vertices.Count; i++)
@@ -1202,7 +1204,7 @@ namespace FreeRaider
             string name)
         {
             var model = GetModelByID(modelID);
-            if(model == null)
+            if (model == null)
             {
                 return false;
             }
@@ -1210,13 +1212,15 @@ namespace FreeRaider
             var bf = new SSBoneFrame();
             bf.FromModel(model);
 
-            var item = new BaseItem();
-            item.ID = itemID;
-            item.WorldModelId = worldModelID;
-            item.Type = type;
-            item.Count = count;
-            item.Name = (char)0 + name; // TODO: Is it useful?
-            item.BoneFrame = bf;
+            var item = new BaseItem
+            {
+                ID = itemID,
+                WorldModelId = worldModelID,
+                Type = type,
+                Count = count,
+                Name = (char) 0 + name, // TODO: Is it useful?
+                BoneFrame = bf
+            };
 
             ItemsTree[item.ID] = item;
 
@@ -1274,18 +1278,124 @@ namespace FreeRaider
 
         }
 
-        public uint SpawnEntity(uint modelID, uint roomID, Vector3 pos, Vector3 angle, int ID);
+        public uint SpawnEntity(uint modelID, uint roomID, Vector3 pos, Vector3 angle, int id)
+        {
+            var model = GetModelByID(modelID);
+            if(model != null)
+            {
+                var ent = GetEntityByID((uint)id);
+                if(ent != null)
+                {
+                    if(pos != Vector3.Zero)
+                    {
+                        ent.Transform.Origin = pos;
+                    }
+                    if(angle != Vector3.Zero)
+                    {
+                        ent.Angles = angle;
+                        ent.UpdateTransform();
+                    }
+                    if(roomID < Rooms.Count)
+                    {
+                        ent.Self.Room = Rooms[(int) roomID];
+                        ent.CurrentSector = ent.Self.Room.GetSectorRaw(ent.Transform.Origin);
+                    }
+                    else
+                    {
+                        ent.Self.Room = null;
+                    }
 
-        public bool DeleteEntity(uint ID);
+                    return ent.ID;
+                }
 
-        public Entity GetEntityByID(uint ID);
+                if(id < 0)
+                {
+                    ent = new Entity(NextEntityID);
+                    EntityTree[NextEntityID] = ent;
+                    NextEntityID++;
+                }
+                else
+                {
+                    ent = new Entity((uint)id);
+                    if (id + 1 > NextEntityID)
+                        NextEntityID = (uint)id + 1;
+                }
 
-        public Character GetCharacterByID(uint ID);
+                if (pos != Vector3.Zero)
+                {
+                    ent.Transform.Origin = pos;
+                }
+                if (angle != Vector3.Zero)
+                {
+                    ent.Angles = angle;
+                    ent.UpdateTransform();
+                }
+                if (roomID < Rooms.Count)
+                {
+                    ent.Self.Room = Rooms[(int)roomID];
+                    ent.CurrentSector = ent.Self.Room.GetSectorRaw(ent.Transform.Origin);
+                }
+                else
+                {
+                    ent.Self.Room = null;
+                }
 
-        public BaseItem GetBaseItemByID(uint ID);
+                ent.TypeFlags = ENTITY_TYPE.Spawned;
+                ent.Active = ent.Enabled = true;
+                ent.TriggerLayout = 0x00;
+                ent.OCB = 0x00;
+                ent.Timer = 0.0f;
 
-        public Room FindRoomByPosition(Vector3 pos);
+                ent.MoveType = MoveType.StaticPos;
+                ent.InertiaLinear = 0.0f;
+                ent.InertiaAngular = Vector2.Zero;
 
-        public Room GetRoomByID(uint ID);
+                ent.Bf.FromModel(model);
+
+                ent.SetAnimation(TR_ANIMATION.LaraRun, 0); // Set zero animation and zero frame
+
+                Res_SetEntityProperties(ent);
+                ent.RebuildBV();
+                ent.GenRigidBody();
+
+                ent.Self.Room?.AddEntity(ent);
+                AddEntity(ent);
+                Res_SetEntityFunction(ent);
+
+                return ent.ID;
+            }
+
+            return 0xFFFFFFFF;
+        }
+
+        public bool DeleteEntity(uint id)
+        {
+            return Character.ID != id && EntityTree.Remove(id);
+        }
+
+        public Entity GetEntityByID(uint id)
+        {
+            return Character.ID == id ? Character : EntityTree.GetValueOrDefault(id);
+        }
+
+        public Character GetCharacterByID(uint id)
+        {
+            return GetEntityByID(id) as Character;
+        }
+
+        public BaseItem GetBaseItemByID(uint id)
+        {
+            return ItemsTree.GetValueOrDefault(id);
+        }
+
+        public Room FindRoomByPosition(Vector3 pos)
+        {
+            return Rooms.FirstOrDefault(r => r.Active && pos.IsBetween(r.BBMin, r.BBMax, IB.aIbE));
+        }
+
+        public Room GetByID(uint id)
+        {
+            return Rooms.FirstOrDefault(r => r.ID == id);
+        }
     }
 }

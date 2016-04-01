@@ -13,14 +13,14 @@ namespace FreeRaider
         public const bool NO_AUDIO = false;
     }
 
-    class Program
+    public class Program
     {
         public static bool Done = false;
 
         public static float TimeScale = 1.0f;
 
         [STAThread]
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 

@@ -191,7 +191,7 @@ namespace FreeRaider
             {
                 var cand = canonicalObjectTextures[i];
 
-                if(cand.OriginalPage == (texture.TileAndFlag & Loader.Constants.TextureIndexMaskTr4)
+                if(cand.OriginalPage == (texture.TileAndFlag & TextureIndexMaskTr4)
                     && cand.OriginalX == min[0]
                     && cand.OriginalY == min[1]
                     && cand.Width == width
@@ -211,7 +211,7 @@ namespace FreeRaider
                 {
                     Width = (byte)width,
                     Height = (byte)height,
-                    OriginalPage = (ushort)(texture.TileAndFlag & Loader.Constants.TextureIndexMaskTr4),
+                    OriginalPage = (ushort)(texture.TileAndFlag & TextureIndexMaskTr4),
                     OriginalX = min[0],
                     OriginalY = min[1]
                 });
@@ -258,7 +258,7 @@ namespace FreeRaider
             {
                 var cand = canonicalObjectTextures[i];
 
-                if (cand.OriginalPage == (texture.Tile & Loader.Constants.TextureIndexMaskTr4)
+                if (cand.OriginalPage == (texture.Tile &  TextureIndexMaskTr4)
                     && cand.OriginalX == x
                     && cand.OriginalY == y
                     && cand.Width == width
@@ -278,7 +278,7 @@ namespace FreeRaider
                 {
                     Width = (byte)width,
                     Height = (byte)height,
-                    OriginalPage = (ushort)(texture.Tile & Loader.Constants.TextureIndexMaskTr4),
+                    OriginalPage = (ushort)(texture.Tile &  TextureIndexMaskTr4),
                     OriginalX = (byte)x,
                     OriginalY = (byte)y
                 });

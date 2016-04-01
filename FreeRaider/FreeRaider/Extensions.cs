@@ -18,6 +18,17 @@ namespace FreeRaider
 {
     public static partial class Extensions
     {
+        // http://stackoverflow.com/a/2601501/2196124
+        public static TValue GetValueOrDefault<TKey, TValue>
+            (this IDictionary<TKey, TValue> dictionary,
+                TKey key,
+                TValue defaultValue = default(TValue))
+        {
+            TValue value;
+            return dictionary.TryGetValue(key, out value) ? value : defaultValue;
+        }
+
+
         public static string ParseString(this BinaryReader br, long strLength)
         {
             var str = new byte[strLength];
@@ -214,7 +225,6 @@ namespace FreeRaider
             return Convert.ChangeType(obj, t);
         }
 
-        /// <param name="inclusive"></param>
         public static bool IsBetween<T, Tc1, Tc2>(this T f, Tc1 a, Tc2 b, IB inclusive = IB.aIbI, bool reorder = true)
             where T : IComparable
             where Tc1 : IConvertible, IComparable
@@ -230,8 +240,8 @@ namespace FreeRaider
             var fc = f.CompareTo(c);
             var fd = f.CompareTo(d);
 
-            var oa = inclusive.HasFlagSig(1) ? fc >= 0 : fc > 0;
-            var ob = inclusive.HasFlagSig(2) ? fd <= 0 : fd < 0;
+            var oa = ((int)inclusive & 1) == 1 ? fc >= 0 : fc > 0;
+            var ob = ((int)inclusive & 2) == 2 ? fd <= 0 : fd < 0;
 
             return oa && ob;
         }
