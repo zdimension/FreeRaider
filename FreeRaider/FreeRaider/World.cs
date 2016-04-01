@@ -1138,18 +1138,107 @@ namespace FreeRaider
                 CalculateWaterTint(ptr, fixedColour);
         }
 
-        public unsafe void CalculateWaterTint(float* tint, bool fixedColour);
+        public unsafe void CalculateWaterTint(float* tint, bool fixedColour)
+        {
+            if(EngineVersion < Loader.Engine.TR4) // If water room and level is TR1-3
+            {
+                if(EngineVersion < Loader.Engine.TR3)
+                {
+                    // Placeholder, color very similar to TR1 PSX ver.
+                    if(fixedColour)
+                    {
+                        tint[0] = 0.585f;
+                        tint[1] = 0.9f;
+                        tint[2] = 0.9f;
+                        tint[3] = 1.0f;
+                    }
+                    else
+                    {
+                        tint[0] *= 0.585f;
+                        tint[1] *= 0.9f;
+                        tint[2] *= 0.9f;
+                    }
+                }
+                else
+                {
+                    // TOMB3 - closely matches TOMB3
+                    if (fixedColour)
+                    {
+                        tint[0] = 0.275f;
+                        tint[1] = 0.45f;
+                        tint[2] = 0.5f;
+                        tint[3] = 1.0f;
+                    }
+                    else
+                    {
+                        tint[0] *= 0.275f;
+                        tint[1] *= 0.45f;
+                        tint[2] *= 0.5f;
+                    }
+                }
+            }
+            else
+            {
+                if (fixedColour)
+                {
+                    tint[0] = 1.0f;
+                    tint[1] = 1.0f;
+                    tint[2] = 1.0f;
+                    tint[3] = 1.0f;
+                }
+            }
+        }
 
-        public void AddEntity(Entity entity);
+        public void AddEntity(Entity entity)
+        {
+            if (EntityTree.ContainsKey(entity.ID))
+                return;
+            EntityTree[entity.ID] = entity;
+            if (entity.ID + 1 > NextEntityID)
+                NextEntityID = entity.ID + 1;
+        }
 
         public bool CreateItem(uint itemID, uint modelID, uint worldModelID, MenuItemType type, ushort count,
-            string name);
+            string name)
+        {
+            var model = GetModelByID(modelID);
+            if(model == null)
+            {
+                return false;
+            }
 
-        public int DeleteItem(uint itemID);
+            var bf = new SSBoneFrame();
+            bf.FromModel(model);
 
-        public Sprite GetSpriteByID(uint spriteID);
+            var item = new BaseItem();
+            item.ID = itemID;
+            item.WorldModelId = worldModelID;
+            item.Type = type;
+            item.Count = count;
+            item.Name = (char)0 + name; // TODO: Is it useful?
+            item.BoneFrame = bf;
 
-        public SkeletalModel GetModelByID(uint modelID);
+            ItemsTree[item.ID] = item;
+
+            return true;
+        }
+
+        public int DeleteItem(uint itemID)
+        {
+            ItemsTree.Remove(itemID);
+            return 1;
+        }
+
+        public Sprite GetSpriteByID(uint spriteID)
+        {
+            return Sprites.FirstOrDefault(sp => sp.ID == spriteID);
+        }
+
+        public SkeletalModel GetModelByID(uint modelID)
+        {
+            // TODO: This code maybe doesn't work
+            return SkeletalModels.FirstOrDefault(sm => sm.ID == modelID);
+        }
 
         public void Prepare()
         {
