@@ -362,6 +362,12 @@ namespace FreeRaider
         {
             return new Vector3(Math.Max(a.X, b.X), Math.Max(a.Y, b.Y), Math.Max(a.Z, b.Z));
         }
+
+        public static T Max<T>(params T[] args)
+            where T : IComparable
+        {
+            return args.Max();
+        }
     }
 
     public static class ALExt

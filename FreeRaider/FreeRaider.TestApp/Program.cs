@@ -4,25 +4,111 @@ using System.Linq;
 using AT.MIN;
 using FreeRaider.Loader;
 using NLua;
+using OpenTK;
 
 namespace FreeRaider.TestApp
 {
     class Program
     {
+        public static void test(string a, int b, float c = 0.5f)
+        {
+            Console.WriteLine(a + " " + b * c);
+        }
+
+        public static void test2(int x, int? y = null, int? z = null)
+        {
+            var g = x * x;
+            if (y != null) g += (int)(y * y);
+            if (z != null) g += (int)(z * z);
+            Console.WriteLine(g);
+        }
+
+        public static void test3(bool a)
+        {
+            Console.WriteLine(a);
+        }
+
         static void Main(string[] args)
         {
-            /*var state = new Lua();
-            state.DoString(@"abc = nil");
-           state.NewTable("abc");
-           state.NewTable("abc.ab");
-           state.NewTable("abc.3");
-           state.NewTable("abc.'g'");
-            var g = ((LuaTable) state["abc"]);
-            var d = g.Keys.Cast<dynamic>().ToDictionary(x => x, x => g.Values.Cast<dynamic>().ToList()[g.Keys.Cast<dynamic>().ToList().IndexOf(x)]);
+            var state = new Lua();
+            var n = DateTime.Now;
+            state.RegisterFunction("test", typeof (Program).GetMethod("test"));
+            state.RegisterFunction("test2", typeof (Program).GetMethod("test2"));
+            state.RegisterFunction("test3", typeof (Program).GetMethod("test3"));
+            var n1 = DateTime.Now - n;
+            n = DateTime.Now;
+            state.DoString("test(\"lol\", 5)");
+            state.DoString("test(\"lol\", 5, 2)");
+            state.DoString("test2(6)");
+            state.DoString("test2(3, 4)");
+            state.DoString("test2(3, 4, 5)");
+            state.DoString("test3(false)");
+            var n2 = DateTime.Now - n;
+            Console.WriteLine(n1);
+            Console.WriteLine(n2);
+            state.DoString(@" function maximum (a)
+      local mi = 1          -- maximum index
+      local m = a[mi]       -- maximum value
+      for i,val in ipairs(a) do
+        if val > m then
+          mi = i
+          m = val
+        end
+      end
+      return m, mi
+    end");
+            var h = state.DoString("return maximum({8,10,23,12,5})");
+            Console.WriteLine(string.Join(", ", h));
+            state["lolabc"] = Tuple.Create(1.3f, "abc", false);
+            var ttt = Tuple.Create(1.3f, "abc", false);
+            state["lol2"] = new object[] {ttt.Item1, ttt.Item2, ttt.Item3};
+            state.DoString(@" function maxi2 (a)
+  return lol2[1]
+end");
+            Console.WriteLine(string.Join(", ", state.DoString("return maxi2(13)")));
 
-            Console.WriteLine(string.Join(", ", d.Select(x => x.Key + " : " + x.Value)));*/
+            state.RegisterFunction("test4", typeof (Program).GetMethod("test4"));
+            state.DoString("test4(5)");
+            /*state.DoString(
+"function print_r ( t ) \n " +
+"    local print_r_cache={}\n " +
+"    local function sub_print_r(t,indent)\n " +
+"        if (print_r_cache[tostring(t)]) then\n " +
+"            print(indent..\" * \"..tostring(t))\n " +
+"        else\n " +
+"            print_r_cache[tostring(t)] = true\n " +
+"            if (type(t) == \"table\") then\n " +
+"                for pos, val in pairs(t) do\n " +
+"                    if (type(val) == \"table\") then\n " +
+"                          print(indent..\"[\"..pos..\"] => \"..tostring(t)..\" {\")\n " +
+"                        sub_print_r(val, indent..string.rep(\" \", string.len(pos) + 8))\n " +
+"                        print(indent..string.rep(\" \", string.len(pos) + 6)..\"}\")\n " +
+"                    elseif(type(val) == \"string\") then\n " +
+"                         print(indent..\"[\"..pos..'] => \"'..val..'\"')\n " +
+"                    else\n " +
+"                        print(indent..\"[\"..pos..\"] => \"..tostring(val))\n " +
+"                    end\n " +
+"                end\n " +
+"            else\n " +
+"                print(indent..tostring(t))\n " +
+"            end\n " +
+"        end\n " +
+"    end\n " +
+"    if (type(t) == \"table\") then\n " +
+"          print(tostring(t)..\" {\")\n " +
+"        sub_print_r(t, \"  \")\n " +
+"        print(\"}\")\n " +
+"    else\n " +
+"        sub_print_r(t, \"  \")\n " +
+"    end\n " +
+"    print()\n " +
+"end");
+            state.DoString("print_r(lol1)");
+            state.DoString(
+@"print(lol1[1])
+");*/
 
-            long t1 = 0;
+            /*long t1 = 0;
             long t2 = 0;
 
             var f1 = "{0} {1:0.00}";
@@ -61,7 +147,7 @@ namespace FreeRaider.TestApp
             }
 
             Console.WriteLine(new TimeSpan(t1 / 10));
-            Console.WriteLine(new TimeSpan(t2 / 10));
+            Console.WriteLine(new TimeSpan(t2 / 10));*/
 
             // multiple tests
 
@@ -88,6 +174,11 @@ namespace FreeRaider.TestApp
 
 
             Console.ReadLine();
+        }
+
+        public static void test4(ConsoleColor hgg)
+        {
+            Console.WriteLine(hgg);
         }
     }
 }

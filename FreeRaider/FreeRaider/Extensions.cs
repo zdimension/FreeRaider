@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using BulletSharp;
 using LibSndFile;
+using NLua;
 using OpenTK;
 using OpenTK.Audio.OpenAL;
 using OpenTK.Graphics;
@@ -468,7 +469,7 @@ namespace FreeRaider
             }
         }
 
-        public static T[] AddArray<T>(this T[] a, T[] b)
+        public static T[] AddArray<T>(this T[] a, params T[] b)
         {
             var r = new T[a.Length + b.Length];
             a.CopyTo(r, 0);
@@ -702,9 +703,19 @@ namespace FreeRaider
             return Helper.GetArrayFromPointer((float*)p, 16);
         }
 
-        public static string ToString(this Vector3 vec, string format)
+        public static string ToStringEx(this Vector3 vec, string format = "({0}, {1}, {2})", int round = -1)
         {
-            return string.Format(format, vec.X, vec.Y, vec.Z);
+            double x = vec.X;
+            double y = vec.Y;
+            double z = vec.Z;
+
+            if (round != -1)
+            {
+                x = Math.Round(x, round);
+                y = Math.Round(y, round);
+                z = Math.Round(z, round);
+            }
+            return Helper.Format(format, x, y, z);
         }
 
         public static string Lcase(this bool b, string trueStr = "true", string falseStr = "false")
@@ -741,6 +752,56 @@ namespace FreeRaider
             where T : struct
         {
             return arr.Length * Marshal.SizeOf(typeof(T));
+        }
+
+        public static KeraLua.LuaState GetLuaState(this Lua lua)
+        {
+            return (KeraLua.LuaState) lua.GetInstanceField("luaState");
+        }
+
+        // http://stackoverflow.com/a/3303182/2196124
+        /// <summary>
+        /// Uses reflection to get the field value from an object.
+        /// </summary>
+        ///
+        /// <param name="type">The instance type.</param>
+        /// <param name="instance">The instance object.</param>
+        /// <param name="fieldName">The field's name which is to be fetched.</param>
+        ///
+        /// <returns>The field value from the object.</returns>
+        public static object GetInstanceField(Type type, object instance, string fieldName)
+        {
+            var bindFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+                | BindingFlags.Static;
+            var field = type.GetField(fieldName, bindFlags);
+            return field.GetValue(instance);
+        }
+
+        /// <summary>
+        /// Uses reflection to get the field value from an object.
+        /// </summary>
+        ///
+        /// <param name="type">The instance type.</param>
+        /// <param name="instance">The instance object.</param>
+        /// <param name="fieldName">The field's name which is to be fetched.</param>
+        ///
+        /// <returns>The field value from the object.</returns>
+        public static object GetInstanceField(this object instance, string fieldName)
+        {
+            var bindFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+                | BindingFlags.Static;
+            var field = instance.GetType().GetField(fieldName, bindFlags);
+            return field.GetValue(instance);
+        }
+
+        public static int ToInt32(this Enum en)
+        {
+            return (int)Convert.ChangeType(en, TypeCode.Int32);
+        }
+
+        public static uint ToUInt32(this Enum en)
+        {
+            return (uint)Convert.ChangeType(en, TypeCode.UInt32);
         }
     }
 

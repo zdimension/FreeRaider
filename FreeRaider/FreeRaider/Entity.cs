@@ -1116,6 +1116,8 @@ namespace FreeRaider
             return Substance.None;
         }
 
+        public uint SubstanceStateUInt32 => (uint) GetSubstanceState();
+
         public static void UpdateCurrentBoneFrame(SSBoneFrame bf, Transform etr)
         {
             var btag = bf.BoneTags[0];

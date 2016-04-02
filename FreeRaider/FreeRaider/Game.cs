@@ -97,17 +97,17 @@ namespace FreeRaider
             if (ent.TypeFlags.HasFlag(ENTITY_TYPE.Spawned))
             {
                 f.WriteLine("spawnEntity({0}, {1}, {2}, {3}, {4});", ent.Bf.Animations.Model.ID,
-                    ent.Transform.Origin.ToString("{0:0.00}, {1:0.00}, {2:0.00}"),
-                    ent.Angles.ToString("{0:0.00}, {1:0.00}, {2:0.00}"), ent.Self.Room?.ID ?? 0xFFFFFFFF, ent.ID);
+                    ent.Transform.Origin.ToStringEx("{0}, {1}, {2}", 2),
+                    ent.Angles.ToStringEx("{0}, {1}, {2}", 2), ent.Self.Room?.ID ?? 0xFFFFFFFF, ent.ID);
             }
             else
             {
                 f.WriteLine("setEntityPos({0}, {1}, {2});", ent.ID,
-                    ent.Transform.Origin.ToString("{0:0.00}, {1:0.00}, {2:0.00}"),
-                    ent.Angles.ToString("{0:0.00}, {1:0.00}, {2:0.00}"));
+                    ent.Transform.Origin.ToStringEx("{0}, {1}, {2}", 2),
+                    ent.Angles.ToStringEx("{0}, {1}, {2}", 2));
             }
 
-            f.WriteLine("setEntitySpeed({0}, {1});", ent.ID, ent.Speed.ToString("{0:0.00}, {1:0.00}, {2:0.00}"));
+            f.WriteLine("setEntitySpeed({0}, {1});", ent.ID, ent.Speed.ToStringEx("{0}, {1}, {2}", 2));
             f.WriteLine("setEntityAnim({0}, {1:D}, {2});", ent.ID, ent.Bf.Animations.CurrentAnimation,
                 ent.Bf.Animations.CurrentFrame);
             f.WriteLine("setEntityState({0}, {1:D}, {2:D});", ent.ID, ent.Bf.Animations.NextState,
@@ -752,86 +752,51 @@ namespace FreeRaider
         }
     }
 
-    public class luaFuncs
+    public partial class luaFuncs
     {
-        public static void lua_mlook(object mlook)
+        public static void lua_mlook(bool? mlook = null)
         {
-            if (mlook is bool)
-            {
-                ControlStates.MouseLook = (bool) mlook;
-            }
-            else
-            {
-                ControlStates.MouseLook = !ControlStates.MouseLook;
-            }
+            ControlStates.MouseLook = mlook ?? !ControlStates.MouseLook;
 
             ConsoleInfo.Instance.Printf("mlook = {0}", ControlStates.MouseLook);
         }
 
-        public static void lua_freelook(object free)
+        public static void lua_freelook(bool? free = null)
         {
-            if (free is bool)
-            {
-                ControlStates.FreeLook = (bool)free;
-            }
-            else
-            {
-                ControlStates.FreeLook = !ControlStates.FreeLook;
-            }
+            ControlStates.FreeLook = free ?? !ControlStates.FreeLook;
 
             ConsoleInfo.Instance.Printf("free_look = {0}", ControlStates.FreeLook);
         }
 
-        public static void lua_cam_distance(object mlook)
+        public static void lua_cam_distance(float? camDistance = null)
         {
-            if (mlook is float)
+            if (camDistance != null)
             {
-                ControlStates.CamDistance = (float)mlook;
+                ControlStates.CamDistance = (float)camDistance;
             }
 
             ConsoleInfo.Instance.Printf("cam_distance = {0}", ControlStates.CamDistance);
         }
 
-        public static void lua_noclip(object noclip)
+        public static void lua_noclip(bool? noclip = null)
         {
-            if (noclip is bool)
-            {
-                ControlStates.NoClip = (bool)noclip;
-            }
-            else
-            {
-                ControlStates.NoClip = !ControlStates.NoClip;
-            }
+            ControlStates.NoClip = noclip ?? !ControlStates.NoClip;
 
             ConsoleInfo.Instance.Printf("noclip = {0}", ControlStates.NoClip);
         }
 
-        public static void lua_debuginfo(object show)
+        public static void lua_debuginfo(bool? show = null)
         {
-            if (show is bool)
-            {
-                Global.ScreenInfo.ShowDebugInfo = (bool)show;
-            }
-            else
-            {
-                Global.ScreenInfo.ShowDebugInfo = !Global.ScreenInfo.ShowDebugInfo;
-            }
+            Global.ScreenInfo.ShowDebugInfo = show ?? !Global.ScreenInfo.ShowDebugInfo;
 
             ConsoleInfo.Instance.Printf("debug_info = {0}", Global.ScreenInfo.ShowDebugInfo);
         }
 
-        public static void lua_timescale(object scale)
+        public static void lua_timescale(float? scale = null)
         {
-            if (scale is float)
-            {
-                Program.TimeScale = (float) scale;
-            }
-            else
-            {
-                Program.TimeScale = Program.TimeScale == 1.0f ? 0.033f : 1.0f;
-            }
+            Program.TimeScale = scale ?? (Program.TimeScale == 1.0f ? 0.033f : 1.0f);
 
-            ConsoleInfo.Instance.Printf("time_scale = {0}", Math.Round(Program.TimeScale, 3));
+            ConsoleInfo.Instance.Printf("time_scale = {0.000}", Program.TimeScale);
         }
     }
 }

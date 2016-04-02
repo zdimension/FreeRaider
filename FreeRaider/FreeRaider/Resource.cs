@@ -278,11 +278,9 @@ namespace FreeRaider
             }
         }
 
-        public static uint Res_Sector_BiggestCorner(ref uint v1, ref uint v2, uint v3, uint v4)
+        public static uint Res_Sector_BiggestCorner(uint v1, uint v2, uint v3, uint v4)
         {
-            v1 = v1 > v2 ? v1 : v2;
-            v2 = v3 > v4 ? v3 : v4;
-            return v1 > v2 ? v1 : v2;
+            return Helper.Max(v1, v2, v3, v4);
         }
 
         public static void Res_Sector_SetTweenFloorConfig(SectorTween tween)

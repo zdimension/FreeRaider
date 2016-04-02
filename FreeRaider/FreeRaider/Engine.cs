@@ -809,7 +809,7 @@ namespace FreeRaider
             if(r != null)
             {
                 Sys.DebugLog("room_dump.txt", "ROOM = {0}, ({1} x {2}), bottom = {3}, top = {4}, pos({5})",
-                    r.ID, r.SectorsX, r.SectorsY, r.BBMin.Z, r.BBMax.Z, r.Transform.Origin.ToString("{0}, {1}"));
+                    r.ID, r.SectorsX, r.SectorsY, r.BBMin.Z, r.BBMax.Z, r.Transform.Origin.ToStringEx("{0}, {1}"));
                 Sys.DebugLog("room_dump.txt", "flag = {0} ({0:X}), alt_room = {1}, base_room = {2}",
                     (RoomFlag) r.Flags, r.AlternateRoom == null ? -1 : (long) r.AlternateRoom.ID,
                     r.BaseRoom == null ? -1 : (long) r.BaseRoom.ID);
