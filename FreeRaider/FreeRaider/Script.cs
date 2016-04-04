@@ -897,6 +897,149 @@ namespace FreeRaider
             return ent.Scaling.ToArray();
         }
 
+        public static bool lua_SimilarSector(uint id, float dx, float dy, float dz, bool ignoreDoors,
+            bool ceiling = false)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return false;
+            }
+
+            var nextPos = ent.Transform.Origin +
+                          (dx * ent.Transform.Basis.Column0 +
+                           dy * ent.Transform.Basis.Column1 +
+                           dz * ent.Transform.Basis.Column2);
+
+            var currSector = ent.Self.Room.GetSectorRaw(ent.Transform.Origin);
+            var nextSector = ent.Self.Room.GetSectorRaw(nextPos);
+
+            currSector = currSector.CheckPortalPointer();
+            nextSector = nextSector.CheckPortalPointer();
+
+            return ceiling
+                ? currSector.SimilarCeiling(nextSector, ignoreDoors)
+                : currSector.SimilarFloor(nextSector, ignoreDoors);
+        }
+
+        public static float lua_GetSectorHeight(uint id, bool ceiling = false, float? dx = null, float? dy = null,
+            float? dz = null)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return 0;
+            }
+
+            var pos = ent.Transform.Origin;
+
+            if (dx != null && dy != null && dz != null)
+                pos += (float) dx * ent.Transform.Basis.Column0 +
+                       (float) dy * ent.Transform.Basis.Column1 +
+                       (float) dz * ent.Transform.Basis.Column2;
+
+            var currSector = ent.Self.Room.GetSectorRaw(pos);
+            currSector = currSector.CheckPortalPointer();
+
+            return (ceiling ? currSector.GetCeilingPoint() : currSector.GetFloorPoint()).Z;
+        }
+
+        public static void lua_SetEntityPosition(uint id, float x, float y, float z, float? ax = null, float? ay = null,
+            float? az = null)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+            ent.Transform.Origin = new Vector3(x, y, z);
+            if (ax != null && ay != null && az != null)
+                ent.Angles = new Vector3((float) ax, (float) ay, (float) az);
+            ent.UpdateTransform();
+            ent.UpdatePlatformPreStep();
+        }
+
+        public static void lua_SetEntityAngles(uint id, float x, float? y = null, float? z = null)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+            }
+            else
+            {
+                if (y == null || z == null)
+                    ent.Angles.X = x;
+                else
+                    ent.Angles = new Vector3(x, (float) y, (float) z);
+                ent.UpdateTransform();
+            }
+        }
+
+        public static void lua_SetEntityScaling(uint id, float x, float y, float z)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+            }
+            else
+            {
+                ent.Scaling = new Vector3(x, y, z);
+                
+                if(ent.Bf.BoneTags.Count > 0 && ent.Bt.BtBody.Count > 0)
+                {
+                    for (var i = 0; i < ent.Bf.BoneTags.Count; i++)
+                    {
+                        if(ent.Bt.BtBody[i] != null)
+                        {
+                            BtEngineDynamicsWorld.RemoveRigidBody(ent.Bt.BtBody[i]);
+                            ent.Bt.BtBody[i].CollisionShape.LocalScaling = ent.Scaling;
+                            BtEngineDynamicsWorld.AddRigidBody(ent.Bt.BtBody[i]);
+
+                            ent.Bt.BtBody[i].Activate();
+                        }
+                    }
+                }
+
+                ent.UpdateRigidBody(true);
+            }
+        }
+
+        public static void lua_MoveEntityGlobal(uint id, float x, float y, float z)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+            ent.Transform.Origin += new Vector3(x, y, z);
+            
+            ent.UpdateRigidBody(true);
+            ent.GhostUpdate();
+        }
+
+        public static void lua_MoveEntitLocal(uint id, float dx, float dy, float dz)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+
+            ent.Transform.Origin += ent.Transform.Basis.MultiplyByVector(new Vector3(dx, dy, dz));
+
+            ent.UpdateRigidBody(true);
+            ent.GhostUpdate();
+        }
+
         #endregion
     }
 }
