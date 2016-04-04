@@ -291,7 +291,7 @@ namespace FreeRaider
             if (parameter >= (int) CharParameters.Sentinel)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_OPTION_INDEX, (int) CharParameters.Sentinel);
-                    // TODO: Should put parameter instead?
+                // TODO: Should put parameter instead?
                 return -1;
             }
 
@@ -313,7 +313,7 @@ namespace FreeRaider
             if (parameter >= (int) CharParameters.Sentinel)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_OPTION_INDEX, (int) CharParameters.Sentinel);
-                    // TODO: Should put parameter instead?
+                // TODO: Should put parameter instead?
                 return;
             }
 
@@ -352,7 +352,7 @@ namespace FreeRaider
             if (parameter >= (int) CharParameters.Sentinel)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_OPTION_INDEX, (int) CharParameters.Sentinel);
-                    // TODO: Should put parameter instead?
+                // TODO: Should put parameter instead?
                 return;
             }
 
@@ -370,14 +370,14 @@ namespace FreeRaider
         {
             var ent = EngineWorld.GetCharacterByID(entID);
 
-            if(ent != null)
+            if (ent != null)
             {
                 var hairSetup = new HairSetup();
 
                 hairSetup.GetSetup(setupIndex);
                 ent.Hairs.Add(new Hair());
 
-                if(!ent.Hairs.Last().Create(hairSetup, ent))
+                if (!ent.Hairs.Last().Create(hairSetup, ent))
                 {
                     ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_CREATE_HAIR, entID);
                     ent.Hairs.RemoveAt(ent.Hairs.Count - 1);
@@ -387,6 +387,514 @@ namespace FreeRaider
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_CHARACTER, entID);
             }
+        }
+
+        public static void lua_ResetCharacterHair(uint entID)
+        {
+            var ent = EngineWorld.GetCharacterByID(entID);
+
+            if (ent != null)
+            {
+                if (ent.Hairs.Count == 0)
+                {
+                    ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_RESET_HAIR, entID);
+                }
+                else
+                {
+                    ent.Hairs.Clear();
+                }
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_CHARACTER, entID);
+            }
+        }
+
+        public static void lua_AddEntityRagdoll(uint entID, int setupIndex)
+        {
+            var ent = EngineWorld.GetEntityByID(entID);
+
+            if (ent != null)
+            {
+                var ragdollSetup = new RDSetup();
+
+                if (!ragdollSetup.GetSetup(setupIndex))
+                {
+                    ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_RAGDOLL_SETUP, setupIndex);
+                }
+                else
+                {
+                    if (!ent.CreateRagdoll(ragdollSetup))
+                    {
+                        ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_CREATE_RAGDOLL, entID);
+                    }
+                }
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entID);
+            }
+        }
+
+        public static void lua_RemoveEntityRagdoll(uint entID)
+        {
+            var ent = EngineWorld.GetEntityByID(entID);
+
+            if (ent != null)
+            {
+                if (ent.Bt.BtJoints.Count == 0)
+                {
+                    ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_REMOVE_RAGDOLL, entID);
+                }
+                else
+                {
+                    ent.DeleteRagdoll();
+                }
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entID);
+            }
+        }
+
+        public static bool lua_GetSecretStatus(int secretNumber)
+        {
+            if (!secretNumber.IsBetween(0, GF_MAX_SECRETS))
+                return false; // No such secret - return TODO: Add Warning to console
+
+            return GameflowManager.SecretsTriggerMap[secretNumber];
+        }
+
+        // TODO: If no 'status' provided, maybe toggle it?
+        public static void lua_SetSecretStatus(int secretNumber, bool status)
+        {
+            if (!secretNumber.IsBetween(0, GF_MAX_SECRETS))
+                return; // No such secret - return TODO: Add Warning to console
+
+            GameflowManager.SecretsTriggerMap[secretNumber] = status;
+        }
+
+        public static bool lua_GetActionState(int act)
+        {
+            if (act.IsBetween(0, (int) ACTIONS.LastIndex, IB.aIbE))
+            {
+                return ControlMapper.ActionMap[act].State;
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ACTION_NUMBER);
+                return false;
+            }
+        }
+
+        public static bool lua_GetActionChange(int act)
+        {
+            if (act.IsBetween(0, (int) ACTIONS.LastIndex, IB.aIbE))
+            {
+                return ControlMapper.ActionMap[act].AlreadyPressed;
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ACTION_NUMBER);
+                return false;
+            }
+        }
+
+        public static int lua_GetEngineVersion()
+        {
+            return (int) EngineWorld.EngineVersion;
+        }
+
+        public static void lua_AddFont(int index, string path, uint size)
+        {
+            if (!Global.FontManager.AddFont((FontType) index, size, path))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_CREATE_FONT, Global.FontManager.FontCount, MaxFonts);
+            }
+        }
+
+        public static void lua_AddFontStyle(int style_index,
+            float color_R, float color_G, float color_B, float color_A,
+            bool shadowed, bool fading, bool rect, float rect_border,
+            float rect_R, float rect_G, float rect_B, float rect_A,
+            bool hide)
+        {
+            if (!Global.FontManager.AddFontStyle((FontStyle) style_index, 
+                new[] {color_R, color_G, color_B, color_A},
+                shadowed, fading,
+                rect, rect_border, new[] {rect_R, rect_G, rect_B, rect_A},
+                hide))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_CREATE_STYLE, Global.FontManager.FontStyleCount, (int)FontStyle.Sentinel);
+            }
+        }
+
+        public static void lua_DeleteFont(int fontindex)
+        {
+            if(!Global.FontManager.RemoveFont((FontType)fontindex))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_REMOVE_FONT);
+            }
+        }
+
+        public static void lua_DeleteFontStyle(int styleindex)
+        {
+            if (!Global.FontManager.RemoveFontStyle((FontStyle)styleindex))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_REMOVE_STYLE);
+            }
+        }
+
+        public static int lua_AddItem(uint entID, uint itemID, int count = -1)
+        {
+            var ent = EngineWorld.GetCharacterByID(entID);
+
+            if (ent != null)
+            {
+                return ent.AddItem(itemID, count);
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entID);
+                return -1;
+            }
+        }
+
+        public static int lua_RemoveItem(uint entID, uint itemID, int count = -1)
+        {
+            var ent = EngineWorld.GetCharacterByID(entID);
+
+            if (ent != null)
+            {
+                return ent.RemoveItem(itemID, count);
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entID);
+                return -1;
+            }
+        }
+
+        public static void lua_RemoveAllItems(uint entID) // TODO: Made this return an int (from RemoveAllItems)
+        {
+            var ent = EngineWorld.GetCharacterByID(entID);
+
+            if (ent != null)
+            {
+                ent.RemoveAllItems(); 
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entID);
+            }
+        }
+
+        public static int lua_GetItemsCount(uint entID, uint itemID)
+        {
+            var ent = EngineWorld.GetCharacterByID(entID);
+
+            if (ent != null)
+            {
+                return ent.GetItemsCount(itemID);
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entID);
+                return -1;
+            }
+        }
+
+        public static void lua_CreateBaseItem(uint item_id, uint model_id, uint world_model_id, int type, ushort count,
+            string name)
+        {
+            EngineWorld.CreateItem(item_id, model_id, world_model_id, (MenuItemType) type, count, name);
+        }
+
+        public static void lua_DeleteBaseItem(uint id) // TODO: Make this return int
+        {
+            EngineWorld.DeleteItem(id);
+        }
+
+        public static void lua_PrintItems(uint entityID)
+        {
+            var ent = EngineWorld.GetCharacterByID(entityID);
+            if(ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entityID);
+                return;
+            }
+
+            foreach (var i in ent.Inventory)
+            {
+                ConsoleInfo.Instance.Printf("item[id = {0}]: count = {1}", i.ID, i.Count);
+            }
+        }
+
+        public static void lua_SetStateChangeRange(uint id, int anim, short state, int dispatch, ushort frame_low, ushort frame_high, int? next_anim = null, ushort? next_frame = null)
+        {
+            var model = EngineWorld.GetModelByID(id);
+
+            if(model == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_SKELETAL_MODEL, id);
+                return;
+            }
+
+            if(!anim.IsBetween(0, model.Animations.Count, IB.aIbE))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ANIM_NUMBER);
+                return;
+            }
+
+            foreach (var sc in model.Animations[anim].StateChange)
+            {
+                if((short)sc.ID == state)
+                {
+                    if(dispatch.IsBetween(0, sc.AnimDispatch.Count, IB.aIbE))
+                    {
+                        sc.AnimDispatch[dispatch].FrameLow = frame_low;
+                        sc.AnimDispatch[dispatch].FrameHigh = frame_high;
+                        if(next_anim != null && next_frame != null)
+                        {
+                            sc.AnimDispatch[dispatch].NextAnim = (TR_ANIMATION) next_anim;
+                            sc.AnimDispatch[dispatch].NextFrame = (ushort)next_frame;
+                        }
+                    }
+                    else
+                    {
+                        ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_DISPATCH_NUMBER, dispatch);
+                    }
+                    break;
+                }
+            }
+        }
+
+        public static object[] lua_GetAnimCommandTransform(uint id, int anim, int frame)
+        {
+            var model = EngineWorld.GetModelByID(id);
+
+            if (model == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_SKELETAL_MODEL, id);
+                return new object[0];
+            }
+
+            if (!anim.IsBetween(0, model.Animations.Count, IB.aIbE))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ANIM_NUMBER);
+                return new object[0];
+            }
+
+            var an = model.Animations[anim];
+
+            if (frame < 0) // it is convenient to use -1 as a last frame number
+            {
+                frame = an.Frames.Count + frame;
+            }
+
+            if (!frame.IsBetween(0, an.Frames.Count, IB.aIbE))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FRAME_NUMBER);
+                return new object[0];
+            }
+
+            var fr = an.Frames[frame];
+
+            return new object[] {fr.Command, fr.Move.X, fr.Move.Y, fr.Move.Z};
+        }
+
+        public static void lua_SetAnimCommandTransform(uint id, int anim, int frame, ushort flag, float? dx = null, float? dy = null, float? dz = null)
+        {
+            var model = EngineWorld.GetModelByID(id);
+
+            if (model == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_SKELETAL_MODEL, id);
+                return;
+            }
+
+            if (!anim.IsBetween(0, model.Animations.Count, IB.aIbE))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ANIM_NUMBER);
+                return;
+            }
+
+            var an = model.Animations[anim];
+
+            if (frame < 0) // it is convenient to use -1 as a last frame number
+            {
+                frame = an.Frames.Count + frame;
+            }
+
+            if (!frame.IsBetween(0, an.Frames.Count, IB.aIbE))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FRAME_NUMBER);
+                return;
+            }
+
+            an.Frames[frame].Command = flag;
+
+            if (dx != null && dy != null && dz != null)
+                an.Frames[frame].Move = new Vector3((float) dx, (float) dy, (float) dz);
+        }
+
+        public static void lua_SetAnimVerticalSpeed(uint id, int anim, int frame, float speed)
+        {
+            var model = EngineWorld.GetModelByID(id);
+
+            if (model == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_SKELETAL_MODEL, id);
+                return;
+            }
+
+            if (!anim.IsBetween(0, model.Animations.Count, IB.aIbE))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ANIM_NUMBER);
+                return;
+            }
+
+            var an = model.Animations[anim];
+
+            if (frame < 0) // it is convenient to use -1 as a last frame number
+            {
+                frame = an.Frames.Count + frame;
+            }
+
+            if (!frame.IsBetween(0, an.Frames.Count, IB.aIbE))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FRAME_NUMBER);
+                return;
+            }
+            
+            an.Frames[frame].V_Vertical = speed;
+        }
+
+        public static uint lua_SpawnEntity(uint model_id, float x, float y, float z, float ax, float ay, float az, uint room_id, int ov_id = -1)
+        {
+            return EngineWorld.SpawnEntity(model_id, room_id, new Vector3(x, y, z), new Vector3(ax, ay, az), ov_id);
+        }
+
+        public static bool lua_DeleteEntity(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if(ent == null)
+            {
+                return false;
+            }
+            else
+            {
+                ent.Self.Room?.RemoveEntity(ent);
+                EngineWorld.DeleteEntity(id); // TODO: Return this instead of true
+                return true;
+            }
+        }
+
+        #endregion
+
+        #region Moveable script control section
+
+        public static float[] lua_GetEntityVector(uint id1, uint id2)
+        {
+            var e1 = EngineWorld.GetEntityByID(id1);
+            if(e1 == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id1);
+                return new float[0];
+            }
+            var e2 = EngineWorld.GetEntityByID(id2);
+            if (e2 == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id2);
+                return new float[0];
+            }
+
+            return (e2.Transform.Origin - e1.Transform.Origin).ToArray();
+        }
+
+        public static float lua_GetEntityDistance(uint id1, uint id2)
+        {
+            var e1 = EngineWorld.GetEntityByID(id1);
+            if (e1 == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id1);
+                return float.MaxValue;
+            }
+            var e2 = EngineWorld.GetEntityByID(id2);
+            if (e2 == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id2);
+                return float.MaxValue;
+            }
+
+            return e1.FindDistance(e2);
+        }
+
+        public static float lua_GetEntityDirDot(uint id1, uint id2)
+        {
+            var e1 = EngineWorld.GetEntityByID(id1);
+            if (e1 == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id1);
+                return float.MaxValue;
+            }
+            var e2 = EngineWorld.GetEntityByID(id2);
+            if (e2 == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id2);
+                return float.MaxValue;
+            }
+
+            return e1.Transform.Basis.Column1.Dot(e2.Transform.Basis.Column1);
+        }
+
+        public static bool lua_IsInRoom(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            return ent?.Self.Room != null && ent.CurrentSector != null;
+        }
+
+        public static object[] lua_GetEntityPosition(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if(ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return new object[0];
+            }
+
+            return
+                ent.Transform.Origin.ToArray()
+                    .AddArray(ent.Angles.ToArray())
+                    .Cast<object>()
+                    .AddItems(ent.Self.Room.ID)
+                    .ToArray();
+        }
+
+        public static float[] lua_GetEntityAngles(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return new float[0];
+            }
+
+            return ent.Angles.ToArray();
+        }
+
+        public static float[] lua_GetEntityScaling(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return new float[0];
+            }
+
+            return ent.Scaling.ToArray();
         }
 
         #endregion
@@ -597,7 +1105,16 @@ namespace FreeRaider.Script
 
         public void AddKey(int keycode, bool state);
 
-        public static void BindKey(int act, int primary, object secondary);
+        public static void BindKey(int act, int primary, int? secondary = null)
+        {
+            if(!act.IsBetween(0, (int)ACTIONS.LastIndex, IB.aIbE))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ACTION_NUMBER);
+            }
+            ControlMapper.ActionMap[act].Primary = primary;
+            if (secondary != null)
+                ControlMapper.ActionMap[act].Secondary = (int) secondary;
+        }
 
         public bool GetOverridedSamplesInfo(out int numSamples, out int numSounds, out string samplesNameMask);
 

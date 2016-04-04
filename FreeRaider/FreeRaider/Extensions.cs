@@ -477,6 +477,15 @@ namespace FreeRaider
             return r;
         }
 
+        public static List<T> AddItems<T>(this IEnumerable<T> a, params T[] b)
+        {
+            var g = a.ToList();
+            g.AddRange(b);
+            return g;
+        } 
+
+       
+
         public static Matrix4 MultiplyByTransform(this Matrix4 m, Transform t)
         {
             return m * (Matrix4) t;

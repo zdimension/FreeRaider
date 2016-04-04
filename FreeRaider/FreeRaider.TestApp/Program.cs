@@ -28,9 +28,21 @@ namespace FreeRaider.TestApp
             Console.WriteLine(a);
         }
 
+        public enum GGG
+        {
+            A,
+            B,
+            C,
+            D,
+            E,
+            F
+        }
+
         static void Main(string[] args)
         {
-            var state = new Lua();
+            var fmt = "Can't create style. Possibly max. styles? (%d / %d)";
+            Console.WriteLine(Tools.sprintf(fmt, 5, GGG.F));
+            /*var state = new Lua();
             var n = DateTime.Now;
             state.RegisterFunction("test", typeof (Program).GetMethod("test"));
             state.RegisterFunction("test2", typeof (Program).GetMethod("test2"));
@@ -68,7 +80,7 @@ end");
             Console.WriteLine(string.Join(", ", state.DoString("return maxi2(13)")));
 
             state.RegisterFunction("test4", typeof (Program).GetMethod("test4"));
-            state.DoString("test4(5)");
+            state.DoString("test4(5)");*/
             /*state.DoString(
 "function print_r ( t ) \n " +
 "    local print_r_cache={}\n " +
