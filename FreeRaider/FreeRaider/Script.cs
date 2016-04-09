@@ -1510,7 +1510,7 @@ namespace FreeRaider
             {
                 var triggerLayout = (int)ent.TriggerLayout;
                 triggerLayout &= ~(int)ENTITY_TLAYOUT.Event;
-                triggerLayout ^= (_event ? 1 : 0) << 5; // lock - 01000000
+                triggerLayout ^= (_event ? 1 : 0) << 5; // event - 00100000
                 ent.TriggerLayout = (ENTITY_TLAYOUT)triggerLayout;
             }
         }
@@ -1520,6 +1520,512 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID(id);
             // TODO: Add warning if null
             return ent != null && (int)(ent.TriggerLayout & ENTITY_TLAYOUT.Event) >> 5 != 0;
+        }
+
+        public static int lua_GetEntityMask(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            // TODO: Add warning if null
+            if(ent != null)
+            {
+                return (int) (ent.TriggerLayout & ENTITY_TLAYOUT.Mask); // mask
+            }
+            return -1;
+        }
+
+        public static void lua_SetEntityMask(uint id, int mask)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent != null) // TODO: Add warning if null
+            {
+                var triggerLayout = (int)ent.TriggerLayout;
+                triggerLayout &= ~(int)ENTITY_TLAYOUT.Mask;
+                triggerLayout ^= mask; // mask - 00011111
+                ent.TriggerLayout = (ENTITY_TLAYOUT)triggerLayout;
+            }
+        }
+
+        public static bool lua_GetEntitySectorStatus(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            // TODO: Add warning if null
+            if (ent != null)
+            {
+                return (int) (ent.TriggerLayout & ENTITY_TLAYOUT.SectorStatus) >> 7 != 0;
+            }
+            return true;
+        }
+
+        public static void lua_SetEntitySectorStatus(uint id, bool status)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent != null) // TODO: Add warning if null
+            {
+                var triggerLayout = (int)ent.TriggerLayout;
+                triggerLayout &= ~(int)ENTITY_TLAYOUT.SectorStatus;
+                triggerLayout ^= (status ? 1 : 0) << 7; // sector_status - 10000000
+                ent.TriggerLayout = (ENTITY_TLAYOUT)triggerLayout;
+            }
+        }
+
+        public static int lua_GetEntityOCB(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            // TODO: Add warning if null
+            return ent?.OCB ?? -1;
+        }
+
+        public static void lua_SetEntityOCB(uint id, int ocb)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            // TODO: Add warning if null
+            if (ent == null)
+                return; // No entity found - return.
+
+            ent.OCB = ocb;
+        }
+
+        public static object[] lua_GetEntityFlags(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return new object[0];
+            }
+
+            return new object[]
+            {
+                ent.Active,
+                ent.Enabled,
+                ent.Visible,
+                (ushort)ent.TypeFlags,
+                (uint)ent.CallbackFlags
+            };
+        }
+
+        public static void lua_SetEntityFlags(uint id, bool active, bool enabled, bool visible, ushort typeFlags, uint? cbFlags = null)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+
+            ent.Active = active;
+            ent.Enabled = enabled;
+            ent.Visible = visible;
+            ent.TypeFlags = (ENTITY_TYPE) typeFlags;
+            if (cbFlags != null)
+                ent.CallbackFlags = (ENTITY_CALLBACK) cbFlags;
+        }
+
+        public static uint lua_GetEntityTypeFlag(uint id, ushort? flag = null)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return uint.MaxValue;
+            }
+
+            if (flag != null)
+                return (uint) ((ushort) ent.TypeFlags & flag);
+            else
+                return (uint)ent.TypeFlags;
+        }
+
+        public static void lua_SetEntityTypeFlag(uint id, ushort typeFlag, bool? value = null)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+            if(value == null)
+            {
+                ent.TypeFlags ^= (ENTITY_TYPE) typeFlag;
+                return;
+            }
+
+            if((bool)value)
+            {
+                ent.TypeFlags |= (ENTITY_TYPE) typeFlag;
+            }
+            else
+            {
+                ent.TypeFlags &= ~(ENTITY_TYPE)typeFlag;
+            }
+        }
+
+        public static bool lua_GetEntityStateFlag(uint id, string whichCstr)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return false;
+            }
+
+            switch(whichCstr)
+            {
+                case "active":
+                    return ent.Active;
+                case "enabled":
+                    return ent.Enabled;
+                case "visible":
+                    return ent.Visible;
+                default:
+                    return false;
+            }
+        }
+
+        public static void lua_SetEntityStateFlag(uint id, string whichCstr, bool? value = null)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+
+            var tmp = value == null;
+
+            switch (whichCstr)
+            {
+                case "active":
+                    ent.Active = tmp ? !ent.Active : (bool) value;
+                    break;
+                case "enabled":
+                    ent.Enabled = tmp ? !ent.Enabled : (bool)value;
+                    break;
+                case "visible":
+                    ent.Visible = tmp ? !ent.Visible : (bool)value;
+                    break;
+            }
+        }
+
+        public static uint lua_GetEntityCallbackFlag(uint id, ushort? flag = null)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return uint.MaxValue;
+            }
+
+            if (flag == null)
+                return (uint) ent.CallbackFlags;
+            else
+                return (uint) ent.CallbackFlags & (ushort)flag;
+        }
+
+        public static void lua_SetEntityCallbackFlag(uint id, uint callbackFlag, bool? value = null)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+            if (value == null)
+            {
+                ent.CallbackFlags ^= (ENTITY_CALLBACK)callbackFlag;
+                return;
+            }
+
+            if ((bool)value)
+            {
+                ent.CallbackFlags |= (ENTITY_CALLBACK)callbackFlag;
+            }
+            else
+            {
+                ent.CallbackFlags &= ~(ENTITY_CALLBACK)callbackFlag;
+            }
+        }
+
+        public static float lua_GetEntityTimer(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            // TODO: Add warning if null
+            return ent?.Timer ?? float.MaxValue;
+        }
+
+        public static void lua_SetEntityTimer(uint id, float timer)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            // TODO: Add warning if null
+            if (ent == null)
+                return; // No entity found - return.
+
+            ent.Timer = timer;
+        }
+
+        public static ushort lua_GetEntityMoveType(uint id, ushort? flag = null)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return ushort.MaxValue;
+            }
+
+            return (ushort) ent.MoveType;
+        }
+
+        public static void lua_SetEntityCallbackFlag(uint id, ushort type)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            // TODO: Add warning if null
+            if (ent == null)
+                return;
+            ent.MoveType = (MoveType) type;
+        }
+
+        public static int lua_GetEntityResponse(uint id, int response)
+        {
+            var ent = EngineWorld.GetCharacterByID(id);
+
+            if (ent != null)
+            {
+                switch (response)
+                {
+                    case 0: return ent.Response.Killed ? 1 : 0;
+                    case 1: return ent.Response.VerticalCollide;
+                    case 2: return ent.Response.HorizontalCollide;
+                    case 3: return (int)ent.Response.Slide;
+                    case 4: return (int)ent.Response.Lean;
+                    default: return 0;
+                }
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return 0;
+            }
+        }
+
+        public static void lua_SetEntityResponse(uint id, int response, int value)
+        {
+            var ent = EngineWorld.GetCharacterByID(id);
+
+            if (ent != null)
+            {
+                switch (response)
+                {
+                    case 0:
+                        ent.Response.Killed = value != 0;
+                        break;
+                    case 1:
+                        ent.Response.VerticalCollide = (sbyte) value;
+                        break;
+                    case 2:
+                        ent.Response.HorizontalCollide = (sbyte) value;
+                        break;
+                    case 3:
+                        ent.Response.Slide = (SlideType) value;
+                        break;
+                    case 4:
+                        ent.Response.Lean = (LeanType) value;
+                        break;
+                }
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+            }
+        }
+
+        public static short lua_GetEntityState(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return -1;
+            }
+
+            return (short)ent.Bf.Animations.LastState;
+        }
+
+        public static uint lua_GetEntityModel(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return uint.MaxValue;
+            }
+
+            return ent.Bf.Animations.Model.ID;
+        }
+
+        public static void lua_SetEntityState(uint id, short value, short? next = null)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+
+            ent.Bf.Animations.NextState = (TR_STATE) value;
+            if (next != null)
+                ent.Bf.Animations.LastState = (TR_STATE) next; // TODO: WTF?? It's inverted
+        }
+
+        public static void lua_SetEntityRommMove(uint id, int room, ushort moveType, int dirFlag)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+
+            if(room < EngineWorld.Rooms.Count)
+            {
+                var r = EngineWorld.Rooms[room];
+                if(ent == EngineWorld.Character)
+                {
+                    ent.Self.Room = r;
+                }
+                else if(ent.Self.Room != r)
+                {
+                    ent.Self.Room?.RemoveEntity(ent);
+                    r.AddEntity(ent);
+                }
+            }
+            ent.UpdateRoomPos();
+
+            ent.MoveType = (MoveType) moveType;
+            ent.DirFlag = (ENT_MOVE)dirFlag;
+        }
+
+        public static int lua_GetEntityMeshCount(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return 0;
+            }
+
+            return ent.Bf.BoneTags.Count;
+        }
+
+        public static void lua_SetEntityMeshswap(uint idDest, uint idSrc)
+        {
+            var entDest = EngineWorld.GetEntityByID(idDest); // TODO: Add warning if null
+            var modelSrc = EngineWorld.GetModelByID(idSrc);
+
+            var meshesToCopy = Math.Min(entDest.Bf.BoneTags.Count, modelSrc.MeshCount);
+
+            for(var i = 0; i < meshesToCopy; i++)
+            {
+                entDest.Bf.BoneTags[i].MeshBase = modelSrc.MeshTree[i].MeshBase;
+                entDest.Bf.BoneTags[i].MeshSkin = modelSrc.MeshTree[i].MeshSkin;
+            }
+        }
+
+        public static void lua_SetModelMeshReplaceFlag(uint id, int bone, byte flag)
+        {
+            var sm = EngineWorld.GetModelByID(id);
+            if(sm != null)
+            {
+                if(bone.IsBetween(0, sm.MeshCount - 1))
+                {
+                    sm.MeshTree[bone].ReplaceMesh = flag;
+                }
+                else
+                {
+                    ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_BONE_NUMBER, bone);
+                }
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_MODEL_ID, id);
+            }
+        }
+
+        public static void lua_SetModelAnimReplaceFlag(uint id, int bone, byte flag)
+        {
+            var sm = EngineWorld.GetModelByID(id);
+            if (sm != null)
+            {
+                if (bone.IsBetween(0, sm.MeshCount - 1))
+                {
+                    sm.MeshTree[bone].ReplaceAnim = flag;
+                }
+                else
+                {
+                    ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_BONE_NUMBER, bone);
+                }
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_MODEL_ID, id);
+            }
+        }
+
+        public static void lua_CopyMeshFromModelToModel(uint id1, uint id2, int bone1, int bone2)
+        {
+            var sm1 = EngineWorld.GetModelByID(id1);
+            if(sm1 == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_MODEL_ID, id1);
+                return;
+            }
+
+            var sm2 = EngineWorld.GetModelByID(id2);
+            if (sm2 == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_MODEL_ID, id2);
+                return;
+            }
+
+            var tmp1 = bone1.IsBetween(0, sm1.MeshCount - 1);
+            var tmp2 = bone2.IsBetween(0, sm2.MeshCount - 1);
+
+            if (tmp1 && tmp2)
+            {
+                sm1.MeshTree[bone1].MeshBase = sm2.MeshTree[bone2].MeshBase;
+                return;
+            }
+            if(!tmp1)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_BONE_NUMBER, bone1);
+            }
+            if(!tmp2)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_BONE_NUMBER, bone2);
+            }
+        }
+
+        public static void lua_CreateEntityGhosts(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            // TODO: Add warning if null
+            if(ent != null && ent.Bf.BoneTags.Count > 0)
+            {
+                ent.CreateGhosts();
+            }
         }
 
         #endregion
@@ -1768,3 +2274,4 @@ namespace FreeRaider.Script
         private void registerMainFunctions();
     }
 }
+
