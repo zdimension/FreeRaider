@@ -92,6 +92,7 @@ namespace FreeRaider
         QuicksandConsumed
     }
 
+    [Flags]
     public enum ENTITY_TLAYOUT : byte
     {
         /// <summary>

@@ -898,7 +898,7 @@ namespace FreeRaider
             {
                 tr_setupRoomVertices(world, tr, trRoom, Mesh, 3, trRoom.Triangles[i].Vertices,
                     (ushort)(trRoom.Triangles[i].Texture & texMask), Mesh.Polygons[p]);
-                Mesh.Polygons[p].DoubleSide = Convert.ToBoolean(trRoom.Triangles[i].Texture & 0x8000);
+                Mesh.Polygons[p].DoubleSide = (trRoom.Triangles[i].Texture & 0x8000) != 0;
             }
 
             // rectangles
@@ -906,7 +906,7 @@ namespace FreeRaider
             {
                 tr_setupRoomVertices(world, tr, trRoom, Mesh, 4, trRoom.Rectangles[i].Vertices,
                     (ushort)(trRoom.Rectangles[i].Texture & texMask), Mesh.Polygons[p]);
-                Mesh.Polygons[p].DoubleSide = Convert.ToBoolean(trRoom.Rectangles[i].Texture & 0x8000);
+                Mesh.Polygons[p].DoubleSide = (trRoom.Rectangles[i].Texture & 0x8000) != 0;
             }
 
             // let us normalise normals %)

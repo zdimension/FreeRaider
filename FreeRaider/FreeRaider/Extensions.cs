@@ -450,6 +450,11 @@ namespace FreeRaider
             return (b - a).LengthSquared;
         }
 
+        public static float Distance(this Vector3 a, Vector3 b)
+        {
+            return (b - a).Length;
+        }
+
         public static T Square<T>(this T t)
         {
             return (T) Convert.ChangeType((dynamic) t * (dynamic) t, typeof (T));
@@ -524,9 +529,9 @@ namespace FreeRaider
 
         public static float WrapAngle(this float value)
         {
-            var i = (int) (value / 360.0f);
-            i = value < 0.0f ? i - 1 : i;
-            return value - 360.0f * i;
+            var i = (int) (value / 360.0);
+            i = value < 0.0 ? i - 1 : i;
+            return (float)(value - 360.0 * i);
         }
 
         public static Vector3 WrapAngle(this Vector3 v)
@@ -811,6 +816,16 @@ namespace FreeRaider
         public static uint ToUInt32(this Enum en)
         {
             return (uint)Convert.ChangeType(en, TypeCode.UInt32);
+        }
+
+        public static float Degrees(this float x)
+        {
+            return x * DegPerRad;
+        }
+
+        public static float Radians(this float x)
+        {
+            return x * RadPerDeg;
         }
     }
 

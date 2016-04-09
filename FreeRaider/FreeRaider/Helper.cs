@@ -368,6 +368,11 @@ namespace FreeRaider
         {
             return args.Max();
         }
+
+        public static float Atan2(float x, float y)
+        {
+            return (float) Math.Atan2(y, x);
+        }
     }
 
     public static class ALExt

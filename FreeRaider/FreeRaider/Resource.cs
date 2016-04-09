@@ -847,7 +847,7 @@ namespace FreeRaider
 
                 var tex = tr.ObjectTextures[face3.Texture & texMask];
 
-                p.DoubleSide = Convert.ToBoolean(face3.Texture >> 15); // CORRECT, BUT WRONG IN TR3-5
+                p.DoubleSide = face3.Texture >> 15 != 0; // CORRECT, BUT WRONG IN TR3-5
 
                 SetAnimTexture(p, (uint)face3.Texture & texMask, world);
 
@@ -884,7 +884,7 @@ namespace FreeRaider
 
                 var tex = tr.ObjectTextures[face4.Texture & texMask];
 
-                p.DoubleSide = Convert.ToBoolean(face4.Texture >> 15); // CORRECT, BUT WRONG IN TR3-5
+                p.DoubleSide = face4.Texture >> 15 != 0; // CORRECT, BUT WRONG IN TR3-5
 
                 SetAnimTexture(p, (uint)face4.Texture & texMask, world);
 

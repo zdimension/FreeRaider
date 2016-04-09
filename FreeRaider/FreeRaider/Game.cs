@@ -678,10 +678,9 @@ namespace FreeRaider
                         dAngle += 1 * RadPerDeg;
                     }
                     CamAngles.X =
-                        (float)
-                            ((CamAngles.X +
-                              Math.Atan2(Math.Sin(currentAngle - dAngle), Math.Cos(currentAngle + dAngle)) *
-                              EngineFrameTime * rotSpeed) % Rad360); // Update camera's angle
+                        (CamAngles.X +
+                         Helper.Atan2((float) Math.Sin(currentAngle - dAngle), (float) Math.Cos(currentAngle + dAngle)) *
+                         EngineFrameTime * rotSpeed) % Rad360; // Update camera's angle
                 }
             }
 

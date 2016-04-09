@@ -1652,7 +1652,7 @@ namespace FreeRaider
             ret.Up.X = 0.0f;
             ret.Up.Y = 0.0f;
             ret.Up.Z = 1.0f;
-            ret.EdgeZAngle = (float) Math.Atan2(n2.X, -n2.Y) * DegPerRad;
+            ret.EdgeZAngle = Helper.Atan2(n2.X, -n2.Y) * DegPerRad;
             ret.EdgeTanXY.X = -n2.Y;
             ret.EdgeTanXY.Y = n2.X;
             ret.EdgeTanXY.Z = 0.0f;
@@ -2027,7 +2027,7 @@ namespace FreeRaider
                 {
                     floorNormal.Z = -floorNormal.Z;
                     speed = floorNormal * SpeedMult * DEFAULT_CHARACTER_SLIDE_SPEED_MULT; // slide down direction
-                    var zAngle = (float) Math.Atan2(floorNormal.X, -floorNormal.Y) * DegPerRad;
+                    var zAngle = Helper.Atan2(floorNormal.X, -floorNormal.Y) * DegPerRad;
                         // from -180 deg to +180 deg
                     var t = floorNormal.XxYy(Transform.Basis.Column1);
                     if (t >= 0.0f)
@@ -2340,7 +2340,7 @@ namespace FreeRaider
                 return 2;
             }
 
-            Angles.X = (float) (Math.Atan2(climb.N.X, -climb.N.Y) * DegPerRad);
+            Angles.X = Helper.Atan2(climb.N.X, -climb.N.Y) * DegPerRad;
             UpdateTransform();
             pos.X = climb.Point.X - Transform.Basis.Column1.X * Bf.BBMax.Y;
             pos.Y = climb.Point.Y - Transform.Basis.Column1.Y * Bf.BBMax.Y;

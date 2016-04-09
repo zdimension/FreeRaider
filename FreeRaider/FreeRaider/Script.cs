@@ -71,7 +71,7 @@ namespace FreeRaider
 
         public static void lua_SetRoomEnabled(int id, bool value)
         {
-            if (!id.IsBetween(0, EngineWorld.Rooms.Count, IB.aIbE))
+            if (!id.IsBetween(0, EngineWorld.Rooms.Count - 1))
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ROOM, id);
                 return;
@@ -98,7 +98,7 @@ namespace FreeRaider
                 return;
             }
 
-            if (size.IsBetween(0, sm.MeshCount, IB.aIbE))
+            if (size.IsBetween(0, sm.MeshCount - 1))
             {
                 sm.CollisionMap.Resize(size);
             }
@@ -113,7 +113,7 @@ namespace FreeRaider
                 return;
             }
 
-            if (arg.IsBetween(0, sm.CollisionMap.Count, IB.aIbE) && val.IsBetween(0, sm.MeshCount, IB.aIbE))
+            if (arg.IsBetween(0, sm.CollisionMap.Count - 1) && val.IsBetween(0, sm.MeshCount - 1))
             {
                 sm.CollisionMap[arg] = val;
             }
@@ -476,7 +476,7 @@ namespace FreeRaider
 
         public static bool lua_GetActionState(int act)
         {
-            if (act.IsBetween(0, (int) ACTIONS.LastIndex, IB.aIbE))
+            if (act.IsBetween(0, (int) ACTIONS.LastIndex - 1))
             {
                 return ControlMapper.ActionMap[act].State;
             }
@@ -489,7 +489,7 @@ namespace FreeRaider
 
         public static bool lua_GetActionChange(int act)
         {
-            if (act.IsBetween(0, (int) ACTIONS.LastIndex, IB.aIbE))
+            if (act.IsBetween(0, (int) ACTIONS.LastIndex - 1))
             {
                 return ControlMapper.ActionMap[act].AlreadyPressed;
             }
@@ -519,19 +519,20 @@ namespace FreeRaider
             float rect_R, float rect_G, float rect_B, float rect_A,
             bool hide)
         {
-            if (!Global.FontManager.AddFontStyle((FontStyle) style_index, 
+            if (!Global.FontManager.AddFontStyle((FontStyle) style_index,
                 new[] {color_R, color_G, color_B, color_A},
                 shadowed, fading,
                 rect, rect_border, new[] {rect_R, rect_G, rect_B, rect_A},
                 hide))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_CREATE_STYLE, Global.FontManager.FontStyleCount, (int)FontStyle.Sentinel);
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_CREATE_STYLE, Global.FontManager.FontStyleCount,
+                    (int) FontStyle.Sentinel);
             }
         }
 
         public static void lua_DeleteFont(int fontindex)
         {
-            if(!Global.FontManager.RemoveFont((FontType)fontindex))
+            if (!Global.FontManager.RemoveFont((FontType) fontindex))
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_REMOVE_FONT);
             }
@@ -539,7 +540,7 @@ namespace FreeRaider
 
         public static void lua_DeleteFontStyle(int styleindex)
         {
-            if (!Global.FontManager.RemoveFontStyle((FontStyle)styleindex))
+            if (!Global.FontManager.RemoveFontStyle((FontStyle) styleindex))
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_REMOVE_STYLE);
             }
@@ -581,7 +582,7 @@ namespace FreeRaider
 
             if (ent != null)
             {
-                ent.RemoveAllItems(); 
+                ent.RemoveAllItems();
             }
             else
             {
@@ -618,7 +619,7 @@ namespace FreeRaider
         public static void lua_PrintItems(uint entityID)
         {
             var ent = EngineWorld.GetCharacterByID(entityID);
-            if(ent == null)
+            if (ent == null)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entityID);
                 return;
@@ -630,17 +631,18 @@ namespace FreeRaider
             }
         }
 
-        public static void lua_SetStateChangeRange(uint id, int anim, short state, int dispatch, ushort frame_low, ushort frame_high, int? next_anim = null, ushort? next_frame = null)
+        public static void lua_SetStateChangeRange(uint id, int anim, short state, int dispatch, ushort frame_low,
+            ushort frame_high, int? next_anim = null, ushort? next_frame = null)
         {
             var model = EngineWorld.GetModelByID(id);
 
-            if(model == null)
+            if (model == null)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_SKELETAL_MODEL, id);
                 return;
             }
 
-            if(!anim.IsBetween(0, model.Animations.Count, IB.aIbE))
+            if (!anim.IsBetween(0, model.Animations.Count - 1))
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ANIM_NUMBER);
                 return;
@@ -648,16 +650,16 @@ namespace FreeRaider
 
             foreach (var sc in model.Animations[anim].StateChange)
             {
-                if((short)sc.ID == state)
+                if ((short) sc.ID == state)
                 {
-                    if(dispatch.IsBetween(0, sc.AnimDispatch.Count, IB.aIbE))
+                    if (dispatch.IsBetween(0, sc.AnimDispatch.Count - 1))
                     {
                         sc.AnimDispatch[dispatch].FrameLow = frame_low;
                         sc.AnimDispatch[dispatch].FrameHigh = frame_high;
-                        if(next_anim != null && next_frame != null)
+                        if (next_anim != null && next_frame != null)
                         {
                             sc.AnimDispatch[dispatch].NextAnim = (TR_ANIMATION) next_anim;
-                            sc.AnimDispatch[dispatch].NextFrame = (ushort)next_frame;
+                            sc.AnimDispatch[dispatch].NextFrame = (ushort) next_frame;
                         }
                     }
                     else
@@ -679,7 +681,7 @@ namespace FreeRaider
                 return new object[0];
             }
 
-            if (!anim.IsBetween(0, model.Animations.Count, IB.aIbE))
+            if (!anim.IsBetween(0, model.Animations.Count - 1))
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ANIM_NUMBER);
                 return new object[0];
@@ -692,7 +694,7 @@ namespace FreeRaider
                 frame = an.Frames.Count + frame;
             }
 
-            if (!frame.IsBetween(0, an.Frames.Count, IB.aIbE))
+            if (!frame.IsBetween(0, an.Frames.Count - 1))
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FRAME_NUMBER);
                 return new object[0];
@@ -703,7 +705,8 @@ namespace FreeRaider
             return new object[] {fr.Command, fr.Move.X, fr.Move.Y, fr.Move.Z};
         }
 
-        public static void lua_SetAnimCommandTransform(uint id, int anim, int frame, ushort flag, float? dx = null, float? dy = null, float? dz = null)
+        public static void lua_SetAnimCommandTransform(uint id, int anim, int frame, ushort flag, float? dx = null,
+            float? dy = null, float? dz = null)
         {
             var model = EngineWorld.GetModelByID(id);
 
@@ -713,7 +716,7 @@ namespace FreeRaider
                 return;
             }
 
-            if (!anim.IsBetween(0, model.Animations.Count, IB.aIbE))
+            if (!anim.IsBetween(0, model.Animations.Count - 1))
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ANIM_NUMBER);
                 return;
@@ -726,7 +729,7 @@ namespace FreeRaider
                 frame = an.Frames.Count + frame;
             }
 
-            if (!frame.IsBetween(0, an.Frames.Count, IB.aIbE))
+            if (!frame.IsBetween(0, an.Frames.Count - 1))
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FRAME_NUMBER);
                 return;
@@ -748,7 +751,7 @@ namespace FreeRaider
                 return;
             }
 
-            if (!anim.IsBetween(0, model.Animations.Count, IB.aIbE))
+            if (!anim.IsBetween(0, model.Animations.Count - 1))
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ANIM_NUMBER);
                 return;
@@ -761,16 +764,17 @@ namespace FreeRaider
                 frame = an.Frames.Count + frame;
             }
 
-            if (!frame.IsBetween(0, an.Frames.Count, IB.aIbE))
+            if (!frame.IsBetween(0, an.Frames.Count - 1))
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FRAME_NUMBER);
                 return;
             }
-            
+
             an.Frames[frame].V_Vertical = speed;
         }
 
-        public static uint lua_SpawnEntity(uint model_id, float x, float y, float z, float ax, float ay, float az, uint room_id, int ov_id = -1)
+        public static uint lua_SpawnEntity(uint model_id, float x, float y, float z, float ax, float ay, float az,
+            uint room_id, int ov_id = -1)
         {
             return EngineWorld.SpawnEntity(model_id, room_id, new Vector3(x, y, z), new Vector3(ax, ay, az), ov_id);
         }
@@ -779,7 +783,7 @@ namespace FreeRaider
         {
             var ent = EngineWorld.GetEntityByID(id);
 
-            if(ent == null)
+            if (ent == null)
             {
                 return false;
             }
@@ -798,7 +802,7 @@ namespace FreeRaider
         public static float[] lua_GetEntityVector(uint id1, uint id2)
         {
             var e1 = EngineWorld.GetEntityByID(id1);
-            if(e1 == null)
+            if (e1 == null)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id1);
                 return new float[0];
@@ -859,7 +863,7 @@ namespace FreeRaider
         public static object[] lua_GetEntityPosition(uint id)
         {
             var ent = EngineWorld.GetEntityByID(id);
-            if(ent == null)
+            if (ent == null)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
                 return new object[0];
@@ -991,12 +995,12 @@ namespace FreeRaider
             else
             {
                 ent.Scaling = new Vector3(x, y, z);
-                
-                if(ent.Bf.BoneTags.Count > 0 && ent.Bt.BtBody.Count > 0)
+
+                if (ent.Bf.BoneTags.Count > 0 && ent.Bt.BtBody.Count > 0)
                 {
                     for (var i = 0; i < ent.Bf.BoneTags.Count; i++)
                     {
-                        if(ent.Bt.BtBody[i] != null)
+                        if (ent.Bt.BtBody[i] != null)
                         {
                             BtEngineDynamicsWorld.RemoveRigidBody(ent.Bt.BtBody[i]);
                             ent.Bt.BtBody[i].CollisionShape.LocalScaling = ent.Scaling;
@@ -1020,12 +1024,12 @@ namespace FreeRaider
                 return;
             }
             ent.Transform.Origin += new Vector3(x, y, z);
-            
+
             ent.UpdateRigidBody(true);
             ent.GhostUpdate();
         }
 
-        public static void lua_MoveEntitLocal(uint id, float dx, float dy, float dz)
+        public static void lua_MoveEntityLocal(uint id, float dx, float dy, float dz)
         {
             var ent = EngineWorld.GetEntityByID(id);
             if (ent == null)
@@ -1038,6 +1042,484 @@ namespace FreeRaider
 
             ent.UpdateRigidBody(true);
             ent.GhostUpdate();
+        }
+
+        public static void lua_MoveEntityToSink(uint id, int sinkIndex)
+        {
+            var ent = EngineWorld.GetEntityByID(id); // TODO: Add check
+
+            if (!sinkIndex.IsBetween(0, EngineWorld.CamerasSinks.Count - 1))
+                return;
+            var sink = EngineWorld.CamerasSinks[sinkIndex];
+
+            var entPos = ent.Transform.Origin;
+
+            var sinkPos = new Vector3(sink.X, sink.Y, sink.Z + 256.0f);
+
+            Assert.That(ent.CurrentSector != null);
+            var ls = ent.CurrentSector.GetLowestSector();
+            Assert.That(ls != null);
+            var hs = ent.CurrentSector.GetHighestSector();
+            Assert.That(hs != null);
+            if (sinkPos.Z > hs.Ceiling || sinkPos.Z < ls.Floor)
+            {
+                sinkPos.Z = entPos.Z;
+            }
+
+            var dist = entPos.Distance(sinkPos);
+            if (dist == 0.0f) dist = 1.0f; // Prevents division by zero.
+
+            var speed = (sinkPos - entPos) / dist * (sink.RoomOrStrength * 1.5f);
+
+            ent.Transform.Origin.X += speed.X;
+            ent.Transform.Origin.Y += speed.Y;
+            ent.Transform.Origin.Z += speed.Z * 16.0f;
+
+            ent.UpdateRigidBody(true);
+            ent.GhostUpdate();
+        }
+
+        public static void lua_MoveEntityToEntity(uint id1, uint id2, float speedMult, bool ignoreZ = false)
+        {
+            var ent1 = EngineWorld.GetEntityByID(id1);
+            var ent2 = EngineWorld.GetEntityByID(id2);
+
+            var ent1pos = ent1.Transform.Origin;
+            var ent2pos = ent2.Transform.Origin;
+
+            var dist = ent1pos.Distance(ent2pos);
+            if (dist == 0.0f) dist = 1.0f; // Prevents division by zero
+
+            var speed = (ent2pos - ent1pos) / dist * speedMult; // FIXME!
+
+            ent1.Transform.Origin.X += speed.X;
+            ent1.Transform.Origin.Y += speed.Y;
+            if (!ignoreZ)
+                ent1.Transform.Origin.Z += speed.Z;
+            ent1.UpdatePlatformPreStep();
+            ent1.UpdateRigidBody(true);
+        }
+
+        public static void lua_RotateEntity(uint id, float rx, float ry = 0, float rz = 0)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+            }
+            else
+            {
+                ent.Angles += new Vector3(rx, ry, rz);
+                // TODO: In OpenTomb, it doesn't work if ANY of ry / rz is null. Here, it's default-ed to 0
+
+                ent.UpdateTransform();
+                ent.UpdateRigidBody(true);
+            }
+        }
+
+        public static void lua_RotateEntity(uint id1, uint id2, int axis, float? speed = null, float? smooth = null,
+            float? addAngle = null)
+        {
+            var ent1 = EngineWorld.GetEntityByID(id1);
+            var ent2 = EngineWorld.GetEntityByID(id2);
+
+            if (ent1 == null || ent2 == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, ent1?.ID ?? ent2.ID);
+            }
+            else if (axis < 0 || axis > 2)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_AXIS, axis);
+                // TODO: OpenTomb uses entity's ID here? wtf?
+            }
+            else
+            {
+                var ent1pos = ent1.Transform.Origin;
+                var ent2pos = ent2.Transform.Origin;
+                var facing = ent1pos - ent2pos;
+
+                int targAngleId = -1;
+                float theta = -1;
+
+                switch (axis)
+                {
+                    case 0:
+                        targAngleId = 0;
+                        theta = Helper.Atan2(-facing.X, facing.Y);
+                        break;
+                    case 1:
+                        targAngleId = 1;
+                        theta = Helper.Atan2(facing.Z, facing.Y);
+                        break;
+                    case 2:
+                        targAngleId = 2;
+                        theta = Helper.Atan2(facing.X, facing.Z);
+                        break;
+                }
+
+                theta = theta.Degrees();
+                if (addAngle != null) theta += (float) addAngle;
+
+                var delta = ent1.Angles[targAngleId] - theta;
+
+                if (Math.Ceiling(delta) != 180.0)
+                {
+                    if (speed != null)
+                    {
+                        var spd = (float) speed;
+
+                        if (Math.Abs(delta) > spd)
+                        {
+                            // Solve ~0-360 rotation cases
+
+                            if (Math.Abs(delta) > 180.0f)
+                            {
+                                delta = -(360.0f - ent1.Angles[targAngleId] + theta);
+                            }
+                            else
+                            {
+                                delta = 360.0f - theta + ent1.Angles[targAngleId];
+                            }
+
+                            if (delta > 180.0f)
+                            {
+                                ent1.Angles[targAngleId] = theta + 180.0f;
+                            }
+                            else if (delta.IsBetween(0.0f, 180.0f, IB.aIbE))
+                            {
+                                ent1.Angles[targAngleId] += spd;
+                            }
+                            else
+                            {
+                                ent1.Angles[targAngleId] -= spd;
+                            }
+                        }
+
+                        if (Math.Abs(delta) + speed >= 180.0f)
+                            ent1.Angles[targAngleId] = (float) (Math.Floor(theta) + 180.0);
+                    }
+                    else
+                    {
+                        ent1.Angles[targAngleId] = theta + 180.0f;
+                    }
+                }
+
+                ent1.UpdateTransform();
+                ent1.UpdateRigidBody(true);
+            }
+        }
+
+        public static float lua_GetEntityOrientation(uint id1, uint id2, int axis, float? addAngle = null)
+        {
+            var ent1 = EngineWorld.GetEntityByID(id1);
+            var ent2 = EngineWorld.GetEntityByID(id2);
+
+            if (ent1 == null || ent2 == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, ent1?.ID ?? ent2.ID);
+                return 0;
+            }
+            else
+            {
+                var ent1pos = ent1.Transform.Origin;
+                var ent2pos = ent2.Transform.Origin;
+                var facing = ent1pos - ent2pos;
+
+                var theta = Helper.Atan2(-facing.X, facing.Y);
+                if (addAngle != null) theta += (float) addAngle;
+
+                return (ent2.Angles.X - theta).WrapAngle();
+            }
+        }
+
+        public static float[] lua_GetEntitySpeed(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return new float[0];
+            }
+
+            return ent.Speed.ToArray();
+        }
+
+        public static float lua_GetEntitySoeedLinear(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return 0;
+            }
+
+            return ent.Angles.Length;
+        }
+
+        public static void lua_SetEntitySpeed(uint id, float vx, float? vy = null, float? vz = null)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+            }
+            else
+            {
+                if (vy == null || vz == null)
+                    ent.Angles.X = vx;
+                else
+                    ent.Angles = new Vector3(vx, (float) vy, (float) vz);
+                ent.UpdateCurrentSpeed();
+            }
+        }
+
+        public static void lua_SetEntityAnim(uint id, int anim, int frame = 0, int otherModel = -1)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+
+            ent.SetAnimation((TR_ANIMATION) anim, frame, otherModel);
+        }
+
+        public static void lua_SetEntityAnimFlag(uint id, ushort animFlag)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+
+            ent.Bf.Animations.AnimFlags = (AnimControlFlags) animFlag;
+        }
+
+        public static void lua_SetEntityBodyPartFlag(uint id, int boneID, uint bodyPartFlag)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+
+            if (!boneID.IsBetween(0, ent.Bf.BoneTags.Count - 1))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_OPTION_INDEX, boneID);
+                return;
+            }
+
+            ent.Bf.BoneTags[boneID].BodyPart = bodyPartFlag;
+        }
+
+        public static void lua_SetModelBodyPartFlag(uint id, int boneID, uint bodyPartFlag)
+        {
+            var model = EngineWorld.GetModelByID(id);
+            if (model == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_SKELETAL_MODEL, id);
+                return;
+            }
+
+            if (!boneID.IsBetween(0, model.MeshCount - 1))
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_OPTION_INDEX, boneID);
+                return;
+            }
+
+            model.MeshTree[boneID].BodyPart = bodyPartFlag;
+        }
+
+        public static object[] lua_GetEntityAnim(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return new object[0];
+            }
+
+            return new object[]
+            {
+                ent.Bf.Animations.CurrentAnimation,
+                ent.Bf.Animations.CurrentFrame,
+                ent.Bf.Animations.Model.Animations[(int) ent.Bf.Animations.CurrentAnimation].Frames.Count
+            };
+        }
+
+        public static bool lua_CanTriggerEntity(uint id1, uint id2, float rv = -1, float? ofsX = null,
+            float? ofsY = null, float? ofsZ = null)
+        {
+            var e1 = EngineWorld.GetCharacterByID(id1);
+            if (e1 == null || !e1.Command.Action)
+            {
+                return false;
+            }
+
+            var e2 = EngineWorld.GetEntityByID(id2);
+            if (e2 == null || e1 == e2)
+            {
+                return false;
+            }
+
+            var r = rv < 0 ? e2.ActivationRadius : rv;
+            r *= r;
+
+            var offset = new[] {ofsX, ofsY, ofsZ}.Contains(null)
+                ? e2.ActivationOffset
+                : new Vector3((float) ofsX, (float) ofsY, (float) ofsZ);
+
+            var pos = e2.Transform * offset;
+            return e1.Transform.Basis.Column1.Dot(e2.Transform.Basis.Column1) > 0.75f &&
+                   (e1.Transform.Origin - pos).LengthSquared < r;
+        }
+
+        public static bool lua_GetEntityVisibility(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return false;
+            }
+
+            return ent.Visible;
+        }
+
+        public static void lua_SetEntityVisibility(uint id, bool value)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+
+            ent.Visible = value;
+        }
+
+        public static bool lua_GetEntityEnability(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return false;
+            }
+
+            return ent.Enabled;
+        }
+
+        public static bool lua_GetEntityActivity(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return false;
+            }
+
+            return ent.Active;
+        }
+
+        public static void lua_SetEntityActivity(uint id, bool value)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+
+            ent.Active = value;
+        }
+
+        public static object[] lua_GetEntityTriggerLayout(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+                return new object[0]; // No entity found - return. TODO: Add the warning?
+
+            return new object[]
+            {
+                (int) (ent.TriggerLayout & ENTITY_TLAYOUT.Mask),
+                (ent.TriggerLayout & ENTITY_TLAYOUT.Event) != 0,
+                (ent.TriggerLayout & ENTITY_TLAYOUT.Lock) != 0
+            };
+        }
+
+        public static void lua_SetEntityTriggerLayout(uint id, int mask, bool eventOrLayout = false, bool _lock = false)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+
+            if (ent == null)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return;
+            }
+
+            if (_lock)
+            {
+                var triggerLayout = (int) ent.TriggerLayout;
+                triggerLayout &= ~(int) ENTITY_TLAYOUT.Mask;
+                triggerLayout ^= mask;
+                triggerLayout &= ~(int) ENTITY_TLAYOUT.Event;
+                triggerLayout ^= (eventOrLayout ? 1 : 0) << 5;
+                triggerLayout &= ~(int) ENTITY_TLAYOUT.Lock;
+                triggerLayout ^= (_lock ? 1 : 0) << 6;
+                ent.TriggerLayout = (ENTITY_TLAYOUT) triggerLayout;
+            }
+            else
+            {
+                ent.TriggerLayout = (ENTITY_TLAYOUT) (eventOrLayout ? 0 : 1);
+            }
+        }
+
+        public static void lua_SetEntityLock(uint id, bool _lock)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent != null) // TODO: Add warning if null
+            {
+                var triggerLayout = (int) ent.TriggerLayout;
+                triggerLayout &= ~(int) ENTITY_TLAYOUT.Lock;
+                triggerLayout ^= (_lock ? 1 : 0) << 6; // lock - 01000000
+                ent.TriggerLayout = (ENTITY_TLAYOUT) triggerLayout;
+            }
+        }
+
+        public static bool lua_GetEntityLock(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            // TODO: Add warning if null
+            return ent != null && (int) (ent.TriggerLayout & ENTITY_TLAYOUT.Lock) >> 6 != 0;
+        }
+
+        public static void lua_SetEntityEvent(uint id, bool _event)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            if (ent != null) // TODO: Add warning if null
+            {
+                var triggerLayout = (int)ent.TriggerLayout;
+                triggerLayout &= ~(int)ENTITY_TLAYOUT.Event;
+                triggerLayout ^= (_event ? 1 : 0) << 5; // lock - 01000000
+                ent.TriggerLayout = (ENTITY_TLAYOUT)triggerLayout;
+            }
+        }
+
+        public static bool lua_GetEntityEvent(uint id)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            // TODO: Add warning if null
+            return ent != null && (int)(ent.TriggerLayout & ENTITY_TLAYOUT.Event) >> 5 != 0;
         }
 
         #endregion
@@ -1250,7 +1732,7 @@ namespace FreeRaider.Script
 
         public static void BindKey(int act, int primary, int? secondary = null)
         {
-            if(!act.IsBetween(0, (int)ACTIONS.LastIndex, IB.aIbE))
+            if(!act.IsBetween(0, (int)ACTIONS.LastIndex - 1))
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ACTION_NUMBER);
             }
