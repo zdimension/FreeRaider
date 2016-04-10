@@ -1094,7 +1094,7 @@ namespace FreeRaider
                     var j = (int) (seq.FrameTime / seq.FrameRate);
                     seq.FrameTime -= j * seq.FrameRate;
 
-                    switch((TR_ANIMTEXTURE)seq.AnimType)
+                    switch(seq.AnimType)
                     {
                         case TR_ANIMTEXTURE.Reverse:
                             if(seq.ReverseDirection)

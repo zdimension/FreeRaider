@@ -84,7 +84,15 @@ namespace FreeRaider.TestApp
   return lol2[1]
 end");
             Console.WriteLine(string.Join(", ", state.DoString("return maxi2(13)")));
-
+            state.DoString("ggg = {\"lol\", 5.5, 8}");
+            Console.WriteLine(string.Join("; ", (state["ggg"] as LuaTable).Values.Cast<object>()));
+            state["hhhg"] = new Dictionary<string, int>
+            {
+                { "ABC", 1},
+                {"def", 5 },
+                {"ghI", 8 }
+            };
+            state.DoString("print(hhhg[\"def\"])");
             state.RegisterFunction("sumlol", typeof (Program).GetMethod("sum"));
             state.DoString("print(sumlol(80, 2.8, 591, -258))");
             /*state.DoString(

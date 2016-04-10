@@ -1715,7 +1715,7 @@ namespace FreeRaider
             }
         }
 
-        public static uint lua_GetEntityCallbackFlag(uint id, ushort? flag = null)
+        public static uint lua_GetENTITY_CALLBACKFlag(uint id, ushort? flag = null)
         {
             var ent = EngineWorld.GetEntityByID(id);
 
@@ -1731,7 +1731,7 @@ namespace FreeRaider
                 return (uint) ent.CallbackFlags & (ushort)flag;
         }
 
-        public static void lua_SetEntityCallbackFlag(uint id, uint callbackFlag, bool? value = null)
+        public static void lua_SetENTITY_CALLBACKFlag(uint id, uint callbackFlag, bool? value = null)
         {
             var ent = EngineWorld.GetEntityByID(id);
 
@@ -1786,7 +1786,7 @@ namespace FreeRaider
             return (ushort) ent.MoveType;
         }
 
-        public static void lua_SetEntityCallbackFlag(uint id, ushort type)
+        public static void lua_SetENTITY_CALLBACKFlag(uint id, ushort type)
         {
             var ent = EngineWorld.GetEntityByID(id);
             // TODO: Add warning if null
@@ -2453,6 +2453,66 @@ namespace FreeRaider
             return EngineWorld.FlipData[group].State;
         }
 
+        #endregion
+
+        #region Generate UV rotate animations
+
+        public static void lua_genUVRotateAnimations(uint id)
+        {
+            var model = EngineWorld.GetModelByID(id);
+
+            if (model == null)
+                return; // TODO: Add warning if null
+
+            if (model.MeshTree[0].MeshBase.TransparencyPolygons.Count == 0)
+                return;
+            var firstPolygon = model.MeshTree[0].MeshBase.TransparencyPolygons[0];
+            if (firstPolygon.AnimID != 0)
+                return;
+
+            var seq = new AnimSeq();
+
+            // Fill up new sequence with frame list
+
+            seq.AnimType = TR_ANIMTEXTURE.Forward;
+            seq.FrameLock = false; // by default anim is playing
+            seq.UVRotate = true;
+            seq.Frames.Resize(16);
+            seq.FrameList.Resize(16);
+            seq.ReverseDirection = false; // Neede for proper reverse-type start-up.
+            seq.FrameRate = 0.025f; // Should be passed as 1 / FPS
+            seq.FrameTime = 0.0f; // Reset frame time to initial state
+            seq.CurrentFrame = 0; // Reset current frame to zero.
+            seq.FrameList[0] = 0;
+
+            var vMin = firstPolygon.Vertices.Min(x => x.TexCoord[1]);
+            var vMax = firstPolygon.Vertices.Max(x => x.TexCoord[1]);
+
+            seq.UVRotateMax = 0.5f * (vMax - vMin);
+            seq.UVRotateSpeed = seq.UVRotateMax / seq.Frames.Count;
+
+            for (var j = 0; j < seq.Frames.Count; j++)
+            {
+                seq.Frames[j].TextureIndex = firstPolygon.TexIndex;
+                seq.Frames[j].Mat[0] = 1.0f;
+                seq.Frames[j].Mat[1] = 0.0f;
+                seq.Frames[j].Mat[2] = 0.0f;
+                seq.Frames[j].Mat[3] = 1.0f;
+                seq.Frames[j].Move[0] = 0.0f;
+                seq.Frames[j].Move[1] = -(j * seq.UVRotateSpeed);
+            }
+
+            EngineWorld.AnimSequences.Add(seq);
+
+            foreach (var p in model.MeshTree[0].MeshBase.TransparencyPolygons)
+            {
+                p.AnimID = (ushort) EngineWorld.AnimSequences.Count;
+                foreach (var v in p.Vertices)
+                {
+                    v.TexCoord[1] = vMin + 0.5f * (v.TexCoord[1] - vMin) + seq.UVRotateMax;
+                }
+            }
+        }
 
         #endregion
     }
@@ -2525,7 +2585,207 @@ namespace FreeRaider.Script
         }
 
 
-        public void ExposeConstants();
+        public void ExposeConstants()
+        {
+            state["MOVE_STATIC_POS"] = (int) MoveType.StaticPos;
+            state["MOVE_KINEMATIC"] = (int) MoveType.Kinematic;
+            state["MOVE_ON_FLOOR"] = (int) MoveType.OnFloor;
+            state["MOVE_WADE"] = (int) MoveType.Wade;
+            state["MOVE_QUICKSAND"] = (int) MoveType.Quicksand;
+            state["MOVE_ON_WATER"] = (int) MoveType.OnWater;
+            state["MOVE_UNDERWATER"] = (int) MoveType.Underwater;
+            state["MOVE_FREE_FALLING"] = (int) MoveType.FreeFalling;
+            state["MOVE_CLIMBING"] = (int) MoveType.Climbing;
+            state["MOVE_MONKEYSWING"] = (int) MoveType.Monkeyswing;
+            state["MOVE_WALLS_CLIMB"] = (int) MoveType.WallsClimb;
+            state["MOVE_DOZY"] = (int) MoveType.Dozy;
+
+            state["Game"] = new Dictionary<string, int>
+            {
+                {"I", (int)TRGame.TR1 },
+                {"I_DEMO", (int)TRGame.TR1Demo },
+                {"I_GOLD", (int)TRGame.TR1UnfinishedBusiness },
+                {"II", (int)TRGame.TR2 },
+                {"II_DEMO", (int)TRGame.TR2Demo },
+                {"II_GOLD", (int)TRGame.TR2Gold },
+                {"III", (int)TRGame.TR3 },
+                {"III_GOLD", (int)TRGame.TR3Gold },
+                {"IV", (int)TRGame.TR4 },
+                {"IV_DEMO", (int)TRGame.TR4Demo },
+                {"V", (int)TRGame.TR5 },
+                {"Unknown", (int)TRGame.Unknown },
+            };
+
+            state["Engine"] = new Dictionary<string, int>
+            {
+                {"I", (int)Loader.Engine.TR1 },
+                {"II", (int)Loader.Engine.TR2 },
+                {"III", (int)Loader.Engine.TR3 },
+                {"IV", (int)Loader.Engine.TR4 },
+                {"V", (int)Loader.Engine.TR5 },
+                {"Unknown", (int)Loader.Engine.Unknown },
+            };
+
+            EXPOSE_C("ENTITY_TYPE_GENERIC", (int)ENTITY_TYPE.Generic);
+            EXPOSE_C("ENTITY_TYPE_INTERACTIVE", (int)ENTITY_TYPE.Interactive);
+            EXPOSE_C("ENTITY_TYPE_TRIGGER_ACTIVATOR", (int)ENTITY_TYPE.TriggerActivator);
+            EXPOSE_C("ENTITY_TYPE_HEAVYTRIGGER_ACTIVATOR", (int)ENTITY_TYPE.HeavyTriggerActivator);
+            EXPOSE_C("ENTITY_TYPE_PICKABLE", (int)ENTITY_TYPE.Pickable);
+            EXPOSE_C("ENTITY_TYPE_TRAVERSE", (int)ENTITY_TYPE.Traverse);
+            EXPOSE_C("ENTITY_TYPE_TRAVERSE_FLOOR", (int)ENTITY_TYPE.TraverseFloor);
+            EXPOSE_C("ENTITY_TYPE_DYNAMIC", (int)ENTITY_TYPE.Dynamic);
+            EXPOSE_C("ENTITY_TYPE_ACTOR", (int)ENTITY_TYPE.Actor);
+            EXPOSE_C("ENTITY_TYPE_COLLCHECK", (int)ENTITY_TYPE.CollCheck);
+
+            EXPOSE_C("ENTITY_CALLBACK_NONE", (int)ENTITY_CALLBACK.None);
+            EXPOSE_C("ENTITY_CALLBACK_ACTIVATE", (int)ENTITY_CALLBACK.Activate);
+            EXPOSE_C("ENTITY_CALLBACK_DEACTIVATE", (int)ENTITY_CALLBACK.Deactivate);
+            EXPOSE_C("ENTITY_CALLBACK_COLLISION", (int)ENTITY_CALLBACK.Collision);
+            EXPOSE_C("ENTITY_CALLBACK_STAND", (int)ENTITY_CALLBACK.Stand);
+            EXPOSE_C("ENTITY_CALLBACK_HIT", (int)ENTITY_CALLBACK.Hit);
+            EXPOSE_C("ENTITY_CALLBACK_ROOMCOLLISION", (int)ENTITY_CALLBACK.RoomCollision);
+
+            EXPOSE_C("COLLISION_TYPE_NONE", (int)COLLISION_TYPE.None);
+            EXPOSE_C("COLLISION_TYPE_STATIC", (int)COLLISION_TYPE.Static);
+            EXPOSE_C("COLLISION_TYPE_KINEMATIC", (int)COLLISION_TYPE.Kinematic);
+            EXPOSE_C("COLLISION_TYPE_DYNAMIC", (int)COLLISION_TYPE.Dynamic);
+            EXPOSE_C("COLLISION_TYPE_ACTOR", (int)COLLISION_TYPE.Actor);
+            EXPOSE_C("COLLISION_TYPE_VEHICLE", (int)COLLISION_TYPE.Vehicle);
+            EXPOSE_C("COLLISION_TYPE_GHOST", (int)COLLISION_TYPE.Ghost);
+
+            EXPOSE_C("COLLISION_SHAPE_BOX", (int)COLLISION_SHAPE.Box);
+            EXPOSE_C("COLLISION_SHAPE_BOX_BASE", (int)COLLISION_SHAPE.BoxBase);
+            EXPOSE_C("COLLISION_SHAPE_SPHERE", (int)COLLISION_SHAPE.Sphere);
+            EXPOSE_C("COLLISION_SHAPE_TRIMESH", (int)COLLISION_SHAPE.Trimesh);
+            EXPOSE_C("COLLISION_SHAPE_TRIMESH_CONVEX", (int) COLLISION_SHAPE.TrimeshConvex);
+
+            EXPOSE_C("SECTOR_MATERIAL_MUD", (int)SectorMaterial.Mud);
+            EXPOSE_C("SECTOR_MATERIAL_SNOW", (int)SectorMaterial.Snow);
+            EXPOSE_C("SECTOR_MATERIAL_SAND", (int)SectorMaterial.Sand);
+            EXPOSE_C("SECTOR_MATERIAL_GRAVEL", (int)SectorMaterial.Gravel);
+            EXPOSE_C("SECTOR_MATERIAL_ICE", (int)SectorMaterial.Ice);
+            EXPOSE_C("SECTOR_MATERIAL_WATER", (int)SectorMaterial.Water);
+            EXPOSE_C("SECTOR_MATERIAL_STONE", (int)SectorMaterial.Stone);
+            EXPOSE_C("SECTOR_MATERIAL_WOOD", (int)SectorMaterial.Wood);
+            EXPOSE_C("SECTOR_MATERIAL_METAL", (int)SectorMaterial.Metal);
+            EXPOSE_C("SECTOR_MATERIAL_MARBLE", (int)SectorMaterial.Marble);
+            EXPOSE_C("SECTOR_MATERIAL_GRASS", (int)SectorMaterial.Grass);
+            EXPOSE_C("SECTOR_MATERIAL_CONCRETE", (int)SectorMaterial.Concrete);
+            EXPOSE_C("SECTOR_MATERIAL_OLDWOOD", (int)SectorMaterial.OldWood);
+            EXPOSE_C("SECTOR_MATERIAL_OLDMETAL", (int) SectorMaterial.OldMetal);
+
+            EXPOSE_C("ANIM_NORMAL_CONTROL", (int)AnimControlFlags.NormalControl);
+            EXPOSE_C("ANIM_LOOP_LAST_FRAME", (int)AnimControlFlags.LoopLastFrame);
+            EXPOSE_C("ANIM_LOCK", (int)AnimControlFlags.Lock);
+
+            EXPOSE_C("ACT_ACTION", (int)ACTIONS.Action);
+
+            TODO
+            SDL KEYS;
+
+            EXPOSE_CC("PARAM_HEALTH");
+            EXPOSE_CC("PARAM_AIR");
+            EXPOSE_CC("PARAM_STAMINA");
+            EXPOSE_CC("PARAM_WARMTH");
+            EXPOSE_CC("PARAM_POISON");
+            EXPOSE_CC("PARAM_EXTRA1");
+            EXPOSE_CC("PARAM_EXTRA2");
+            EXPOSE_CC("PARAM_EXTRA3");
+            EXPOSE_CC("PARAM_EXTRA4");
+
+            EXPOSE_C("PARAM_ABSOLUTE_MAX");
+
+            EXPOSE_C("BODY_PART_BODY_LOW");
+            EXPOSE_C("BODY_PART_BODY_UPPER");
+            EXPOSE_C("BODY_PART_HEAD");
+
+            EXPOSE_C("BODY_PART_LEFT_HAND_1" );
+            EXPOSE_C("BODY_PART_LEFT_HAND_2" );
+            EXPOSE_C("BODY_PART_LEFT_HAND_3" );
+            EXPOSE_C("BODY_PART_RIGHT_HAND_1");
+            EXPOSE_C("BODY_PART_RIGHT_HAND_2");
+            EXPOSE_C("BODY_PART_RIGHT_HAND_3");
+
+            EXPOSE_C("BODY_PART_LEFT_LEG_1" );
+            EXPOSE_C("BODY_PART_LEFT_LEG_2" );
+            EXPOSE_C("BODY_PART_LEFT_LEG_3" );
+            EXPOSE_C("BODY_PART_RIGHT_LEG_1");
+            EXPOSE_C("BODY_PART_RIGHT_LEG_2");
+            EXPOSE_C("BODY_PART_RIGHT_LEG_3");
+
+            EXPOSE_C("HAIR_TR1");
+            EXPOSE_C("HAIR_TR2");
+            EXPOSE_C("HAIR_TR3");
+            EXPOSE_C("HAIR_TR4_KID_1");
+            EXPOSE_C("HAIR_TR4_KID_2");
+            EXPOSE_C("HAIR_TR4_OLD");
+            EXPOSE_C("HAIR_TR5_KID_1");
+            EXPOSE_C("HAIR_TR5_KID_2");
+            EXPOSE_C("HAIR_TR5_OLD");
+
+
+            EXPOSE_C("PARAM_HEALTH", (int)CharParameters.Health);
+            EXPOSE_C("PARAM_AIR", (int)CharParameters.Air);
+            EXPOSE_C("PARAM_STAMINA", (int)CharParameters.Stamina);
+            EXPOSE_C("PARAM_WARMTH", (int)CharParameters.Warmth);
+            EXPOSE_C("PARAM_POISON", (int)CharParameters.Poison);
+            EXPOSE_C("PARAM_EXTRA1", (int)CharParameters.Extra1);
+            EXPOSE_C("PARAM_EXTRA2", (int)CharParameters.Extra2);
+            EXPOSE_C("PARAM_EXTRA3", (int)CharParameters.Extra3);
+            EXPOSE_C("PARAM_EXTRA4", (int)CharParameters.Extra4);
+
+            EXPOSE_C("PARAM_ABSOLUTE_MAX", PARAM_ABSOLUTE_MAX);
+
+            EXPOSE_C("BODY_PART_BODY_LOW", BODY_PART.BodyLow);
+            EXPOSE_C("BODY_PART_BODY_UPPER", BODY_PART.BodyUpper);
+            EXPOSE_C("BODY_PART_HEAD", BODY_PART.Head);
+
+            EXPOSE_C("BODY_PART_LEFT_HAND_1" , (int)BODY_PART.LeftHand1);
+            EXPOSE_C("BODY_PART_LEFT_HAND_2" , (int)BODY_PART.LeftHand2);
+            EXPOSE_C("BODY_PART_LEFT_HAND_3" , (int)BODY_PART.LeftHand3);
+            EXPOSE_C("BODY_PART_RIGHT_HAND_1", (int)BODY_PART.RightHand1);
+            EXPOSE_C("BODY_PART_RIGHT_HAND_2", (int)BODY_PART.RightHand2);
+            EXPOSE_C("BODY_PART_RIGHT_HAND_3", (int)BODY_PART.RightHand3);
+
+            EXPOSE_C("BODY_PART_LEFT_LEG_1" , (int)BODY_PART.LeftLeg1);
+            EXPOSE_C("BODY_PART_LEFT_LEG_2" , (int)BODY_PART.LeftLeg2);
+            EXPOSE_C("BODY_PART_LEFT_LEG_3" , (int)BODY_PART.LeftLeg3);
+            EXPOSE_C("BODY_PART_RIGHT_LEG_1", (int)BODY_PART.RightLeg1);
+            EXPOSE_C("BODY_PART_RIGHT_LEG_2", (int)BODY_PART.RightLeg2);
+            EXPOSE_C("BODY_PART_RIGHT_LEG_3", (int)BODY_PART.RightLeg3);
+
+            EXPOSE_C("HAIR_TR1", (int)HairType.TR1);
+            EXPOSE_C("HAIR_TR2", (int)HairType.TR2);
+            EXPOSE_C("HAIR_TR3", (int)HairType.TR3);
+            EXPOSE_C("HAIR_TR4_KID_1", (int)HairType.TR4_Kid1);
+            EXPOSE_C("HAIR_TR4_KID_2", (int)HairType.TR4_Kid2);
+            EXPOSE_C("HAIR_TR4_OLD", (int)HairType.TR4_Old);
+            EXPOSE_C("HAIR_TR5_KID_1", (int)HairType.TR5_Kid1);
+            EXPOSE_C("HAIR_TR5_KID_2", (int)HairType.TR5_Kid2);
+            EXPOSE_C("HAIR_TR5_OLD", (int)HairType.TR5_Old);
+
+            EXPOSE_C("M_PI", Math.PI);
+        }
+
+        private void EXPOSE_C(string name)
+        {
+            state[name] = typeof (Constants).GetField(name).GetValue(null);
+        }
+
+        private void EXPOSE_C(string name, object value)
+        {
+            state[name] = value;
+        }
+
+        private void EXPOSE_CC(string name)
+        {
+            state[name] = (int)(dynamic)typeof(Constants).GetField(name).GetValue(null);
+        }
+
+        /*private void EXPOSE_CC(string name, object value)
+        {
+            state[name] = (int) (dynamic) value;
+        }*/
 
         public List<string> GetGlobals();
 

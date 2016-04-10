@@ -704,7 +704,7 @@ namespace FreeRaider
         /// <summary>
         /// 0 = normal, 1 = back, 2 = reverse.
         /// </summary>
-        public sbyte AnimType;
+        public TR_ANIMTEXTURE AnimType;
 
         /// <summary>
         /// Used only with type 2 to identify current animation direction.
