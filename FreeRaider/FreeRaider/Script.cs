@@ -2346,6 +2346,114 @@ namespace FreeRaider
             GameflowManager.Send(GF_OP.LevelComplete, (int) GameflowManager.LevelID);
         }
 
+        public static void lua_LoadMap(string mapName, byte? gameID = null, uint? mapID = null)
+        {
+            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_LOADING_MAP, mapName);
+
+            if(!string.IsNullOrWhiteSpace(mapName) && mapName != GameflowManager.CurrentLevelPath)
+            {
+                if(gameID != null)
+                {
+                    GameflowManager.GameID = (byte) gameID;
+                }
+                if (mapID != null)
+                {
+                    GameflowManager.LevelID = (uint) mapID;
+                }
+                var filePath = EngineLua.GetLoadingScreen(GameflowManager.LevelID);
+                Gui.FadeAssignPic(FaderType.LoadScreen, filePath);
+                Gui.FadeStart(FaderType.LoadScreen, FaderDir.In);
+                Engine.LoadMap(mapName); // TODO: return value?
+            }
+        }
+
+        #endregion
+
+        #region Flipped (alternate) room functions
+
+        public static void lua_SetFlipState(int group, bool state)
+        {
+            if(group >= EngineWorld.FlipData.Count)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FLIPMAP_INDEX, group);
+                return;
+            }
+
+            if(EngineWorld.FlipData[group].Map == 0x1F) // Check flipmap state.
+            {
+                if(EngineWorld.EngineVersion > Loader.Engine.TR3)
+                {
+                    foreach (var currentRoom in EngineWorld.Rooms)
+                    {
+                        if(currentRoom.AlternateGroup == group) // Check if group is valid.
+                        {
+                            if(state)
+                                currentRoom.SwapToAlternate();
+                            else
+                                currentRoom.SwapToBase();
+                        }
+                    }
+                    
+                    EngineWorld.FlipData[group].State = (byte)(state ? 1 : 0);
+                }
+                else
+                {
+                    foreach (var currentRoom in EngineWorld.Rooms)
+                    {
+                        if (state)
+                            currentRoom.SwapToAlternate();
+                        else
+                            currentRoom.SwapToBase();
+                    }
+
+                    EngineWorld.FlipData[0].State = (byte)(state ? 1 : 0); // In TR1-3, state is always global.
+                }
+            }
+        }
+
+        public static void lua_SetFlipMap(int group, byte mask, int _op)
+        {
+            var op = mask > AMASK_OP_XOR ? AMASK_OP_XOR : AMASK_OP_OR;
+
+            if(group >= EngineWorld.FlipData.Count)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FLIPMAP_INDEX, group);
+                return;
+            }
+
+            if(op == AMASK_OP_XOR)
+            {
+                EngineWorld.FlipData[group].Map ^= mask;
+            }
+            else
+            {
+                EngineWorld.FlipData[group].Map |= mask;
+            }
+        }
+
+        public static byte lua_GetFlipMap(int group)
+        {
+            if (group >= EngineWorld.FlipData.Count)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FLIPMAP_INDEX, group);
+                return 0;
+            }
+
+            return EngineWorld.FlipData[group].Map;
+        }
+
+        public static byte lua_GetFlipState(int group)
+        {
+            if (group >= EngineWorld.FlipData.Count)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FLIPMAP_INDEX, group);
+                return 0;
+            }
+
+            return EngineWorld.FlipData[group].State;
+        }
+
+
         #endregion
     }
 }
@@ -2577,7 +2685,7 @@ namespace FreeRaider.Script
 
         public bool GetSoundtrack(int trackIndex, string trackPath, TR_AUDIO_STREAM_METHOD loadMethod, TR_AUDIO_STREAM_TYPE streamType);
 
-        public string GetLoadingScreen(int levelIndex);
+        public string GetLoadingScreen(uint levelIndex);
 
         public string GetString(int stringID);
 
