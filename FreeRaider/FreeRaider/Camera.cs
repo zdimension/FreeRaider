@@ -6,6 +6,13 @@ using static FreeRaider.Constants;
 
 namespace FreeRaider
 {
+    public partial class Constants
+    {
+        public const float TR_CAM_MAX_SHAKE_DISTANCE = 8192.0f;
+
+        public const float TR_CAM_DEFAULT_SHAKE_POWER = 100.0f;
+    }
+
     public enum TR_CAM_TARG : sbyte
     {
         Back = 0,

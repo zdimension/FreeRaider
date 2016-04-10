@@ -5,6 +5,7 @@ using AT.MIN;
 using FreeRaider.Loader;
 using NLua;
 using OpenTK;
+using OpenTK.Graphics.ES20;
 
 namespace FreeRaider.TestApp
 {
@@ -36,6 +37,11 @@ namespace FreeRaider.TestApp
             D,
             E,
             F
+        }
+
+        public static float sum(int b, params float[] args)
+        {
+            return args.Sum() - b;
         }
 
         static void Main(string[] args)
@@ -79,8 +85,8 @@ namespace FreeRaider.TestApp
 end");
             Console.WriteLine(string.Join(", ", state.DoString("return maxi2(13)")));
 
-            state.RegisterFunction("test4", typeof (Program).GetMethod("test4"));
-            state.DoString("test4(5)");
+            state.RegisterFunction("sumlol", typeof (Program).GetMethod("sum"));
+            state.DoString("print(sumlol(80, 2.8, 591, -258))");
             /*state.DoString(
 "function print_r ( t ) \n " +
 "    local print_r_cache={}\n " +

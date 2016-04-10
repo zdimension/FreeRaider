@@ -4,6 +4,8 @@ using System.Linq;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
+using BulletSharp;
+using FreeRaider.Loader;
 using KeraLua;
 using NLua;
 using OpenTK;
@@ -2026,6 +2028,322 @@ namespace FreeRaider
             {
                 ent.CreateGhosts();
             }
+        }
+
+        public static void lua_PushEntityBody(uint id, int bodyNumber, float hForce, float vForce, bool resetFlag)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            // TODO: Add warning if null
+            // TODO: Check bodyNumber > 0
+            if(ent != null && bodyNumber < ent.Bf.BoneTags.Count && ent.Bt.BtBody[bodyNumber] != null && ent.TypeFlags.HasFlag(ENTITY_TYPE.Dynamic))
+            {
+                var t = ent.Angles.X * RadPerDeg;
+
+                var ang1 = (float)Math.Sin(t);
+                var ang2 = (float)Math.Cos(t);
+
+                var angle = new Vector3(-ang1 * hForce, ang2 * hForce, vForce);
+
+                if(resetFlag)
+                    ent.Bt.BtBody[bodyNumber].ClearForces();
+
+                ent.Bt.BtBody[bodyNumber].LinearVelocity = angle;
+                ent.Bt.BtBody[bodyNumber].AngularVelocity = angle / 1024.0f;
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_APPLY_FORCE, id);
+            }
+        }
+
+        public static int lua_SetEntityBodyMass(uint id, int bodyNumber, params float[] masses)
+        {
+            if(masses.Length == 0)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ARGS, "[entity_id, body_number, (mass / each body mass)]");
+                return 0;
+            }
+
+            var ent = EngineWorld.GetEntityByID(id);
+
+            bodyNumber = Math.Max(1, bodyNumber);
+
+            var dyn = false;
+
+            if(ent != null && bodyNumber < ent.Bf.BoneTags.Count)
+            {
+                for(var i = 0; i < bodyNumber; i++)
+                {
+                    var mass = 0.0f;
+                    if (i < masses.Length) mass = masses[i];
+
+                    if(ent.Bt.BtBody[i] != null)
+                    {
+                        BtEngineDynamicsWorld.RemoveRigidBody(ent.Bt.BtBody[i]);
+
+                        Vector3 inertia;
+                        ent.Bt.BtBody[i].CollisionShape.CalculateLocalInertia(mass, out inertia);
+
+                        ent.Bt.BtBody[i].SetMassProps(mass, inertia);
+
+                        ent.Bt.BtBody[i].UpdateInertiaTensor();
+                        ent.Bt.BtBody[i].ClearForces();
+
+                        ent.Bt.BtBody[i].CollisionShape.LocalScaling = ent.Scaling;
+
+                        var factor = mass > 0.0f ? Vector3.One : Vector3.Zero;
+                        ent.Bt.BtBody[i].LinearFactor = factor;
+                        ent.Bt.BtBody[i].AngularFactor = factor;
+
+                        //ent.Bt.BtBody[i].ForceActivationState(ActivationState.DisableDeactivation);
+
+                        //ent.Bt.BtBody[i].CcdMotionThreshold = 32.0f; // disable tunneling effect
+                        //ent.Bt.BtBody[i].CcdSweptSphereRadius = 32.0f;
+
+                        BtEngineDynamicsWorld.AddRigidBody(ent.Bt.BtBody[i]);
+
+                        ent.Bt.BtBody[i].Activate();
+
+                        //ent.Bt.BtBody[i].BroadphaseHandle.CollisionFilterGroup = CollisionFilterGroups.AllFilter;
+                        //ent.Bt.BtBody[i].BroadphaseHandle.CollisionFilterMask = CollisionFilterGroups.AllFilter;
+
+                        //ent.Self.ObjectType = OBJECT_TYPE.Entity;
+                        //ent.Bt.BtBody[i].UserObject = ent.Self;
+
+                        if (mass > 0.0f) dyn = true;
+                    }
+                }
+
+                if(dyn)
+                {
+                    ent.TypeFlags |= ENTITY_TYPE.Dynamic;
+                }
+                else
+                {
+                    ent.TypeFlags &= ~ENTITY_TYPE.Dynamic;
+                }
+
+                ent.UpdateRigidBody(true);
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ENTITY_OR_BODY, id, bodyNumber); // TODO: Replace bodyNumber by ent.Bf.BoneTags.Count
+            }
+
+            return 0;
+        }
+
+        public static void lua_LockEntityBodyLinearFactor(uint id, int bodyNumber, float vFactor = 1.0f)
+        {
+            var ent = EngineWorld.GetEntityByID(id);
+            // TODO: Add warning if null
+            // TODO: Check bodyNumber > 0
+            if (ent != null && bodyNumber < ent.Bf.BoneTags.Count && ent.Bt.BtBody[bodyNumber] != null && ent.TypeFlags.HasFlag(ENTITY_TYPE.Dynamic))
+            {
+                var t = ent.Angles.X * RadPerDeg;
+                var ang1 = (float)Math.Sin(t);
+                var ang2 = (float)Math.Cos(t);
+                var ang3 = Math.Min(1.0f, Math.Abs(vFactor));
+
+                ent.Bt.BtBody[bodyNumber].LinearFactor = new Vector3(Math.Abs(ang1), Math.Abs(ang2), ang3);
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_APPLY_FORCE, id);
+            }
+        }
+
+        public static void lua_SetCharacterWeaponModel(uint id, int weaponModel, int state)
+        {
+            var ent = EngineWorld.GetCharacterByID(id);
+
+            if(ent != null)
+            {
+                ent.SetWeaponModel(weaponModel, state);
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+            }
+        }
+
+        public static int lua_GetCharacterCurrentWeapon(uint id)
+        {
+            var ent = EngineWorld.GetCharacterByID(id);
+
+            if (ent != null)
+            {
+                return ent.CurrentWeapon;
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                return -1;
+            }
+        }
+
+        public static void lua_SetCharacterCurrentWeapon(uint id, int weapon)
+        {
+            var ent = EngineWorld.GetCharacterByID(id);
+
+            if (ent != null)
+            {
+                ent.CurrentWeapon = weapon;
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+            }
+        }
+
+        #endregion
+
+        #region Camera functions
+
+        public static void lua_CamShake(float power, float time, uint? id = null)
+        {
+            if(id != null)
+            {
+                var ent = EngineWorld.GetEntityByID((uint) id);
+
+                var camPos = Renderer.Camera.Position;
+
+                var dist = ent.Transform.Origin.Distance(camPos);
+                dist = dist > TR_CAM_MAX_SHAKE_DISTANCE ? 0 : 1.0f - dist / TR_CAM_MAX_SHAKE_DISTANCE;
+
+                power *= dist;
+            }
+
+            if(power > 0.0f)
+                Renderer.Camera.Shake(power, time);
+        }
+
+        public static void lua_FlashSetup(byte alpha, byte R, byte G, byte B, ushort fadeinSpeed, ushort fadeoutSpeed)
+        {
+            Gui.FadeSetup(FaderType.Effect, alpha, R, G, B, BlendingMode.Multiply, fadeinSpeed, fadeoutSpeed);
+        }
+
+        public static void lua_FlashStart()
+        {
+            Gui.FadeStart(FaderType.Effect, FaderDir.Timed);
+        }
+
+        public static void lua_FadeOut()
+        {
+            Gui.FadeStart(FaderType.Effect, FaderDir.Out);
+        }
+
+        public static void lua_FadeIn()
+        {
+            Gui.FadeStart(FaderType.Effect, FaderDir.In);
+        }
+
+        public static bool lua_FadeCheck()
+        {
+            return Gui.FadeCheck(FaderType.Black) != FaderStatus.Idle;
+        }
+
+        #endregion
+        
+        #region General gameplay functions
+
+        public static void lua_PlayStream(uint id, byte mask = 0)
+        {
+            /*if (id < 0)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_STREAM_ID);
+                return;
+            }*/
+
+            Audio.StreamPlay(id, mask); // TODO: return value?
+        }
+
+        public static void lua_StopStreams()
+        {
+            Audio.StopStreams();
+        }
+
+        public static void lua_PlaySound(uint id, uint? entID = null)
+        {
+            //if (id < 0) return;
+
+            if(id > EngineWorld.AudioMap.Count)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_SOUND_ID, EngineWorld.AudioMap.Count);
+                return;
+            }
+
+            var eid = -1;
+            if (entID != null)
+                eid = (int) entID;
+            if (eid < 0 || EngineWorld.GetEntityByID((uint) eid) == null)
+                eid = -1;
+
+            TR_AUDIO_SEND result;
+
+            result = eid >= 0 ? Audio.Send(id, TR_AUDIO_EMITTER.Entity, eid) : Audio.Send(id, TR_AUDIO_EMITTER.Global);
+
+            if(result < 0)
+            {
+                switch(result)
+                {
+                    case TR_AUDIO_SEND.NoChannel:
+                        ConsoleInfo.Instance.Warning(Strings.SYSWARN_AS_NOCHANNEL);
+                        break;
+
+                    case TR_AUDIO_SEND.NoSample:
+                        ConsoleInfo.Instance.Warning(Strings.SYSWARN_AS_NOSAMPLE);
+                        break;
+                }
+            }
+        }
+
+        public static void lua_StopSound(uint id, uint? entID = null)
+        {
+            if (id > EngineWorld.AudioMap.Count)
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_SOUND_ID, EngineWorld.AudioMap.Count);
+                return;
+            }
+
+            var eid = -1;
+            if (entID != null)
+                eid = (int)entID;
+            if (eid < 0 || EngineWorld.GetEntityByID((uint)eid) == null)
+                eid = -1;
+
+            var result = eid == -1 ? Audio.Send(id, TR_AUDIO_EMITTER.Global) : Audio.Send(id, TR_AUDIO_EMITTER.Entity, eid);
+
+            if (result < 0)
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_AK_NOTPLAYED, id);
+        }
+
+        public static uint lua_GetLevel()
+        {
+            return GameflowManager.LevelID;
+        }
+
+        public static void lua_SetLevel(uint id)
+        {
+            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_CHANGING_LEVEL, id);
+
+            Game.LevelTransition((ushort)id);
+            GameflowManager.Send(GF_OP.LevelComplete, (int) id); // Next level
+        }
+
+        public static void lua_SetGame(byte gameID, uint? levelID = null)
+        {
+            GameflowManager.GameID = gameID;
+            if (levelID != null)
+                GameflowManager.LevelID = (uint) levelID;
+
+            var str = EngineLua.Call("getTitleScreen", gameID)[0].ToString();
+            Gui.FadeAssignPic(FaderType.LoadScreen, str);
+            Gui.FadeStart(FaderType.LoadScreen, FaderDir.Out);
+
+            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_CHANGING_GAME, gameID);
+            Game.LevelTransition((ushort)GameflowManager.LevelID);
+            GameflowManager.Send(GF_OP.LevelComplete, (int) GameflowManager.LevelID);
         }
 
         #endregion
