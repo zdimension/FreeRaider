@@ -827,6 +827,26 @@ namespace FreeRaider
         {
             return x * RadPerDeg;
         }
+
+        public static List<string> GetGlobals(this Lua state)
+        {
+            var result = new List<string>();
+            var L = state.GetLuaState();
+            LuaLib.LuaNetPushGlobalTable(L);
+            LuaLib.LuaPushNil(L);
+            while (LuaLib.LuaNext(L, -2) != 0)
+            {
+                result.Add(LuaLib.LuaToString(L, -2));
+                LuaLib.LuaPop(L, 1);
+            }
+            LuaLib.LuaPop(L, 1);
+            return result;
+        } 
+
+        public static string FirstLetterUppercase(this string s)
+        {
+            return char.ToUpper(s[0]) + s.Substring(1);
+        }
     }
 
     public partial class Constants

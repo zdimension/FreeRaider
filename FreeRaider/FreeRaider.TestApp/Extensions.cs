@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using NLua;
 
 namespace FreeRaider
 {
@@ -180,6 +181,19 @@ namespace FreeRaider
         public static bool HasFlagEx(this object theField, object theFlag)
         {
             return (Enum.ToObject(theFlag.GetType(), theField) as Enum).HasFlag(theFlag as Enum);
+        }
+
+        public static KeraLua.LuaState GetLuaState(this Lua lua)
+        {
+            return (KeraLua.LuaState)lua.GetInstanceField("luaState");
+        }
+
+        public static object GetInstanceField(this object instance, string fieldName)
+        {
+            var bindFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+                | BindingFlags.Static;
+            var field = instance.GetType().GetField(fieldName, bindFlags);
+            return field.GetValue(instance);
         }
     }
 }

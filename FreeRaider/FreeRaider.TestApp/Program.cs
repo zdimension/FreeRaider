@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using AT.MIN;
 using FreeRaider.Loader;
 using NLua;
@@ -95,6 +97,32 @@ end");
             state.DoString("print(hhhg[\"def\"])");
             state.RegisterFunction("sumlol", typeof (Program).GetMethod("sum"));
             state.DoString("print(sumlol(80, 2.8, 591, -258))");
+            Console.WriteLine(String.Join("; ", state.Globals));
+            Console.WriteLine();
+            var result = new List<string>();
+            var L = state.GetLuaState();
+            LuaLib.LuaNetPushGlobalTable(L);
+            LuaLib.LuaPushNil(L);
+            while(LuaLib.LuaNext(L, -2) != 0)
+            {
+                result.Add(LuaLib.LuaToString(L, -2));
+                LuaLib.LuaPop(L, 1);
+            }
+            LuaLib.LuaPop(L, 1);
+            Console.WriteLine(String.Join("; ", result));
+
+            state.DoString("CVAR_LUA_TABLE_NAME = {}");
+            Console.WriteLine(state["CVAR_LUA_TABLE_NAME"]);
+
+            state.RegisterFunction("wrlol",Console.Out, 
+                typeof (TextWriter).GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                    .First(
+                        x =>
+                            x.Name == "WriteLine" && x.GetParameters().Length == 1 &&
+                            x.GetParameters()[0].ParameterType == typeof (string)));
+            state.DoString("wrlol(\"abcd\")");
+
+
             /*state.DoString(
 "function print_r ( t ) \n " +
 "    local print_r_cache={}\n " +

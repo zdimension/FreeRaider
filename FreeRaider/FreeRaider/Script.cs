@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -2526,7 +2527,8 @@ namespace FreeRaider.Script
         {
             ExposeConstants();
             RegisterFunction("print", print);
-            //lua_atpanic(m_state.getState(), &ScriptEngine::panic); NOT NEEDE ANYMORE, NLua handles exceptions by itself
+            LuaLib.LuaAtPanic(state.GetLuaState(), panic);
+            // MAYBE NOT NEEDED ANYMORE, NLua handles exceptions by itself
         }
 
         public void DoFile(string filename)
@@ -2562,6 +2564,13 @@ namespace FreeRaider.Script
             state.RegisterFunction(funcName, m);
             state.RegisterFunction(funcName.ToLower(), m);
             state.RegisterFunction(funcName.ToUpper(), m);
+        }
+
+        public void RegisterC(string funcName, object target, MethodInfo m)
+        {
+            state.RegisterFunction(funcName, target, m);
+            state.RegisterFunction(funcName.ToLower(), target, m);
+            state.RegisterFunction(funcName.ToUpper(), target, m);
         }
 
         public void RegisterC(string funcName, Func<Lua, int> func)
@@ -2602,192 +2611,154 @@ namespace FreeRaider.Script
 
             state["Game"] = new Dictionary<string, int>
             {
-                {"I", (int)TRGame.TR1 },
-                {"I_DEMO", (int)TRGame.TR1Demo },
-                {"I_GOLD", (int)TRGame.TR1UnfinishedBusiness },
-                {"II", (int)TRGame.TR2 },
-                {"II_DEMO", (int)TRGame.TR2Demo },
-                {"II_GOLD", (int)TRGame.TR2Gold },
-                {"III", (int)TRGame.TR3 },
-                {"III_GOLD", (int)TRGame.TR3Gold },
-                {"IV", (int)TRGame.TR4 },
-                {"IV_DEMO", (int)TRGame.TR4Demo },
-                {"V", (int)TRGame.TR5 },
-                {"Unknown", (int)TRGame.Unknown },
+                {"I", (int) TRGame.TR1},
+                {"I_DEMO", (int) TRGame.TR1Demo},
+                {"I_GOLD", (int) TRGame.TR1UnfinishedBusiness},
+                {"II", (int) TRGame.TR2},
+                {"II_DEMO", (int) TRGame.TR2Demo},
+                {"II_GOLD", (int) TRGame.TR2Gold},
+                {"III", (int) TRGame.TR3},
+                {"III_GOLD", (int) TRGame.TR3Gold},
+                {"IV", (int) TRGame.TR4},
+                {"IV_DEMO", (int) TRGame.TR4Demo},
+                {"V", (int) TRGame.TR5},
+                {"Unknown", (int) TRGame.Unknown},
             };
 
             state["Engine"] = new Dictionary<string, int>
             {
-                {"I", (int)Loader.Engine.TR1 },
-                {"II", (int)Loader.Engine.TR2 },
-                {"III", (int)Loader.Engine.TR3 },
-                {"IV", (int)Loader.Engine.TR4 },
-                {"V", (int)Loader.Engine.TR5 },
-                {"Unknown", (int)Loader.Engine.Unknown },
+                {"I", (int) Loader.Engine.TR1},
+                {"II", (int) Loader.Engine.TR2},
+                {"III", (int) Loader.Engine.TR3},
+                {"IV", (int) Loader.Engine.TR4},
+                {"V", (int) Loader.Engine.TR5},
+                {"Unknown", (int) Loader.Engine.Unknown},
             };
 
-            EXPOSE_C("ENTITY_TYPE_GENERIC", (int)ENTITY_TYPE.Generic);
-            EXPOSE_C("ENTITY_TYPE_INTERACTIVE", (int)ENTITY_TYPE.Interactive);
-            EXPOSE_C("ENTITY_TYPE_TRIGGER_ACTIVATOR", (int)ENTITY_TYPE.TriggerActivator);
-            EXPOSE_C("ENTITY_TYPE_HEAVYTRIGGER_ACTIVATOR", (int)ENTITY_TYPE.HeavyTriggerActivator);
-            EXPOSE_C("ENTITY_TYPE_PICKABLE", (int)ENTITY_TYPE.Pickable);
-            EXPOSE_C("ENTITY_TYPE_TRAVERSE", (int)ENTITY_TYPE.Traverse);
-            EXPOSE_C("ENTITY_TYPE_TRAVERSE_FLOOR", (int)ENTITY_TYPE.TraverseFloor);
-            EXPOSE_C("ENTITY_TYPE_DYNAMIC", (int)ENTITY_TYPE.Dynamic);
-            EXPOSE_C("ENTITY_TYPE_ACTOR", (int)ENTITY_TYPE.Actor);
-            EXPOSE_C("ENTITY_TYPE_COLLCHECK", (int)ENTITY_TYPE.CollCheck);
+            state["ENTITY_TYPE_GENERIC"] = (int) ENTITY_TYPE.Generic;
+            state["ENTITY_TYPE_INTERACTIVE"] = (int) ENTITY_TYPE.Interactive;
+            state["ENTITY_TYPE_TRIGGER_ACTIVATOR"] = (int) ENTITY_TYPE.TriggerActivator;
+            state["ENTITY_TYPE_HEAVYTRIGGER_ACTIVATOR"] = (int) ENTITY_TYPE.HeavyTriggerActivator;
+            state["ENTITY_TYPE_PICKABLE"] = (int) ENTITY_TYPE.Pickable;
+            state["ENTITY_TYPE_TRAVERSE"] = (int) ENTITY_TYPE.Traverse;
+            state["ENTITY_TYPE_TRAVERSE_FLOOR"] = (int) ENTITY_TYPE.TraverseFloor;
+            state["ENTITY_TYPE_DYNAMIC"] = (int) ENTITY_TYPE.Dynamic;
+            state["ENTITY_TYPE_ACTOR"] = (int) ENTITY_TYPE.Actor;
+            state["ENTITY_TYPE_COLLCHECK"] = (int) ENTITY_TYPE.CollCheck;
 
-            EXPOSE_C("ENTITY_CALLBACK_NONE", (int)ENTITY_CALLBACK.None);
-            EXPOSE_C("ENTITY_CALLBACK_ACTIVATE", (int)ENTITY_CALLBACK.Activate);
-            EXPOSE_C("ENTITY_CALLBACK_DEACTIVATE", (int)ENTITY_CALLBACK.Deactivate);
-            EXPOSE_C("ENTITY_CALLBACK_COLLISION", (int)ENTITY_CALLBACK.Collision);
-            EXPOSE_C("ENTITY_CALLBACK_STAND", (int)ENTITY_CALLBACK.Stand);
-            EXPOSE_C("ENTITY_CALLBACK_HIT", (int)ENTITY_CALLBACK.Hit);
-            EXPOSE_C("ENTITY_CALLBACK_ROOMCOLLISION", (int)ENTITY_CALLBACK.RoomCollision);
+            state["ENTITY_CALLBACK_NONE"] = (int) ENTITY_CALLBACK.None;
+            state["ENTITY_CALLBACK_ACTIVATE"] = (int) ENTITY_CALLBACK.Activate;
+            state["ENTITY_CALLBACK_DEACTIVATE"] = (int) ENTITY_CALLBACK.Deactivate;
+            state["ENTITY_CALLBACK_COLLISION"] = (int) ENTITY_CALLBACK.Collision;
+            state["ENTITY_CALLBACK_STAND"] = (int) ENTITY_CALLBACK.Stand;
+            state["ENTITY_CALLBACK_HIT"] = (int) ENTITY_CALLBACK.Hit;
+            state["ENTITY_CALLBACK_ROOMCOLLISION"] = (int) ENTITY_CALLBACK.RoomCollision;
 
-            EXPOSE_C("COLLISION_TYPE_NONE", (int)COLLISION_TYPE.None);
-            EXPOSE_C("COLLISION_TYPE_STATIC", (int)COLLISION_TYPE.Static);
-            EXPOSE_C("COLLISION_TYPE_KINEMATIC", (int)COLLISION_TYPE.Kinematic);
-            EXPOSE_C("COLLISION_TYPE_DYNAMIC", (int)COLLISION_TYPE.Dynamic);
-            EXPOSE_C("COLLISION_TYPE_ACTOR", (int)COLLISION_TYPE.Actor);
-            EXPOSE_C("COLLISION_TYPE_VEHICLE", (int)COLLISION_TYPE.Vehicle);
-            EXPOSE_C("COLLISION_TYPE_GHOST", (int)COLLISION_TYPE.Ghost);
+            state["COLLISION_TYPE_NONE"] = (int) COLLISION_TYPE.None;
+            state["COLLISION_TYPE_STATIC"] = (int) COLLISION_TYPE.Static;
+            state["COLLISION_TYPE_KINEMATIC"] = (int) COLLISION_TYPE.Kinematic;
+            state["COLLISION_TYPE_DYNAMIC"] = (int) COLLISION_TYPE.Dynamic;
+            state["COLLISION_TYPE_ACTOR"] = (int) COLLISION_TYPE.Actor;
+            state["COLLISION_TYPE_VEHICLE"] = (int) COLLISION_TYPE.Vehicle;
+            state["COLLISION_TYPE_GHOST"] = (int) COLLISION_TYPE.Ghost;
 
-            EXPOSE_C("COLLISION_SHAPE_BOX", (int)COLLISION_SHAPE.Box);
-            EXPOSE_C("COLLISION_SHAPE_BOX_BASE", (int)COLLISION_SHAPE.BoxBase);
-            EXPOSE_C("COLLISION_SHAPE_SPHERE", (int)COLLISION_SHAPE.Sphere);
-            EXPOSE_C("COLLISION_SHAPE_TRIMESH", (int)COLLISION_SHAPE.Trimesh);
-            EXPOSE_C("COLLISION_SHAPE_TRIMESH_CONVEX", (int) COLLISION_SHAPE.TrimeshConvex);
+            state["COLLISION_SHAPE_BOX"] = (int) COLLISION_SHAPE.Box;
+            state["COLLISION_SHAPE_BOX_BASE"] = (int) COLLISION_SHAPE.BoxBase;
+            state["COLLISION_SHAPE_SPHERE"] = (int) COLLISION_SHAPE.Sphere;
+            state["COLLISION_SHAPE_TRIMESH"] = (int) COLLISION_SHAPE.Trimesh;
+            state["COLLISION_SHAPE_TRIMESH_CONVEX"] = (int) COLLISION_SHAPE.TrimeshConvex;
 
-            EXPOSE_C("SECTOR_MATERIAL_MUD", (int)SectorMaterial.Mud);
-            EXPOSE_C("SECTOR_MATERIAL_SNOW", (int)SectorMaterial.Snow);
-            EXPOSE_C("SECTOR_MATERIAL_SAND", (int)SectorMaterial.Sand);
-            EXPOSE_C("SECTOR_MATERIAL_GRAVEL", (int)SectorMaterial.Gravel);
-            EXPOSE_C("SECTOR_MATERIAL_ICE", (int)SectorMaterial.Ice);
-            EXPOSE_C("SECTOR_MATERIAL_WATER", (int)SectorMaterial.Water);
-            EXPOSE_C("SECTOR_MATERIAL_STONE", (int)SectorMaterial.Stone);
-            EXPOSE_C("SECTOR_MATERIAL_WOOD", (int)SectorMaterial.Wood);
-            EXPOSE_C("SECTOR_MATERIAL_METAL", (int)SectorMaterial.Metal);
-            EXPOSE_C("SECTOR_MATERIAL_MARBLE", (int)SectorMaterial.Marble);
-            EXPOSE_C("SECTOR_MATERIAL_GRASS", (int)SectorMaterial.Grass);
-            EXPOSE_C("SECTOR_MATERIAL_CONCRETE", (int)SectorMaterial.Concrete);
-            EXPOSE_C("SECTOR_MATERIAL_OLDWOOD", (int)SectorMaterial.OldWood);
-            EXPOSE_C("SECTOR_MATERIAL_OLDMETAL", (int) SectorMaterial.OldMetal);
+            state["SECTOR_MATERIAL_MUD"] = (int) SectorMaterial.Mud;
+            state["SECTOR_MATERIAL_SNOW"] = (int) SectorMaterial.Snow;
+            state["SECTOR_MATERIAL_SAND"] = (int) SectorMaterial.Sand;
+            state["SECTOR_MATERIAL_GRAVEL"] = (int) SectorMaterial.Gravel;
+            state["SECTOR_MATERIAL_ICE"] = (int) SectorMaterial.Ice;
+            state["SECTOR_MATERIAL_WATER"] = (int) SectorMaterial.Water;
+            state["SECTOR_MATERIAL_STONE"] = (int) SectorMaterial.Stone;
+            state["SECTOR_MATERIAL_WOOD"] = (int) SectorMaterial.Wood;
+            state["SECTOR_MATERIAL_METAL"] = (int) SectorMaterial.Metal;
+            state["SECTOR_MATERIAL_MARBLE"] = (int) SectorMaterial.Marble;
+            state["SECTOR_MATERIAL_GRASS"] = (int) SectorMaterial.Grass;
+            state["SECTOR_MATERIAL_CONCRETE"] = (int) SectorMaterial.Concrete;
+            state["SECTOR_MATERIAL_OLDWOOD"] = (int) SectorMaterial.OldWood;
+            state["SECTOR_MATERIAL_OLDMETAL"] = (int) SectorMaterial.OldMetal;
 
-            EXPOSE_C("ANIM_NORMAL_CONTROL", (int)AnimControlFlags.NormalControl);
-            EXPOSE_C("ANIM_LOOP_LAST_FRAME", (int)AnimControlFlags.LoopLastFrame);
-            EXPOSE_C("ANIM_LOCK", (int)AnimControlFlags.Lock);
+            state["ANIM_NORMAL_CONTROL"] = (int) AnimControlFlags.NormalControl;
+            state["ANIM_LOOP_LAST_FRAME"] = (int) AnimControlFlags.LoopLastFrame;
+            state["ANIM_LOCK"] = (int) AnimControlFlags.Lock;
 
-            EXPOSE_C("ACT_ACTION", (int)ACTIONS.Action);
+            state["ACT_ACTION"] = (int) ACTIONS.Action;
 
             TODO
             SDL KEYS;
 
-            EXPOSE_CC("PARAM_HEALTH");
-            EXPOSE_CC("PARAM_AIR");
-            EXPOSE_CC("PARAM_STAMINA");
-            EXPOSE_CC("PARAM_WARMTH");
-            EXPOSE_CC("PARAM_POISON");
-            EXPOSE_CC("PARAM_EXTRA1");
-            EXPOSE_CC("PARAM_EXTRA2");
-            EXPOSE_CC("PARAM_EXTRA3");
-            EXPOSE_CC("PARAM_EXTRA4");
+            state["PARAM_HEALTH"] = (int) CharParameters.Health;
+            state["PARAM_AIR"] = (int) CharParameters.Air;
+            state["PARAM_STAMINA"] = (int) CharParameters.Stamina;
+            state["PARAM_WARMTH"] = (int) CharParameters.Warmth;
+            state["PARAM_POISON"] = (int) CharParameters.Poison;
+            state["PARAM_EXTRA1"] = (int) CharParameters.Extra1;
+            state["PARAM_EXTRA2"] = (int) CharParameters.Extra2;
+            state["PARAM_EXTRA3"] = (int) CharParameters.Extra3;
+            state["PARAM_EXTRA4"] = (int) CharParameters.Extra4;
 
-            EXPOSE_C("PARAM_ABSOLUTE_MAX");
+            state["PARAM_ABSOLUTE_MAX"] = PARAM_ABSOLUTE_MAX;
 
-            EXPOSE_C("BODY_PART_BODY_LOW");
-            EXPOSE_C("BODY_PART_BODY_UPPER");
-            EXPOSE_C("BODY_PART_HEAD");
+            state["BODY_PART_BODY_LOW"] = (int) BODY_PART.BodyLow;
+            state["BODY_PART_BODY_UPPER"] = (int) BODY_PART.BodyUpper;
+            state["BODY_PART_HEAD"] = (int) BODY_PART.Head;
 
-            EXPOSE_C("BODY_PART_LEFT_HAND_1" );
-            EXPOSE_C("BODY_PART_LEFT_HAND_2" );
-            EXPOSE_C("BODY_PART_LEFT_HAND_3" );
-            EXPOSE_C("BODY_PART_RIGHT_HAND_1");
-            EXPOSE_C("BODY_PART_RIGHT_HAND_2");
-            EXPOSE_C("BODY_PART_RIGHT_HAND_3");
+            state["BODY_PART_LEFT_HAND_1"] = (int) BODY_PART.LeftHand1;
+            state["BODY_PART_LEFT_HAND_2"] = (int) BODY_PART.LeftHand2;
+            state["BODY_PART_LEFT_HAND_3"] = (int) BODY_PART.LeftHand3;
+            state["BODY_PART_RIGHT_HAND_1"] = (int) BODY_PART.RightHand1;
+            state["BODY_PART_RIGHT_HAND_2"] = (int) BODY_PART.RightHand2;
+            state["BODY_PART_RIGHT_HAND_3"] = (int) BODY_PART.RightHand3;
 
-            EXPOSE_C("BODY_PART_LEFT_LEG_1" );
-            EXPOSE_C("BODY_PART_LEFT_LEG_2" );
-            EXPOSE_C("BODY_PART_LEFT_LEG_3" );
-            EXPOSE_C("BODY_PART_RIGHT_LEG_1");
-            EXPOSE_C("BODY_PART_RIGHT_LEG_2");
-            EXPOSE_C("BODY_PART_RIGHT_LEG_3");
+            state["BODY_PART_LEFT_LEG_1"] = (int) BODY_PART.LeftLeg1;
+            state["BODY_PART_LEFT_LEG_2"] = (int) BODY_PART.LeftLeg2;
+            state["BODY_PART_LEFT_LEG_3"] = (int) BODY_PART.LeftLeg3;
+            state["BODY_PART_RIGHT_LEG_1"] = (int) BODY_PART.RightLeg1;
+            state["BODY_PART_RIGHT_LEG_2"] = (int) BODY_PART.RightLeg2;
+            state["BODY_PART_RIGHT_LEG_3"] = (int) BODY_PART.RightLeg3;
 
-            EXPOSE_C("HAIR_TR1");
-            EXPOSE_C("HAIR_TR2");
-            EXPOSE_C("HAIR_TR3");
-            EXPOSE_C("HAIR_TR4_KID_1");
-            EXPOSE_C("HAIR_TR4_KID_2");
-            EXPOSE_C("HAIR_TR4_OLD");
-            EXPOSE_C("HAIR_TR5_KID_1");
-            EXPOSE_C("HAIR_TR5_KID_2");
-            EXPOSE_C("HAIR_TR5_OLD");
+            state["HAIR_TR1"] = (int) HairType.TR1;
+            state["HAIR_TR2"] = (int) HairType.TR2;
+            state["HAIR_TR3"] = (int) HairType.TR3;
+            state["HAIR_TR4_KID_1"] = (int) HairType.TR4_Kid1;
+            state["HAIR_TR4_KID_2"] = (int) HairType.TR4_Kid2;
+            state["HAIR_TR4_OLD"] = (int) HairType.TR4_Old;
+            state["HAIR_TR5_KID_1"] = (int) HairType.TR5_Kid1;
+            state["HAIR_TR5_KID_2"] = (int) HairType.TR5_Kid2;
+            state["HAIR_TR5_OLD"] = (int) HairType.TR5_Old;
 
+            state["M_PI"] = Math.PI;
 
-            EXPOSE_C("PARAM_HEALTH", (int)CharParameters.Health);
-            EXPOSE_C("PARAM_AIR", (int)CharParameters.Air);
-            EXPOSE_C("PARAM_STAMINA", (int)CharParameters.Stamina);
-            EXPOSE_C("PARAM_WARMTH", (int)CharParameters.Warmth);
-            EXPOSE_C("PARAM_POISON", (int)CharParameters.Poison);
-            EXPOSE_C("PARAM_EXTRA1", (int)CharParameters.Extra1);
-            EXPOSE_C("PARAM_EXTRA2", (int)CharParameters.Extra2);
-            EXPOSE_C("PARAM_EXTRA3", (int)CharParameters.Extra3);
-            EXPOSE_C("PARAM_EXTRA4", (int)CharParameters.Extra4);
+            state["FONTSTYLE_CONSOLE_INFO"] = (int) FontStyle.ConsoleInfo;
+            state["FONTSTYLE_CONSOLE_WARNING"] = (int) FontStyle.ConsoleWarning;
+            state["FONTSTYLE_CONSOLE_EVENT"] = (int) FontStyle.ConsoleEvent;
+            state["FONTSTYLE_CONSOLE_NOTIFY"] = (int) FontStyle.ConsoleNotify;
+            state["FONTSTYLE_MENU_TITLE"] = (int) FontStyle.MenuTitle;
+            state["FONTSTYLE_MENU_HEADING1"] = (int) FontStyle.MenuHeading1;
+            state["FONTSTYLE_MENU_HEADING2"] = (int) FontStyle.MenuHeading2;
+            state["FONTSTYLE_MENU_ITEM_ACTIVE"] = (int) FontStyle.MenuItemActive;
+            state["FONTSTYLE_MENU_ITEM_INACTIVE"] = (int) FontStyle.MenuItemInactive;
+            state["FONTSTYLE_MENU_CONTENT"] = (int) FontStyle.MenuContent;
+            state["FONTSTYLE_STATS_TITLE"] = (int) FontStyle.StatsTitle;
+            state["FONTSTYLE_STATS_CONTENT"] = (int) FontStyle.StatsContent;
+            state["FONTSTYLE_NOTIFIER"] = (int) FontStyle.Notifier;
+            state["FONTSTYLE_SAVEGAMELIST"] = (int) FontStyle.SavegameList;
+            state["FONTSTYLE_GENERIC"] = (int) FontStyle.Generic;
 
-            EXPOSE_C("PARAM_ABSOLUTE_MAX", PARAM_ABSOLUTE_MAX);
-
-            EXPOSE_C("BODY_PART_BODY_LOW", BODY_PART.BodyLow);
-            EXPOSE_C("BODY_PART_BODY_UPPER", BODY_PART.BodyUpper);
-            EXPOSE_C("BODY_PART_HEAD", BODY_PART.Head);
-
-            EXPOSE_C("BODY_PART_LEFT_HAND_1" , (int)BODY_PART.LeftHand1);
-            EXPOSE_C("BODY_PART_LEFT_HAND_2" , (int)BODY_PART.LeftHand2);
-            EXPOSE_C("BODY_PART_LEFT_HAND_3" , (int)BODY_PART.LeftHand3);
-            EXPOSE_C("BODY_PART_RIGHT_HAND_1", (int)BODY_PART.RightHand1);
-            EXPOSE_C("BODY_PART_RIGHT_HAND_2", (int)BODY_PART.RightHand2);
-            EXPOSE_C("BODY_PART_RIGHT_HAND_3", (int)BODY_PART.RightHand3);
-
-            EXPOSE_C("BODY_PART_LEFT_LEG_1" , (int)BODY_PART.LeftLeg1);
-            EXPOSE_C("BODY_PART_LEFT_LEG_2" , (int)BODY_PART.LeftLeg2);
-            EXPOSE_C("BODY_PART_LEFT_LEG_3" , (int)BODY_PART.LeftLeg3);
-            EXPOSE_C("BODY_PART_RIGHT_LEG_1", (int)BODY_PART.RightLeg1);
-            EXPOSE_C("BODY_PART_RIGHT_LEG_2", (int)BODY_PART.RightLeg2);
-            EXPOSE_C("BODY_PART_RIGHT_LEG_3", (int)BODY_PART.RightLeg3);
-
-            EXPOSE_C("HAIR_TR1", (int)HairType.TR1);
-            EXPOSE_C("HAIR_TR2", (int)HairType.TR2);
-            EXPOSE_C("HAIR_TR3", (int)HairType.TR3);
-            EXPOSE_C("HAIR_TR4_KID_1", (int)HairType.TR4_Kid1);
-            EXPOSE_C("HAIR_TR4_KID_2", (int)HairType.TR4_Kid2);
-            EXPOSE_C("HAIR_TR4_OLD", (int)HairType.TR4_Old);
-            EXPOSE_C("HAIR_TR5_KID_1", (int)HairType.TR5_Kid1);
-            EXPOSE_C("HAIR_TR5_KID_2", (int)HairType.TR5_Kid2);
-            EXPOSE_C("HAIR_TR5_OLD", (int)HairType.TR5_Old);
-
-            EXPOSE_C("M_PI", Math.PI);
+            state["FONT_PRIMARY"] = (int) FontType.Primary;
+            state["FONT_SECONDARY"] = (int) FontType.Secondary;
+            state["FONT_CONSOLE"] = (int) FontType.Console;
         }
 
-        private void EXPOSE_C(string name)
+        public List<string> GetGlobals()
         {
-            state[name] = typeof (Constants).GetField(name).GetValue(null);
+            return state.GetGlobals();
         }
-
-        private void EXPOSE_C(string name, object value)
-        {
-            state[name] = value;
-        }
-
-        private void EXPOSE_CC(string name)
-        {
-            state[name] = (int)(dynamic)typeof(Constants).GetField(name).GetValue(null);
-        }
-
-        /*private void EXPOSE_CC(string name, object value)
-        {
-            state[name] = (int) (dynamic) value;
-        }*/
-
-        public List<string> GetGlobals();
 
         public void ParseScreen(ScreenInfo sc);
 
@@ -2862,16 +2833,21 @@ namespace FreeRaider.Script
             return 0;
         }
 
-        private static int panic(NLua.Lua state)
+        /// <summary>
+        /// Called when something goes absolutely horribly wrong in Lua, and tries
+        /// to produce some debug output. Lua calls abort afterwards, so sending
+        /// the output to the internal console is not an option.
+        /// </summary>
+        private static int panic(LuaState state)
         {
-            if(LuaCore.LuaGetTop(state.GetLuaState()) < 1)
+            if(LuaCore.LuaGetTop(state) < 1)
             {
                 Console.Error.WriteLine("Fatal lua error (no details provided).");
             }
             else
             {
                 uint tmp;
-                Console.Error.WriteLine("Fatal lua error: {0}", LuaCore.LuaToLString(state.GetLuaState(), 1, out tmp).ToString());
+                Console.Error.WriteLine("Fatal lua error: {0}", LuaCore.LuaToLString(state, 1, out tmp));
             }
             Console.Error.Flush();
             return 0;
@@ -2957,7 +2933,200 @@ namespace FreeRaider.Script
 
         public static int ParseInt(string str, int index);
 
-        private void registerMainFunctions();
+        private void registerMainFunctions()
+        {
+            // Register globals
+
+            state.DoString(CVAR_LUA_TABLE_NAME + " = {}");
+
+            Game.RegisterLUAFunctions(this);
+
+            // Register script functions
+
+            RegisterC("checkStack", this, typeof(ScriptEngine).GetMethod("CheckStack"));
+            registerLuaFunc("dumpModel");
+            registerLuaFunc("dumpRoom");
+            registerLuaFunc("setRoomEnabled");
+
+            registerLuaFunc("playSound");
+            registerLuaFunc("stopSound");
+
+            registerLuaFunc("playStream");
+            registerLuaFunc("stopStreams");
+
+            registerLuaFunc("setLevel");
+            registerLuaFunc("getLevel");
+
+            registerLuaFunc("setGame");
+            registerLuaFunc("loadMap");
+
+            registerLuaFunc("camShake");
+
+            registerLuaFunc("fadeOut");
+            registerLuaFunc("fadeIn");
+            registerLuaFunc("fadeCheck");
+
+            registerLuaFunc("flashSetup");
+            registerLuaFunc("flashStart");
+
+            registerLuaFunc("getEngineVersion");
+
+            registerLuaFunc("setFlipMap");
+            registerLuaFunc("getFlipMap");
+            registerLuaFunc("setFlipState");
+            registerLuaFunc("getFlipState");
+
+            registerLuaFunc("setModelCollisionMapSize");
+            registerLuaFunc("setModelCollisionMap");
+            registerLuaFunc("getAnimCommandTransform");
+            registerLuaFunc("setAnimCommandTransform");
+            registerLuaFunc("setStateChangeRange");
+            registerLuaFunc("setAnimVerticalSpeed");
+
+            registerLuaFunc("addItem");
+            registerLuaFunc("removeItem");
+            registerLuaFunc("removeAllItems");
+            registerLuaFunc("getItemsCount");
+            registerLuaFunc("createBaseItem");
+            registerLuaFunc("deleteBaseItem");
+            registerLuaFunc("printItems");
+
+            registerLuaFunc("canTriggerEntity");
+            registerLuaFunc("spawnEntity");
+            registerLuaFunc("deleteEntity");
+            registerLuaFunc("enableEntity");
+            registerLuaFunc("disableEntity");
+
+            registerLuaFunc("isInRoom");
+            registerLuaFunc("sameRoom");
+            registerLuaFunc("sameSector");
+            registerLuaFunc("newSector");
+            registerLuaFunc("similarSector");
+            registerLuaFunc("getSectorHeight");
+
+            registerLuaFunc("moveEntityGlobal");
+            registerLuaFunc("moveEntityLocal");
+            registerLuaFunc("moveEntityToSink");
+            registerLuaFunc("moveEntityToEntity");
+            registerLuaFunc("rotateEntity");
+            registerLuaFunc("rotateEntityToEntity");
+
+            registerLuaFunc("getEntityModelID");
+
+            registerLuaFunc("getEntityVector");
+            registerLuaFunc("getEntityDirDot");
+            registerLuaFunc("getEntityOrientation");
+            registerLuaFunc("getEntityDistance");
+            registerLuaFunc("getEntityPos");
+            registerLuaFunc("setEntityPos");
+            registerLuaFunc("getEntityAngles");
+            registerLuaFunc("setEntityAngles");
+            registerLuaFunc("getEntityScaling");
+            registerLuaFunc("setEntityScaling");
+            registerLuaFunc("getEntitySpeed");
+            registerLuaFunc("setEntitySpeed");
+            registerLuaFunc("getEntitySpeedLinear");
+            registerLuaFunc("setEntityCollision");
+            registerLuaFunc("setEntityCollisionFlags");
+            registerLuaFunc("getEntityAnim");
+            registerLuaFunc("setEntityAnim");
+            registerLuaFunc("setEntityAnimFlag");
+            registerLuaFunc("setEntityBodyPartFlag");
+            registerLuaFunc("setModelBodyPartFlag");
+            registerLuaFunc("getEntityModel");
+            registerLuaFunc("getEntityVisibility");
+            registerLuaFunc("setEntityVisibility");
+            registerLuaFunc("getEntityActivity");
+            registerLuaFunc("setEntityActivity");
+            registerLuaFunc("getEntityEnability");
+            registerLuaFunc("getEntityOCB");
+            registerLuaFunc("setEntityOCB");
+            registerLuaFunc("getEntityTimer");
+            registerLuaFunc("setEntityTimer");
+            registerLuaFunc("getEntityFlags");
+            registerLuaFunc("setEntityFlags");
+            registerLuaFunc("getEntityTypeFlag");
+            registerLuaFunc("setEntityTypeFlag");
+            registerLuaFunc("getEntityStateFlag");
+            registerLuaFunc("setEntityStateFlag");
+            registerLuaFunc("getEntityCallbackFlag");
+            registerLuaFunc("setEntityCallbackFlag");
+            registerLuaFunc("getEntityState");
+            registerLuaFunc("setEntityState");
+            registerLuaFunc("setEntityRoomMove");
+            registerLuaFunc("getEntityMoveType");
+            registerLuaFunc("setEntityMoveType");
+            registerLuaFunc("getEntityResponse");
+            registerLuaFunc("setEntityResponse");
+            registerLuaFunc("getEntityMeshCount");
+            registerLuaFunc("setEntityMeshswap");
+            registerLuaFunc("setModelMeshReplaceFlag");
+            registerLuaFunc("setModelAnimReplaceFlag");
+            registerLuaFunc("copyMeshFromModelToModel");
+
+            registerLuaFunc("createEntityGhosts");
+            registerLuaFunc("setEntityBodyMass");
+            registerLuaFunc("pushEntityBody");
+            registerLuaFunc("lockEntityBodyLinearFactor");
+
+            registerLuaFunc("getEntityTriggerLayout");
+            registerLuaFunc("setEntityTriggerLayout");
+            registerLuaFunc("getEntityMask");
+            registerLuaFunc("setEntityMask");
+            registerLuaFunc("getEntityEvent");
+            registerLuaFunc("setEntityEvent");
+            registerLuaFunc("getEntityLock");
+            registerLuaFunc("setEntityLock");
+            registerLuaFunc("getEntitySectorStatus");
+            registerLuaFunc("setEntitySectorStatus");
+
+            registerLuaFunc("getEntityActivationOffset");
+            registerLuaFunc("setEntityActivationOffset");
+            registerLuaFunc("getEntitySectorIndex");
+            registerLuaFunc("getEntitySectorFlags");
+            registerLuaFunc("getEntitySectorMaterial");
+            registerLuaFunc("getEntitySubstanceState");
+
+            registerLuaFunc("addEntityRagdoll");
+            registerLuaFunc("removeEntityRagdoll");
+
+            registerLuaFunc("getCharacterParam");
+            registerLuaFunc("setCharacterParam");
+            registerLuaFunc("changeCharacterParam");
+            registerLuaFunc("getCharacterCurrentWeapon");
+            registerLuaFunc("setCharacterCurrentWeapon");
+            registerLuaFunc("setCharacterWeaponModel");
+            registerLuaFunc("getCharacterCombatMode");
+
+            registerLuaFunc("addCharacterHair");
+            registerLuaFunc("resetCharacterHair");
+
+            registerLuaFunc("getSecretStatus");
+            registerLuaFunc("setSecretStatus");
+
+            registerLuaFunc("getActionState");
+            registerLuaFunc("getActionChange");
+
+            registerLuaFunc("genUVRotateAnimation");
+
+            registerLuaFunc("getGravity");
+            registerLuaFunc("setGravity");
+            registerLuaFunc("dropEntity");
+            RegisterC("bind", this, typeof(MainEngine).GetMethod("BindKey"));
+
+            registerLuaFunc("addFont");
+            registerLuaFunc("deleteFont");
+            registerLuaFunc("addFontStyle");
+            registerLuaFunc("deleteFontStyle");
+        }
+
+        private void registerLuaFunc(string name)
+        {
+            var m = typeof (luaFuncs).GetMethod("lua_" + name.FirstLetterUppercase()) ??
+                    typeof (luaFuncs).GetMethod("lua_" + name) ??
+                    typeof (luaFuncs).GetMethod(name);
+            if(m != null) RegisterC(name, m);
+        }
     }
 }
 
