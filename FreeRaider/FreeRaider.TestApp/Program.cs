@@ -122,6 +122,10 @@ end");
                             x.GetParameters()[0].ParameterType == typeof (string)));
             state.DoString("wrlol(\"abcd\")");
 
+            state.DoString("abclol = {abc=5, def=8, ghi=9}");
+
+           Console.WriteLine(((dynamic)state["abclol"])["def"]);
+
 
             /*state.DoString(
 "function print_r ( t ) \n " +

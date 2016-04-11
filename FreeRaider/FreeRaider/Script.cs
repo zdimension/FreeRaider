@@ -2541,7 +2541,7 @@ namespace FreeRaider.Script
             state.DoString(script);
         }
 
-        public object this[string key] => Get(key);
+        public dynamic this[string key] => Get(key);
 
         public object Get(string key)
         {
@@ -2766,11 +2766,47 @@ namespace FreeRaider.Script
 
         public void ParseAudio(AudioSettings au);
 
-        public void ParseConsole(ConsoleInfo cn);
+        public void ParseConsole(ConsoleInfo cn)
+        {
+            var r = (float) statedyn["console"]["background_color"]["r"];
+            var g = (float) statedyn["console"]["background_color"]["g"];
+            var b = (float) statedyn["console"]["background_color"]["b"];
+            var a = (float) statedyn["console"]["background_color"]["a"];
+            cn.SetBackgroundColor(r / 255, g / 255, b / 255, a / 255);
+
+            var tmpF = (float) statedyn["console"]["spacing"];
+            if (tmpF.IsBetween(CON_MIN_LINE_INTERVAL, CON_MAX_LINE_INTERVAL))
+                cn.Spacing = tmpF;
+
+            var tmpI = (int) statedyn["console"]["line_size"];
+            if (tmpI.IsBetween(CON_MIN_LINE_SIZE, CON_MAX_LINE_SIZE))
+                cn.LineSize = (ushort)tmpI;
+
+            tmpI = (ushort)statedyn["console"]["showing_lines"];
+            if (tmpI.IsBetween(CON_MIN_LINES, CON_MAX_LINES))
+                cn.VisibleLines = tmpI;
+
+            tmpI = (ushort)statedyn["console"]["log_size"];
+            if (tmpI.IsBetween(CON_MIN_LOG, CON_MAX_LOG))
+                cn.HistorySize = tmpI;
+
+            tmpI = (ushort)statedyn["console"]["lines_count"];
+            if (tmpI.IsBetween(CON_MIN_LOG, CON_MAX_LOG))
+                cn.BufferSize = tmpI;
+
+            var tmpB = (bool) statedyn["console"]["show"];
+            cn.IsVisible = tmpB;
+
+            tmpF = (float) statedyn["console"]["show_cursor_period"];
+            cn.BlinkPeriod = tmpF;
+        }
 
         public void ParseControls(ControlSettings cs);
 
-        public void ParseSystem(SystemSettings ss);
+        public void ParseSystem(SystemSettings ss)
+        {
+            ss.Logging = (bool) statedyn["system"]["logging"];
+        }
 
         protected void CheckStack()
         {
@@ -2778,6 +2814,8 @@ namespace FreeRaider.Script
         }
 
         public NLua.Lua state;
+
+        private dynamic statedyn => (dynamic) state;
 
         private static int print(NLua.Lua state)
         {
