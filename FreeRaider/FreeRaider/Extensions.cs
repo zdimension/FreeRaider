@@ -360,6 +360,11 @@ namespace FreeRaider
             else return v;
         }
 
+        public static string ClampStr(this string str, int length)
+        {
+            return str.Length > length ? str.Substring(0, length) : str;
+        }
+
         public static SndFileInfo GetSndFileInfo(this SndFile f)
         {
             return

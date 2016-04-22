@@ -20,6 +20,10 @@ namespace FreeRaider
 {
     public partial class Constants
     {
+        /// <summary>
+        /// TODO: Don't use this!
+        /// </summary>
+        [Obsolete("Remove this, not needed in C#")]
         public const int MAX_ENGINE_PATH = 1024;
 
         public const int COLLISION_NONE = 0x0000;

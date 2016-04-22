@@ -2760,48 +2760,117 @@ namespace FreeRaider.Script
             return state.GetGlobals();
         }
 
-        public void ParseScreen(ScreenInfo sc);
+        public void ParseScreen(ScreenInfo sc)
+        {
+            var scr = statedyn["screen"];
+            sc.X = (short) scr["x"];
+            sc.Y = (short) scr["y"];
+            sc.W = (short) scr["width"];
+            sc.Wunit = sc.W / ScreenMeteringResolution;
+            sc.H = (short) scr["height"];
+            sc.Hunit = sc.H / ScreenMeteringResolution;
+            sc.FSflag = (bool) scr["fullscreen"];
+            sc.ShowDebugInfo = (bool) scr["debug_info"];
+            sc.Fov = (float) scr["fov"];
+            sc.Vsync = (bool) scr["vsync"];
+        }
 
-        public void ParseRender(RenderSettings rs);
+        public void ParseRender(RenderSettings rs)
+        {
+            var ren = statedyn["render"];
+            rs.MipmapMode = (uint) ren["mipmap_mode"];
+            rs.Mipmaps = (uint) ren["mipmaps"];
+            rs.LodBias = (float) ren["lod_bias"];
+            rs.Anisotropy = (uint) ren["anisotropy"];
+            rs.Antialias = (bool) ren["antialias"];
+            rs.AntialiasSamples = (int) ren["antialias_samples"];
+            rs.TextureBorder = (int) ren["texture_border"];
+            rs.SaveTextureMemory = (bool) ren["save_texture_memory"];
+            rs.Zdepth = (int) ren["z_depth"];
+            rs.FogEnabled = (bool) ren["fog_enabled"];
+            rs.FogStart_depth = (float) ren["fog_start_depth"];
+            rs.FogEnd_depth = (float) ren["fog_end_depth"];
+            rs.FogColor[0] = (float) ren["fog_color"]["r"] / 255.0f;
+            rs.FogColor[1] = (float) ren["fog_color"]["g"] / 255.0f;
+            rs.FogColor[2] = (float) ren["fog_color"]["b"] / 255.0f;
+            rs.FogColor[3] = 1;
 
-        public void ParseAudio(AudioSettings au);
+            rs.UseGL3 = (bool) ren["use_gl3"];
+
+            if (rs.Zdepth != 8 && rs.Zdepth != 16 && rs.Zdepth != 24)
+                rs.Zdepth = 24;
+        }
+
+        public void ParseAudio(AudioSettings au)
+        {
+            var aud = statedyn["audio"];
+            au.MusicVolume = (float) aud["music_volume"];
+            au.SoundVolume = (float) aud["sound_volume"];
+            au.UseEffects = (bool) aud["use_effects"];
+            au.ListenerIsPlayer = (bool) aud["listener_is_player"];
+            au.StreamBufferSize = (int) aud["stream_buffer_size"] * 1024;
+            if (au.StreamBufferSize <= 0)
+                au.StreamBufferSize = 131072; // 128 * 1024
+        }
 
         public void ParseConsole(ConsoleInfo cn)
         {
-            var r = (float) statedyn["console"]["background_color"]["r"];
-            var g = (float) statedyn["console"]["background_color"]["g"];
-            var b = (float) statedyn["console"]["background_color"]["b"];
-            var a = (float) statedyn["console"]["background_color"]["a"];
+            var con = statedyn["console"];
+            var r = (float) con["background_color"]["r"];
+            var g = (float) con["background_color"]["g"];
+            var b = (float) con["background_color"]["b"];
+            var a = (float) con["background_color"]["a"];
             cn.SetBackgroundColor(r / 255, g / 255, b / 255, a / 255);
 
-            var tmpF = (float) statedyn["console"]["spacing"];
+            var tmpF = (float) con["spacing"];
             if (tmpF.IsBetween(CON_MIN_LINE_INTERVAL, CON_MAX_LINE_INTERVAL))
                 cn.Spacing = tmpF;
 
-            var tmpI = (int) statedyn["console"]["line_size"];
+            var tmpI = (int) con["line_size"];
             if (tmpI.IsBetween(CON_MIN_LINE_SIZE, CON_MAX_LINE_SIZE))
                 cn.LineSize = (ushort)tmpI;
 
-            tmpI = (ushort)statedyn["console"]["showing_lines"];
+            tmpI = (ushort)con["showing_lines"];
             if (tmpI.IsBetween(CON_MIN_LINES, CON_MAX_LINES))
                 cn.VisibleLines = tmpI;
 
-            tmpI = (ushort)statedyn["console"]["log_size"];
+            tmpI = (ushort)con["log_size"];
             if (tmpI.IsBetween(CON_MIN_LOG, CON_MAX_LOG))
                 cn.HistorySize = tmpI;
 
-            tmpI = (ushort)statedyn["console"]["lines_count"];
+            tmpI = (ushort)con["lines_count"];
             if (tmpI.IsBetween(CON_MIN_LOG, CON_MAX_LOG))
                 cn.BufferSize = tmpI;
 
-            var tmpB = (bool) statedyn["console"]["show"];
+            var tmpB = (bool) con["show"];
             cn.IsVisible = tmpB;
 
-            tmpF = (float) statedyn["console"]["show_cursor_period"];
+            tmpF = (float) con["show_cursor_period"];
             cn.BlinkPeriod = tmpF;
         }
 
-        public void ParseControls(ControlSettings cs);
+        public void ParseControls(ControlSettings cs)
+        {
+            var con = statedyn["controls"];
+            cs.MouseSensitivity = (float) con["mouse_sensitivity"];
+            cs.MouseScaleX = (float) con["mouse_scale_x"];
+            cs.MouseScaleY = (float) con["mouse_scale_y"];
+            cs.UseJoy = (bool) con["use_joy"];
+            cs.JoyNumber = (int) con["joy_number"];
+            cs.JoyRumble = (bool) con["joy_rumble"];
+            cs.JoyAxisMap[(int) AXES.LookX] = (int) con["joy_look_axis_x"];
+            cs.JoyAxisMap[(int) AXES.LookY] = (int) con["joy_look_axis_y"];
+            cs.JoyAxisMap[(int) AXES.MoveX] = (int) con["joy_move_axis_x"];
+            cs.JoyAxisMap[(int) AXES.MoveY] = (int) con["joy_move_axis_y"];
+            cs.JoyLookInvertX = (bool) con["joy_look_invert_x"];
+            cs.JoyLookInvertY = (bool) con["joy_look_invert_y"];
+            cs.JoyLookSensitivity = (float) con["joy_look_sensitivity"];
+            cs.JoyLookDeadzone = (short) con["joy_look_deadzone"];
+            cs.JoyMoveInvertX = (bool) con["joy_move_invert_x"];
+            cs.JoyMoveInvertY = (bool) con["joy_move_invert_y"];
+            cs.JoyMoveSensitivity = (float) con["joy_move_sensitivity"];
+            cs.JoyMoveDeadzone = (short) con["joy_move_deadzone"];
+        }
 
         public void ParseSystem(SystemSettings ss)
         {
@@ -2928,13 +2997,33 @@ namespace FreeRaider.Script
             Call("clearKeys");
         }
 
-        public void LoopEntity(int objectID);
+        public void LoopEntity(uint objectID)
+        {
+            var ent = EngineWorld.GetEntityByID(objectID);
+            // TODO: Add warning if null
+            if(ent!= null && ent.Active)
+            {
+                Call("loopEntity", objectID);
+            }
+        }
 
-        public void ExecEntity(int idCallback, int idObject, int idActivator = -1);
+        public void ExecEntity(int idCallback, int idObject, int idActivator = -1)
+        {
+            if (idActivator >= 0)
+                Call("execEntity", idCallback, idObject, idActivator);
+            else
+                Call("execEntity", idCallback, idObject);
+        }
 
-        public void ExecEffect(int id, int caller = -1, int operand = -1);
+        public void ExecEffect(int id, int caller = -1, int operand = -1)
+        {
+            Call("execFlipeffect", id, caller, operand);
+        }
 
-        public void AddKey(int keycode, bool state);
+        public void AddKey(int keycode, bool state)
+        {
+            Call("addKey", keycode, state);
+        }
 
         public static void BindKey(int act, int primary, int? secondary = null)
         {
@@ -2947,23 +3036,64 @@ namespace FreeRaider.Script
                 ControlMapper.ActionMap[act].Secondary = (int) secondary;
         }
 
-        public bool GetOverridedSamplesInfo(out int numSamples, out int numSounds, out string samplesNameMask);
+        public bool GetOverridedSamplesInfo(out int numSamples, out int numSounds, out string samplesNameMask)
+        {
+            var res = Call("getOverridedSamplesInfo", (int) EngineWorld.EngineVersion);
+            samplesNameMask = (string) res[0];
+            numSounds = (int) res[1];
+            numSamples = (int) res[2];
 
-        public bool GetOverridedSample(int soundID, out int firstSampleNumber, out int samplesCount);
+            return numSounds != -1 && numSamples != -1 && samplesNameMask != "NONE";
+        }
 
-        public int GetGlobalSound(int globalSoundID);
+        public bool GetOverridedSample(int soundID, out int firstSampleNumber, out int samplesCount)
+        {
+            var res = Call("getOverridedSample", (int) EngineWorld.EngineVersion, GameflowManager.LevelID, soundID);
+            firstSampleNumber = (int) res[0];
+            samplesCount = (int) res[1];
+            return firstSampleNumber != -1 && samplesCount != -1;
+        }
 
-        public int GetSecretTrackNumber();
+        public int GetGlobalSound(int globalSoundID)
+        {
+            return (int) Call("getGlobalSound", (int) EngineWorld.EngineVersion, globalSoundID)[0];
+        }
 
-        public int GetNumTracks();
+        public int GetSecretTrackNumber()
+        {
+            return (int)Call("getSecretTrackNumber", (int)EngineWorld.EngineVersion)[0];
+        }
 
-        public bool GetSoundtrack(int trackIndex, string trackPath, TR_AUDIO_STREAM_METHOD loadMethod, TR_AUDIO_STREAM_TYPE streamType);
+        public int GetNumTracks()
+        {
+            return (int)Call("getNumTracks", (int)EngineWorld.EngineVersion)[0];
+        }
 
-        public string GetLoadingScreen(uint levelIndex);
+        public bool GetSoundtrack(int trackIndex, out string trackPath, out TR_AUDIO_STREAM_METHOD loadMethod, out TR_AUDIO_STREAM_TYPE streamType)
+        {
+            var res = Call("getTrackInfo", (int) EngineWorld.EngineVersion, trackIndex);
+            trackPath = (string) res[0];
+            streamType = (TR_AUDIO_STREAM_TYPE) (int) res[1];
+            loadMethod = (TR_AUDIO_STREAM_METHOD) (int) res[2];
+            return streamType != TR_AUDIO_STREAM_TYPE.Unknown;
+        }
 
-        public string GetString(int stringID);
+        public string GetLoadingScreen(uint levelIndex)
+        {
+            return
+                ((string)
+                    Call("getLoadingScreen", (int) GameflowManager.GameID, (int) GameflowManager.LevelID, levelIndex)[0]).ClampStr(MAX_ENGINE_PATH);
+        }
 
-        public string GetSysNotify(int stringID);
+        public string GetString(int stringID)
+        {
+            return (string) Call("getString", stringID)[0];
+        }
+
+        public string GetSysNotify(int stringID)
+        {
+            return (string)Call("getSysNotify", stringID)[0];
+        }
 
         public static int ParseToken(string data, int index, out string token);
 
@@ -3167,4 +3297,6 @@ namespace FreeRaider.Script
         }
     }
 }
+
+
 

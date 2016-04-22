@@ -514,7 +514,7 @@ namespace FreeRaider
             foreach (var entity in entities.Values.Where(entity => entity.Enabled))
             {
                 entity.ProcessSector();
-                EngineLua.LoopEntity((int) entity.ID);
+                EngineLua.LoopEntity(entity.ID);
 
                 if(entity.TypeFlags.HasFlag(ENTITY_TYPE.CollCheck))
                     entity.CheckCollisionCallbacks();

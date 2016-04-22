@@ -2245,7 +2245,7 @@ else
             // "load_method" argument. Function itself returns false, if script wasn't found or
             // request was broken; in this case, we quit.
 
-            if(!EngineLua.GetSoundtrack((int)trackID, filePath, loadMethod, streamType))
+            if(!EngineLua.GetSoundtrack((int)trackID, out filePath, out loadMethod, out streamType))
             {
                 // TODO: Warning Track wrong index
                 return TR_AUDIO_STREAMPLAY.WrongTrack;
