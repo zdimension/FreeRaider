@@ -13,6 +13,8 @@ $RECYCLE.BIN/
 **/*.sln.ide
 *.vshost.*
 *.config
+!app.config
+!packages.config
 *.suo
 *.user
 *.sln.docstates
