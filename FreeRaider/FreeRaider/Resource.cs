@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Runtime.InteropServices;
 using BulletSharp;
 using FreeRaider.Loader;
+using FreeRaider.Script;
 using NLua;
 using NLua.Exceptions;
 using OpenTK;
@@ -355,11 +356,11 @@ namespace FreeRaider
             }
         }
 
-        public static int Res_Sector_IsWall(RoomSector ws, RoomSector ns)
+        public static bool Res_Sector_IsWall(RoomSector ws, RoomSector ns)
         {
             if(ws.PortalToRoom < 0 && ns.PortalToRoom < 0 && ws.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Wall)
             {
-                return 1;
+                return true;
             }
 
             if(ns.PortalToRoom < 0 && ns.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall && ws.PortalToRoom >= 0)
@@ -367,14 +368,434 @@ namespace FreeRaider
                 ws = ws.CheckPortalPointer();
                 if(ws.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Wall || !ns.IsTwoSidePortal(ws))
                 {
-                    return 1;
+                    return true;
                 }
             }
 
-            return 0;
+            return false;
         }
 
-        public static List<SectorTween> Res_Sector_GenTweens(Room room); 
+        public static List<SectorTween> Res_Sector_GenTweens(Room room)
+        {
+            var result = new List<SectorTween>();
+            for (var h = 0; h < room.SectorsY - 1; h++)
+            {
+                for (var w = 0; w < room.SectorsX - 1; w++)
+                {
+                    var room_tween = new SectorTween();
+
+                    // Init X-plane tween [ | ]
+
+                    var current_heightmap = room.Sectors[w * room.SectorsY + h];
+                    var next_heightmap = room.Sectors[w * room.SectorsY + h + 1];
+                    byte joinedFloors = 0;
+                    byte joinedCeilings = 0;
+
+                    // XY corners coordinates must be calculated from native room sector 
+                    room_tween.FloorCorners[0][1] = current_heightmap.FloorCorners[0][1];
+                    room_tween.FloorCorners[1][1] = room_tween.FloorCorners[0][1];
+                    room_tween.FloorCorners[2][1] = room_tween.FloorCorners[0][1];
+                    room_tween.FloorCorners[3][1] = room_tween.FloorCorners[0][1];
+                    room_tween.FloorCorners[0][0] = current_heightmap.FloorCorners[0][0];
+                    room_tween.FloorCorners[1][0] = room_tween.FloorCorners[0][0];
+                    room_tween.FloorCorners[2][0] = current_heightmap.FloorCorners[1][0];
+                    room_tween.FloorCorners[3][0] = room_tween.FloorCorners[2][0];
+                    room_tween.CeilingCorners[0][1] = current_heightmap.CeilingCorners[0][1];
+                    room_tween.CeilingCorners[1][1] = room_tween.CeilingCorners[0][1];
+                    room_tween.CeilingCorners[2][1] = room_tween.CeilingCorners[0][1];
+                    room_tween.CeilingCorners[3][1] = room_tween.CeilingCorners[0][1];
+                    room_tween.CeilingCorners[0][0] = current_heightmap.CeilingCorners[0][0];
+                    room_tween.CeilingCorners[1][0] = room_tween.CeilingCorners[0][0];
+                    room_tween.CeilingCorners[2][0] = current_heightmap.CeilingCorners[1][0];
+                    room_tween.CeilingCorners[3][0] = room_tween.CeilingCorners[2][0];
+
+                    if (w > 0)
+                    {
+                        if (next_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall ||
+                            current_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall)
+                        {
+                            if (Res_Sector_IsWall(next_heightmap, current_heightmap))
+                            {
+                                room_tween.FloorCorners[0][2] = current_heightmap.FloorCorners[0][2];
+                                room_tween.FloorCorners[1][2] = current_heightmap.CeilingCorners[0][2];
+                                room_tween.FloorCorners[2][2] = current_heightmap.CeilingCorners[1][2];
+                                room_tween.FloorCorners[3][2] = current_heightmap.FloorCorners[1][2];
+                                Res_Sector_SetTweenFloorConfig(room_tween);
+                                room_tween.CeilingTweenType = SectorTweenType.None;
+                                joinedFloors = 1;
+                                joinedCeilings = 1;
+                            }
+                            else if (Res_Sector_IsWall(current_heightmap, next_heightmap))
+                            {
+                                room_tween.FloorCorners[0][2] = next_heightmap.FloorCorners[3][2];
+                                room_tween.FloorCorners[1][2] = next_heightmap.CeilingCorners[3][2];
+                                room_tween.FloorCorners[2][2] = next_heightmap.CeilingCorners[2][2];
+                                room_tween.FloorCorners[3][2] = next_heightmap.FloorCorners[2][2];
+                                Res_Sector_SetTweenFloorConfig(room_tween);
+                                room_tween.CeilingTweenType = SectorTweenType.None;
+                                joinedFloors = 1;
+                                joinedCeilings = 1;
+                            }
+                            else
+                            {
+                                /************************** SECTION WITH DROPS CALCULATIONS **********************/
+                                if (current_heightmap.PortalToRoom < 0 && next_heightmap.PortalToRoom < 0 ||
+                                    current_heightmap.IsTwoSidePortal(next_heightmap))
+                                {
+                                    current_heightmap = current_heightmap.CheckPortalPointer();
+                                    next_heightmap = next_heightmap.CheckPortalPointer();
+                                    if (current_heightmap.PortalToRoom < 0 && next_heightmap.PortalToRoom < 0 &&
+                                        current_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall &&
+                                        next_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall)
+                                    {
+                                        if (current_heightmap.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Solid ||
+                                            next_heightmap.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Solid)
+                                        {
+                                            room_tween.FloorCorners[0][2] = current_heightmap.FloorCorners[0][2];
+                                            room_tween.FloorCorners[1][2] = next_heightmap.FloorCorners[3][2];
+                                            room_tween.FloorCorners[2][2] = next_heightmap.FloorCorners[2][2];
+                                            room_tween.FloorCorners[3][2] = current_heightmap.FloorCorners[1][2];
+                                            Res_Sector_SetTweenFloorConfig(room_tween);
+                                            joinedFloors = 1;
+                                        }
+                                        if (current_heightmap.CeilingPenetrationConfig == TR_PENETRATION_CONFIG.Solid ||
+                                            next_heightmap.CeilingPenetrationConfig == TR_PENETRATION_CONFIG.Solid)
+                                        {
+                                            room_tween.CeilingCorners[0][2] = current_heightmap.CeilingCorners[0][2];
+                                            room_tween.CeilingCorners[1][2] = next_heightmap.CeilingCorners[3][2];
+                                            room_tween.CeilingCorners[2][2] = next_heightmap.CeilingCorners[2][2];
+                                            room_tween.CeilingCorners[3][2] = current_heightmap.CeilingCorners[1][2];
+                                            Res_Sector_SetTweenCeilingConfig(room_tween);
+                                            joinedCeilings = 1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        current_heightmap = room.Sectors[w * room.SectorsY + h];
+                        next_heightmap = room.Sectors[w * room.SectorsY + h + 1];
+                        if (joinedFloors == 0 && (current_heightmap.PortalToRoom < 0 || next_heightmap.PortalToRoom < 0))
+                        {
+                            byte valid = 0;
+                            if (next_heightmap.PortalToRoom >= 0 && current_heightmap.SectorAbove != null &&
+                                current_heightmap.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Solid)
+                            {
+                                next_heightmap = next_heightmap.CheckPortalPointer();
+                                if (next_heightmap.OwnerRoom.ID == current_heightmap.SectorAbove.OwnerRoom.ID)
+                                {
+                                    valid = 1;
+                                }
+                                if (valid == 0)
+                                {
+                                    var rs =
+                                        current_heightmap.SectorAbove.OwnerRoom.GetSectorRaw(next_heightmap.Position);
+                                    if (rs != null && rs.PortalToRoom == next_heightmap.OwnerRoom.ID)
+                                    {
+                                        valid = 1;
+                                    }
+                                }
+                            }
+
+                            if (current_heightmap.PortalToRoom >= 0 && next_heightmap.SectorAbove != null &&
+                                next_heightmap.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Solid)
+                            {
+                                current_heightmap = current_heightmap.CheckPortalPointer();
+                                if (current_heightmap.OwnerRoom.ID == next_heightmap.SectorAbove.OwnerRoom.ID)
+                                {
+                                    valid = 1;
+                                }
+                                if (valid == 0)
+                                {
+                                    var rs =
+                                        next_heightmap.SectorAbove.OwnerRoom.GetSectorRaw(current_heightmap.Position);
+                                    if (rs != null && rs.PortalToRoom == current_heightmap.OwnerRoom.ID)
+                                    {
+                                        valid = 1;
+                                    }
+                                }
+                            }
+
+                            if (valid == 1 && current_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall &&
+                                next_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall)
+                            {
+                                room_tween.FloorCorners[0][2] = current_heightmap.FloorCorners[0][2];
+                                room_tween.FloorCorners[1][2] = next_heightmap.FloorCorners[3][2];
+                                room_tween.FloorCorners[2][2] = next_heightmap.FloorCorners[2][2];
+                                room_tween.FloorCorners[3][2] = current_heightmap.FloorCorners[1][2];
+                                Res_Sector_SetTweenFloorConfig(room_tween);
+                            }
+                        }
+
+                        current_heightmap = room.Sectors[w * room.SectorsY + h];
+                        next_heightmap = room.Sectors[w * room.SectorsY + h + 1];
+                        if (joinedCeilings == 0 &&
+                            (current_heightmap.PortalToRoom < 0 || next_heightmap.PortalToRoom < 0))
+                        {
+                            byte valid = 0;
+                            if (next_heightmap.PortalToRoom >= 0 && current_heightmap.SectorBelow != null &&
+                                current_heightmap.CeilingPenetrationConfig == TR_PENETRATION_CONFIG.Solid)
+                            {
+                                next_heightmap = next_heightmap.CheckPortalPointer();
+                                if (next_heightmap.OwnerRoom.ID == current_heightmap.SectorBelow.OwnerRoom.ID)
+                                {
+                                    valid = 1;
+                                }
+                                if (valid == 0)
+                                {
+                                    var rs =
+                                        current_heightmap.SectorBelow.OwnerRoom.GetSectorRaw(next_heightmap.Position);
+                                    if (rs != null && rs.PortalToRoom == next_heightmap.OwnerRoom.ID)
+                                    {
+                                        valid = 1;
+                                    }
+                                }
+                            }
+
+                            if (current_heightmap.PortalToRoom >= 0 && next_heightmap.SectorBelow != null &&
+                                next_heightmap.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Solid)
+                            {
+                                current_heightmap = current_heightmap.CheckPortalPointer();
+                                if (current_heightmap.OwnerRoom.ID == next_heightmap.SectorBelow.OwnerRoom.ID)
+                                {
+                                    valid = 1;
+                                }
+                                if (valid == 0)
+                                {
+                                    var rs =
+                                        next_heightmap.SectorBelow.OwnerRoom.GetSectorRaw(current_heightmap.Position);
+                                    if (rs != null && rs.PortalToRoom == current_heightmap.OwnerRoom.ID)
+                                    {
+                                        valid = 1;
+                                    }
+                                }
+                            }
+
+                            if (valid == 1 && current_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall &&
+                                next_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall)
+                            {
+                                room_tween.CeilingCorners[0][2] = current_heightmap.CeilingCorners[0][2];
+                                room_tween.CeilingCorners[1][2] = next_heightmap.CeilingCorners[3][2];
+                                room_tween.CeilingCorners[2][2] = next_heightmap.CeilingCorners[2][2];
+                                room_tween.CeilingCorners[3][2] = current_heightmap.CeilingCorners[1][2];
+                                Res_Sector_SetTweenCeilingConfig(room_tween);
+                            }
+                        }
+                    }
+
+                    result.Add(room_tween);
+
+                    /*****************************************************************************************************
+                     ********************************   CENTRE  OF  THE  ALGORITHM   *************************************
+                     *****************************************************************************************************/
+
+                    room_tween = new SectorTween();
+
+                    current_heightmap = room.Sectors[w * room.SectorsY + h];
+                    next_heightmap = room.Sectors[(w + 1) * room.SectorsY + h];
+                    room_tween.FloorCorners[0][0] = current_heightmap.FloorCorners[1][0];
+                    room_tween.FloorCorners[1][0] = room_tween.FloorCorners[0][0];
+                    room_tween.FloorCorners[2][0] = room_tween.FloorCorners[0][0];
+                    room_tween.FloorCorners[3][0] = room_tween.FloorCorners[0][0];
+                    room_tween.FloorCorners[0][1] = current_heightmap.FloorCorners[1][1];
+                    room_tween.FloorCorners[1][1] = room_tween.FloorCorners[0][1];
+                    room_tween.FloorCorners[2][1] = current_heightmap.FloorCorners[2][1];
+                    room_tween.FloorCorners[3][1] = room_tween.FloorCorners[2][1];
+
+                    room_tween.CeilingCorners[0][0] = current_heightmap.CeilingCorners[1][0];
+                    room_tween.CeilingCorners[1][0] = room_tween.CeilingCorners[0][0];
+                    room_tween.CeilingCorners[2][0] = room_tween.CeilingCorners[0][0];
+                    room_tween.CeilingCorners[3][0] = room_tween.CeilingCorners[0][0];
+                    room_tween.CeilingCorners[0][1] = current_heightmap.CeilingCorners[1][1];
+                    room_tween.CeilingCorners[1][1] = room_tween.CeilingCorners[0][1];
+                    room_tween.CeilingCorners[2][1] = current_heightmap.CeilingCorners[2][1];
+                    room_tween.CeilingCorners[3][1] = room_tween.CeilingCorners[2][1];
+
+                    joinedFloors = 0;
+                    joinedCeilings = 0;
+
+                    if (h > 0)
+                    {
+                        if (next_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall ||
+                            current_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall)
+                        {
+                            // Init Y-plane tween  [ - ]
+                            if (Res_Sector_IsWall(next_heightmap, current_heightmap))
+                            {
+                                room_tween.FloorCorners[0][2] = current_heightmap.FloorCorners[1][2];
+                                room_tween.FloorCorners[1][2] = current_heightmap.CeilingCorners[1][2];
+                                room_tween.FloorCorners[2][2] = current_heightmap.CeilingCorners[2][2];
+                                room_tween.FloorCorners[3][2] = current_heightmap.FloorCorners[2][2];
+                                Res_Sector_SetTweenFloorConfig(room_tween);
+                                room_tween.CeilingTweenType = SectorTweenType.None;
+                                joinedFloors = 1;
+                                joinedCeilings = 1;
+                            }
+                            else if (Res_Sector_IsWall(current_heightmap, next_heightmap))
+                            {
+                                room_tween.FloorCorners[0][2] = next_heightmap.FloorCorners[0][2];
+                                room_tween.FloorCorners[1][2] = next_heightmap.CeilingCorners[0][2];
+                                room_tween.FloorCorners[2][2] = next_heightmap.CeilingCorners[3][2];
+                                room_tween.FloorCorners[3][2] = next_heightmap.FloorCorners[3][2];
+                                Res_Sector_SetTweenFloorConfig(room_tween);
+                                room_tween.CeilingTweenType = SectorTweenType.None;
+                                joinedFloors = 1;
+                                joinedCeilings = 1;
+                            }
+                            else
+                            {
+                                /************************** BIG SECTION WITH DROPS CALCULATIONS **********************/
+                                if (current_heightmap.PortalToRoom < 0 && next_heightmap.PortalToRoom < 0 ||
+                                    current_heightmap.IsTwoSidePortal(next_heightmap))
+                                {
+                                    current_heightmap = current_heightmap.CheckPortalPointer();
+                                    next_heightmap = next_heightmap.CheckPortalPointer();
+                                    if (current_heightmap.PortalToRoom < 0 && next_heightmap.PortalToRoom < 0 &&
+                                        current_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall &&
+                                        next_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall)
+                                    {
+                                        if (current_heightmap.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Solid ||
+                                            next_heightmap.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Solid)
+                                        {
+                                            room_tween.FloorCorners[0][2] = current_heightmap.FloorCorners[1][2];
+                                            room_tween.FloorCorners[1][2] = next_heightmap.FloorCorners[0][2];
+                                            room_tween.FloorCorners[2][2] = next_heightmap.FloorCorners[3][2];
+                                            room_tween.FloorCorners[3][2] = current_heightmap.FloorCorners[2][2];
+                                            Res_Sector_SetTweenFloorConfig(room_tween);
+                                            joinedFloors = 1;
+                                        }
+                                        if (current_heightmap.CeilingPenetrationConfig == TR_PENETRATION_CONFIG.Solid ||
+                                            next_heightmap.CeilingPenetrationConfig == TR_PENETRATION_CONFIG.Solid)
+                                        {
+                                            room_tween.CeilingCorners[0][2] = current_heightmap.CeilingCorners[1][2];
+                                            room_tween.CeilingCorners[1][2] = next_heightmap.CeilingCorners[0][2];
+                                            room_tween.CeilingCorners[2][2] = next_heightmap.CeilingCorners[3][2];
+                                            room_tween.CeilingCorners[3][2] = current_heightmap.CeilingCorners[2][2];
+                                            Res_Sector_SetTweenCeilingConfig(room_tween);
+                                            joinedCeilings = 1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        current_heightmap = room.Sectors[w * room.SectorsY + h];
+
+                        next_heightmap = room.Sectors[(w + 1) * room.SectorsY + h];
+                        if (joinedFloors == 0 && (current_heightmap.PortalToRoom < 0 || next_heightmap.PortalToRoom < 0))
+                        {
+                            byte valid = 0;
+                            if (next_heightmap.PortalToRoom >= 0 && current_heightmap.SectorAbove != null &&
+                                current_heightmap.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Solid)
+                            {
+                                next_heightmap = next_heightmap.CheckPortalPointer();
+                                if (next_heightmap.OwnerRoom.ID == current_heightmap.SectorAbove.OwnerRoom.ID)
+                                {
+                                    valid = 1;
+                                }
+                                if (valid == 0)
+                                {
+                                    var rs =
+                                        current_heightmap.SectorAbove.OwnerRoom.GetSectorRaw(next_heightmap.Position);
+                                    if (rs != null && rs.PortalToRoom == next_heightmap.OwnerRoom.ID)
+                                    {
+                                        valid = 1;
+                                    }
+                                }
+                            }
+
+                            if (current_heightmap.PortalToRoom >= 0 && next_heightmap.SectorAbove != null &&
+                                next_heightmap.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Solid)
+                            {
+                                current_heightmap = current_heightmap.CheckPortalPointer();
+                                if (current_heightmap.OwnerRoom.ID == next_heightmap.SectorAbove.OwnerRoom.ID)
+                                {
+                                    valid = 1;
+                                }
+                                if (valid == 0)
+                                {
+                                    var rs =
+                                        next_heightmap.SectorAbove.OwnerRoom.GetSectorRaw(current_heightmap.Position);
+                                    if (rs != null && rs.PortalToRoom == current_heightmap.OwnerRoom.ID)
+                                    {
+                                        valid = 1;
+                                    }
+                                }
+                            }
+
+                            if (valid == 1 && current_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall &&
+                                next_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall)
+                            {
+                                room_tween.FloorCorners[0][2] = current_heightmap.FloorCorners[1][2];
+                                room_tween.FloorCorners[1][2] = next_heightmap.FloorCorners[0][2];
+                                room_tween.FloorCorners[2][2] = next_heightmap.FloorCorners[3][2];
+                                room_tween.FloorCorners[3][2] = current_heightmap.FloorCorners[2][2];
+                                Res_Sector_SetTweenFloorConfig(room_tween);
+                            }
+                        }
+
+                        current_heightmap = room.Sectors[w * room.SectorsY + h];
+
+                        next_heightmap = room.Sectors[(w + 1) * room.SectorsY + h];
+                        if (joinedCeilings == 0 &&
+                            (current_heightmap.PortalToRoom < 0 || next_heightmap.PortalToRoom < 0))
+                        {
+                            byte valid = 0;
+                            if (next_heightmap.PortalToRoom >= 0 && current_heightmap.SectorBelow != null &&
+                                current_heightmap.CeilingPenetrationConfig == TR_PENETRATION_CONFIG.Solid)
+                            {
+                                next_heightmap = next_heightmap.CheckPortalPointer();
+                                if (next_heightmap.OwnerRoom.ID == current_heightmap.SectorBelow.OwnerRoom.ID)
+                                {
+                                    valid = 1;
+                                }
+                                if (valid == 0)
+                                {
+                                    var rs =
+                                        current_heightmap.SectorBelow.OwnerRoom.GetSectorRaw(next_heightmap.Position);
+                                    if (rs != null && rs.PortalToRoom == next_heightmap.OwnerRoom.ID)
+                                    {
+                                        valid = 1;
+                                    }
+                                }
+                            }
+
+                            if (current_heightmap.PortalToRoom >= 0 && next_heightmap.SectorBelow != null &&
+                                next_heightmap.FloorPenetrationConfig == TR_PENETRATION_CONFIG.Solid)
+                            {
+                                current_heightmap = current_heightmap.CheckPortalPointer();
+                                if (current_heightmap.OwnerRoom.ID == next_heightmap.SectorBelow.OwnerRoom.ID)
+                                {
+                                    valid = 1;
+                                }
+                                if (valid == 0)
+                                {
+                                    var rs =
+                                        next_heightmap.SectorBelow.OwnerRoom.GetSectorRaw(current_heightmap.Position);
+                                    if (rs != null && rs.PortalToRoom == current_heightmap.OwnerRoom.ID)
+                                    {
+                                        valid = 1;
+                                    }
+                                }
+                            }
+
+                            if (valid == 1 && current_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall &&
+                                next_heightmap.FloorPenetrationConfig != TR_PENETRATION_CONFIG.Wall)
+                            {
+                                room_tween.CeilingCorners[0][2] = current_heightmap.CeilingCorners[1][2];
+                                room_tween.CeilingCorners[1][2] = next_heightmap.CeilingCorners[0][2];
+                                room_tween.CeilingCorners[2][2] = next_heightmap.CeilingCorners[3][2];
+                                room_tween.CeilingCorners[3][2] = current_heightmap.CeilingCorners[2][2];
+                                Res_Sector_SetTweenCeilingConfig(room_tween);
+                            }
+                        }
+                    }
+
+                    result.Add(room_tween);
+                }
+            }
+            return result;
+        }
 
         public static void Res_Sector_FixHeights(RoomSector sector)
         {
@@ -398,7 +819,7 @@ namespace FreeRaider
 
         public static void GenerateAnimCommandsTransform(SkeletalModel model)
         {
-            if(EngineWorld.AnimCommands.Count == 0)
+            if(EngineWorld.AnimCommands.Length == 0)
             {
                 return;
             }
@@ -414,7 +835,7 @@ namespace FreeRaider
                 if (af.NumAnimCommands == 0)
                     continue;
 
-                Assert.That(af.AnimCommand < EngineWorld.AnimCommands.Count);
+                Assert(af.AnimCommand < EngineWorld.AnimCommands.Length);
                 var ac = (int) af.AnimCommand;
 
                 for (var i = 0; i < af.NumAnimCommands; i++)
@@ -580,7 +1001,7 @@ namespace FreeRaider
             }
         }
 
-        public static void Res_CreateEntityFunc(Script.ScriptEngine lua, string func_name, int entity_id)
+        public static void Res_CreateEntityFunc(ScriptEngine lua, string func_name, int entity_id)
         {
             if(((LuaTable)lua["entity_funcs"])[entity_id] == null)
                 lua.state.NewTable("entity_funcs." + entity_id);
@@ -964,7 +1385,347 @@ namespace FreeRaider
             }
         }
 
-        public static void TR_GenSkeletalModel(World world, int model_id, SkeletalModel model, Level tr);
+        public static void TR_GenSkeletalModel(World world, int model_num, SkeletalModel model, Level tr)
+        {
+            var trMoveable = tr.Moveables[model_num]; // original tr structure
+
+            model.CollisionMap.Resize(model.MeshCount);
+            for(ushort i = 0; i < model.MeshCount; i++)
+            {
+                model.CollisionMap[i] = i;
+            }
+
+            model.MeshTree.Resize(model.MeshCount);
+            var treeTag = model.MeshTree[0];
+
+            var meshIndex = tr.MeshIndices.SkipEx(trMoveable.StartingMesh);
+
+            for(var k = 0; k < model.MeshCount; k++, treeTag = model.MeshTree[k])
+            {
+                treeTag.MeshBase = world.Meshes[(int)meshIndex[k]];
+                treeTag.MeshSkin = null; // PARANOID: I use calloc for tree_tag's
+                treeTag.ReplaceAnim = 0x00;
+                treeTag.ReplaceMesh = 0x00;
+                treeTag.BodyPart = 0x00;
+                treeTag.Offset = Vector3.Zero;
+                if(k == 0)
+                {
+                    treeTag.Flag = 0x02;
+                }
+                else
+                {
+                    var tr_mesh_tree = tr.MeshTreeData.SkipEx((int)trMoveable.MeshTreeIndex + (k - 1) * 4);
+                    treeTag.Flag = (ushort)(tr_mesh_tree[0] & 0xFF);
+                    treeTag.Offset.X = tr_mesh_tree[1];
+                    treeTag.Offset.Y = tr_mesh_tree[3];
+                    treeTag.Offset.Z = -tr_mesh_tree[2];
+                }
+            }
+
+            /*
+             * =================    now, animation loading    ========================
+             */
+
+            if(trMoveable.AnimationIndex >= tr.Animations.Length)
+            {
+                // model has no start offset and any animation
+                model.Animations.Resize(1);
+                model.Animations[0].Frames.Resize(1);
+                var boneFrame = model.Animations[0].Frames[0];
+
+                model.Animations[0].ID = TR_ANIMATION.LaraRun;
+                model.Animations[0].NextAnim = null;
+                model.Animations[0].NextFrame = 0;
+                model.Animations[0].StateChange.Clear();
+                model.Animations[0].OriginalFrameRate = 1;
+
+                boneFrame.BoneTags.Resize(model.MeshCount);
+
+                boneFrame.Position = Vector3.Zero;
+                boneFrame.Move = Vector3.Zero;
+                boneFrame.V_Horizontal = 0.0f;
+                boneFrame.V_Vertical = 0.0f;
+                boneFrame.Command = 0x00;
+                for(var k = 0; k < boneFrame.BoneTags.Count; k++)
+                {
+                    treeTag = model.MeshTree[k];
+                    var boneTag = boneFrame.BoneTags[k];
+
+                    VMath.Vec4_SetTRRotations(ref boneTag.QRotate, Vector3.Zero);
+                    boneTag.Offset = treeTag.Offset;
+                }
+                return;
+            }
+            //Sys.DebugLog(LOG_FILENAME, "model = {0}, anims = {1}", trMoveable.ObjectID, TR_GetNumAnimationsForMoveable(tr, model_num));
+            model.Animations.Resize(Math.Max(1, TR_GetNumAnimationsForMoveable(tr, model_num))); // the animation count must be >= 1
+
+            /*
+             *   Ok, let us calculate animations;
+             *   there is no difficult:
+             * - first 9 words are bounding box and frame offset coordinates.
+             * - 10's word is a rotations count, must be equal to number of meshes in model.
+             *   BUT! only in TR1. In TR2 - TR5 after first 9 words begins next section.
+             * - in the next follows rotation's data. one word - one rotation, if rotation is one-axis (one angle).
+             *   two words in 3-axis rotations (3 angles). angles are calculated with bit mask.
+             */
+            for (var i = 0; i < model.Animations.Count; i++)
+            {
+                var anim = model.Animations[i];
+                var trAnimation = tr.Animations[trMoveable.AnimationIndex + i];
+
+                var frameOffset = trAnimation.FrameOffset / 2;
+                var l_start = 0x09;
+
+                if (tr.GameVersion.IsAnyOf(TRGame.TR1, TRGame.TR1Demo, TRGame.TR1UnfinishedBusiness))
+                {
+                    l_start = 0x0A;
+                }
+
+                var frameStep = trAnimation.FrameSize;
+
+                anim.ID = (TR_ANIMATION) i;
+                anim.OriginalFrameRate = trAnimation.FrameRate;
+
+                anim.SpeedX = trAnimation.Speed;
+                anim.AccelX = trAnimation.Acceleration;
+                anim.SpeedY = trAnimation.AccelerationLateral;
+                anim.AccelY = trAnimation.SpeedLateral; // TODO: Inverted?
+
+                anim.AnimCommand = trAnimation.AnimCommand;
+                anim.NumAnimCommands = trAnimation.NumAnimCommands;
+                anim.StateID = (TR_STATE) trAnimation.StateID;
+
+                anim.Frames.Resize(TR_GetNumFramesForAnimation(tr, trMoveable.AnimationIndex + i));
+
+                //Sys.DebugLog(LOG_FILENAME, "Anim[{0}], {1}", trMoveable.AnimationIndex, TR_GetNumFramesForAnimation(tr, trMoveable.AnimationIndex));
+
+                // Parse AnimCommands
+                // Max. amount of AnimCommands is 255, larger numbers are considered as 0.
+                // See http://evpopov.com/dl/TR4format.html#Animations for details.
+
+                if (anim.NumAnimCommands.IsBetween(0, 255, IB.aEbI))
+                {
+                    // Calculate current animation anim command block offset.
+                    Assert(anim.AnimCommand < world.AnimCommands.Length);
+                    unsafe
+                    {
+                        fixed (short* tmp = &world.AnimCommands[(int) anim.AnimCommand])
+                        {
+                            var pointer = tmp;
+                            for(uint count = 0; count < anim.NumAnimCommands; count++)
+                            {
+                                var command = *pointer;
+                                ++pointer;
+                                switch((TR_ANIMCOMMAND)command)
+                                {
+                                    case TR_ANIMCOMMAND.PlayEffect:
+                                        case TR_ANIMCOMMAND.PlaySound:
+                                        // Recalculate absolute frame number to relative.
+                                        pointer[0] -= (short)trAnimation.FrameStart;
+                                        pointer += 2;
+                                        break;
+
+                                        case TR_ANIMCOMMAND.SetPosition:
+                                        // Parse through 3 operands.
+                                        pointer += 3;
+                                        break;
+
+                                        case TR_ANIMCOMMAND.JumpDistance:
+                                        // Parse through 2 operands.
+                                        pointer += 2;
+                                        break;
+
+                                    default:
+                                        // All other commands have no operands.
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if(anim.Frames.Count == 0)
+                {
+                    // number of animations must be >= 1, because frame contains base model offset
+                    anim.Frames.Resize(1);
+                }
+
+                // let us begin to load animations
+                foreach (var boneFrame in anim.Frames)
+                {
+                    boneFrame.BoneTags.Resize(model.MeshCount);
+                    boneFrame.Position = Vector3.Zero;
+                    boneFrame.Move = Vector3.Zero;
+                    TR_GetBFrameBB_Pos(tr, (int)frameOffset, boneFrame);
+
+                    if(frameOffset >= tr.FrameData.Length)
+                    {
+                        for(var k = 0; k < boneFrame.BoneTags.Count; k++)
+                        {
+                            treeTag = model.MeshTree[k];
+                            var boneTag = boneFrame.BoneTags[k];
+                            VMath.Vec4_SetTRRotations(ref boneTag.QRotate, Vector3.Zero);
+                            boneTag.Offset = treeTag.Offset;
+                        }
+                    }
+                    else
+                    {
+                        var l = l_start;
+                        ushort temp1, temp2;
+                        float ang;
+
+                        for (var k = 0; k < boneFrame.BoneTags.Count; k++)
+                        {
+                            treeTag = model.MeshTree[k];
+                            var boneTag = boneFrame.BoneTags[k];
+                            VMath.Vec4_SetTRRotations(ref boneTag.QRotate, Vector3.Zero);
+                            boneTag.Offset = treeTag.Offset;
+
+                            switch (tr.GameVersion)
+                            {
+                                case TRGame.TR1:
+                                case TRGame.TR1UnfinishedBusiness:
+                                case TRGame.TR1Demo:
+                                    temp2 = tr.FrameData[frameOffset + l];
+                                    l++;
+                                    temp1 = tr.FrameData[frameOffset + l];
+                                    l++;
+                                    VMath.Vec4_SetTRRotations(ref boneTag.QRotate, new Vector3(
+                                        (temp1 & 0x3ff0) >> 4,
+                                        -(((temp1 & 0x000f) << 6) | ((temp2 & 0xfc00) >> 10)),
+                                        temp2 & 0x03ff) * (360.0f / 1024.0f));
+                                    break;
+
+                                default:
+                                    temp1 = tr.FrameData[frameOffset + l];
+                                    l++;
+                                    if(tr.GameVersion >= TRGame.TR4)
+                                    {
+                                        ang = (temp1 & 0x0fff) * (360.0f / 4096.0f);
+                                    }
+                                    else
+                                    {
+                                        ang = (temp1 & 0x03ff) * (360.0f / 1024.0f);
+                                    }
+
+                                    switch(temp1 & 0xc000)
+                                    {
+                                        case 0x4000: // x only
+                                            VMath.Vec4_SetTRRotations(ref boneTag.QRotate, new Vector3(ang, 0, 0));
+                                            break;
+
+                                        case 0x8000: // y only
+                                            VMath.Vec4_SetTRRotations(ref boneTag.QRotate, new Vector3(0, 0, -ang));
+                                            break;
+
+                                        case 0xc000: // z only
+                                            VMath.Vec4_SetTRRotations(ref boneTag.QRotate, new Vector3(0, ang, 0));
+                                            break;
+
+                                        default: // all three
+                                            temp2 = tr.FrameData[frameOffset + l];
+                                            VMath.Vec4_SetTRRotations(ref boneTag.QRotate, new Vector3(
+                                                (temp1 & 0x3ff0) >> 4,
+                                                -(((temp1 & 0x000f) << 6) | ((temp2 & 0xfc00) >> 10)),
+                                                temp2 & 0x03ff) * (360.0f / 1024.0f));
+                                            l++;
+                                            break;
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+
+                    frameOffset += frameStep;
+                }
+            }
+
+            // Animations interpolation to 1/30 sec like in original. Needed for correct state change works.
+            model.InterpolateFrames();
+            // state change's loading
+
+#if LOG_ANIM_DISPATCHES
+            if(model.Animations.Count > 1)
+            {
+                Sys.DebugLog(LOG_FILENAME, "MODEL[{0}], anims = {1}", model_num, model.Animations.Count);
+            } 
+#endif
+            for(var i = 0; i < model.Animations.Count; i++)
+            {
+                var anim = model.Animations[i];
+                anim.StateChange.Clear();
+
+                var trAnimation = tr.Animations[trMoveable.AnimationIndex + i];
+                var animId = (trAnimation.NextAnimation - trMoveable.AnimationIndex) & 0x7fff; // this masks out the sign bit
+                Assert(animId >= 0);
+                if (animId < model.Animations.Count)
+                {
+                    anim.NextAnim = model.Animations[animId];
+                    anim.NextFrame = Math.Max(0,
+                        (trAnimation.NextFrame - tr.Animations[trAnimation.NextAnimation].FrameStart) %
+                        anim.NextAnim.Frames.Count);
+
+#if LOG_ANIM_DISPATCHES
+                    Sys.DebugLog(LOG_FILENAME, "ANIM[{0}], next_anim = {1}, next_frame = {2}", i, (int) anim.NextAnim.ID,
+                        anim.NextFrame);
+#endif
+                }
+                else
+                {
+                    anim.NextAnim = null;
+                    anim.NextFrame = 0;
+                }
+
+                anim.StateChange.Clear(); // TODO: Needed?
+
+                if(trAnimation.NumStateChanges > 0 && model.Animations.Count > 1)
+                {
+#if LOG_ANIM_DISPATCHES
+                    Sys.DebugLog(LOG_FILENAME, "ANIM[{0}], next_anim = {1}, next_frame = {2}", i,
+                        anim.NextAnim == null ? -1 : (int) anim.NextAnim.ID, anim.NextFrame);
+#endif
+                    anim.StateChange.Resize(trAnimation.NumStateChanges);
+                    
+                    for(var j = 0; j < trAnimation.NumStateChanges; j++)
+                    {
+                        var schP = anim.StateChange[j];
+                        var trSch = tr.StateChanges[j + trAnimation.StateChangeOffset];
+                        schP.ID = (TR_STATE)trSch.StateID;
+                        schP.AnimDispatch.Clear();
+                        for (var l = 0; l < trSch.NumAnimDispatches; l++)
+                        {
+                            var trAdisp = tr.AnimDispatches[trSch.AnimDispatch + l];
+                            var nextAnim = trAdisp.NextAnimation & 0x7fff;
+                            var nextAnimInd = nextAnim - (trMoveable.AnimationIndex & 0x7fff);
+                            if (nextAnimInd < model.Animations.Count)
+                            {
+                                var adsp = new AnimDispatch();
+                                var nextFramesCount =
+                                    model.Animations[nextAnim - trMoveable.AnimationIndex].Frames.Count;
+                                var nextFrame = trAdisp.NextFrame - tr.Animations[nextAnim].FrameStart;
+
+                                var low = trAdisp.Low - trAnimation.FrameStart;
+                                var high = trAdisp.High - trAnimation.FrameStart;
+
+                                adsp.FrameLow = (ushort) (low % anim.Frames.Count);
+                                adsp.FrameHigh = (ushort) ((high - 1) % anim.Frames.Count);
+                                adsp.NextAnim = (TR_ANIMATION) (nextAnim - trMoveable.AnimationIndex);
+                                adsp.NextFrame = (ushort) (nextFrame % nextFramesCount);
+
+                                schP.AnimDispatch.Add(adsp);
+
+#if !LOG_ANIM_DISPATCHES
+                                Sys.DebugLog(LOG_FILENAME,
+                                    "anim_disp[{0}], frames.size() = {1}: interval[{3}.. {4}], next_anim = {5}, next_frame = {6}",
+                                    l, anim.Frames.Count, adsp.FrameLow, adsp.FrameHigh, (int)adsp.NextAnim, adsp.NextFrame);
+#endif
+                            }
+                        }
+                    }
+                }
+            }
+            GenerateAnimCommandsTransform(model);
+        }
 
         public static void TR_GenEntities(World world, Level tr)
         {
@@ -1035,7 +1796,7 @@ namespace FreeRaider
                 if(trItem.ObjectID == 0) // Lara is unical model
                 {
                     var lara = (Character) entity;
-                    Assert.That(lara != null);
+                    Assert(lara != null);
 
                     lara.MoveType = MoveType.OnFloor;
                     world.Character = lara;
@@ -1238,7 +1999,7 @@ namespace FreeRaider
 
         public static void TR_GenAnimCommands(World world, Level tr)
         {
-            world.AnimCommands = tr.AnimCommands.ToList();
+            world.AnimCommands = tr.AnimCommands.ToArray();
         }
 
         public static void TR_GenAnimTextures(World world, Level tr);
@@ -1489,20 +2250,20 @@ namespace FreeRaider
                 RoomSector nearSector = null;
 
                 // OX
-                if (sector.IndexY.IsBetween(0, room.SectorsY - 1, false) && sector.IndexX == 0)
+                if (sector.IndexY.IsBetween(0, room.SectorsY - 1, IB.aEbE) && sector.IndexX == 0)
                 {
                     nearSector = room.Sectors[i + room.SectorsY];
                 }
-                if (sector.IndexY.IsBetween(0, room.SectorsY - 1, false) && sector.IndexX == room.SectorsX - 1)
+                if (sector.IndexY.IsBetween(0, room.SectorsY - 1, IB.aEbE) && sector.IndexX == room.SectorsX - 1)
                 {
                     nearSector = room.Sectors[i - room.SectorsY];
                 }
-                // OX
-                if (sector.IndexX.IsBetween(0, room.SectorsX - 1, false) && sector.IndexY == 0)
+                // OY
+                if (sector.IndexX.IsBetween(0, room.SectorsX - 1, IB.aEbE) && sector.IndexY == 0)
                 {
                     nearSector = room.Sectors[i + 1];
                 }
-                if (sector.IndexX.IsBetween(0, room.SectorsX - 1, false) && sector.IndexY == room.SectorsY - 1)
+                if (sector.IndexX.IsBetween(0, room.SectorsX - 1, IB.aEbE) && sector.IndexY == room.SectorsY - 1)
                 {
                     nearSector = room.Sectors[i - 1];
                 }
@@ -1511,7 +2272,7 @@ namespace FreeRaider
                 {
                     foreach (var p in room.Portals)
                     {
-                        if(p.Normal.Normal.Z.IsBetween(-0.01, 0.01f, false))
+                        if(p.Normal.Normal.Z.IsBetween(-0.01f, 0.01f, IB.aEbE))
                         {
                             var dst = p.DestRoom?.GetSectorRaw(sector.Position);
                             var origDst = EngineWorld.Rooms[sector.PortalToRoom].GetSectorRaw(sector.Position);
@@ -1620,6 +2381,11 @@ namespace FreeRaider
                     v.Color = new float[] {1, 1, 1, 1};
                 }
             }
+        }
+
+        public static void Assert(bool condition, string message = "Incorrect value")
+        {
+            throw new Exception("Assert: " + message);
         }
     }
 }

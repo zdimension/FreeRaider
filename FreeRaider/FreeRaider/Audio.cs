@@ -1405,7 +1405,7 @@ else
         /// </summary>
         private unsafe bool stream(uint buffer)
         {
-            Assert.That(Global.AudioSettings.StreamBufferSize >= sfInfo.Channels - 1);
+            StaticFuncs.Assert(Global.AudioSettings.StreamBufferSize >= sfInfo.Channels - 1);
             /*
 #ifdef AUDIO_OPENAL_FLOAT
     std::vector<ALfloat> pcm(Global.AudioSettings.stream_buffer_size);

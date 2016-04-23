@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using JetBrains.Annotations;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
 
@@ -57,6 +58,7 @@ namespace FreeRaider
 
     public class Sys
     {
+        [StringFormatMethod("fmt")]
         public static void Printf(string fmt, params object[] args)
         {
             Console.Error.WriteLine(Helper.Format(fmt, args));
@@ -104,17 +106,20 @@ namespace FreeRaider
             SystemFps.Text = "";
         }
 
+        [StringFormatMethod("error")]
         public static void Error(string error, params object[] args)
         {
-            DebugLog(LOG_FILENAME, "System error: {0}", error, args);
+            DebugLog(LOG_FILENAME, "System error: {0}", Helper.Format(error, args));
             Engine.Shutdown(1);
         }
 
+        [StringFormatMethod("warning")]
         public static void Warn(string warning, params object[] args)
         {
-            DebugLog(LOG_FILENAME, "Warning: {0}", warning, args);
+            DebugLog(LOG_FILENAME, "Warning: {0}", Helper.Format(warning, args));
         }
 
+        [StringFormatMethod("fmt")]
         public static void DebugLog(string file, string fmt, params object[] args)
         {
             if (!Global.SystemSettings.Logging) return;
@@ -140,12 +145,14 @@ namespace FreeRaider
             DebugLog(LOG_FILENAME, "\"{0}\" str = {1}", Helper.__FILE__, Helper.__LINE__);
         }
 
+        [StringFormatMethod("error")]
         public static void extError(string error, params object[] args)
         {
             LogCurrPlace();
             Error(error, args);
         }
 
+        [StringFormatMethod("warning")]
         public static void extWarn(string warning, params object[] args)
         {
             LogCurrPlace();

@@ -341,11 +341,11 @@ namespace FreeRaider
                     if (original.ElementsPerTexture[page] == 0)
                         continue;
 
-                    Assert.That(originalElementsStart < original.Elements.Count);
-                    Assert.That(originalElementsStart + original.ElementsPerTexture[page] <= original.Elements.Count);
+                    Assert(originalElementsStart < original.Elements.Count);
+                    Assert(originalElementsStart + original.ElementsPerTexture[page] <= original.Elements.Count);
 
-                    Assert.That(elementsStartPerTexture[page] < Mesh.Elements.Count);
-                    Assert.That(elementsStartPerTexture[page] + original.ElementsPerTexture[page] <= Mesh.Elements.Count);
+                    Assert(elementsStartPerTexture[page] < Mesh.Elements.Count);
+                    Assert(elementsStartPerTexture[page] + original.ElementsPerTexture[page] <= Mesh.Elements.Count);
 
                     Helper.ListCopy(original.Elements, originalElementsStart, Mesh.Elements,
                         (int) elementsStartPerTexture[page], (int) original.ElementsPerTexture[page]);
@@ -376,7 +376,7 @@ namespace FreeRaider
                 for (var j = 0; j < original.Vertices.Count; j++)
                 {
                     Mesh.MatrixIndices.Add(new BaseMesh.MatrixIndex());
-                    Assert.That(Mesh.MatrixIndices.Count > verticesStart + j);
+                    Assert(Mesh.MatrixIndices.Count > verticesStart + j);
                     if (original.Vertices[j].Position[1] <= 0)
                     {
                         Mesh.MatrixIndices[verticesStart + j].I = (sbyte) i;

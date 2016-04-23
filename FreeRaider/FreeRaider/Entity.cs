@@ -524,7 +524,7 @@ namespace FreeRaider
             if (Bt.GhostObjects.Count == 0)
                 return;
 
-            Assert.That(Bt.GhostObjects.Count == Bf.BoneTags.Count);
+            Assert(Bt.GhostObjects.Count == Bf.BoneTags.Count);
 
             if(TypeFlags.HasFlag(ENTITY_TYPE.Dynamic))
             {
@@ -553,7 +553,7 @@ namespace FreeRaider
             if (Bt.GhostObjects.Count == 0)
                 return;
 
-            Assert.That(Bt.GhostObjects.Count == Bf.BoneTags.Count);
+            Assert(Bt.GhostObjects.Count == Bf.BoneTags.Count);
 
             for(var i = 0; i < Bf.BoneTags.Count; i++)
             {
@@ -612,7 +612,7 @@ namespace FreeRaider
             if (Bt.GhostObjects.Count == 0 || Bt.NoFixAll)
                 return 0;
 
-            Assert.That(Bt.GhostObjects.Count == Bf.BoneTags.Count);
+            Assert(Bt.GhostObjects.Count == Bf.BoneTags.Count);
 
             var origPos = Transform.Origin;
             var ret = 0;
@@ -1190,85 +1190,94 @@ namespace FreeRaider
 
         public void DoAnimCommands(SSAnimation ssAnim, int changing)
         {
-            if (EngineWorld.AnimCommands.Count == 0 || ssAnim.Model == null)
+            if (EngineWorld.AnimCommands.Length == 0 || ssAnim.Model == null)
             {
                 return; // If no anim commands
             }
 
             var af = ssAnim.Model.Animations[(int) ssAnim.CurrentAnimation];
-            if (af.NumAnimCommands.IsBetween(1, 255))
+            if (af.NumAnimCommands.IsBetween(0, 255, IB.aEbI))
             {
-                Assert.That(af.AnimCommand < EngineWorld.AnimCommands.Count);
-                var pointer = (int) af.AnimCommand;
+                Assert(af.AnimCommand < EngineWorld.AnimCommands.Length);
 
-                for (var i = 0; i < af.NumAnimCommands; i++)
+                unsafe
                 {
-                    Assert.That(pointer < EngineWorld.AnimCommands.Count);
-                    var command = (TR_ANIMCOMMAND) EngineWorld.AnimCommands[pointer];
-                    pointer++;
-                    switch (command)
+                    fixed (short* tmp = &EngineWorld.AnimCommands[(int)af.AnimCommand])
                     {
-                        case TR_ANIMCOMMAND.SetPosition:
-                            // This command executes ONLY at the end of animation.
-                            pointer += 3; // Parse through 3 operands.
-                            break;
-
-                        case TR_ANIMCOMMAND.JumpDistance:
-                            // This command executes ONLY at the end of animation.
-                            pointer += 2; // Parse through 2 operands.
-                            break;
-
-                        case TR_ANIMCOMMAND.EmptyHands:
-                            // FIXME: Behaviour is yet to be discovered.
-                            break;
-
-                        case TR_ANIMCOMMAND.Kill:
-                            // This command executes ONLY at the end of animation.
-                            if (ssAnim.CurrentFrame == af.Frames.Count - 1)
+                        fixed (short* back = &EngineWorld.AnimCommands[EngineWorld.AnimCommands.Length])
+                        {
+                            var pointer = tmp;
+                            for (uint count = 0; count < af.NumAnimCommands; count++)
                             {
-                                Kill();
+                                Assert(pointer < back);
+                                var command = *pointer;
+                                ++pointer;
+                                switch ((TR_ANIMCOMMAND) command)
+                                {
+                                    case TR_ANIMCOMMAND.SetPosition:
+                                        // This command executes ONLY at the end of animation.
+                                        pointer += 3; // Parse through 3 operands.
+                                        break;
+
+                                    case TR_ANIMCOMMAND.JumpDistance:
+                                        // This command executes ONLY at the end of animation.
+                                        pointer += 2; // Parse through 2 operands.
+                                        break;
+
+                                    case TR_ANIMCOMMAND.EmptyHands:
+                                        // FIXME: Behaviour is yet to be discovered.
+                                        break;
+
+                                    case TR_ANIMCOMMAND.Kill:
+                                        // This command executes ONLY at the end of animation.
+                                        if (ssAnim.CurrentFrame == af.Frames.Count - 1)
+                                        {
+                                            Kill();
+                                        }
+
+                                        break;
+
+                                    case TR_ANIMCOMMAND.PlaySound:
+                                        if (ssAnim.CurrentFrame == pointer[0])
+                                        {
+                                            var soundIndex = pointer[1] & 0x3FFF;
+
+                                            // Quick workaround for TR3 quicksand.
+                                            if (GetSubstanceState().IsAnyOf(Substance.QuicksandConsumed, Substance.QuicksandShallow))
+                                            {
+                                                soundIndex = 18;
+                                            }
+
+                                            if (pointer[1].HasFlagSig(TR_ANIMCOMMAND_CONDITION.Water))
+                                            {
+                                                if (GetSubstanceState() == Substance.WaterShallow)
+                                                    Audio.Send((uint)soundIndex, TR_AUDIO_EMITTER.Entity, (int)ID);
+                                            }
+                                            else if (pointer[1].HasFlagSig(TR_ANIMCOMMAND_CONDITION.Land))
+                                            {
+                                                if (GetSubstanceState() != Substance.WaterShallow)
+                                                    Audio.Send((uint)soundIndex, TR_AUDIO_EMITTER.Entity, (int)ID);
+                                            }
+                                            else
+                                            {
+                                                Audio.Send((uint)soundIndex, TR_AUDIO_EMITTER.Entity, (int)ID);
+                                            }
+                                        }
+                                        pointer += 2;
+                                        break;
+
+                                    case TR_ANIMCOMMAND.PlayEffect:
+                                        if (ssAnim.CurrentFrame == pointer[0])
+                                        {
+                                            var effectID = pointer[1] & 0x3FFF;
+                                            if (effectID > 0)
+                                                EngineLua.ExecEffect(effectID, (int)ID);
+                                        }
+                                        pointer += 2;
+                                        break;
+                                }
                             }
-
-                            break;
-
-                        case TR_ANIMCOMMAND.PlaySound:
-                            if (ssAnim.CurrentFrame == EngineWorld.AnimCommands[pointer + 0])
-                            {
-                                var soundIndex = EngineWorld.AnimCommands[pointer + 1] & 0x3FFF;
-
-                                // Quick workaround for TR3 quicksand.
-                                if (GetSubstanceState().IsAnyOf(Substance.QuicksandConsumed, Substance.QuicksandShallow))
-                                {
-                                    soundIndex = 18;
-                                }
-
-                                if (EngineWorld.AnimCommands[pointer + 1].HasFlagSig(TR_ANIMCOMMAND_CONDITION.Water))
-                                {
-                                    if (GetSubstanceState() == Substance.WaterShallow)
-                                        Audio.Send((uint) soundIndex, TR_AUDIO_EMITTER.Entity, (int) ID);
-                                }
-                                else if (EngineWorld.AnimCommands[pointer + 1].HasFlagSig(TR_ANIMCOMMAND_CONDITION.Land))
-                                {
-                                    if (GetSubstanceState() != Substance.WaterShallow)
-                                        Audio.Send((uint) soundIndex, TR_AUDIO_EMITTER.Entity, (int) ID);
-                                }
-                                else
-                                {
-                                    Audio.Send((uint) soundIndex, TR_AUDIO_EMITTER.Entity, (int) ID);
-                                }
-                            }
-                            pointer += 2;
-                            break;
-
-                        case TR_ANIMCOMMAND.PlayEffect:
-                            if (ssAnim.CurrentFrame == EngineWorld.AnimCommands[pointer + 0])
-                            {
-                                var effectID = EngineWorld.AnimCommands[pointer + 1] & 0x3FFF;
-                                if (effectID > 0)
-                                    EngineLua.ExecEffect(effectID, (int) ID);
-                            }
-                            pointer += 2;
-                            break;
+                        }
                     }
                 }
             }
@@ -1284,9 +1293,9 @@ namespace FreeRaider
             // (e.g. first trapdoor in The Great Wall, etc.)
             // Sector above primarily needed for paranoid cases of monkeyswing.
 
-            Assert.That(CurrentSector != null); // TODO: Useless?
+            Assert(CurrentSector != null); // TODO: Useless?
             var lowestSector = CurrentSector.GetLowestSector();
-            Assert.That(lowestSector != null);
+            Assert(lowestSector != null);
 
             ProcessSectorImpl();
 

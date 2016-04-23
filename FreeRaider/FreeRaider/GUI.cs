@@ -5,6 +5,7 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
 using FreeRaider.Loader;
+using JetBrains.Annotations;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using SharpFont;
@@ -2234,6 +2235,7 @@ namespace FreeRaider
         /// <summary>
         /// Draws text using a <see cref="FontType.Secondary"/>.
         /// </summary>
+        [StringFormatMethod("fmt")]
         public static TextLine OutTextXY(float x, float y, string fmt, params object[] args)
         {
             if(Global.FontManager != null && TempLinesUsed < MaxTempLines - 1)

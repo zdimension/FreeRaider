@@ -857,6 +857,21 @@ namespace FreeRaider
         {
             return s.Split(new[] {delimiter}, 2);
         }
+
+        public static T[] SkipEx<T>(this IList<T> g, int count)
+        {
+            var length = g.Count - count;
+            if(length < 0)
+            {
+                throw new IndexOutOfRangeException();
+            }
+            var result = new T[length];
+            for(var i = 0; i < length; i++)
+            {
+                result[i] = g[i + count];
+            }
+            return result;
+        }
     }
 
     public partial class Constants

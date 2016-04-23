@@ -1082,7 +1082,7 @@ namespace FreeRaider
                 // Then: Individual hair pieces
                 for (var i = 0; i < entity.Hairs[h].Elements.Count; i++)
                 {
-                    Assert.That(i + 1 < matrixCount);
+                    StaticFuncs.Assert(i + 1 < matrixCount);
                     /*
                      * Definitions: x_o - as in original file. x_h - as in hair model
                      * (translated)

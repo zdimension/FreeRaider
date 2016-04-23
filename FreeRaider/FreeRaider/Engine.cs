@@ -1057,7 +1057,7 @@ namespace FreeRaider
         {
             for(var i = world.NumCollisionObjects - 1; i >= 0; i--)
             {
-                Assert.That(i >= 0 && i < BtEngineDynamicsWorld.CollisionObjectArray.Count);
+                Assert(i >= 0 && i < BtEngineDynamicsWorld.CollisionObjectArray.Count);
                 var obj = BtEngineDynamicsWorld.CollisionObjectArray[i];
                 var body = RigidBody.Upcast(obj);
                 if(body != null && !body.IsStaticObject && body.MotionState != null)

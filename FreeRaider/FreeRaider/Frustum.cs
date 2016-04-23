@@ -50,7 +50,7 @@ namespace FreeRaider
                 return false;
 
             // Direction from the camera position to an arbitrary vertex frustum
-            Assert.That(Vertices.Any());
+            StaticFuncs.Assert(Vertices.Any());
             var dir = Vertices[0] - cam.Position;
             var lambda = 0.0f;
 
@@ -440,7 +440,7 @@ namespace FreeRaider
 
         public bool SplitByPlane(Plane splitPlane)
         {
-            Assert.That(Vertices.Any());
+            StaticFuncs.Assert(Vertices.Any());
 
             var buf = new List<Vector3>();
 

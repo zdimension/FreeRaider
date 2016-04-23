@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using AT.MIN;
 using FreeRaider.Loader;
 using Ionic.Zlib;
+using JetBrains.Annotations;
 using OpenTK;
 using OpenTK.Audio.OpenAL;
 using OpenTK.Graphics.OpenGL;
@@ -69,7 +70,7 @@ namespace FreeRaider
         public static void Quat_SetRotation(ref Quaternion quat, Vector3 axis, float angle)
         {
             float d = axis.Length;
-            Assert.That(d != 0);
+            StaticFuncs.Assert(d != 0);
             float s = (float) Math.Sin(angle * 0.5) / d;
             quat = new Quaternion(axis * s, (float) Math.Cos(angle * 0.5));
         }
@@ -225,7 +226,7 @@ namespace FreeRaider
         public static void SetRotation(ref Matrix3 mat, Quaternion q)
         {
             var d = q.LengthSquared;
-            Assert.That(d != 0.0f);
+            StaticFuncs.Assert(d != 0.0f);
             var s = 2.0f / d;
 
             var xs = q.X * s;
@@ -295,7 +296,7 @@ namespace FreeRaider
             }
         }
 
-
+        [StringFormatMethod("format")]
         public static string Format(string format, params object[] args)
         {
             if (Regex.IsMatch(format, @"(?:[^{}])({\d})(?:[^}])"))

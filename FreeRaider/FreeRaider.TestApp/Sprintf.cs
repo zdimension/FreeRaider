@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using JetBrains.Annotations;
 
 #endregion
 
@@ -243,18 +244,21 @@ namespace AT.MIN
         }
         #endregion
         #region printf
+        [StringFormatMethod("Format")]
         public static void printf(string Format, params object[] Parameters)
         {
             Console.Write(sprintf(Format, Parameters));
         }
         #endregion
         #region fprintf
+        [StringFormatMethod("Format")]
         public static void fprintf(TextWriter Destination, string Format, params object[] Parameters)
         {
             Destination.Write(sprintf(Format, Parameters));
         }
         #endregion
         #region sprintf
+        [StringFormatMethod("Format")]
         public static string sprintf(string Format, params object[] Parameters)
         {
             #region Variables

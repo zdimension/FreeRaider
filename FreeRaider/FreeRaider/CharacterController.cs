@@ -1039,11 +1039,11 @@ namespace FreeRaider
 
         public override void ProcessSectorImpl()
         {
-            Assert.That(CurrentSector != null);
+            Assert(CurrentSector != null);
             var highestSector = CurrentSector.GetHighestSector();
-            Assert.That(highestSector != null);
+            Assert(highestSector != null);
             var lowestSector = CurrentSector.GetLowestSector();
-            Assert.That(lowestSector != null);
+            Assert(lowestSector != null);
 
             HeightInfo.WallsClimbDir = 0;
             HeightInfo.WallsClimbDir |= (sbyte) (lowestSector.Flags & (uint) (SectorFlag.ClimbWest |
@@ -1168,7 +1168,7 @@ namespace FreeRaider
         {
             if (Bt.GhostObjects.Count > 0)
             {
-                Assert.That(Bf.BoneTags.Count == Bt.GhostObjects.Count);
+                Assert(Bf.BoneTags.Count == Bt.GhostObjects.Count);
                 for (var i = 0; i < Bf.BoneTags.Count; i++)
                 {
                     var tr = (Transform) Bt.BtBody[i].WorldTransform;
@@ -1282,9 +1282,9 @@ namespace FreeRaider
                 {
                     while (rs.SectorAbove != null)
                     {
-                        Assert.That(rs.SectorAbove != null);
+                        Assert(rs.SectorAbove != null);
                         rs = rs.SectorAbove.CheckFlip();
-                        Assert.That(rs?.OwnerRoom != null);
+                        Assert(rs?.OwnerRoom != null);
                         if ((rs.OwnerRoom.Flags & (uint) RoomFlag.Water) == 0x00)
                         {
                             fc.TransitionLevel = rs.Floor;
@@ -1297,9 +1297,9 @@ namespace FreeRaider
                 {
                     while (rs.SectorAbove != null)
                     {
-                        Assert.That(rs.SectorAbove != null);
+                        Assert(rs.SectorAbove != null);
                         rs = rs.SectorAbove.CheckFlip();
-                        Assert.That(rs?.OwnerRoom != null);
+                        Assert(rs?.OwnerRoom != null);
                         if ((rs.OwnerRoom.Flags & (uint) RoomFlag.Quicksand) == 0x00)
                         {
                             fc.TransitionLevel = rs.Floor;
@@ -1314,9 +1314,9 @@ namespace FreeRaider
                 {
                     while (rs.SectorBelow != null)
                     {
-                        Assert.That(rs.SectorBelow != null);
+                        Assert(rs.SectorBelow != null);
                         rs = rs.SectorBelow.CheckFlip();
-                        Assert.That(rs?.OwnerRoom != null);
+                        Assert(rs?.OwnerRoom != null);
                         if ((rs.OwnerRoom.Flags & (uint) RoomFlag.Water) != 0x00)
                         {
                             fc.TransitionLevel = rs.Ceiling;
@@ -1588,9 +1588,9 @@ namespace FreeRaider
             var n2 = Transform.Basis.Column0;
             var n2d = -n2.Dot(pos);
 
-            Assert.That(!n0.FuzzyZero());
-            Assert.That(!n1.FuzzyZero());
-            Assert.That(!n2.FuzzyZero());
+            Assert(!n0.FuzzyZero());
+            Assert(!n1.FuzzyZero());
+            Assert(!n2.FuzzyZero());
 
             /*
              * Solve system of the linear equations by Kramer method!
@@ -3071,11 +3071,11 @@ namespace FreeRaider
             var cb = new BtEngineClosestRayResultCallback(container);
             var from = new Vector3(rs.Position.X, rs.Position.Y, floor + TR_METERING_SECTORSIZE * 0.5f);
             var to = new Vector3(rs.Position.X, rs.Position.Y, floor - TR_METERING_SECTORSIZE * 0.5f);
-            BtEngineDynamicsWorld.RayTest(from, to, cb);
+            BtEngineDynamicsWorld.RayTest(@from, to, cb);
             if (cb.HasHit)
             {
                 Vector3 v;
-                Helper.SetInterpolate3(out v, from, to, cb.ClosestHitFraction);
+                Helper.SetInterpolate3(out v, @from, to, cb.ClosestHitFraction);
                 if (Math.Abs(v.Z - floor) < 1.1f)
                 {
                     var cont = (EngineContainer) cb.CollisionObject.UserObject;

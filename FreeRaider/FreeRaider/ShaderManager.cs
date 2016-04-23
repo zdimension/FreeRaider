@@ -97,7 +97,7 @@ namespace FreeRaider
 
         public LitShaderDescription GetEntityShader(int numberOfLights, bool skin)
         {
-            Assert.That(numberOfLights <= MAX_NUM_LIGHTS);
+            StaticFuncs.Assert(numberOfLights <= MAX_NUM_LIGHTS);
 
             return entityShader[numberOfLights][skin ? 1 : 0];
         }

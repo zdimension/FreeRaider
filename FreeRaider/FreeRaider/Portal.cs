@@ -61,7 +61,7 @@ namespace FreeRaider
 
         public void GenNormal()
         {
-            Assert.That(Vertices.Count > 3);
+            StaticFuncs.Assert(Vertices.Count > 3);
             var v1 = Vertices[1] - Vertices[0];
             var v2 = Vertices[2] - Vertices[1];
             Normal.Assign(v1, v2, Vertices[0]);

@@ -49,7 +49,7 @@ namespace FreeRaider
             GL.LinkProgram(Program);
             int isLinked;
             GL.GetProgram(Program, GetProgramParameterName.LinkStatus, out isLinked);
-            Assert.That(isLinked != 0);
+            StaticFuncs.Assert(isLinked != 0);
 
             GLUtil.CheckOpenGLError();
             GLUtil.PrintShaderInfoLog(Program);
@@ -87,7 +87,7 @@ namespace FreeRaider
             GL.LinkProgram(Program);
             int isLinked;
             GL.GetProgram(Program, GetProgramParameterName.LinkStatus, out isLinked);
-            Assert.That(isLinked != 0);
+            StaticFuncs.Assert(isLinked != 0);
 
             GLUtil.CheckOpenGLError();
             GLUtil.PrintShaderInfoLog(Program);
@@ -117,7 +117,7 @@ namespace FreeRaider
             GL.LinkProgram(Program);
             int isLinked;
             GL.GetProgram(Program, GetProgramParameterName.LinkStatus, out isLinked);
-            Assert.That(isLinked != 0);
+            StaticFuncs.Assert(isLinked != 0);
 
             GLUtil.CheckOpenGLError();
             GLUtil.PrintShaderInfoLog(Program);
@@ -146,7 +146,7 @@ namespace FreeRaider
             GL.LinkProgram(Program);
             int isLinked;
             GL.GetProgram(Program, GetProgramParameterName.LinkStatus, out isLinked);
-            Assert.That(isLinked != 0);
+            StaticFuncs.Assert(isLinked != 0);
 
             GLUtil.CheckOpenGLError();
             GLUtil.PrintShaderInfoLog(Program);
@@ -182,7 +182,7 @@ namespace FreeRaider
             GL.LinkProgram(Program);
             int isLinked;
             GL.GetProgram(Program, GetProgramParameterName.LinkStatus, out isLinked);
-            Assert.That(isLinked != 0);
+            StaticFuncs.Assert(isLinked != 0);
 
             GLUtil.CheckOpenGLError();
             GLUtil.PrintShaderInfoLog(Program);

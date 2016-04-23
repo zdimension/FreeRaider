@@ -350,9 +350,9 @@ namespace FreeRaider
         /// <param name="reverse">Whether to reverse the order of texture coordinates on output.</param>
         public void GetCoordinates(uint texture, bool reverse, Polygon poly, int shift = 0, bool split = false)
         {
-            Assert.That(poly.Vertices.Count <= 4);
+            StaticFuncs.Assert(poly.Vertices.Count <= 4);
 
-            Assert.That(texture < fileObjectTextures.Count);
+            StaticFuncs.Assert(texture < fileObjectTextures.Count);
             var fileObjectTexture = fileObjectTextures[(int) texture];
             var canonical = canonicalObjectTextures[(int) fileObjectTexture.CanonicalTextureIndex];
 
@@ -406,7 +406,7 @@ namespace FreeRaider
         /// </summary>
         public void GetSpriteCoordinates(uint spriteTexture, out uint outPage, float[] coordinates)
         {
-            Assert.That(spriteTexture < canonicalTexturesForSpriteTextures.Count);
+            StaticFuncs.Assert(spriteTexture < canonicalTexturesForSpriteTextures.Count);
 
             var canonicalIndex = canonicalTexturesForSpriteTextures[(int) spriteTexture];
             var canonical = canonicalObjectTextures[(int) canonicalIndex];
@@ -450,7 +450,7 @@ namespace FreeRaider
         /// </summary>
         public uint GetTextureHeight(uint texture)
         {
-            Assert.That(texture < fileObjectTextures.Count);
+            StaticFuncs.Assert(texture < fileObjectTextures.Count);
 
             var fileObjectTexture = fileObjectTextures[(int) texture];
             var canonical = canonicalObjectTextures[(int) fileObjectTexture.CanonicalTextureIndex];

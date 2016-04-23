@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using FreeRaider.Loader;
+using JetBrains.Annotations;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 using static FreeRaider.Constants;
@@ -393,6 +394,7 @@ namespace FreeRaider
             }
         }
 
+        [StringFormatMethod("fmt")]
         public void Printf(string fmt, params object[] args)
         {
             AddLine(Helper.Format(fmt, args), FontStyle.ConsoleNotify);

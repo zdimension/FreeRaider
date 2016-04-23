@@ -1060,11 +1060,11 @@ namespace FreeRaider
 
             var sinkPos = new Vector3(sink.X, sink.Y, sink.Z + 256.0f);
 
-            Assert.That(ent.CurrentSector != null);
+            StaticFuncs.Assert(ent.CurrentSector != null);
             var ls = ent.CurrentSector.GetLowestSector();
-            Assert.That(ls != null);
+            StaticFuncs.Assert(ls != null);
             var hs = ent.CurrentSector.GetHighestSector();
-            Assert.That(hs != null);
+            StaticFuncs.Assert(hs != null);
             if (sinkPos.Z > hs.Ceiling || sinkPos.Z < ls.Floor)
             {
                 sinkPos.Z = entPos.Z;

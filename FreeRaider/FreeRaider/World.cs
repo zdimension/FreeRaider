@@ -1039,7 +1039,7 @@ namespace FreeRaider
         /// </summary>
         public List<StatCameraSink> CamerasSinks { get; set; }
 
-        public List<short> AnimCommands { get; set; }
+        public short[] AnimCommands { get; set; }
 
         /// <summary>
         /// Audio emitters
@@ -1269,7 +1269,7 @@ namespace FreeRaider
             CamerasSinks = new List<StatCameraSink>();
             SkeletalModels = new List<SkeletalModel>();
             SkyBox = null;
-            AnimCommands = new List<short>();
+            AnimCommands = new short[0];
         }
 
         public void Empty()
