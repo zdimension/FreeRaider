@@ -14,6 +14,7 @@ using Lua = NLua.Lua;
 using LuaCore = KeraLua.Lua;
 using static FreeRaider.Global;
 using static FreeRaider.Constants;
+using static FreeRaider.Strings;
 
 namespace FreeRaider
 {
@@ -1511,10 +1512,10 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID(id);
             if (ent != null) // TODO: Add warning if null
             {
-                var triggerLayout = (int)ent.TriggerLayout;
-                triggerLayout &= ~(int)ENTITY_TLAYOUT.Event;
+                var triggerLayout = (int) ent.TriggerLayout;
+                triggerLayout &= ~(int) ENTITY_TLAYOUT.Event;
                 triggerLayout ^= (_event ? 1 : 0) << 5; // event - 00100000
-                ent.TriggerLayout = (ENTITY_TLAYOUT)triggerLayout;
+                ent.TriggerLayout = (ENTITY_TLAYOUT) triggerLayout;
             }
         }
 
@@ -1522,14 +1523,14 @@ namespace FreeRaider
         {
             var ent = EngineWorld.GetEntityByID(id);
             // TODO: Add warning if null
-            return ent != null && (int)(ent.TriggerLayout & ENTITY_TLAYOUT.Event) >> 5 != 0;
+            return ent != null && (int) (ent.TriggerLayout & ENTITY_TLAYOUT.Event) >> 5 != 0;
         }
 
         public static int lua_GetEntityMask(uint id)
         {
             var ent = EngineWorld.GetEntityByID(id);
             // TODO: Add warning if null
-            if(ent != null)
+            if (ent != null)
             {
                 return (int) (ent.TriggerLayout & ENTITY_TLAYOUT.Mask); // mask
             }
@@ -1541,10 +1542,10 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID(id);
             if (ent != null) // TODO: Add warning if null
             {
-                var triggerLayout = (int)ent.TriggerLayout;
-                triggerLayout &= ~(int)ENTITY_TLAYOUT.Mask;
+                var triggerLayout = (int) ent.TriggerLayout;
+                triggerLayout &= ~(int) ENTITY_TLAYOUT.Mask;
                 triggerLayout ^= mask; // mask - 00011111
-                ent.TriggerLayout = (ENTITY_TLAYOUT)triggerLayout;
+                ent.TriggerLayout = (ENTITY_TLAYOUT) triggerLayout;
             }
         }
 
@@ -1564,10 +1565,10 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID(id);
             if (ent != null) // TODO: Add warning if null
             {
-                var triggerLayout = (int)ent.TriggerLayout;
-                triggerLayout &= ~(int)ENTITY_TLAYOUT.SectorStatus;
+                var triggerLayout = (int) ent.TriggerLayout;
+                triggerLayout &= ~(int) ENTITY_TLAYOUT.SectorStatus;
                 triggerLayout ^= (status ? 1 : 0) << 7; // sector_status - 10000000
-                ent.TriggerLayout = (ENTITY_TLAYOUT)triggerLayout;
+                ent.TriggerLayout = (ENTITY_TLAYOUT) triggerLayout;
             }
         }
 
@@ -1603,12 +1604,13 @@ namespace FreeRaider
                 ent.Active,
                 ent.Enabled,
                 ent.Visible,
-                (ushort)ent.TypeFlags,
-                (uint)ent.CallbackFlags
+                (ushort) ent.TypeFlags,
+                (uint) ent.CallbackFlags
             };
         }
 
-        public static void lua_SetEntityFlags(uint id, bool active, bool enabled, bool visible, ushort typeFlags, uint? cbFlags = null)
+        public static void lua_SetEntityFlags(uint id, bool active, bool enabled, bool visible, ushort typeFlags,
+            uint? cbFlags = null)
         {
             var ent = EngineWorld.GetEntityByID(id);
 
@@ -1639,7 +1641,7 @@ namespace FreeRaider
             if (flag != null)
                 return (uint) ((ushort) ent.TypeFlags & flag);
             else
-                return (uint)ent.TypeFlags;
+                return (uint) ent.TypeFlags;
         }
 
         public static void lua_SetEntityTypeFlag(uint id, ushort typeFlag, bool? value = null)
@@ -1651,19 +1653,19 @@ namespace FreeRaider
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
                 return;
             }
-            if(value == null)
+            if (value == null)
             {
                 ent.TypeFlags ^= (ENTITY_TYPE) typeFlag;
                 return;
             }
 
-            if((bool)value)
+            if ((bool) value)
             {
                 ent.TypeFlags |= (ENTITY_TYPE) typeFlag;
             }
             else
             {
-                ent.TypeFlags &= ~(ENTITY_TYPE)typeFlag;
+                ent.TypeFlags &= ~(ENTITY_TYPE) typeFlag;
             }
         }
 
@@ -1677,7 +1679,7 @@ namespace FreeRaider
                 return false;
             }
 
-            switch(whichCstr)
+            switch (whichCstr)
             {
                 case "active":
                     return ent.Active;
@@ -1708,15 +1710,15 @@ namespace FreeRaider
                     ent.Active = tmp ? !ent.Active : (bool) value;
                     break;
                 case "enabled":
-                    ent.Enabled = tmp ? !ent.Enabled : (bool)value;
+                    ent.Enabled = tmp ? !ent.Enabled : (bool) value;
                     break;
                 case "visible":
-                    ent.Visible = tmp ? !ent.Visible : (bool)value;
+                    ent.Visible = tmp ? !ent.Visible : (bool) value;
                     break;
             }
         }
 
-        public static uint lua_GetENTITY_CALLBACKFlag(uint id, ushort? flag = null)
+        public static uint lua_GetEntityCallbackFlag(uint id, ushort? flag = null)
         {
             var ent = EngineWorld.GetEntityByID(id);
 
@@ -1729,10 +1731,10 @@ namespace FreeRaider
             if (flag == null)
                 return (uint) ent.CallbackFlags;
             else
-                return (uint) ent.CallbackFlags & (ushort)flag;
+                return (uint) ent.CallbackFlags & (ushort) flag;
         }
 
-        public static void lua_SetENTITY_CALLBACKFlag(uint id, uint callbackFlag, bool? value = null)
+        public static void lua_SetEntityCallbackFlag(uint id, uint callbackFlag, bool? value = null)
         {
             var ent = EngineWorld.GetEntityByID(id);
 
@@ -1743,17 +1745,17 @@ namespace FreeRaider
             }
             if (value == null)
             {
-                ent.CallbackFlags ^= (ENTITY_CALLBACK)callbackFlag;
+                ent.CallbackFlags ^= (ENTITY_CALLBACK) callbackFlag;
                 return;
             }
 
-            if ((bool)value)
+            if ((bool) value)
             {
-                ent.CallbackFlags |= (ENTITY_CALLBACK)callbackFlag;
+                ent.CallbackFlags |= (ENTITY_CALLBACK) callbackFlag;
             }
             else
             {
-                ent.CallbackFlags &= ~(ENTITY_CALLBACK)callbackFlag;
+                ent.CallbackFlags &= ~(ENTITY_CALLBACK) callbackFlag;
             }
         }
 
@@ -1804,12 +1806,18 @@ namespace FreeRaider
             {
                 switch (response)
                 {
-                    case 0: return ent.Response.Killed ? 1 : 0;
-                    case 1: return ent.Response.VerticalCollide;
-                    case 2: return ent.Response.HorizontalCollide;
-                    case 3: return (int)ent.Response.Slide;
-                    case 4: return (int)ent.Response.Lean;
-                    default: return 0;
+                    case 0:
+                        return ent.Response.Killed ? 1 : 0;
+                    case 1:
+                        return ent.Response.VerticalCollide;
+                    case 2:
+                        return ent.Response.HorizontalCollide;
+                    case 3:
+                        return (int) ent.Response.Slide;
+                    case 4:
+                        return (int) ent.Response.Lean;
+                    default:
+                        return 0;
                 }
             }
             else
@@ -1860,7 +1868,7 @@ namespace FreeRaider
                 return -1;
             }
 
-            return (short)ent.Bf.Animations.LastState;
+            return (short) ent.Bf.Animations.LastState;
         }
 
         public static uint lua_GetEntityModel(uint id)
@@ -1901,14 +1909,14 @@ namespace FreeRaider
                 return;
             }
 
-            if(room < EngineWorld.Rooms.Count)
+            if (room < EngineWorld.Rooms.Count)
             {
                 var r = EngineWorld.Rooms[room];
-                if(ent == EngineWorld.Character)
+                if (ent == EngineWorld.Character)
                 {
                     ent.Self.Room = r;
                 }
-                else if(ent.Self.Room != r)
+                else if (ent.Self.Room != r)
                 {
                     ent.Self.Room?.RemoveEntity(ent);
                     r.AddEntity(ent);
@@ -1917,7 +1925,7 @@ namespace FreeRaider
             ent.UpdateRoomPos();
 
             ent.MoveType = (MoveType) moveType;
-            ent.DirFlag = (ENT_MOVE)dirFlag;
+            ent.DirFlag = (ENT_MOVE) dirFlag;
         }
 
         public static int lua_GetEntityMeshCount(uint id)
@@ -1940,7 +1948,7 @@ namespace FreeRaider
 
             var meshesToCopy = Math.Min(entDest.Bf.BoneTags.Count, modelSrc.MeshCount);
 
-            for(var i = 0; i < meshesToCopy; i++)
+            for (var i = 0; i < meshesToCopy; i++)
             {
                 entDest.Bf.BoneTags[i].MeshBase = modelSrc.MeshTree[i].MeshBase;
                 entDest.Bf.BoneTags[i].MeshSkin = modelSrc.MeshTree[i].MeshSkin;
@@ -1950,9 +1958,9 @@ namespace FreeRaider
         public static void lua_SetModelMeshReplaceFlag(uint id, int bone, byte flag)
         {
             var sm = EngineWorld.GetModelByID(id);
-            if(sm != null)
+            if (sm != null)
             {
-                if(bone.IsBetween(0, sm.MeshCount - 1))
+                if (bone.IsBetween(0, sm.MeshCount - 1))
                 {
                     sm.MeshTree[bone].ReplaceMesh = flag;
                 }
@@ -1990,7 +1998,7 @@ namespace FreeRaider
         public static void lua_CopyMeshFromModelToModel(uint id1, uint id2, int bone1, int bone2)
         {
             var sm1 = EngineWorld.GetModelByID(id1);
-            if(sm1 == null)
+            if (sm1 == null)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_MODEL_ID, id1);
                 return;
@@ -2011,11 +2019,11 @@ namespace FreeRaider
                 sm1.MeshTree[bone1].MeshBase = sm2.MeshTree[bone2].MeshBase;
                 return;
             }
-            if(!tmp1)
+            if (!tmp1)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_BONE_NUMBER, bone1);
             }
-            if(!tmp2)
+            if (!tmp2)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_BONE_NUMBER, bone2);
             }
@@ -2025,7 +2033,7 @@ namespace FreeRaider
         {
             var ent = EngineWorld.GetEntityByID(id);
             // TODO: Add warning if null
-            if(ent != null && ent.Bf.BoneTags.Count > 0)
+            if (ent != null && ent.Bf.BoneTags.Count > 0)
             {
                 ent.CreateGhosts();
             }
@@ -2036,16 +2044,17 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID(id);
             // TODO: Add warning if null
             // TODO: Check bodyNumber > 0
-            if(ent != null && bodyNumber < ent.Bf.BoneTags.Count && ent.Bt.BtBody[bodyNumber] != null && ent.TypeFlags.HasFlag(ENTITY_TYPE.Dynamic))
+            if (ent != null && bodyNumber < ent.Bf.BoneTags.Count && ent.Bt.BtBody[bodyNumber] != null &&
+                ent.TypeFlags.HasFlag(ENTITY_TYPE.Dynamic))
             {
                 var t = ent.Angles.X * RadPerDeg;
 
-                var ang1 = (float)Math.Sin(t);
-                var ang2 = (float)Math.Cos(t);
+                var ang1 = (float) Math.Sin(t);
+                var ang2 = (float) Math.Cos(t);
 
                 var angle = new Vector3(-ang1 * hForce, ang2 * hForce, vForce);
 
-                if(resetFlag)
+                if (resetFlag)
                     ent.Bt.BtBody[bodyNumber].ClearForces();
 
                 ent.Bt.BtBody[bodyNumber].LinearVelocity = angle;
@@ -2059,9 +2068,10 @@ namespace FreeRaider
 
         public static int lua_SetEntityBodyMass(uint id, int bodyNumber, params float[] masses)
         {
-            if(masses.Length == 0)
+            if (masses.Length == 0)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ARGS, "[entity_id, body_number, (mass / each body mass)]");
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ARGS,
+                    "[entity_id, body_number, (mass / each body mass)]");
                 return 0;
             }
 
@@ -2071,14 +2081,14 @@ namespace FreeRaider
 
             var dyn = false;
 
-            if(ent != null && bodyNumber < ent.Bf.BoneTags.Count)
+            if (ent != null && bodyNumber < ent.Bf.BoneTags.Count)
             {
-                for(var i = 0; i < bodyNumber; i++)
+                for (var i = 0; i < bodyNumber; i++)
                 {
                     var mass = 0.0f;
                     if (i < masses.Length) mass = masses[i];
 
-                    if(ent.Bt.BtBody[i] != null)
+                    if (ent.Bt.BtBody[i] != null)
                     {
                         BtEngineDynamicsWorld.RemoveRigidBody(ent.Bt.BtBody[i]);
 
@@ -2115,7 +2125,7 @@ namespace FreeRaider
                     }
                 }
 
-                if(dyn)
+                if (dyn)
                 {
                     ent.TypeFlags |= ENTITY_TYPE.Dynamic;
                 }
@@ -2128,7 +2138,8 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ENTITY_OR_BODY, id, bodyNumber); // TODO: Replace bodyNumber by ent.Bf.BoneTags.Count
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ENTITY_OR_BODY, id, bodyNumber);
+                    // TODO: Replace bodyNumber by ent.Bf.BoneTags.Count
             }
 
             return 0;
@@ -2139,11 +2150,12 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID(id);
             // TODO: Add warning if null
             // TODO: Check bodyNumber > 0
-            if (ent != null && bodyNumber < ent.Bf.BoneTags.Count && ent.Bt.BtBody[bodyNumber] != null && ent.TypeFlags.HasFlag(ENTITY_TYPE.Dynamic))
+            if (ent != null && bodyNumber < ent.Bf.BoneTags.Count && ent.Bt.BtBody[bodyNumber] != null &&
+                ent.TypeFlags.HasFlag(ENTITY_TYPE.Dynamic))
             {
                 var t = ent.Angles.X * RadPerDeg;
-                var ang1 = (float)Math.Sin(t);
-                var ang2 = (float)Math.Cos(t);
+                var ang1 = (float) Math.Sin(t);
+                var ang2 = (float) Math.Cos(t);
                 var ang3 = Math.Min(1.0f, Math.Abs(vFactor));
 
                 ent.Bt.BtBody[bodyNumber].LinearFactor = new Vector3(Math.Abs(ang1), Math.Abs(ang2), ang3);
@@ -2158,7 +2170,7 @@ namespace FreeRaider
         {
             var ent = EngineWorld.GetCharacterByID(id);
 
-            if(ent != null)
+            if (ent != null)
             {
                 ent.SetWeaponModel(weaponModel, state);
             }
@@ -2203,7 +2215,7 @@ namespace FreeRaider
 
         public static void lua_CamShake(float power, float time, uint? id = null)
         {
-            if(id != null)
+            if (id != null)
             {
                 var ent = EngineWorld.GetEntityByID((uint) id);
 
@@ -2215,7 +2227,7 @@ namespace FreeRaider
                 power *= dist;
             }
 
-            if(power > 0.0f)
+            if (power > 0.0f)
                 Renderer.Camera.Shake(power, time);
         }
 
@@ -2245,7 +2257,7 @@ namespace FreeRaider
         }
 
         #endregion
-        
+
         #region General gameplay functions
 
         public static void lua_PlayStream(uint id, byte mask = 0)
@@ -2268,7 +2280,7 @@ namespace FreeRaider
         {
             //if (id < 0) return;
 
-            if(id > EngineWorld.AudioMap.Count)
+            if (id > EngineWorld.AudioMap.Count)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_SOUND_ID, EngineWorld.AudioMap.Count);
                 return;
@@ -2284,9 +2296,9 @@ namespace FreeRaider
 
             result = eid >= 0 ? Audio.Send(id, TR_AUDIO_EMITTER.Entity, eid) : Audio.Send(id, TR_AUDIO_EMITTER.Global);
 
-            if(result < 0)
+            if (result < 0)
             {
-                switch(result)
+                switch (result)
                 {
                     case TR_AUDIO_SEND.NoChannel:
                         ConsoleInfo.Instance.Warning(Strings.SYSWARN_AS_NOCHANNEL);
@@ -2309,11 +2321,13 @@ namespace FreeRaider
 
             var eid = -1;
             if (entID != null)
-                eid = (int)entID;
-            if (eid < 0 || EngineWorld.GetEntityByID((uint)eid) == null)
+                eid = (int) entID;
+            if (eid < 0 || EngineWorld.GetEntityByID((uint) eid) == null)
                 eid = -1;
 
-            var result = eid == -1 ? Audio.Send(id, TR_AUDIO_EMITTER.Global) : Audio.Send(id, TR_AUDIO_EMITTER.Entity, eid);
+            var result = eid == -1
+                ? Audio.Send(id, TR_AUDIO_EMITTER.Global)
+                : Audio.Send(id, TR_AUDIO_EMITTER.Entity, eid);
 
             if (result < 0)
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_AK_NOTPLAYED, id);
@@ -2328,7 +2342,7 @@ namespace FreeRaider
         {
             ConsoleInfo.Instance.Notify(Strings.SYSNOTE_CHANGING_LEVEL, id);
 
-            Game.LevelTransition((ushort)id);
+            Game.LevelTransition((ushort) id);
             GameflowManager.Send(GF_OP.LevelComplete, (int) id); // Next level
         }
 
@@ -2343,7 +2357,7 @@ namespace FreeRaider
             Gui.FadeStart(FaderType.LoadScreen, FaderDir.Out);
 
             ConsoleInfo.Instance.Notify(Strings.SYSNOTE_CHANGING_GAME, gameID);
-            Game.LevelTransition((ushort)GameflowManager.LevelID);
+            Game.LevelTransition((ushort) GameflowManager.LevelID);
             GameflowManager.Send(GF_OP.LevelComplete, (int) GameflowManager.LevelID);
         }
 
@@ -2351,9 +2365,9 @@ namespace FreeRaider
         {
             ConsoleInfo.Instance.Notify(Strings.SYSNOTE_LOADING_MAP, mapName);
 
-            if(!string.IsNullOrWhiteSpace(mapName) && mapName != GameflowManager.CurrentLevelPath)
+            if (!string.IsNullOrWhiteSpace(mapName) && mapName != GameflowManager.CurrentLevelPath)
             {
-                if(gameID != null)
+                if (gameID != null)
                 {
                     GameflowManager.GameID = (byte) gameID;
                 }
@@ -2374,28 +2388,28 @@ namespace FreeRaider
 
         public static void lua_SetFlipState(int group, bool state)
         {
-            if(group >= EngineWorld.FlipData.Count)
+            if (group >= EngineWorld.FlipData.Count)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FLIPMAP_INDEX, group);
                 return;
             }
 
-            if(EngineWorld.FlipData[group].Map == 0x1F) // Check flipmap state.
+            if (EngineWorld.FlipData[group].Map == 0x1F) // Check flipmap state.
             {
-                if(EngineWorld.EngineVersion > Loader.Engine.TR3)
+                if (EngineWorld.EngineVersion > Loader.Engine.TR3)
                 {
                     foreach (var currentRoom in EngineWorld.Rooms)
                     {
-                        if(currentRoom.AlternateGroup == group) // Check if group is valid.
+                        if (currentRoom.AlternateGroup == group) // Check if group is valid.
                         {
-                            if(state)
+                            if (state)
                                 currentRoom.SwapToAlternate();
                             else
                                 currentRoom.SwapToBase();
                         }
                     }
-                    
-                    EngineWorld.FlipData[group].State = (byte)(state ? 1 : 0);
+
+                    EngineWorld.FlipData[group].State = (byte) (state ? 1 : 0);
                 }
                 else
                 {
@@ -2407,7 +2421,7 @@ namespace FreeRaider
                             currentRoom.SwapToBase();
                     }
 
-                    EngineWorld.FlipData[0].State = (byte)(state ? 1 : 0); // In TR1-3, state is always global.
+                    EngineWorld.FlipData[0].State = (byte) (state ? 1 : 0); // In TR1-3, state is always global.
                 }
             }
         }
@@ -2416,13 +2430,13 @@ namespace FreeRaider
         {
             var op = mask > AMASK_OP_XOR ? AMASK_OP_XOR : AMASK_OP_OR;
 
-            if(group >= EngineWorld.FlipData.Count)
+            if (group >= EngineWorld.FlipData.Count)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FLIPMAP_INDEX, group);
                 return;
             }
 
-            if(op == AMASK_OP_XOR)
+            if (op == AMASK_OP_XOR)
             {
                 EngineWorld.FlipData[group].Map ^= mask;
             }
@@ -2511,6 +2525,167 @@ namespace FreeRaider
                 foreach (var v in p.Vertices)
                 {
                     v.TexCoord[1] = vMin + 0.5f * (v.TexCoord[1] - vMin) + seq.UVRotateMax;
+                }
+            }
+        }
+
+        #endregion
+
+        #region Functions from ExecCmd
+
+        public static void lua_help()
+        {
+            for (var j = SYSNOTE_COMMAND_HELP1; j <= SYSNOTE_COMMAND_HELP15; j++)
+            {
+                ConsoleInfo.Instance.Notify(j);
+            }
+        }
+
+        public static void lua_goto(float x, float y, float z)
+        {
+            ControlStates.FreeLook = true;
+            Renderer.Camera.Position = new Vector3(x, y, z);
+        }
+
+        public static void lua_save(string name)
+        {
+            Game.Save(name); // TODO: return value
+        }
+
+        public static void lua_load(string name)
+        {
+            Game.Load(name); // TODO: return value
+        }
+
+        public static void lua_exit()
+        {
+            Engine.Shutdown(0);
+        }
+
+        public static void lua_cls()
+        {
+            ConsoleInfo.Instance.Clean();
+        }
+
+        public static void lua_spacing(float? spacing = null)
+        {
+            if (spacing == null)
+            {
+                ConsoleInfo.Instance.Notify(SYSNOTE_CONSOLE_SPACING, ConsoleInfo.Instance.Spacing);
+            }
+            else
+            {
+                ConsoleInfo.Instance.SetLineInterval((float) spacing);
+            }
+        }
+
+        public static void lua_showing_lines(int? lines = null)
+        {
+            if (lines == null)
+            {
+                ConsoleInfo.Instance.Notify(SYSNOTE_CONSOLE_LINECOUNT, ConsoleInfo.Instance.VisibleLines);
+            }
+            else
+            {
+                var val = (int) lines;
+                if (val >= 2 && val <= Global.ScreenInfo.H / ConsoleInfo.Instance.LineHeight)
+                {
+                    ConsoleInfo.Instance.VisibleLines = val;
+                    ConsoleInfo.Instance.CursorY = (short) (Global.ScreenInfo.H -
+                                                            ConsoleInfo.Instance.LineHeight *
+                                                            ConsoleInfo.Instance.VisibleLines);
+                }
+                else
+                {
+                    ConsoleInfo.Instance.Warning(SYSWARN_INVALID_LINECOUNT);
+                }
+            }
+        }
+
+        public static void lua_r_wireframe()
+        {
+            Renderer.ToggleWireframe();
+        }
+
+        public static void lua_r_points()
+        {
+            Renderer.ToggleDrawPoints();
+        }
+
+        public static void lua_r_coll()
+        {
+            Renderer.ToggleDrawColl();
+        }
+
+        public static void lua_r_normals()
+        {
+            Renderer.ToggleDrawNormals();
+        }
+
+        public static void lua_r_portals()
+        {
+            Renderer.ToggleDrawPortals();
+        }
+
+        public static void lua_r_frustums()
+        {
+            Renderer.ToggleDrawFrustums();
+        }
+
+        public static void lua_r_room_boxes()
+        {
+            Renderer.ToggleDrawRoomBoxes();
+        }
+
+        public static void lua_r_boxes()
+        {
+            Renderer.ToggleDrawBoxes();
+        }
+
+        public static void lua_r_axis()
+        {
+            Renderer.ToggleDrawAxis();
+        }
+
+        public static void lua_r_allmodels()
+        {
+            Renderer.ToggleDrawAllModels();
+        }
+
+        public static void lua_r_dummy_statics()
+        {
+            Renderer.ToggleDrawDummyStatics();
+        }
+
+        public static void lua_r_skip_room()
+        {
+            Renderer.ToggleSkipRoom();
+        }
+
+        public static void lua_room_info()
+        {
+            var r = Renderer.Camera.CurrentRoom; // TODO: Specify room ID as parameter
+            if (r != null)
+            {
+                var sect = r.GetSectorXYZ(Renderer.Camera.Position);
+                ConsoleInfo.Instance.Printf("ID = {0}, x_sect = {1}, y_sect = {2}", r.ID, r.SectorsX, r.SectorsY);
+                if (sect != null)
+                {
+                    ConsoleInfo.Instance.Printf("sect({0}, {1}), inpenetrable = {2}, r_up = {3}, r_down = {4}",
+                        sect.IndexX, sect.IndexY,
+                        TR_METERING_WALLHEIGHT.IsAnyOf(sect.Ceiling, sect.Floor),
+                        sect.SectorAbove != null, sect.SectorBelow != null);
+                    for (var j = 0; j < sect.OwnerRoom.StaticMesh.Count; j++)
+                    {
+                        ConsoleInfo.Instance.Printf("static[{0}].object_id = {1}", j, sect.OwnerRoom.StaticMesh[j].ObjectID);
+                    }
+                    foreach (
+                        var e in
+                            sect.OwnerRoom.Containers.Where(x => x.ObjectType == OBJECT_TYPE.Entity)
+                                .Select(cont => (Entity)cont.Object))
+                    {
+                        ConsoleInfo.Instance.Printf("cont[entity]{0}.object_id = {1}", e.Transform.Origin, e.ID);
+                    }
                 }
             }
         }
@@ -3095,11 +3270,11 @@ namespace FreeRaider.Script
             return (string)Call("getSysNotify", stringID)[0];
         }
 
-        public static int ParseToken(string data, int index, out string token);
+        /*public static int ParseToken(string data, int index, out string token);
 
         public static float ParseFloat(string str, int index);
 
-        public static int ParseInt(string str, int index);
+        public static int ParseInt(string str, int index);*/
 
         private void registerMainFunctions()
         {
@@ -3286,13 +3461,28 @@ namespace FreeRaider.Script
             registerLuaFunc("deleteFont");
             registerLuaFunc("addFontStyle");
             registerLuaFunc("deleteFontStyle");
+
+            foreach (var f in ExecCmdFunctions)
+            {
+                registerLuaFunc(f);
+            }
         }
+
+        public static string[] ExecCmdFunctions =
+        {
+            "help", "goto", "save", "load", "exit", "cls", "spacing",
+            "showing_lines", "r_wireframe", "r_points", "r_coll", "r_normals", "r_portals", "r_frustums", "r_room_boxes",
+            "r_boxes", "r_axis", "r_allmodels", "r_dummy_statics", "r_skip_room", "room_info"
+        };
 
         private void registerLuaFunc(string name)
         {
             var m = typeof (luaFuncs).GetMethod("lua_" + name.FirstLetterUppercase()) ??
                     typeof (luaFuncs).GetMethod("lua_" + name) ??
-                    typeof (luaFuncs).GetMethod(name);
+                    typeof (luaFuncs).GetMethod("lua_" + name.ToLower()) ??
+                    typeof (luaFuncs).GetMethod(name) ??
+                    typeof (luaFuncs).GetMethod(name.FirstLetterUppercase()) ??
+                    typeof (luaFuncs).GetMethod(name.ToLower());
             if(m != null) RegisterC(name, m);
         }
     }

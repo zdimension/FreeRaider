@@ -982,163 +982,34 @@ namespace FreeRaider
 
         public static bool ExecCmd(string cmd)
         {
-            var token = "";
-            var sect = new RoomSector();
-            cmd = cmd.ToLower();
-
-            var ch = 0;
-            for(var i = 0; i < cmd.Length; i++)
+            cmd = cmd.ToLower().Trim();
+            if (!string.IsNullOrWhiteSpace(cmd))
             {
-                ch = MainEngine.ParseToken(cmd, ch, out token);
-                token = token.ToLower();
-                
-                switch (token)
+                if (!cmd.Contains('(') || !cmd.Contains(')'))
                 {
-                    case "help":
-                        for(var j = SYSNOTE_COMMAND_HELP1; j <= SYSNOTE_COMMAND_HELP15; j++)
-                        {
-                            ConsoleInfo.Instance.Notify(j);
-                        }
-                        break;
-                    case "goto":
+                    var tok = cmd.SplitOnce(' ');
+                    if (MainEngine.ExecCmdFunctions.Contains(tok[0]))
                     {
-                        ControlStates.FreeLook = true;
-                        var x = MainEngine.ParseFloat(cmd, ch);
-                        var y = MainEngine.ParseFloat(cmd, ch);
-                        var z = MainEngine.ParseFloat(cmd, ch);
-                        Renderer.Camera.Position = new Vector3(x, y, z);
-                        return true;
-                    }
-                    case "save":
-                        ch = MainEngine.ParseToken(cmd, ch, out token);
-                        if(ch != 0)
+                        if(tok.Length == 1)
                         {
-                            Game.Save(token);
-                        }
-                        return true;
-                    case "load":
-                        ch = MainEngine.ParseToken(cmd, ch, out token);
-                        if (ch != 0)
-                        {
-                            Game.Load(token);
-                        }
-                        return true;
-                    case "exit":
-                        Shutdown(0);
-                        return true;
-                    case "cls":
-                        ConsoleInfo.Instance.Clean();
-                        return true;
-                    case "spacing":
-                        ch = MainEngine.ParseToken(cmd, ch, out token);
-                        if(ch == 0)
-                        {
-                            ConsoleInfo.Instance.Notify(SYSNOTE_CONSOLE_SPACING, ConsoleInfo.Instance.Spacing);
-                            return true;
-                        }
-                        ConsoleInfo.Instance.SetLineInterval(float.Parse(token));
-                        return true;
-                    case "showing_lines":
-                        ch = MainEngine.ParseToken(cmd, ch, out token);
-                        if (ch == 0)
-                        {
-                            ConsoleInfo.Instance.Notify(SYSNOTE_CONSOLE_LINECOUNT, ConsoleInfo.Instance.VisibleLines);
-                            return true;
+                            cmd = tok[0] + "()";
                         }
                         else
                         {
-                            var val = int.Parse(token);
-                            if(val >= 2 && val <= Global.ScreenInfo.H / ConsoleInfo.Instance.LineHeight)
-                            {
-                                ConsoleInfo.Instance.VisibleLines = val;
-                                ConsoleInfo.Instance.CursorY = (short)(Global.ScreenInfo.H -
-                                                                       ConsoleInfo.Instance.LineHeight *
-                                                                       ConsoleInfo.Instance.VisibleLines);
-                            }
-                            else
-                            {
-                                ConsoleInfo.Instance.Warning(SYSWARN_INVALID_LINECOUNT);
-                            }
+                            cmd = tok[0] + "(" + tok[1].Trim() + ")";
                         }
-                        return true;
-                    case "r_wireframe":
-                        Renderer.ToggleWireframe();
-                        return true;
-                    case "r_points":
-                        Renderer.ToggleDrawPoints();
-                        return true;
-                    case "r_coll":
-                        Renderer.ToggleDrawColl();
-                        return true;
-                    case "r_normals":
-                        Renderer.ToggleDrawNormals();
-                        return true;
-                    case "r_portals":
-                        Renderer.ToggleDrawPortals();
-                        return true;
-                    case "r_frustums":
-                        Renderer.ToggleDrawFrustums();
-                        return true;
-                    case "r_room_boxes":
-                        Renderer.ToggleDrawRoomBoxes();
-                        return true;
-                    case "r_boxes":
-                        Renderer.ToggleDrawBoxes();
-                        return true;
-                    case "r_axis":
-                        Renderer.ToggleDrawAxis();
-                        return true;
-                    case "r_allmodels":
-                        Renderer.ToggleDrawAllModels();
-                        return true;
-                    case "r_dummy_statics":
-                        Renderer.ToggleDrawDummyStatics();
-                        return true;
-                    case "r_skip_room":
-                        Renderer.ToggleSkipRoom();
-                        return true;
-                    case "room_info":
-                        var r = Renderer.Camera.CurrentRoom;
-                        if (r != null)
-                        {
-                            sect = r.GetSectorXYZ(Renderer.Camera.Position);
-                            ConsoleInfo.Instance.Printf("ID = {0}, x_sect = {1}, y_sect = {2}", r.ID, r.SectorsX, r.SectorsY);
-                            if(sect != null)
-                            {
-                                ConsoleInfo.Instance.Printf("sect({0}, {1}), inpenetrable = {2}, r_up = {3}, r_down = {4}",
-                                    sect.IndexX, sect.IndexY,
-                                    TR_METERING_WALLHEIGHT.IsAnyOf(sect.Ceiling, sect.Floor),
-                                    sect.SectorAbove != null, sect.SectorBelow != null);
-                                for (var j = 0; j < sect.OwnerRoom.StaticMesh.Count; j++)
-                                {
-                                    ConsoleInfo.Instance.Printf("static[{0}].object_id = {1}", j, sect.OwnerRoom.StaticMesh[j].ObjectID);
-                                }
-                                foreach (
-                                    var e in
-                                        sect.OwnerRoom.Containers.Where(x => x.ObjectType == OBJECT_TYPE.Entity)
-                                            .Select(cont => (Entity) cont.Object))
-                                {
-                                    ConsoleInfo.Instance.Printf("cont[entity]{0}.object_id = {1}", e.Transform.Origin, e.ID);
-                                }
-                            }
-                        }
-                        return true;
-                    default:
-                        if(token[0] != '\0')
-                        {
-                            ConsoleInfo.Instance.AddLine(cmd, FontStyle.ConsoleEvent);
-                            try
-                            {
-                                EngineLua.DoString(cmd);
-                            }
-                            catch(Exception e)
-                            {
-                                ConsoleInfo.Instance.AddLine(e.Message, FontStyle.ConsoleWarning);
-                            }
-                            
-                        }
-                        return false;
+                    }
                 }
+                ConsoleInfo.Instance.AddLine(cmd, FontStyle.ConsoleEvent);
+                try
+                {
+                    EngineLua.DoString(cmd);
+                }
+                catch (Exception e)
+                {
+                    ConsoleInfo.Instance.AddLine(e.Message, FontStyle.ConsoleWarning);
+                }
+
             }
 
             return false;

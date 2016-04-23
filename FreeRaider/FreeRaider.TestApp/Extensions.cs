@@ -12,6 +12,11 @@ namespace FreeRaider
 {
     public static partial class Extensions
     {
+        public static string[] SplitOnce(this string s, char delimiter)
+        {
+            return s.Split(new[] { delimiter }, 2);
+        }
+
         public static string ParseString(this BinaryReader br, long strLength)
         {
             var str = new byte[strLength];

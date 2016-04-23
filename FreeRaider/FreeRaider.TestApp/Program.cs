@@ -46,8 +46,46 @@ namespace FreeRaider.TestApp
             return args.Sum() - b;
         }
 
+        public static void testtest()
+        {
+            Console.WriteLine("lolol");
+        }
+
+        public static void abc(string cmd)
+        {
+            cmd = cmd.ToLower().Trim();
+            if (!string.IsNullOrWhiteSpace(cmd))
+            {
+                if (!cmd.Contains('(') && !cmd.Contains(')'))
+                {
+                    var tok = cmd.SplitOnce(' ');
+                    if (new[] {
+            "help", "goto", "save", "load", "exit", "cls", "spacing",
+            "showing_lines", "r_wireframe", "r_points", "r_coll", "r_normals", "r_portals", "r_frustums", "r_room_boxes",
+            "r_boxes", "r_axis", "r_allmodels", "r_dummy_statics", "r_skip_room", "room_info"
+        }.Contains(tok[0]))
+                    {
+                        if (tok.Length == 1)
+                        {
+                            cmd = tok[0] + "()";
+                        }
+                        else
+                        {
+                            cmd = tok[0] + "(" + tok[1].Trim() + ")";
+                        }
+                    }
+                }
+
+            }
+
+            Console.WriteLine(cmd);
+        }
+
         static void Main(string[] args)
         {
+            abc("lol");
+            abc("help");
+            abc("  save  \"test.sav\" ");
             /*var fmt = "Can't create style. Possibly max. styles? (%d / %d)";
             Console.WriteLine(Tools.sprintf(fmt, 5, GGG.F));*/
             var state = new Lua();
@@ -55,8 +93,10 @@ namespace FreeRaider.TestApp
             state.RegisterFunction("test", typeof (Program).GetMethod("test"));
             state.RegisterFunction("test2", typeof (Program).GetMethod("test2"));
             state.RegisterFunction("test3", typeof (Program).GetMethod("test3"));
+
             var n1 = DateTime.Now - n;
             n = DateTime.Now;
+
             state.DoString("test(\"lol\", 5)");
             state.DoString("test(\"lol\", 5, 2)");
             state.DoString("test2(6)");

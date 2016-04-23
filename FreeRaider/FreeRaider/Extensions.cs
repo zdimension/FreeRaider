@@ -852,6 +852,11 @@ namespace FreeRaider
         {
             return char.ToUpper(s[0]) + s.Substring(1);
         }
+
+        public static string[] SplitOnce(this string s, char delimiter)
+        {
+            return s.Split(new[] {delimiter}, 2);
+        }
     }
 
     public partial class Constants
