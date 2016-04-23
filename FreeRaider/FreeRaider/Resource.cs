@@ -2002,7 +2002,179 @@ namespace FreeRaider
             world.AnimCommands = tr.AnimCommands.ToArray();
         }
 
-        public static void TR_GenAnimTextures(World world, Level tr);
+        /**   Animated textures loading.
+          *   Natively, animated textures stored as a stream of bitu16s, which
+          *   is then parsed on the fly. What we do is parse this stream to the
+          *   proper structures to be used later within renderer.
+          */
+        public static unsafe void TR_GenAnimTextures(World world, Level tr)
+        {
+            var p0 = new Polygon();
+            var p = new Polygon();
+
+            p0.Vertices.Resize(3);
+            p.Vertices.Resize(3);
+
+            fixed(ushort* tmp = tr.AnimatedTextures)
+            {
+                var pointer = tmp;
+                var numUvrotates = tr.AnimatedTexturesUVCount;
+
+                var numSequences = *(pointer++); // First word in a stream is sequence count.
+
+                world.AnimSequences.Resize(numSequences);
+
+                for(var i = 0; i < numSequences; i++)
+                {
+                    var seq = world.AnimSequences[i];
+
+                    seq.Frames.Resize(*(pointer++) + 1);
+                    seq.FrameList.Resize(seq.Frames.Count);
+
+                    // Fill up new sequence with frame list
+                    seq.AnimType = TR_ANIMTEXTURE.Forward;
+                    seq.FrameLock = false; // by default anim is playing
+                    seq.UVRotate = false; // by default uvrotate
+                    seq.ReverseDirection = false; // Needed for proper reverse-type start-up.
+                    seq.FrameRate = 0.05f; // Should be passed as 1 / FPS.
+                    seq.FrameTime = 0.0f; // Reset frame time to initial state.
+                    seq.CurrentFrame = 0; // Reset current frame to zero.
+
+                    for(var j = 0; j < seq.Frames.Count; j++)
+                    {
+                        seq.FrameList[j] = *(pointer++); // Add one frame.
+                    }
+
+                    // UVRotate textures case.
+                    // In TR4-5, it is possible to define special UVRotate animation mode.
+                    // It is specified by num_uvrotates variable. If sequence belongs to
+                    // UVRotate range, each frame will be divided in half and continously
+                    // scrolled from one part to another by shifting UV coordinates.
+                    // In OpenTomb, we can have BOTH UVRotate and classic frames mode
+                    // applied to the same sequence, but there we specify compatibility
+                    // method for TR4-5.
+
+                    var uvrotateScript = 0;
+                    var tmp1 = EngineLua["UVRotate"];
+                    try
+                    {
+                        uvrotateScript = (int) tmp1;
+                    }
+                    catch
+                    {
+                    }
+
+                    if(i < numUvrotates)
+                    {
+                        seq.FrameLock = false; // by default anim is playing
+
+                        seq.UVRotate = true;
+                        // Get texture height and divide it in half.
+                        // This way, we get a reference value which is used to identify
+                        // if scrolling is completed or not.
+                        seq.Frames.Resize(8);
+                        seq.UVRotateMax = world.TextureAtlas.GetTextureHeight(seq.FrameList[0]) / 2;
+                        seq.UVRotateSpeed = seq.UVRotateMax / seq.Frames.Count;
+                        seq.FrameList.Resize(8);
+
+                        if(uvrotateScript > 0)
+                        {
+                            seq.AnimType = TR_ANIMTEXTURE.Forward;
+                        }
+                        else if(uvrotateScript < 0)
+                        {
+                            seq.AnimType = TR_ANIMTEXTURE.Backward;
+                        }
+
+                        EngineWorld.TextureAtlas.GetCoordinates(seq.FrameList[0], false, p, 0, true);
+                        for(var j = 0; j < seq.Frames.Count; j++)
+                        {
+                            EngineWorld.TextureAtlas.GetCoordinates(seq.FrameList[0], false, p, (int)(j * seq.UVRotateSpeed), true);
+                            seq.Frames[j].TextureIndex = p.TexIndex;
+
+                            var A0 = new[]
+                            {
+                                p0.Vertices[1].TexCoord[0] - p0.Vertices[0].TexCoord[0], // TODO: p0 hasn't been modified??
+                                p0.Vertices[1].TexCoord[1] - p0.Vertices[0].TexCoord[1]
+                            };
+                            var B0 = new[]
+                            {
+                                p0.Vertices[2].TexCoord[0] - p0.Vertices[0].TexCoord[0],
+                                p0.Vertices[2].TexCoord[1] - p0.Vertices[0].TexCoord[1]
+                            };
+
+                            var A = new[]
+                            {
+                                p.Vertices[1].TexCoord[0] - p.Vertices[0].TexCoord[0],
+                                p.Vertices[1].TexCoord[1] - p.Vertices[0].TexCoord[1]
+                            };
+                            var B = new[]
+                            {
+                                p.Vertices[2].TexCoord[0] - p.Vertices[0].TexCoord[0],
+                                p.Vertices[2].TexCoord[1] - p.Vertices[0].TexCoord[1]
+                            };
+
+                            var d = A0[0] * B0[1] - A0[1] * B0[0];
+                            seq.Frames[j].Mat[0 + 0 * 2] = (A[0] * B0[1] - A0[1] * B[0]) / d;
+                            seq.Frames[j].Mat[1 + 0 * 2] = -(A[1] * B0[1] - A0[1] * B[1]) / d;
+                            seq.Frames[j].Mat[0 + 1 * 2] = -(A0[0] * B[0] - A[0] * B0[0]) / d;
+                            seq.Frames[j].Mat[1 + 1 * 2] = (A0[0] * B[1] - A[1] * B0[0]) / d;
+
+                            seq.Frames[j].Move[0] = p.Vertices[0].TexCoord[0] -
+                                                    (p0.Vertices[0].TexCoord[0] * seq.Frames[j].Mat[0 + 0 * 2] +
+                                                     p0.Vertices[0].TexCoord[1] * seq.Frames[j].Mat[0 + 1 * 2]);
+                            seq.Frames[j].Move[1] = p.Vertices[0].TexCoord[1] -
+                                                    (p0.Vertices[0].TexCoord[0] * seq.Frames[j].Mat[1 + 0 * 2] +
+                                                     p0.Vertices[0].TexCoord[1] * seq.Frames[j].Mat[1 + 1 * 2]);
+                        }
+                    }
+                    else
+                    {
+                        EngineWorld.TextureAtlas.GetCoordinates(seq.FrameList[0], false, p0);
+                        for (var j = 0; j < seq.Frames.Count; j++)
+                        {
+                            EngineWorld.TextureAtlas.GetCoordinates(seq.FrameList[j], false, p);
+                            seq.Frames[j].TextureIndex = p.TexIndex;
+
+                            var A0 = new[]
+                            {
+                                p0.Vertices[1].TexCoord[0] - p0.Vertices[0].TexCoord[0],
+                                p0.Vertices[1].TexCoord[1] - p0.Vertices[0].TexCoord[1]
+                            };
+                            var B0 = new[]
+                            {
+                                p0.Vertices[2].TexCoord[0] - p0.Vertices[0].TexCoord[0],
+                                p0.Vertices[2].TexCoord[1] - p0.Vertices[0].TexCoord[1]
+                            };
+
+                            var A = new[]
+                            {
+                                p.Vertices[1].TexCoord[0] - p.Vertices[0].TexCoord[0],
+                                p.Vertices[1].TexCoord[1] - p.Vertices[0].TexCoord[1]
+                            };
+                            var B = new[]
+                            {
+                                p.Vertices[2].TexCoord[0] - p.Vertices[0].TexCoord[0],
+                                p.Vertices[2].TexCoord[1] - p.Vertices[0].TexCoord[1]
+                            };
+
+                            var d = A0[0] * B0[1] - A0[1] * B0[0];
+                            seq.Frames[j].Mat[0 + 0 * 2] = (A[0] * B0[1] - A0[1] * B[0]) / d;
+                            seq.Frames[j].Mat[1 + 0 * 2] = -(A[1] * B0[1] - A0[1] * B[1]) / d;
+                            seq.Frames[j].Mat[0 + 1 * 2] = -(A0[0] * B[0] - A[0] * B0[0]) / d;
+                            seq.Frames[j].Mat[1 + 1 * 2] = (A0[0] * B[1] - A[1] * B0[0]) / d;
+
+                            seq.Frames[j].Move[0] = p.Vertices[0].TexCoord[0] -
+                                                    (p0.Vertices[0].TexCoord[0] * seq.Frames[j].Mat[0 + 0 * 2] +
+                                                     p0.Vertices[0].TexCoord[1] * seq.Frames[j].Mat[0 + 1 * 2]);
+                            seq.Frames[j].Move[1] = p.Vertices[0].TexCoord[1] -
+                                                    (p0.Vertices[0].TexCoord[0] * seq.Frames[j].Mat[1 + 0 * 2] +
+                                                     p0.Vertices[0].TexCoord[1] * seq.Frames[j].Mat[1 + 1 * 2]);
+                        }
+                    }
+                }
+            }
+        }
 
         public static void TR_GenRooms(World world, Level tr)
         {
