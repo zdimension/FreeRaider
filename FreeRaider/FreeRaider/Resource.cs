@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
 using BulletSharp;
 using FreeRaider.Loader;
@@ -2389,12 +2390,12 @@ namespace FreeRaider
                 if (tr.GameVersion < TRGame.TR3)
                 {
                     sector.BoxIndex = trRoom.Sectors[i].Box_Index;
-                    sector.Material = (int) SectorMaterial.Stone;
+                    sector.Material = SectorMaterial.Stone;
                 }
                 else
                 {
                     sector.BoxIndex = (trRoom.Sectors[i].Box_Index & 0xFFF0) >> 4;
-                    sector.Material = (uint) trRoom.Sectors[i].Box_Index & 0x000F;
+                    sector.Material = (SectorMaterial)((uint) trRoom.Sectors[i].Box_Index & 0x000F);
                 }
 
                 if (sector.BoxIndex == 0xFFFF) sector.BoxIndex = -1;
@@ -2992,7 +2993,803 @@ namespace FreeRaider
         // Main functions which are used to translate legacy TR floor data
         // to native OpenTomb structs.
 
-        public static int TR_Sector_TranslateFloorData(RoomSector sector, Level tr);
+        public static unsafe int TR_Sector_TranslateFloorData(RoomSector sector, Level tr)
+        {
+            var ret = 0;
+
+            #region Depth 1
+
+            if (sector == null || !sector.TrigIndex.IsBetween(0, tr.FloorData.Length, IB.aEbE))
+            {
+                return 0;
+            }
+
+            sector.Flags = 0; // Clear sector flags before parsing.
+
+            // PARSE FUNCTIONS
+
+            fixed(ushort* tmp = tr.FloorData)
+            {
+                var end_p = tmp + tr.FloorData.Length - 1;
+                var entry = tmp + sector.TrigIndex;
+                
+                int endBit;
+
+                do
+                {
+                    #region Depth 2
+
+                    // TR1 - TR2
+                    //function = (*entry) & 0x00FF;                   // 0b00000000 11111111
+                    //sub_function = ((*entry) & 0x7F00) >> 8;        // 0b01111111 00000000
+
+                    //TR3+, but works with TR1 - TR2
+                    var function = *entry & 0x001F; // 0b00000000 00011111
+                    // var functionValue = (*entry & 0x00E0) >> 5; // 0b00000000 11100000  TR3+
+                    var subFunction = (*entry & 0x7F00) >> 8; // 0b01111111 00000000
+
+                    endBit = (*entry & 0x8000) >> 15; // 0b10000000 00000000
+
+                    entry++;
+
+                    switch ((FD_FUNC) function)
+                    {
+                        case FD_FUNC.PortalSector: // PORTAL DATA
+                            if (subFunction == 0x00)
+                            {
+                                if (*entry < EngineWorld.Rooms.Count)
+                                {
+                                    sector.PortalToRoom = *entry;
+                                    sector.FloorPenetrationConfig = TR_PENETRATION_CONFIG.Ghost;
+                                    sector.CeilingPenetrationConfig = TR_PENETRATION_CONFIG.Ghost;
+                                }
+                                entry++;
+                            }
+                            break;
+
+                        case FD_FUNC.FloorSlant: // FLOOR SLANT
+                            if (subFunction == 0x00)
+                            {
+                                var rawYslant = *entry & 0x00FF;
+                                var rawXslant = (*entry & 0xFF00) >> 8;
+
+                                sector.FloorDiagonalType = TR_SECTOR_DIAGONAL_TYPE.None;
+                                sector.FloorPenetrationConfig = TR_PENETRATION_CONFIG.Solid;
+
+                                if (rawXslant > 0)
+                                {
+                                    sector.FloorCorners[2][2] -= rawXslant * TR_METERING_STEP;
+                                    sector.FloorCorners[3][2] -= rawXslant * TR_METERING_STEP;
+                                }
+                                else if (rawXslant < 0)
+                                {
+                                    sector.FloorCorners[0][2] -= Math.Abs(rawXslant) * TR_METERING_STEP;
+                                    sector.FloorCorners[1][2] -= Math.Abs(rawXslant) * TR_METERING_STEP;
+                                }
+
+                                if (rawYslant > 0)
+                                {
+                                    sector.FloorCorners[0][2] -= rawYslant * TR_METERING_STEP;
+                                    sector.FloorCorners[3][2] -= rawYslant * TR_METERING_STEP;
+                                }
+                                else if (rawYslant < 0)
+                                {
+                                    sector.FloorCorners[1][2] -= Math.Abs(rawYslant) * TR_METERING_STEP;
+                                    sector.FloorCorners[2][2] -= Math.Abs(rawYslant) * TR_METERING_STEP;
+                                }
+
+                                entry++;
+                            }
+                            break;
+
+                        case FD_FUNC.CeilingSlant: // CEILING SLANT
+                            if (subFunction == 0x00)
+                            {
+                                var rawYslant = *entry & 0x00FF;
+                                var rawXslant = (*entry & 0xFF00) >> 8;
+
+                                sector.CeilingDiagonalType = TR_SECTOR_DIAGONAL_TYPE.None;
+                                sector.CeilingPenetrationConfig = TR_PENETRATION_CONFIG.Solid;
+
+                                if (rawXslant > 0)
+                                {
+                                    sector.CeilingCorners[3][2] += rawXslant * TR_METERING_STEP;
+                                    sector.CeilingCorners[2][2] += rawXslant * TR_METERING_STEP;
+                                }
+                                else if (rawXslant < 0)
+                                {
+                                    sector.CeilingCorners[1][2] += Math.Abs(rawXslant) * TR_METERING_STEP;
+                                    sector.CeilingCorners[0][2] += Math.Abs(rawXslant) * TR_METERING_STEP;
+                                }
+
+                                if (rawYslant > 0)
+                                {
+                                    sector.CeilingCorners[1][2] += rawYslant * TR_METERING_STEP;
+                                    sector.CeilingCorners[2][2] += rawYslant * TR_METERING_STEP;
+                                }
+                                else if (rawYslant < 0)
+                                {
+                                    sector.CeilingCorners[0][2] += Math.Abs(rawYslant) * TR_METERING_STEP;
+                                    sector.CeilingCorners[3][2] += Math.Abs(rawYslant) * TR_METERING_STEP;
+                                }
+
+                                entry++;
+                            }
+                            break;
+
+                        case FD_FUNC.Trigger: // TRIGGERS
+                        {
+                            #region Trigger
+
+                            string header = ""; // Header condition
+                            string once_condition = ""; // One-shot condition
+                            string cont_events = ""; // Continous trigger events
+                            string single_events = ""; // One-shot trigger events
+                            string item_events = ""; // Item activation events
+                            string anti_events = ""; // Item deactivation events, if needed
+
+                            var script = ""; // Final script compile
+
+                            var buf = "\0"; // Stream buffer
+                            var buf2 = "\0"; // Conditional pre-buffer for SWITCH triggers
+
+                            var activator = Activator.Normal; // Activator is normal by default.
+                            var actionType = ActionType.Normal; // Action type is normal by default.
+                            var condition = 0; // No condition by default.
+                            var maskMode = AMASK_OP_OR; // Activation mask by default.
+
+                            var timerField = *entry & 0x00FF; // Used as common parameter for some commands.
+                            var triggerMask = (*entry & 0x3E00) >> 9;
+                            var onlyOnce = (*entry & 0x0100) >> 8; // Lock out triggered items after activation.
+
+                            // Processed entities lookup array initialization.
+
+                            var entLookupTable = Helper.FillArray(0xFF, 64);
+
+                            // Activator type is LARA for all triggers except HEAVY ones, which are triggered by
+                            // some specific entity classes.
+
+                            var activatorType = ((TriggerTypes) subFunction).IsAnyOf(TriggerTypes.Heavy,
+                                TriggerTypes.HeavyAntiTrigger, TriggerTypes.HeavySwitch)
+                                ? ActivatorType.Misc
+                                : ActivatorType.Lara;
+
+                            // Table cell header
+
+                            buf =
+                                Helper.Format(
+                                    "trigger_list[{0}] = {{activator_type = {1}, func = function(entity_index) \n",
+                                    sector.TrigIndex, (int) activatorType);
+
+                            script += buf;
+                            buf = ""; // Zero out buffer to prevent further trashing.
+
+                            switch ((TriggerTypes) subFunction)
+                            {
+                                case TriggerTypes.Trigger:
+                                case TriggerTypes.Heavy:
+                                    activator = Activator.Normal;
+                                    break;
+
+                                case TriggerTypes.Pad:
+                                case TriggerTypes.AntiPad:
+                                    // Check move type for triggering entity.
+                                    buf = Helper.Format("if(getEntityMoveType(entity_index) == {0}) then \n",
+                                        (int) MoveType.OnFloor);
+                                    if (subFunction == (int) TriggerTypes.AntiPad) actionType = ActionType.Anti;
+                                    condition = 1; // Set additional condition.
+                                    break;
+
+                                case TriggerTypes.Switch:
+                                    // Set activator and action type for now; conditions are linked with first item in operand chain.
+                                    activator = Activator.Switch;
+                                    actionType = ActionType.Switch;
+                                    maskMode = AMASK_OP_XOR;
+                                    break;
+
+                                case TriggerTypes.HeavySwitch:
+                                    // Action type remains normal, as HEAVYSWITCH acts as "heavy trigger" with activator mask filter.
+                                    activator = Activator.Switch;
+                                    maskMode = AMASK_OP_XOR;
+                                    break;
+
+                                case TriggerTypes.Key:
+                                    // Action type remains normal, as key acts one-way (no need in switch routines).
+                                    activator = Activator.Key;
+                                    break;
+
+                                case TriggerTypes.Pickup:
+                                    // Action type remains normal, as pick-up acts one-way (no need in switch routines).
+                                    activator = Activator.Pickup;
+                                    break;
+
+                                case TriggerTypes.Combat:
+                                    // Check weapon status for triggering entity.
+                                    buf = " if(getCharacterCombatMode(entity_index) > 0) then \n";
+                                    condition = 1; // Set additional condition.
+                                    break;
+
+                                case TriggerTypes.Dummy:
+                                case TriggerTypes.Skeleton: // TODO: Find the meaning later!!!
+                                    // These triggers are being parsed, but not added to trigger script!
+                                    actionType = ActionType.Bypass;
+                                    break;
+
+                                case TriggerTypes.AntiTrigger:
+                                case TriggerTypes.HeavyAntiTrigger:
+                                    actionType = ActionType.Anti;
+                                    break;
+
+                                case TriggerTypes.Monkey:
+                                case TriggerTypes.Climb:
+                                    // Check move type for triggering entity.
+                                    buf = Helper.Format(" if(getEntityMoveType(entity_index) == {0}) then \n",
+                                        (int)
+                                            (subFunction == (int) TriggerTypes.Monkey
+                                                ? MoveType.Monkeyswing
+                                                : MoveType.Climbing));
+                                    condition = 1; // Set additional condition.
+                                    break;
+
+                                case TriggerTypes.Tightrope:
+                                    // Check state range for triggering entity.
+                                    buf =
+                                        Helper.Format(
+                                            " local state = getEntityState(entity_index) \n" +
+                                            " if((state >= {0}) and (state <= {1})) then \n",
+                                            (int) TR_STATE.LaraTightropeIdle, (int) TR_STATE.LaraTightropeExit);
+                                    condition = 1; // Set additional condition.
+                                    break;
+
+                                case TriggerTypes.CrawlDuck:
+                                    // Check state range for triggering entity.
+                                    buf =
+                                        Helper.Format(
+                                            " local state = getEntityState(entity_index) \n" +
+                                            " if((state >= {0}) and (state <= {1})) then \n",
+                                            (int) TR_ANIMATION.LaraCrouchRollForwardBegin,
+                                            (int) TR_ANIMATION.LaraCrawlSmashLeft);
+                                    // TODO: Inverted STATE and ANIMATION?
+                                    condition = 1; // Set additional condition.
+                                    break;
+                            }
+
+                            header += buf; // Add condition to header.
+
+                            int contBit;
+                            var argn = 0;
+
+                            // Now parse operand chain for trigger function!
+
+                            do
+                            {
+                                entry++;
+
+                                var triggerFunction = (*entry & 0x7C00) >> 10; // 0b01111100 00000000
+                                var operands = *entry & 0x03FF; // 0b00000011 11111111
+                                contBit = (*entry & 0x8000) >> 15; // 0b10000000 00000000
+
+                                switch ((FD_TRIGFUNC) triggerFunction)
+                                {
+                                    case FD_TRIGFUNC.Object: // ACTIVATE / DEACTIVATE object
+                                        // If activator is specified, first item operand counts as activator index (except
+                                        // heavy switch case, which is ordinary heavy trigger case with certain differences).
+                                        if (argn == 0 && activator != Activator.Normal)
+                                        {
+                                            switch (activator)
+                                            {
+                                                case Activator.Switch:
+                                                    if (actionType == ActionType.Switch)
+                                                    {
+                                                        // Switch action type case.
+                                                        script +=
+                                                            Helper.Format(
+                                                                " local switch_state = getEntityState({0}); \n" +
+                                                                " local switch_sectorstatus = getEntitySectorStatus({0}); \n" +
+                                                                " local switch_mask = getEntityMask({0}); \n\n",
+                                                                operands);
+                                                    }
+                                                    else
+                                                    {
+                                                        // Ordinary type case (e.g. heavy switch).
+                                                        script +=
+                                                            Helper.Format(
+                                                                " local switch_sectorstatus = getEntitySectorStatus(entity_index); \n" +
+                                                                " local switch_mask = getEntityMask(entity_index); \n\n");
+                                                    }
+
+                                                    script +=
+                                                        Helper.Format(
+                                                            " if(switch_mask == 0) then switch_mask = 0x1F end; \n" +
+                                                            " switch_mask = bit32.band(switch_mask, 0x{0:X2}); \n\n",
+                                                            triggerMask);
+                                                    if (actionType == ActionType.Switch)
+                                                    {
+                                                        // Switch action type case.
+                                                        buf =
+                                                            Helper.Format(
+                                                                " if((switch_state == 0) and switch_sectorstatus) then \n" +
+                                                                "   setEntitySectorStatus({0}, false); \n" +
+                                                                "   setEntityTimer({0}, {1}); \n", operands,
+                                                                timerField);
+                                                        if (EngineWorld.EngineVersion >= Loader.Engine.TR3 &&
+                                                            onlyOnce != 0)
+                                                        {
+                                                            // Just lock out activator, no anti-action needed.
+                                                            buf2 = Helper.Format(" setEntityLock({0}, true) \n",
+                                                                operands);
+                                                        }
+                                                        else
+                                                        {
+                                                            // Create statement for antitriggering a switch.
+                                                            buf2 =
+                                                                Helper.Format(
+                                                                    " elseif((switch_state == 1) and switch_sectorstatus) then\n" +
+                                                                    "   setEntitySectorStatus({0}, false); \n   setEntityTimer({0}, 0); \n",
+                                                                    operands);
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        // Ordinary type case (e.g. heavy switch).
+                                                        item_events +=
+                                                            Helper.Format(
+                                                                "   activateEntity({0}, entity_index, switch_mask, {1}, {2}, {3}); \n",
+                                                                operands, maskMode, onlyOnce != 0 ? "true" : "false",
+                                                                timerField);
+                                                        buf =
+                                                            " if(not switch_sectorstatus) then \n" +
+                                                            "   setEntitySectorStatus(entity_index, true) \n";
+                                                    }
+                                                    break;
+
+                                                case Activator.Key:
+                                                    buf =
+                                                        Helper.Format(
+                                                            " if((getEntityLock({0})) and (not getEntitySectorStatus({0}))) then \n" +
+                                                            "   setEntitySectorStatus({0}, true); \n",
+                                                            operands);
+                                                    break;
+
+                                                case Activator.Pickup:
+                                                    buf =
+                                                        Helper.Format(
+                                                            " if((not getEntityEnability({0})) and (not getEntitySectorStatus({0}))) then \n" +
+                                                            "   setEntitySectorStatus({0}, true); \n",
+                                                            operands);
+                                                    break;
+                                            }
+
+                                            script += buf;
+                                        }
+                                        else
+                                        {
+                                            // In many original Core Design levels, level designers left dublicated entity activation operands.
+                                            // This results in setting same activation mask twice, effectively blocking entity from activation.
+                                            // To prevent this, a lookup table was implemented to know if entity already had its activation
+                                            // command added.
+                                            if (!Res_IsEntityProcessed(entLookupTable, (ushort) operands))
+                                            {
+                                                // Other item operands are simply parsed as activation functions. Switch case is special, because
+                                                // function is fed with activation mask argument derived from activator mask filter (switch_mask),
+                                                // and also we need to process deactivation in a same way as activation, excluding resetting timer
+                                                // field. This is needed for two-way switch combinations (e.g. Palace Midas).
+                                                if (activator == Activator.Switch)
+                                                {
+                                                    item_events +=
+                                                        Helper.Format(
+                                                            "   activateEntity({0}, entity_index, switch_mask, {1}, {2}, {3}); \n",
+                                                            operands, maskMode, onlyOnce != 0 ? "true" : "false",
+                                                            timerField);
+                                                    anti_events +=
+                                                        Helper.Format(
+                                                            "   activateEntity({0}, entity_index, switch_mask, {1}, {2}, 0); \n",
+                                                            operands, maskMode, onlyOnce != 0 ? "true" : "false");
+                                                }
+                                                else
+                                                {
+                                                    item_events +=
+                                                        Helper.Format(
+                                                            "   activateEntity({0}, entity_index, {1:X2}, {2}, {3}, {4}); \n",
+                                                            operands, triggerMask, maskMode,
+                                                            onlyOnce != 0 ? "true" : "false",
+                                                            timerField);
+                                                    anti_events +=
+                                                        Helper.Format(
+                                                            "   deactivateEntity({0}, entity_index, {1}); \n",
+                                                            operands, onlyOnce != 0 ? "true" : "false");
+                                                }
+                                            }
+                                        }
+                                        argn++;
+                                        break;
+
+                                    case FD_TRIGFUNC.CameraTarget:
+                                    {
+                                        var camIndex = *entry & 0x007F;
+                                        entry++;
+                                        var camTimer = *entry & 0x00FF;
+                                        var camOnce = (*entry & 0x0100) >> 8;
+                                        var camZoom = EngineWorld.EngineVersion < Loader.Engine.TR2
+                                            ? (*entry & 0x0400) >> 10
+                                            : (*entry & 0x1000) >> 12;
+                                        contBit = (*entry & 0x8000) >> 15; // 0b10000000 00000000
+
+                                        single_events += Helper.Format("   setCamera({0}, {1}, {2}, {3}); \n",
+                                            camIndex, camTimer, camOnce, camZoom);
+                                    }
+                                        break;
+
+                                    case FD_TRIGFUNC.UwCurrent:
+                                        cont_events += Helper.Format("   moveToSink(entity_index, {0}); \n",
+                                            operands);
+                                        break;
+
+                                    case FD_TRIGFUNC.FlipMap:
+                                        // FLIPMAP trigger acts two-way for switch cases, so we add FLIPMAP off event to
+                                        // anti-events array.
+                                        if (activator == Activator.Switch)
+                                        {
+                                            single_events +=
+                                                Helper.Format(
+                                                    "   setFlipMap({0}, switch_mask, 1); \n" +
+                                                    "   setFlipState({0}, true); \n",
+                                                    operands);
+                                        }
+                                        else
+                                        {
+                                            single_events +=
+                                                Helper.Format(
+                                                    "   setFlipMap({0}, 0x{1:X2}, 0); \n" +
+                                                    "   setFlipState({0}, true); \n",
+                                                    operands, triggerMask);
+                                        }
+                                        break;
+
+                                    case FD_TRIGFUNC.FlipOn:
+                                        // FLIP_ON trigger acts one-way even in switch cases, i.e. if you un-pull
+                                        // the switch with FLIP_ON trigger, room will remain flipped.
+                                        single_events += Helper.Format("   setFlipState({0}, true); \n", operands);
+                                        break;
+
+                                    case FD_TRIGFUNC.FlipOff:
+                                        // FLIP_OFF trigger acts one-way even in switch cases, i.e. if you un-pull
+                                        // the switch with FLIP_OFF trigger, room will remain unflipped.
+                                        single_events += Helper.Format("   setFlipState({0}, false); \n", operands);
+                                        break;
+
+                                    case FD_TRIGFUNC.LookAt:
+                                        single_events += Helper.Format("   setCamTarget({0}, {1}); \n", operands,
+                                            timerField);
+                                        break;
+
+                                    case FD_TRIGFUNC.EndLevel:
+                                        single_events += Helper.Format("   setLevel({0}); \n", operands);
+                                        break;
+
+                                    case FD_TRIGFUNC.PlayTrack:
+                                        // Override for looped BGM tracks in TR1: if there are any sectors
+                                        // triggering looped tracks, ignore it, as BGM is always set in script.
+                                        if (EngineWorld.EngineVersion < Loader.Engine.TR2)
+                                        {
+                                            TR_AUDIO_STREAM_TYPE looped;
+                                            string tmp1;
+                                            TR_AUDIO_STREAM_METHOD tmp2;
+                                            EngineLua.GetSoundtrack(operands, out tmp1, out tmp2, out looped);
+                                            if (looped == TR_AUDIO_STREAM_TYPE.Background) break;
+                                        }
+
+                                        single_events += Helper.Format("   playStream({0}, 0x{1:X2}); \n", operands,
+                                            (triggerMask << 1) + onlyOnce);
+                                        break;
+
+                                    case FD_TRIGFUNC.FlipEffect:
+                                        cont_events += Helper.Format("   doEffect({0}, entity_index, {1}); \n",
+                                            operands, timerField);
+                                        break;
+
+                                    case FD_TRIGFUNC.Secret:
+                                        single_events += Helper.Format("   findSecret({0}); \n", operands);
+                                        break;
+
+                                    case FD_TRIGFUNC.ClearBodies:
+                                        single_events += "   clearBodies(); \n";
+                                        break;
+
+                                    case FD_TRIGFUNC.FlyBy:
+                                        entry++;
+                                        var flybyOnce = (*entry & 0x0100) >> 8;
+                                        contBit = (*entry & 0x8000) >> 15;
+
+                                        cont_events += Helper.Format("   playFlyby({0}, {1}); \n", operands,
+                                            flybyOnce);
+                                        break;
+
+                                    case FD_TRIGFUNC.Cutscene:
+                                        single_events += Helper.Format("   playCutscene({0}); \n", operands);
+                                        break;
+
+                                    default: // UNKNOWN!
+                                        break;
+                                }
+                            } while (contBit == 0 && entry < end_p);
+
+                            if (!string.IsNullOrWhiteSpace(script))
+                            {
+                                script += header;
+
+                                // Heavy trigger and antitrigger item events are engaged ONLY
+                                // once, when triggering item is approaching sector. Hence, we
+                                // copy item events to single events and nullify original item
+                                // events sequence to prevent it to be merged into continous
+                                // events.
+
+                                if (((TriggerTypes) subFunction).IsAnyOf(TriggerTypes.Heavy,
+                                    TriggerTypes.HeavyAntiTrigger))
+                                {
+                                    if (actionType == ActionType.Anti)
+                                    {
+                                        single_events += anti_events;
+                                    }
+                                    else
+                                    {
+                                        single_events += item_events;
+                                    }
+
+                                    anti_events = "";
+                                    item_events = "";
+                                }
+
+                                if (activator == Activator.Normal) // Ordinary trigger cases.
+                                {
+                                    if (!string.IsNullOrWhiteSpace(single_events))
+                                    {
+                                        if (condition != 0)
+                                            once_condition += " ";
+                                        once_condition += " if(not getEntitySectorStatus(entity_index)) then \n";
+                                        script += once_condition;
+                                        script += single_events;
+                                        script += "   setEntitySectorStatus(entity_index, true); \n";
+
+                                        if (condition != 0)
+                                        {
+                                            script += "  end;\n"; // First ENDIF is tabbed for extra condition.
+                                        }
+                                        else
+                                        {
+                                            script += " end;\n";
+                                        }
+                                    }
+
+                                    // Item commands kind depends on action type. If type is ANTI, then item
+                                    // antitriggering is engaged. If type is normal, ordinary triggering happens
+                                    // in cycle with other continous commands. It is needed to prevent timer dispatch
+                                    // before activator leaves trigger sector.
+
+                                    if (actionType == ActionType.Anti) // TODO: Duplicate of L3522?
+                                    {
+                                        script += anti_events;
+                                    }
+                                    else
+                                    {
+                                        script += item_events;
+                                    }
+
+                                    script += cont_events;
+                                    if (condition != 0)
+                                        script += " end;\n"; // Additional ENDIF for extra condition.
+                                }
+                                else // SWITCH, KEY and ITEM cases.
+                                {
+                                    script += single_events;
+                                    script += item_events;
+                                    script += cont_events;
+                                    if (actionType == ActionType.Switch && activator == Activator.Switch)
+                                    {
+                                        script += buf2;
+                                        if (EngineWorld.EngineVersion < Loader.Engine.TR3 || onlyOnce == 0)
+                                        {
+                                            script += single_events;
+                                            script += anti_events; // Single/continous events are engaged along with
+                                            script += cont_events; // antitriggered items, as described above.
+                                        }
+                                    }
+                                    script += " end;\n";
+                                }
+
+                                script += "return 1;\n" +
+                                          "end }\n"; // Finalize the entry.
+                            }
+
+                            if (actionType != ActionType.Bypass)
+                            {
+                                //Sys.DebugLog("triggers.lua", script);    // Debug!
+                                EngineLua.DoString(script);
+                            }
+
+                            #endregion
+                        }
+                            break;
+
+                        case FD_FUNC.Death:
+                            sector.Flags |= SectorFlag.Death;
+                            break;
+
+                        case FD_FUNC.Climb:
+                            // First 4 sector flags are similar to subfunction layout.
+                            sector.Flags |= (SectorFlag) subFunction;
+                            break;
+
+                        case FD_FUNC.Monkey:
+                            sector.Flags |= SectorFlag.ClimbCeiling;
+                            break;
+
+                        case FD_FUNC.MinecartLeft:
+                            // Minecart left (TR3) and trigger triggerer mark (TR4-5) has the same flag value.
+                            // We re-parse them properly here.
+                            if (tr.GameVersion < TRGame.TR4)
+                            {
+                                sector.Flags |= SectorFlag.MinecartLeft;
+                            }
+                            else
+                            {
+                                sector.Flags |= SectorFlag.TriggererMark;
+                            }
+                            break;
+
+                        case FD_FUNC.MinecartRight:
+                            // Minecart right (TR3) and beetle mark (TR4-5) has the same flag value.
+                            // We re-parse them properly here.
+                            if (tr.GameVersion < TRGame.TR4)
+                            {
+                                sector.Flags |= SectorFlag.MinecartRight;
+                            }
+                            else
+                            {
+                                sector.Flags |= SectorFlag.BeetleMark;
+                            }
+                            break;
+
+                        default:
+                            // Other functions are TR3+ collisional triangle functions.
+                            if (((FD_FUNC) function).IsBetween(FD_FUNC.FloorTriangleNW,
+                                FD_FUNC.CeilingTriangleNEPortalSE))
+                            {
+                                entry--; // Go back, since these functions are parsed differently.
+
+                                endBit = (*entry & 0x8000) >> 15; // 0b10000000 00000000
+
+#if NOPE
+                    int16_t  slope_t01 = ((*entry) & 0x7C00) >> 10;      // 0b01111100 00000000
+                    int16_t  slope_t00 = ((*entry) & 0x03E0) >> 5;       // 0b00000011 11100000
+                    // uint16_t slope_func = ((*entry) & 0x001F);            // 0b00000000 00011111
+                    // t01/t02 are 5-bit values, where sign is specified by 0x10 mask.
+                    if(slope_t01 & 0x10) slope_t01 |= 0xFFF0;
+                    if(slope_t00 & 0x10) slope_t00 |= 0xFFF0;
+#endif
+
+                                entry++;
+
+                                var slope_t13 = (uint) (*entry & 0xF000) >> 12; // 0b11110000 00000000
+                                var slope_t12 = (uint) (*entry & 0x0F00) >> 8; // 0b00001111 00000000
+                                var slope_t11 = (uint) (*entry & 0x00F0) >> 4; // 0b00000000 11110000
+                                var slope_t10 = (uint) (*entry & 0x000F); // 0b00000000 00001111
+
+                                entry++;
+
+                                var overallAdjustment =
+                                    Res_Sector_BiggestCorner(slope_t10, slope_t11, slope_t12, slope_t13) *
+                                    TR_METERING_STEP;
+
+                                if (((FD_FUNC) function).IsAnyOf(FD_FUNC.FloorTriangleNW,
+                                    FD_FUNC.FloorTriangleNWPortalSW, FD_FUNC.FloorTriangleNWPortalNE))
+                                {
+                                    sector.FloorDiagonalType = TR_SECTOR_DIAGONAL_TYPE.NorthWest;
+
+                                    sector.FloorCorners[0][2] -= overallAdjustment - slope_t12 * TR_METERING_STEP;
+                                    sector.FloorCorners[1][2] -= overallAdjustment - slope_t13 * TR_METERING_STEP;
+                                    sector.FloorCorners[2][2] -= overallAdjustment - slope_t10 * TR_METERING_STEP;
+                                    sector.FloorCorners[3][2] -= overallAdjustment - slope_t11 * TR_METERING_STEP;
+
+                                    if (function == (int) FD_FUNC.FloorTriangleNWPortalSW)
+                                    {
+                                        sector.FloorPenetrationConfig = TR_PENETRATION_CONFIG.DoorVerticalA;
+                                    }
+                                    else if (function == (int) FD_FUNC.FloorTriangleNWPortalSW)
+                                    {
+                                        sector.FloorPenetrationConfig = TR_PENETRATION_CONFIG.DoorVerticalB;
+                                    }
+                                    else
+                                    {
+                                        sector.FloorPenetrationConfig = TR_PENETRATION_CONFIG.Solid;
+                                    }
+                                }
+                                else if (((FD_FUNC) function).IsAnyOf(FD_FUNC.FloorTriangleNE,
+                                    FD_FUNC.FloorTriangleNEPortalNW, FD_FUNC.FloorTriangleNEPortalSE))
+                                {
+                                    sector.FloorDiagonalType = TR_SECTOR_DIAGONAL_TYPE.NorthEast;
+
+                                    sector.FloorCorners[0][2] -= overallAdjustment - slope_t12 * TR_METERING_STEP;
+                                    sector.FloorCorners[1][2] -= overallAdjustment - slope_t13 * TR_METERING_STEP;
+                                    sector.FloorCorners[2][2] -= overallAdjustment - slope_t10 * TR_METERING_STEP;
+                                    sector.FloorCorners[3][2] -= overallAdjustment - slope_t11 * TR_METERING_STEP;
+
+                                    if (function == (int) FD_FUNC.FloorTriangleNEPortalNW)
+                                    {
+                                        sector.FloorPenetrationConfig = TR_PENETRATION_CONFIG.DoorVerticalA;
+                                    }
+                                    else if (function == (int) FD_FUNC.FloorTriangleNEPortalSE)
+                                    {
+                                        sector.FloorPenetrationConfig = TR_PENETRATION_CONFIG.DoorVerticalB;
+                                    }
+                                    else
+                                    {
+                                        sector.FloorPenetrationConfig = TR_PENETRATION_CONFIG.Solid;
+                                    }
+                                }
+                                else if (((FD_FUNC) function).IsAnyOf(FD_FUNC.CeilingTriangleNW,
+                                    FD_FUNC.CeilingTriangleNWPortalSW, FD_FUNC.CeilingTriangleNWPortalNE))
+                                {
+                                    sector.CeilingDiagonalType = TR_SECTOR_DIAGONAL_TYPE.NorthWest;
+
+                                    sector.CeilingCorners[0][2] += overallAdjustment - slope_t11 * TR_METERING_STEP;
+                                    sector.CeilingCorners[1][2] += overallAdjustment - slope_t10 * TR_METERING_STEP;
+                                    sector.CeilingCorners[2][2] += overallAdjustment - slope_t13 * TR_METERING_STEP;
+                                    sector.CeilingCorners[3][2] += overallAdjustment - slope_t12 * TR_METERING_STEP;
+
+                                    if (function == (int) FD_FUNC.CeilingTriangleNWPortalSW)
+                                    {
+                                        sector.CeilingPenetrationConfig = TR_PENETRATION_CONFIG.DoorVerticalA;
+                                    }
+                                    else if (function == (int) FD_FUNC.CeilingTriangleNWPortalSW)
+                                    {
+                                        sector.CeilingPenetrationConfig = TR_PENETRATION_CONFIG.DoorVerticalB;
+                                    }
+                                    else
+                                    {
+                                        sector.CeilingPenetrationConfig = TR_PENETRATION_CONFIG.Solid;
+                                    }
+                                }
+                                else if (((FD_FUNC) function).IsAnyOf(FD_FUNC.CeilingTriangleNE,
+                                    FD_FUNC.CeilingTriangleNEPortalNW, FD_FUNC.CeilingTriangleNEPortalSE))
+                                {
+                                    sector.CeilingDiagonalType = TR_SECTOR_DIAGONAL_TYPE.NorthEast;
+
+                                    sector.CeilingCorners[0][2] += overallAdjustment - slope_t11 * TR_METERING_STEP;
+                                    sector.CeilingCorners[1][2] += overallAdjustment - slope_t10 * TR_METERING_STEP;
+                                    sector.CeilingCorners[2][2] += overallAdjustment - slope_t13 * TR_METERING_STEP;
+                                    sector.CeilingCorners[3][2] += overallAdjustment - slope_t12 * TR_METERING_STEP;
+
+                                    if (function == (int) FD_FUNC.CeilingTriangleNEPortalNW)
+                                    {
+                                        sector.CeilingPenetrationConfig = TR_PENETRATION_CONFIG.DoorVerticalA;
+                                    }
+                                    else if (function == (int) FD_FUNC.CeilingTriangleNEPortalSE)
+                                    {
+                                        sector.CeilingPenetrationConfig = TR_PENETRATION_CONFIG.DoorVerticalB;
+                                    }
+                                    else
+                                    {
+                                        sector.CeilingPenetrationConfig = TR_PENETRATION_CONFIG.Solid;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // Unknown floordata function!
+                            }
+                            break;
+                    }
+
+                    #endregion
+                    
+                    ret++;
+                } while (endBit == 0 && entry < end_p);
+            }
+            #endregion
+
+            return ret;
+        }
 
         public static void TR_Sector_Calculate(World world, Level tr, int room_index)
         {

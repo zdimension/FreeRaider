@@ -301,7 +301,17 @@ namespace FreeRaider
         public static string Format(string format, params object[] args)
         {
             if (Regex.IsMatch(format, @"(?:[^{}])({\d})(?:[^}])"))
-                return string.Format(format, args);
+            {
+                try
+                {
+                    return string.Format(format, args);
+                }
+                catch(FormatException e)
+                {
+                    format = format.Replace("{", "{{").Replace("}", "}}");
+                    return string.Format(format, args);
+                }
+            }
             else
                 return Tools.sprintf(format, args);
         }

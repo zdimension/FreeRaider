@@ -1046,16 +1046,16 @@ namespace FreeRaider
             Assert(lowestSector != null);
 
             HeightInfo.WallsClimbDir = 0;
-            HeightInfo.WallsClimbDir |= (sbyte) (lowestSector.Flags & (uint) (SectorFlag.ClimbWest |
-                                                                              SectorFlag.ClimbEast |
-                                                                              SectorFlag.ClimbNorth |
-                                                                              SectorFlag.ClimbSouth));
+            HeightInfo.WallsClimbDir |= (sbyte) (lowestSector.Flags & (SectorFlag.ClimbWest |
+                                                                       SectorFlag.ClimbEast |
+                                                                       SectorFlag.ClimbNorth |
+                                                                       SectorFlag.ClimbSouth));
 
             HeightInfo.WallsClimb = HeightInfo.WallsClimbDir > 0;
-            HeightInfo.CeilingClimb = highestSector.Flags.HasFlagUns(SectorFlag.ClimbCeiling) ||
-                                      lowestSector.Flags.HasFlagUns(SectorFlag.ClimbCeiling);
+            HeightInfo.CeilingClimb = highestSector.Flags.HasFlag(SectorFlag.ClimbCeiling) ||
+                                      lowestSector.Flags.HasFlag(SectorFlag.ClimbCeiling);
 
-            if (lowestSector.Flags.HasFlagUns(SectorFlag.Death))
+            if (lowestSector.Flags.HasFlag(SectorFlag.Death))
             {
                 if (MoveType.IsAnyOf(MoveType.OnFloor, MoveType.Wade, MoveType.Quicksand))
                 {

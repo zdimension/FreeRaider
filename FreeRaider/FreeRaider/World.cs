@@ -10,7 +10,7 @@ using static FreeRaider.StaticFuncs;
 
 namespace FreeRaider
 {
-    public enum FloorDataFunctions : byte
+    public enum FD_FUNC : byte
     {
         PortalSector = 0x01,
         FloorSlant = 0x02,
@@ -56,7 +56,7 @@ namespace FreeRaider
         Climb = 0x10 // TR5 only: If Lara is climbing, run.
     }
 
-    public enum TriggerFunctionTypes : byte
+    public enum FD_TRIGFUNC : byte
     {
         Object = 0x00,
         CameraTarget = 0x01,
@@ -213,9 +213,9 @@ namespace FreeRaider
 
         public int BoxIndex;
 
-        public uint Flags;
+        public SectorFlag Flags;
 
-        public uint Material;
+        public SectorMaterial Material;
 
         public int Floor;
 

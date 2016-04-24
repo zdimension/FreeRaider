@@ -164,7 +164,7 @@ namespace FreeRaider
 
         public static uint lua_GetEntitySectorFlags(uint id)
         {
-            return EngineWorld.GetEntityByID(id)?.CurrentSector?.Flags ?? 0;
+            return (uint)(EngineWorld.GetEntityByID(id)?.CurrentSector?.Flags ?? 0);
         }
 
         public static uint lua_GetEntitySectorIndex(uint id)
@@ -174,7 +174,7 @@ namespace FreeRaider
 
         public static uint lua_GetEntitySectorMaterial(uint id)
         {
-            return EngineWorld.GetEntityByID(id)?.CurrentSector?.Material ?? 0;
+            return (uint)(EngineWorld.GetEntityByID(id)?.CurrentSector?.Material ?? 0);
         }
 
         public static uint lua_GetEntitySubstanceState(uint id)
