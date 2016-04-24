@@ -179,73 +179,73 @@ namespace FreeRaider
 
     public class BaseItem
     {
-        public uint ID { get; set; }
+        public uint ID;
 
-        public uint WorldModelId { get; set; }
+        public uint WorldModelId;
 
-        public MenuItemType Type { get; set; }
+        public MenuItemType Type;
 
-        public ushort Count { get; set; }
+        public ushort Count;
 
-        public string Name { get; set; }
+        public string Name;
 
-        public SSBoneFrame BoneFrame { get; set; }
+        public SSBoneFrame BoneFrame;
     }
 
     public class RoomBox
     {
-        public int Xmin { get; set; }
+        public int Xmin;
 
-        public int Xmax { get; set; }
+        public int Xmax;
 
-        public int Ymin { get; set; }
+        public int Ymin;
 
-        public int Ymax { get; set; }
+        public int Ymax;
 
-        public int TrueFloor { get; set; }
+        public int TrueFloor;
 
-        public int OverlapIndex { get; set; }
+        public int OverlapIndex;
     }
 
     public class RoomSector
     {
-        public uint TrigIndex { get; set; }
+        public uint TrigIndex;
 
-        public int BoxIndex { get; set; }
+        public int BoxIndex;
 
-        public uint Flags { get; set; }
+        public uint Flags;
 
-        public uint Material { get; set; }
+        public uint Material;
 
-        public int Floor { get; set; }
+        public int Floor;
 
-        public int Ceiling { get; set; }
+        public int Ceiling;
 
-        public RoomSector SectorBelow { get; set; }
+        public RoomSector SectorBelow;
 
-        public RoomSector SectorAbove { get; set; }
+        public RoomSector SectorAbove;
 
-        public Room OwnerRoom { get; set; }
+        public Room OwnerRoom;
 
-        public short IndexX { get; set; }
+        public short IndexX;
 
-        public short IndexY { get; set; }
+        public short IndexY;
 
-        public Vector3 Position { get; set; }
+        public Vector3 Position;
 
-        public Vector3[] CeilingCorners { get; set; }
+        public Vector3[] CeilingCorners;
 
-        public TR_SECTOR_DIAGONAL_TYPE CeilingDiagonalType { get; set; }
+        public TR_SECTOR_DIAGONAL_TYPE CeilingDiagonalType;
 
-        public TR_PENETRATION_CONFIG CeilingPenetrationConfig { get; set; }
+        public TR_PENETRATION_CONFIG CeilingPenetrationConfig;
 
-        public Vector3[] FloorCorners { get; set; }
+        public Vector3[] FloorCorners;
 
-        public TR_SECTOR_DIAGONAL_TYPE FloorDiagonalType { get; set; }
+        public TR_SECTOR_DIAGONAL_TYPE FloorDiagonalType;
 
-        public TR_PENETRATION_CONFIG FloorPenetrationConfig { get; set; }
+        public TR_PENETRATION_CONFIG FloorPenetrationConfig;
 
-        public int PortalToRoom { get; set; }
+        public int PortalToRoom;
 
         public RoomSector GetLowestSector()
         {
@@ -460,21 +460,21 @@ namespace FreeRaider
 
     public class SectorTween
     {
-        public Vector3[] FloorCorners { get; set; }
-        public SectorTweenType FloorTweenType { get; set; }
+        public Vector3[] FloorCorners;
+        public SectorTweenType FloorTweenType;
 
-        public Vector3[] CeilingCorners { get; set; }
+        public Vector3[] CeilingCorners;
 
-        public SectorTweenType CeilingTweenType { get; set; }
+        public SectorTweenType CeilingTweenType;
     }
 
     public class RoomSprite
     {
-        public Sprite Sprite { get; set; }
+        public Sprite Sprite;
 
-        public Vector3 Position { get; set; }
+        public Vector3 Position;
 
-        public bool WasRendered { get; set; }
+        public bool WasRendered;
     }
 
     public class Room
@@ -482,107 +482,107 @@ namespace FreeRaider
         /// <summary>
         /// Room's ID
         /// </summary>
-        public uint ID { get; set; }
+        public uint ID;
 
         /// <summary>
         /// Room's type + water, wind info
         /// </summary>
-        public uint Flags { get; set; }
+        public uint Flags;
 
         /// <summary>
         /// Present only in TR2: 0 is normal, 1 is flickering, 2 and 3 are uncertain
         /// </summary>
-        public short LightMode { get; set; }
+        public short LightMode;
 
         /// <summary>
         /// Room reverb type
         /// </summary>
-        public byte ReverbInfo { get; set; }
+        public byte ReverbInfo;
 
-        public byte WaterScheme { get; set; }
+        public byte WaterScheme;
 
-        public byte AlternateGroup { get; set; }
+        public byte AlternateGroup;
 
         /// <summary>
         /// Flag: is active
         /// </summary>
-        public bool Active { get; set; }
+        public bool Active;
 
         /// <summary>
         /// Do not render
         /// </summary>
-        public bool Hide { get; set; }
+        public bool Hide;
 
         /// <summary>
         /// Room's base mesh
         /// </summary>
-        public BaseMesh Mesh { get; set; }
+        public BaseMesh Mesh;
 
         /// <summary>
         /// Render data for sprites
         /// </summary>
-        public SpriteBuffer SpriteBuffer { get; set; }
+        public SpriteBuffer SpriteBuffer;
 
-        public List<StaticMesh> StaticMesh { get; set; }
+        public List<StaticMesh> StaticMesh;
 
-        public List<RoomSprite> Sprites { get; set; }
+        public List<RoomSprite> Sprites;
 
-        public List<EngineContainer> Containers { get; set; }
-
-        /// <summary>
-        /// Room's bounding box
-        /// </summary>
-        public Vector3 BBMin { get; set; }
+        public List<EngineContainer> Containers;
 
         /// <summary>
         /// Room's bounding box
         /// </summary>
-        public Vector3 BBMax { get; set; }
+        public Vector3 BBMin;
+
+        /// <summary>
+        /// Room's bounding box
+        /// </summary>
+        public Vector3 BBMax;
 
         /// <summary>
         /// GL transformation matrix
         /// </summary>
-        public Transform Transform { get; set; }
+        public Transform Transform;
 
-        public float[] AmbientLighting { get; set; }
+        public float[] AmbientLighting;
 
-        public List<Light> Lights { get; set; }
+        public List<Light> Lights;
 
         /// <summary>
         /// Room portals array
         /// </summary>
-        public List<Portal> Portals { get; set; }
+        public List<Portal> Portals;
 
         /// <summary>
         /// Alternative room pointer
         /// </summary>
-        public Room AlternateRoom { get; set; }
+        public Room AlternateRoom;
 
         /// <summary>
         /// Base room = room->alternate_room->base_room
         /// </summary>
-        public Room BaseRoom { get; set; }
+        public Room BaseRoom;
 
-        public ushort SectorsX { get; set; }
+        public ushort SectorsX;
 
-        public ushort SectorsY { get; set; }
+        public ushort SectorsY;
 
-        public List<RoomSector> Sectors { get; set; }
+        public List<RoomSector> Sectors;
 
-        public List<Frustum> Frustum { get; set; }
+        public List<Frustum> Frustum;
 
         /// <summary>
         /// Maximum number of portals in this room
         /// </summary>
-        public int MaxPath { get; set; }
+        public int MaxPath;
 
-        public List<Room> NearRoomList { get; set; }
+        public List<Room> NearRoomList;
 
-        public List<Room> OverlappedRoomList { get; set; }
+        public List<Room> OverlappedRoomList;
 
-        public RigidBody BtBody { get; set; }
+        public RigidBody BtBody;
 
-        public EngineContainer Self { get; set; }
+        public EngineContainer Self;
 
         public void Enable()
         {
@@ -884,7 +884,7 @@ namespace FreeRaider
             Mesh.Vertices.Resize(trRoom.Vertices.Length);
             for (var i = 0; i < Mesh.Vertices.Count; i++)
             {
-                Mesh.Vertices[i].Position = TR_vertex_to_arr(trRoom.Vertices[i].Vertex);
+                Mesh.Vertices[i].Position = trRoom.Vertices[i].Vertex.ToVector3();
                 Mesh.Vertices[i].Normal = Vector3.Zero; // paranoid
             }
 
@@ -985,96 +985,96 @@ namespace FreeRaider
 
     public class FlipInfo
     {
-        public byte Map { get; set; }
+        public byte Map;
 
-        public byte State { get; set; }
+        public byte State;
     }
 
     public class World
     {
-        public string Name { get; set; }
+        public string Name;
 
-        public uint ID { get; set; }
+        public uint ID;
 
-        public Loader.Engine EngineVersion { get; set; }
+        public Loader.Engine EngineVersion;
 
-        public List<Room> Rooms { get; set; }
+        public List<Room> Rooms;
 
-        public List<RoomBox> RoomBoxes { get; set; }
+        public List<RoomBox> RoomBoxes;
 
-        public List<FlipInfo> FlipData { get; set; }
+        public List<FlipInfo> FlipData;
 
-        public BorderedTextureAtlas TextureAtlas { get; set; }
+        public BorderedTextureAtlas TextureAtlas;
 
-        public List<uint> Textures { get; set; }
+        public List<uint> Textures;
 
-        public List<AnimSeq> AnimSequences { get; set; }
+        public List<AnimSeq> AnimSequences;
 
-        public List<BaseMesh> Meshes { get; set; }
+        public List<BaseMesh> Meshes;
 
-        public List<Sprite> Sprites { get; set; }
+        public List<Sprite> Sprites;
 
-        public List<SkeletalModel> SkeletalModels { get; set; }
+        public List<SkeletalModel> SkeletalModels;
 
-        public Character Character { get; set; }
+        public Character Character;
 
-        public SkeletalModel SkyBox { get; set; }
+        public SkeletalModel SkyBox;
 
         /// <summary>
         /// Tree of world active objects
         /// </summary>
-        public Dictionary<uint, Entity> EntityTree { get; set; }
+        public Dictionary<uint, Entity> EntityTree;
 
-        public uint NextEntityID { get; set; }
+        public uint NextEntityID;
 
         /// <summary>
         /// Tree of world items
         /// </summary>
-        public Dictionary<uint, BaseItem> ItemsTree { get; set; }
+        public Dictionary<uint, BaseItem> ItemsTree;
 
-        public uint Type { get; set; }
+        public uint Type;
 
         /// <summary>
         /// Cameras and sinks
         /// </summary>
-        public List<StatCameraSink> CamerasSinks { get; set; }
+        public List<StatCameraSink> CamerasSinks;
 
-        public short[] AnimCommands { get; set; }
+        public short[] AnimCommands;
 
         /// <summary>
         /// Audio emitters
         /// </summary>
-        public List<AudioEmitter> AudioEmitters { get; set; }
+        public List<AudioEmitter> AudioEmitters;
         
         /// <summary>
         /// Effect indexes
         /// </summary>
-        public List<short> AudioMap { get; set; }  
+        public List<short> AudioMap;  
 
         /// <summary>
         /// Effects and their parameters
         /// </summary>
-        public List<AudioEffect> AudioEffects { get; set; } 
+        public List<AudioEffect> AudioEffects; 
 
         /// <summary>
         /// Samples
         /// </summary>
-        public List<uint> AudioBuffers { get; set; } 
+        public List<uint> AudioBuffers; 
 
         /// <summary>
         /// Channels
         /// </summary>
-        public List<AudioSource> AudioSources { get; set; } 
+        public List<AudioSource> AudioSources; 
 
         /// <summary>
         /// Stream tracks
         /// </summary>
-        public List<StreamTrack> StreamTracks { get; set; } 
+        public List<StreamTrack> StreamTracks; 
 
         /// <summary>
         /// Stream track flag map
         /// </summary>
-        public List<byte> StreamTrackMap { get; set; }
+        public List<byte> StreamTrackMap;
 
         /// <summary>
         /// This function is used for updating global animated texture frame

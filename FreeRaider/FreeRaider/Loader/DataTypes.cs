@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using OpenTK;
 
 namespace FreeRaider
 {
@@ -286,6 +287,11 @@ namespace FreeRaider.Loader
         }
 
         public static readonly Vertex Zero = new Vertex(0, 0, 0);
+
+        public Vector3 ToVector3()
+        {
+            return new Vector3(X, -Z, Y);
+        }
     }
 
     public struct Triangle
@@ -631,8 +637,8 @@ namespace FreeRaider.Loader
             Fade1 = fade1;
             Fade2 = fade2;
             Unknown = unknown;
-            Hotspot = hotspot;
-            Falloff = falloff;
+            R_Inner = hotspot;
+            R_Outer = falloff;
             Length = length;
             Cutoff = cutoff;
             Direction = direction;
@@ -697,12 +703,12 @@ namespace FreeRaider.Loader
         /// <summary>
         /// Used for Spot, Light and Shadow; Hotspot angle cosine or TR units
         /// </summary>
-        public float Hotspot;
+        public float R_Inner;
 
         /// <summary>
         /// Used for Spot, Light and Shadow; Falloff angle cosine or TR units
         /// </summary>
-        public float Falloff;
+        public float R_Outer;
 
         /// <summary>
         /// Length
@@ -770,8 +776,8 @@ namespace FreeRaider.Loader
 
                 ret.Intensity = Math.Min(ret.Intensity1 / 4096.0f, 1);
 
-                ret.Falloff = ret.Fade1;
-                ret.Hotspot = (float) ret.Fade1 / 2;
+                ret.R_Outer = ret.Fade1;
+                ret.R_Inner = (float) ret.Fade1 / 2;
 
                 ret.LightType = LightType.Point;
 
@@ -786,8 +792,8 @@ namespace FreeRaider.Loader
                     ret.Unknown = br.ReadByte();
                     ret.Intensity1 = br.ReadByte();
                     ret.Intensity = (float) ret.Intensity1 / 32;
-                    ret.Hotspot = br.ReadSingle();
-                    ret.Falloff = br.ReadSingle();
+                    ret.R_Inner = br.ReadSingle();
+                    ret.R_Outer = br.ReadSingle();
                     ret.Length = br.ReadSingle();
                     ret.Cutoff = br.ReadSingle();
                     ret.Direction = Vertex.ReadF(br);
@@ -796,8 +802,8 @@ namespace FreeRaider.Loader
                 {
                     ret.Color = ByteColor.ReadF(br, true);
                     ret.Intensity = 1;
-                    ret.Hotspot = br.ReadSingle();
-                    ret.Falloff = br.ReadSingle();
+                    ret.R_Inner = br.ReadSingle();
+                    ret.R_Outer = br.ReadSingle();
                     ret.RadianInput = br.ReadSingle();
                     ret.RadianOutput = br.ReadSingle();
                     ret.Range = br.ReadSingle();
@@ -828,8 +834,8 @@ namespace FreeRaider.Loader
 
                 ret.Intensity = 1;
 
-                ret.Falloff = ret.Fade1;
-                ret.Hotspot = (float) ret.Fade1 / 2;
+                ret.R_Outer = ret.Fade1;
+                ret.R_Inner = (float) ret.Fade1 / 2;
 
                 ret.LightType = LightType.Point;
             }

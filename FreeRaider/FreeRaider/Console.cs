@@ -4,7 +4,6 @@ using System.Linq;
 using FreeRaider.Loader;
 using JetBrains.Annotations;
 using OpenTK.Graphics.OpenGL;
-using OpenTK.Input;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
 using static SDL2.SDL;

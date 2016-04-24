@@ -906,7 +906,7 @@ namespace SDL2
         public static extern int SDL_GL_LoadLibrary(
         [In()] [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(LPUtf8StrMarshaler))]
                 string path
-    );
+    ); // zdimernsion: Added this
 
         /* Actually, this is from SDL_blendmode.h */
         /// <summary>

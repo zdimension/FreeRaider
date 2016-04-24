@@ -236,17 +236,17 @@ namespace FreeRaider.Loader
             }
         }
 
-        protected StaticMesh FindStaticMeshById(uint objectID)
+        public StaticMesh FindStaticMeshById(uint objectID)
         {
             return StaticMeshes.FirstOrDefault(x => x.ObjectID == objectID && MeshIndices[x.Mesh] != 0);
         }
 
-        protected Item FindItemById(short objectID)
+        public Item FindItemById(short objectID)
         {
             return Items.FirstOrDefault(x => x.ObjectID == objectID);
         }
 
-        protected Moveable FindMoveableById(uint objectID)
+        public Moveable FindMoveableById(uint objectID)
         {
             return Moveables.FirstOrDefault(x => x.ObjectID == objectID);
         }

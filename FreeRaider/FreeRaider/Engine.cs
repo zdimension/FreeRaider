@@ -10,6 +10,7 @@ using NLua.Exceptions;
 using OpenTK;
 using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
+using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
@@ -235,6 +236,8 @@ namespace FreeRaider
         public static int FPSCycles = 0;
 
         public static float FPSTime = 0.0f;
+
+        public static GraphicsContext GLContext;
     }
 
     public partial class StaticFuncs
@@ -373,7 +376,7 @@ namespace FreeRaider
             // Clearing up memory for initial level loading.
             EngineWorld.Prepare();
 
-            // SDL_SetRelativeMouseMode(SDL_TRUE); TODO
+            SDL_SetRelativeMouseMode(SDL_bool.SDL_TRUE);
 
             // Make splash screen.
             Gui.FadeAssignPic(FaderType.LoadScreen, "resource/graphics/legal.png");
@@ -421,7 +424,25 @@ namespace FreeRaider
             EngineWorld.Empty();
             Destroy();
 
-            // TODO Joystick SDL stuff etc L792 Engine.cpp
+            // no more renderings
+            GLContext.Dispose(); // TODO: Needed?
+            SDL_GL_DeleteContext(sdl_gl_context);
+            SDL_DestroyWindow(sdl_window);
+
+            if(sdl_joystick != null)
+            {
+                SDL_JoystickClose(sdl_joystick);
+            }
+
+            if(sdl_controller != null)
+            {
+                SDL_GameControllerClose(sdl_controller);
+            }
+
+            if(sdl_haptic != null)
+            {
+                SDL_HapticClose(sdl_haptic);
+            }
 
             if(ALContext != ContextHandle.Zero)
             {
@@ -437,6 +458,8 @@ namespace FreeRaider
             // free temporary memory
             FrameVertexBuffer.Clear();
             FrameVertexBufferSizeLeft = 0;
+
+            SDL_Quit();
 
             Environment.Exit(val);
         }
@@ -678,6 +701,7 @@ namespace FreeRaider
                 Global.ScreenInfo.H, video_flags);
             sdl_gl_context = SDL_GL_CreateContext(sdl_window);
             SDL_GL_MakeCurrent(sdl_window, sdl_gl_context);
+            GLContext = new GraphicsContext(new ContextHandle(sdl_gl_context), OpenTK.Platform.Utilities.CreateSdl2WindowInfo(sdl_window));
 
             if(SDL_GL_SetSwapInterval(Global.ScreenInfo.Vsync ? 1 : 0) != 0)
                 Sys.DebugLog(LOG_FILENAME, "Cannot set VSYNC: {0}\n", SDL_GetError());
@@ -869,7 +893,7 @@ namespace FreeRaider
 
             Renderer.DrawListDebugLines();
 
-            // SDL_GL_SwapWindow(sdl_window); TODO
+            SDL_GL_SwapWindow(sdl_window);
         }
 
         public static void Frame(float time)

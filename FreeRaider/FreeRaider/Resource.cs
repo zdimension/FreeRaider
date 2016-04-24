@@ -1253,7 +1253,7 @@ namespace FreeRaider
             mesh.Vertices.Resize(trMesh.Vertices.Length);
             for (var i = 0; i < mesh.Vertices.Count; i++)
             {
-                mesh.Vertices[i].Position = TR_vertex_to_arr(trMesh.Vertices[i]);
+                mesh.Vertices[i].Position = trMesh.Vertices[i].ToVector3();
                 mesh.Vertices[i].Normal = Vector3.Zero; // paranoid
             }
             
@@ -2185,7 +2185,412 @@ namespace FreeRaider
             }
         }
 
-        public static void TR_GenRoom(int room_index, Room room, World world, Level tr);
+        public static void TR_GenRoom(int roomIndex, Room room, World world, Level tr)
+        {
+            var trRoom = tr.Rooms[roomIndex];
+
+            #region Room properties
+
+            room.ID = (uint) roomIndex;
+            room.Active = true;
+            room.Frustum.Clear();
+            room.Flags = trRoom.Flags;
+            room.LightMode = trRoom.LightMode;
+            room.ReverbInfo = (byte) trRoom.ReverbInfo;
+            room.WaterScheme = trRoom.WaterScheme;
+            room.AlternateGroup = (byte) trRoom.AlternateGroup;
+
+            room.Transform.SetIdentity();
+            room.Transform.Origin = trRoom.Offset.ToVector3();
+            room.AmbientLighting[0] = trRoom.LightColor.R * 2;
+            room.AmbientLighting[1] = trRoom.LightColor.G * 2;
+            room.AmbientLighting[2] = trRoom.LightColor.B * 2;
+            room.Self = new EngineContainer();
+            room.Self.Room = room;
+            room.Self.Object = room;
+            room.Self.ObjectType = OBJECT_TYPE.RoomBase;
+            room.NearRoomList.Clear();
+            room.OverlappedRoomList.Clear();
+
+            room.GenMesh(world, (uint) roomIndex, tr);
+
+            room.BtBody = null;
+            // let's load static room meshes
+            room.StaticMesh.Clear();
+
+            #endregion
+
+            #region Static meshes
+
+            Loader.StaticMesh trStatic;
+
+            for (var i = 0; i < trRoom.StaticMeshes.Length; i++)
+            {
+                var trsm = trRoom.StaticMeshes[i];
+                trStatic = tr.FindStaticMeshById(trsm.ObjectID);
+                if (trStatic.Equals(default(Loader.StaticMesh)))
+                {
+                    continue;
+                }
+                var rStatic = new StaticMesh();
+                rStatic.Self = new EngineContainer();
+                rStatic.Self.Room = room;
+                rStatic.Self.Object = rStatic;
+                rStatic.Self.ObjectType = OBJECT_TYPE.StaticMesh;
+                rStatic.ObjectID = trsm.ObjectID;
+                rStatic.Mesh = world.Meshes[(int) tr.MeshIndices[trStatic.Mesh]];
+                rStatic.Position = trsm.Position.ToVector3();
+                rStatic.Rotation = new Vector3(trsm.Rotation, 0.0f, 0.0f);
+                rStatic.Tint[0] = trsm.Tint.R * 2;
+                rStatic.Tint[1] = trsm.Tint.G * 2;
+                rStatic.Tint[2] = trsm.Tint.B * 2;
+                rStatic.Tint[3] = trsm.Tint.A * 2;
+
+                rStatic.CBBMin.X = trStatic.CollisionBox[0].X;
+                rStatic.CBBMin.Y = -trStatic.CollisionBox[0].Z;
+                rStatic.CBBMin.Z = trStatic.CollisionBox[1].Y;
+                rStatic.CBBMax.X = trStatic.CollisionBox[1].X;
+                rStatic.CBBMax.Y = -trStatic.CollisionBox[1].Z;
+                rStatic.CBBMax.Z = trStatic.CollisionBox[0].Y;
+
+                rStatic.VBBMin.X = trStatic.VisibilityBox[0].X;
+                rStatic.VBBMin.Y = -trStatic.VisibilityBox[0].Z;
+                rStatic.VBBMin.Z = trStatic.VisibilityBox[1].Y;
+
+                rStatic.VBBMax.X = trStatic.VisibilityBox[1].X;
+                rStatic.VBBMax.Y = -trStatic.VisibilityBox[1].Z;
+                rStatic.VBBMax.Z = trStatic.VisibilityBox[0].Y;
+
+                rStatic.OBB.Transform = rStatic.Transform;
+                rStatic.OBB.Radius = rStatic.Mesh.Radius;
+                rStatic.Transform.SetIdentity();
+                VMath.Mat4_Translate(rStatic.Transform, rStatic.Position);
+                VMath.Mat4_RotateZ(rStatic.Transform, rStatic.Rotation.X);
+                rStatic.WasRendered = 0;
+                rStatic.OBB.Rebuild(rStatic.VBBMin, rStatic.VBBMax);
+                rStatic.OBB.DoTransform();
+
+                rStatic.BtBody = null;
+                rStatic.Hide = false;
+
+                // Disable static mesh collision, if flag value is 3 (TR1) or all bounding box
+                // coordinates are equal (TR2-5).
+
+                if (trStatic.Flags == 3 ||
+                    trStatic.CollisionBox[0].X == -trStatic.CollisionBox[0].Y &&
+                    trStatic.CollisionBox[0].Y == trStatic.CollisionBox[0].Z &&
+                    trStatic.CollisionBox[1].X == -trStatic.CollisionBox[1].Y &&
+                    trStatic.CollisionBox[1].Y == trStatic.CollisionBox[1].Z)
+                {
+                    rStatic.Self.CollisionType = COLLISION_TYPE.None;
+                }
+                else
+                {
+                    rStatic.Self.CollisionType = COLLISION_TYPE.Static;
+                    rStatic.Self.CollisionShape = COLLISION_SHAPE.Box;
+                }
+
+                // Set additional static mesh properties from level script override.
+
+                Res_SetStaticMeshProperties(rStatic);
+
+                // Set static mesh collision.
+
+                if (rStatic.Self.CollisionType != COLLISION_TYPE.None)
+                {
+                    CollisionShape cshape;
+                    switch (rStatic.Self.CollisionShape)
+                    {
+                        case COLLISION_SHAPE.Box:
+                            cshape = BT_CSfromBBox(rStatic.CBBMin, rStatic.CBBMax, true, true);
+                            break;
+
+                        case COLLISION_SHAPE.BoxBase:
+                            cshape = BT_CSfromBBox(rStatic.Mesh.BBMin, rStatic.Mesh.BBMax, true, true);
+                            break;
+
+                        case COLLISION_SHAPE.Trimesh:
+                            cshape = BT_CSfromMesh(rStatic.Mesh, true, true, true);
+                            break;
+
+                        case COLLISION_SHAPE.TrimeshConvex:
+                            cshape = BT_CSfromMesh(rStatic.Mesh, true, true, true);
+                            break;
+
+                        default:
+                            cshape = null;
+                            break;
+                    }
+
+                    if (cshape != null)
+                    {
+                        var startTransform = rStatic.Transform;
+                        var motionState = new DefaultMotionState((Matrix4) startTransform);
+                        var localInertia = Vector3.Zero;
+                        rStatic.BtBody =
+                            new RigidBody(new RigidBodyConstructionInfo(0.0f, motionState, cshape, localInertia));
+                        BtEngineDynamicsWorld.AddRigidBody(rStatic.BtBody, CollisionFilterGroups.AllFilter,
+                            CollisionFilterGroups.AllFilter);
+                        rStatic.BtBody.UserObject = rStatic.Self;
+                    }
+                }
+
+                room.StaticMesh.Add(rStatic);
+            }
+
+            #endregion
+
+            #region Sprites
+
+            foreach (var trs in trRoom.Sprites)
+            {
+                var rs = new RoomSprite();
+                if (trs.Texture.IsBetween(0, world.Sprites.Count, IB.aIbE))
+                {
+                    rs.Sprite = world.Sprites[trs.Texture];
+                    rs.Position = trRoom.Vertices[trs.Vertex].Vertex.ToVector3() + room.Transform.Origin;
+                }
+                room.Sprites.Add(rs);
+            }
+
+            #endregion
+
+            #region Sectors
+
+            room.SectorsX = trRoom.Num_X_Sectors;
+            room.SectorsY = trRoom.Num_Z_Sectors;
+            room.Sectors.Resize(room.SectorsX * room.SectorsY);
+
+            // base sectors information loading and collisional mesh creation
+
+            // To avoid manipulating with unnecessary information, we declare simple
+            // heightmap here, which will be operated with sector and floordata parsing,
+            // then vertical inbetween polys will be constructed, and Bullet collisional
+            // object will be created. Afterwards, this heightmap also can be used to
+            // quickly detect slopes for pushable blocks and other entities that rely on
+            // floor level.
+
+            for (var i = 0; i < room.Sectors.Count; i++)
+            {
+                var sector = room.Sectors[i];
+
+                // Filling base sectors information.
+
+                sector.IndexX = (short) (i / room.SectorsY);
+                sector.IndexY = (short) (i % room.SectorsY);
+
+                sector.Position.X = room.Transform.Origin.X + (sector.IndexX + 0.5f) * TR_METERING_SECTORSIZE;
+                sector.Position.Y = room.Transform.Origin.Y + (sector.IndexY + 0.5f) * TR_METERING_SECTORSIZE;
+                sector.Position.Z = 0.5f * (trRoom.Y_Bottom + trRoom.Y_Top);
+
+                sector.OwnerRoom = room;
+
+                if (tr.GameVersion < TRGame.TR3)
+                {
+                    sector.BoxIndex = trRoom.Sectors[i].Box_Index;
+                    sector.Material = (int) SectorMaterial.Stone;
+                }
+                else
+                {
+                    sector.BoxIndex = (trRoom.Sectors[i].Box_Index & 0xFFF0) >> 4;
+                    sector.Material = (uint) trRoom.Sectors[i].Box_Index & 0x000F;
+                }
+
+                if (sector.BoxIndex == 0xFFFF) sector.BoxIndex = -1;
+
+                sector.Flags = 0; // Clear sector flags
+
+                sector.Floor = (int) -TR_METERING_STEP * trRoom.Sectors[i].Floor;
+                sector.Ceiling = (int) -TR_METERING_STEP * trRoom.Sectors[i].Ceiling;
+                sector.TrigIndex = trRoom.Sectors[i].FD_Index;
+
+                // BUILDING CEILING HEIGHTMAP.
+
+                // Penetration config is used later to build inbetween vertical collision polys.
+                // If sector's penetration config is a wall, we simply build a vertical plane to
+                // isolate this sector from top to bottom. Also, this allows to trick out wall
+                // sectors inside another wall sectors to be ignored completely when building
+                // collisional mesh.
+                // Door penetration config means that we should either ignore sector collision
+                // completely (classic door) or ignore one of the triangular sector parts (TR3+).
+
+                if (sector.Ceiling == TR_METERING_WALLHEIGHT)
+                {
+                    sector.CeilingPenetrationConfig = TR_PENETRATION_CONFIG.Wall;
+                }
+                else if (trRoom.Sectors[i].RoomAbove != 0xFF)
+                {
+                    sector.CeilingPenetrationConfig = TR_PENETRATION_CONFIG.Ghost;
+                }
+                else
+                {
+                    sector.CeilingPenetrationConfig = TR_PENETRATION_CONFIG.Solid;
+                }
+
+                // Reset some sector parameters to avoid garbaged memory issues.
+
+                sector.PortalToRoom = -1;
+                sector.CeilingDiagonalType = TR_SECTOR_DIAGONAL_TYPE.None;
+                sector.FloorDiagonalType = TR_SECTOR_DIAGONAL_TYPE.None;
+
+                // Now, we define heightmap cells position and draft (flat) height.
+                // Draft height is derived from sector's floor and ceiling values, which are
+                // copied into heightmap cells Y coordinates. As result, we receive flat
+                // heightmap cell, which will be operated later with floordata.
+
+                sector.CeilingCorners[0][0] = sector.IndexX * TR_METERING_SECTORSIZE;
+                sector.CeilingCorners[0][1] = sector.IndexY * TR_METERING_SECTORSIZE + TR_METERING_SECTORSIZE;
+                sector.CeilingCorners[0][2] = sector.Ceiling;
+
+                sector.CeilingCorners[1][0] = sector.IndexX * TR_METERING_SECTORSIZE + TR_METERING_SECTORSIZE;
+                sector.CeilingCorners[1][1] = sector.IndexY * TR_METERING_SECTORSIZE + TR_METERING_SECTORSIZE;
+                sector.CeilingCorners[1][2] = sector.Ceiling;
+
+                sector.CeilingCorners[2][0] = sector.IndexX * TR_METERING_SECTORSIZE + TR_METERING_SECTORSIZE;
+                sector.CeilingCorners[2][1] = sector.IndexY * TR_METERING_SECTORSIZE;
+                sector.CeilingCorners[2][2] = sector.Ceiling;
+
+                sector.CeilingCorners[3][0] = sector.IndexX * TR_METERING_SECTORSIZE;
+                sector.CeilingCorners[3][1] = sector.IndexY * TR_METERING_SECTORSIZE;
+                sector.CeilingCorners[3][2] = sector.Ceiling;
+
+
+                // BUILDING FLOOR HEIGHTMAP.
+
+                // Features same steps as for the ceiling.
+
+                if (sector.Floor == TR_METERING_WALLHEIGHT)
+                {
+                    sector.FloorPenetrationConfig = TR_PENETRATION_CONFIG.Wall;
+                }
+                else if (trRoom.Sectors[i].RoomBelow != 0xFF)
+                {
+                    sector.FloorPenetrationConfig = TR_PENETRATION_CONFIG.Ghost;
+                }
+                else
+                {
+                    sector.FloorPenetrationConfig = TR_PENETRATION_CONFIG.Solid;
+                }
+
+                sector.FloorCorners[0][0] = sector.IndexX * TR_METERING_SECTORSIZE;
+                sector.FloorCorners[0][1] = sector.IndexY * TR_METERING_SECTORSIZE + TR_METERING_SECTORSIZE;
+                sector.FloorCorners[0][2] = sector.Floor;
+
+                sector.FloorCorners[1][0] = sector.IndexX * TR_METERING_SECTORSIZE + TR_METERING_SECTORSIZE;
+                sector.FloorCorners[1][1] = sector.IndexY * TR_METERING_SECTORSIZE + TR_METERING_SECTORSIZE;
+                sector.FloorCorners[1][2] = sector.Floor;
+
+                sector.FloorCorners[2][0] = sector.IndexX * TR_METERING_SECTORSIZE + TR_METERING_SECTORSIZE;
+                sector.FloorCorners[2][1] = sector.IndexY * TR_METERING_SECTORSIZE;
+                sector.FloorCorners[2][2] = sector.Floor;
+
+                sector.FloorCorners[3][0] = sector.IndexX * TR_METERING_SECTORSIZE;
+                sector.FloorCorners[3][1] = sector.IndexY * TR_METERING_SECTORSIZE;
+                sector.FloorCorners[3][2] = sector.Floor;
+            }
+
+            #endregion
+
+            #region Lights
+
+            room.Lights.Resize(trRoom.Lights.Length);
+
+            for (var i = 0; i < trRoom.Lights.Length; i++)
+            {
+                var l = room.Lights[i];
+                var tl = trRoom.Lights[i];
+
+                l.LightType = tl.LightType;
+
+                l.Position = tl.Position.ToVector3();
+
+                if (l.LightType == LightType.Shadow)
+                {
+                    l.Colour[0] = -(tl.Color.R / 255.0f) * tl.Intensity;
+                    l.Colour[1] = -(tl.Color.G / 255.0f) * tl.Intensity;
+                    l.Colour[2] = -(tl.Color.B / 255.0f) * tl.Intensity;
+                    l.Colour[3] = 1.0f;
+                }
+                else
+                {
+                    l.Colour[0] = (tl.Color.R / 255.0f) * tl.Intensity;
+                    l.Colour[1] = (tl.Color.G / 255.0f) * tl.Intensity;
+                    l.Colour[2] = (tl.Color.B / 255.0f) * tl.Intensity;
+                    l.Colour[3] = 1.0f;
+                }
+
+                l.Inner = tl.R_Inner;
+                l.Outer = tl.R_Outer;
+                l.Length = tl.Length;
+                l.Cutoff = tl.Cutoff;
+
+                l.Falloff = 0.001f / l.Outer;
+            }
+
+            #endregion
+
+            #region Portals
+
+            room.Portals.Resize(trRoom.Portals.Length);
+            for (var i = 0; i < room.Portals.Count; i++)
+            {
+                var trp = trRoom.Portals[i];
+                var p = room.Portals[i];
+                var rDest = world.Rooms[trp.AdjoiningRoom];
+                p.Vertices.Resize(4); // in original TR all portals are axis aligned rectangles
+                p.DestRoom = rDest;
+                p.CurrentRoom = room;
+                p.Vertices = trp.Vertices.Reverse().Select(x => x.ToVector3() + room.Transform.Origin).ToList();
+                p.Centre = p.Vertices.Sum() / p.Vertices.Count;
+                p.GenNormal();
+
+                // Portal position fix
+                // X_MIN
+                if(p.Normal.Normal.X > 0.999f && (int)p.Centre.X % 2 != 0)
+                {
+                    p.Move(Vector3.UnitX);
+                }
+
+                // Y_MIN
+                if (p.Normal.Normal.Y > 0.999f && (int)p.Centre.Y % 2 != 0)
+                {
+                    p.Move(Vector3.UnitY);
+                }
+
+                // Z_MAX
+                if (p.Normal.Normal.Z < -0.999f && (int)p.Centre.Z % 2 != 0)
+                {
+                    p.Move(-Vector3.UnitZ);
+                }
+            }
+
+            #endregion
+
+            #region Room borders
+
+            room.BBMin.Z = trRoom.Y_Bottom;
+            room.BBMax.Z = trRoom.Y_Top;
+
+            room.BBMin.X = room.Transform.Origin.X + TR_METERING_SECTORSIZE;
+            room.BBMin.Y = room.Transform.Origin.Y + TR_METERING_SECTORSIZE;
+            room.BBMax.X = room.Transform.Origin.X + TR_METERING_SECTORSIZE * room.SectorsX - TR_METERING_SECTORSIZE;
+            room.BBMax.Y = room.Transform.Origin.Y + TR_METERING_SECTORSIZE * room.SectorsY - TR_METERING_SECTORSIZE;
+
+            #endregion
+
+            #region Alternate room
+
+            // alternate room pointer calculation if one exists.
+            room.AlternateRoom = null;
+            room.BaseRoom = null;
+
+            if(trRoom.AlternateRoom.IsBetween(0, tr.Rooms.Length, IB.aIbE))
+            {
+                room.AlternateRoom = world.Rooms[trRoom.AlternateRoom];
+            }
+
+            #endregion
+        }
 
         public static void TR_GenRoomProperties(World world, Level tr)
         {
@@ -2254,11 +2659,6 @@ namespace FreeRaider
         public static void TR_GenSamples(World world, Level tr);
 
         // Helper functions to convert legacy TR structs to native OpenTomb structs.
-
-        public static Vector3 TR_vertex_to_arr(Loader.Vertex tr_v)
-        {
-            return new Vector3(tr_v.X, -tr_v.Z, tr_v.Y);
-        }
 
         /// <summary>
         /// v[] of length 4
@@ -2469,7 +2869,7 @@ namespace FreeRaider
 
             for (var i = 0; i < numCorners; i++)
             {
-                p.Vertices[i].Position = TR_vertex_to_arr(tr_room.Vertices[vertices[i]].Vertex);
+                p.Vertices[i].Position = tr_room.Vertices[vertices[i]].Vertex.ToVector3();
             }
             p.FindNormal();
 
@@ -2501,7 +2901,7 @@ namespace FreeRaider
 
             for (var i = 0; i < numCorners; i++)
             {
-                p.Vertices[i].Position = TR_vertex_to_arr(trMesh.Vertices[vertexIndices[i]]);
+                p.Vertices[i].Position = trMesh.Vertices[vertexIndices[i]].ToVector3();
             }
             p.FindNormal();
 

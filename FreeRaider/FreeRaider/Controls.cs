@@ -289,7 +289,7 @@ namespace FreeRaider
                         {
                             Key((int)ev.key.keysym.sym, ev.key.state == SDL_PRESSED);
                             // DEBUG KEYBOARD COMMANDS
-                            DebugKeys((int)ev.key.keysym.sym, ev.key.state);
+                            DebugKeys(ev.key.keysym.sym, ev.key.state);
                         }
                         break;
 
@@ -310,7 +310,37 @@ namespace FreeRaider
             }
         }
 
-        public static void DebugKeys(int button, int state);
+        public static void DebugKeys(SDL_Keycode button, int state)
+        {
+            if(state != 0)
+            {
+                if (MainInventoryManager != null)
+                {
+                    switch (button)
+                    {
+                        case SDLK_RETURN:
+                            MainInventoryManager.NextState = InventoryManager.InventoryState.Activate;
+                            break;
+
+                        case SDLK_UP:
+                            MainInventoryManager.NextState = InventoryManager.InventoryState.Up;
+                            break;
+
+                        case SDLK_DOWN:
+                            MainInventoryManager.NextState = InventoryManager.InventoryState.Down;
+                            break;
+
+                        case SDLK_LEFT:
+                            MainInventoryManager.NextState = InventoryManager.InventoryState.RLeft;
+                            break;
+
+                        case SDLK_RIGHT:
+                            MainInventoryManager.NextState = InventoryManager.InventoryState.RRight;
+                            break;
+                    }
+                }
+            }
+        }
 
         public static void PrimaryMouseDown()
         {
@@ -386,17 +416,344 @@ namespace FreeRaider
             }
         }
 
-        public static void Key(int button, bool state);
+        public static void Key(int button, bool state)
+        {
+            // Fill script-driven debug keyboard input.
 
-        public static void WrapGameControllerKey(int button, bool state);
+            EngineLua.AddKey(button, state);
 
-        public static void WrapGameControllerAxis(int axis, short value);
+            // Compare ALL mapped buttons.
 
-        public static void JoyAxis(int axis, short value);
+            foreach (ACTIONS act in Enum.GetValues(typeof (ACTIONS)))
+            {
+                if (button.IsAnyOf(ControlMapper.ActionMap[(int) act].Primary, // If button = mapped action...
+                    ControlMapper.ActionMap[(int) act].Secondary))
+                {
+                    switch(act) // ...Choose corresponding action.
+                    {
+                        case ACTIONS.Up:
+                            ControlStates.MoveForward = state;
+                            break;
 
-        public static void JoyHat(int value);
+                        case ACTIONS.Down:
+                            ControlStates.MoveBackward = state;
+                            break;
 
-        public static void JoyRumble(float power, int time);
+                        case ACTIONS.Left:
+                            ControlStates.MoveLeft = state;
+                            break;
+
+                        case ACTIONS.Right:
+                            ControlStates.MoveRight = state;
+                            break;
+
+                        case ACTIONS.DrawWeapon:
+                            ControlStates.DoDrawWeapon = state;
+                            break;
+
+                        case ACTIONS.Action:
+                            ControlStates.StateAction = state;
+                            break;
+
+                        case ACTIONS.Jump:
+                            ControlStates.MoveUp = ControlStates.DoJump = state;
+                            break;
+
+                        case ACTIONS.Roll:
+                            ControlStates.DoRoll = state;
+                            break;
+
+                        case ACTIONS.Walk:
+                            ControlStates.StateWalk = state;
+                            break;
+
+                        case ACTIONS.Sprint:
+                            ControlStates.StateSprint = state;
+                            break;
+
+                        case ACTIONS.Crouch:
+                            ControlStates.MoveDown = ControlStates.StateCrouch = state;
+                            break;
+
+                        case ACTIONS.LookUp:
+                            ControlStates.LookUp = state;
+                            break;
+
+                        case ACTIONS.LookDown:
+                            ControlStates.LookDown = state;
+                            break;
+
+                        case ACTIONS.LookLeft:
+                            ControlStates.LookLeft = state;
+                            break;
+
+                        case ACTIONS.LookRight:
+                            ControlStates.LookRight = state;
+                            break;
+
+                        case ACTIONS.BigMedi:
+                            if(!ControlMapper.ActionMap[(int)act].AlreadyPressed)
+                            {
+                                ControlStates.UseBigMedipack = state;
+                            }
+                            break;
+
+                        case ACTIONS.SmallMedi:
+                            if(!ControlMapper.ActionMap[(int)act].AlreadyPressed)
+                            {
+                                ControlStates.UseSmallMedipack = state;
+                            }
+                            break;
+
+                        case ACTIONS.Console:
+                            if(!state)
+                            {
+                                ConsoleInfo.Instance.ToggleVisibility();
+
+                                if(ConsoleInfo.Instance.IsVisible)
+                                {
+                                    SDL_SetRelativeMouseMode(SDL_bool.SDL_FALSE);
+                                    SDL_StartTextInput();
+                                }
+                                else
+                                {
+                                    SDL_SetRelativeMouseMode(SDL_bool.SDL_TRUE);
+                                    SDL_StopTextInput();
+                                }
+                            }
+                            break;
+
+                        case ACTIONS.Screenshot:
+                            if(!state)
+                            {
+                                Common.TakeScreenshot();
+                            }
+                            break;
+
+                        case ACTIONS.Inventory:
+                            ControlStates.GuiInventory = state;
+                            break;
+
+                        case ACTIONS.SaveGame:
+                            if(!state)
+                            {
+                                Game.Save("qsave.lua");
+                            }
+                            break;
+
+                        case ACTIONS.LoadGame:
+                            if(!state)
+                            {
+                                Game.Load("qsave.lua");
+                            }
+                            break;
+
+                        default:
+                            // ControlStates.MoveForward = state;
+                            return;
+                    }
+
+                    ControlMapper.ActionMap[(int) act].State = state;
+                }
+            }
+        }
+
+        public static void WrapGameControllerKey(int button, bool state)
+        {
+            // SDL2 Game Controller interface doesn't operate with HAT directions,
+            // instead it treats them as button pushes. So, HAT doesn't return
+            // hat motion event on any HAT direction release - instead, each HAT
+            // direction generates its own press and release event. That's why
+            // game controller's HAT (DPAD) events are directly translated to
+            // Controls.Key function.
+
+            switch ((SDL_GameControllerButton)button)
+            {
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP:
+                    Key(JOY_HAT_MASK + SDL_HAT_UP, state);
+                    break;
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                    Key(JOY_HAT_MASK + SDL_HAT_DOWN, state);
+                    break;
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+                    Key(JOY_HAT_MASK + SDL_HAT_LEFT, state);
+                    break;
+                case SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+                    Key(JOY_HAT_MASK + SDL_HAT_RIGHT, state);
+                    break;
+                default:
+                    Key(JOY_BUTTON_MASK + button, state);
+                    break;
+            }
+        }
+
+        public static void WrapGameControllerAxis(int axis, short value)
+        {
+            // Since left/right triggers on X360-like controllers are actually axes,
+            // and we still need them as buttons, we remap these axes to button events.
+            // Button event is invoked only if trigger is pressed more than 1/3 of its range.
+            // Triggers are coded as native SDL2 enum number + JOY_TRIGGER_MASK (1200).
+
+            if (axis.IsAnyOf((int) SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERLEFT,
+                (int) SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERRIGHT))
+            {
+                Key(axis + JOY_TRIGGER_MASK, value >= JOY_TRIGGER_DEADZONE);
+            }
+            else
+            {
+                JoyAxis(axis, value);
+            }
+        }
+
+        public static void JoyAxis(int axis, short value)
+        {
+            for (var i = 0; i < (int) AXES.LastIndex; i++) // Compare with ALL mapped axes.
+            {
+                if (axis == ControlMapper.JoyAxisMap[i]) // If mapped = current...
+                {
+                    switch ((AXES) i) // ...Choose corresponding action.
+                    {
+                        case AXES.LookX:
+                            if (value.IsBetween(-ControlMapper.JoyLookDeadzone, ControlMapper.JoyLookDeadzone))
+                            {
+                                ControlMapper.JoyLookX = 0;
+                            }
+                            else
+                            {
+                                ControlMapper.JoyLookX = (value * ControlMapper.JoyLookSensitivity) / 32767;
+                                if (ControlMapper.JoyLookInvertX) ControlMapper.JoyLookX = -ControlMapper.JoyLookX;
+                            }
+                            return;
+
+                        case AXES.LookY:
+                            if (value.IsBetween(-ControlMapper.JoyLookDeadzone, ControlMapper.JoyLookDeadzone))
+                            {
+                                ControlMapper.JoyLookY = 0;
+                            }
+                            else
+                            {
+                                ControlMapper.JoyLookY = (value * ControlMapper.JoyLookSensitivity) / 32767;
+                                if (ControlMapper.JoyLookInvertY) ControlMapper.JoyLookY = -ControlMapper.JoyLookY;
+                            }
+                            return;
+
+                        case AXES.MoveX:
+                            if (value.IsBetween(-ControlMapper.JoyMoveDeadzone, ControlMapper.JoyMoveDeadzone))
+                            {
+                                ControlStates.MoveLeft = ControlStates.MoveRight = false;
+                                ControlMapper.JoyMoveX = 0;
+                            }
+                            else
+                            {
+                                if (ControlMapper.JoyMoveInvertX)
+                                {
+                                    ControlMapper.JoyMoveX = -((value * ControlMapper.JoyMoveSensitivity) / 32767);
+
+                                    if (value > ControlMapper.JoyMoveDeadzone)
+                                    {
+                                        ControlStates.MoveLeft = true;
+                                        ControlStates.MoveRight = false;
+                                    }
+                                    else
+                                    {
+                                        ControlStates.MoveLeft = false;
+                                        ControlStates.MoveRight = true;
+                                    }
+                                }
+                                else
+                                {
+                                    ControlMapper.JoyMoveX = (value * ControlMapper.JoyMoveSensitivity) / 32767;
+
+                                    if (value > ControlMapper.JoyMoveDeadzone)
+                                    {
+                                        ControlStates.MoveLeft = false;
+                                        ControlStates.MoveRight = true;
+                                    }
+                                    else
+                                    {
+                                        ControlStates.MoveLeft = true;
+                                        ControlStates.MoveRight = false;
+                                    }
+                                }
+                            }
+                            return;
+
+
+                        case AXES.MoveY:
+                            if (value.IsBetween(-ControlMapper.JoyMoveDeadzone, ControlMapper.JoyMoveDeadzone))
+                            {
+                                ControlStates.MoveForward = ControlStates.MoveBackward = false;
+                                ControlMapper.JoyMoveY = 0;
+                            }
+                            else
+                            {
+                                if (ControlMapper.JoyMoveInvertY)
+                                {
+                                    ControlMapper.JoyMoveY = -((value * ControlMapper.JoyMoveSensitivity) / 32767);
+
+                                    if (value > ControlMapper.JoyMoveDeadzone)
+                                    {
+                                        ControlStates.MoveForward = true;
+                                        ControlStates.MoveBackward = false;
+                                    }
+                                    else
+                                    {
+                                        ControlStates.MoveForward = false;
+                                        ControlStates.MoveBackward = true;
+                                    }
+                                }
+                                else
+                                {
+                                    ControlMapper.JoyMoveY = (value * ControlMapper.JoyMoveSensitivity) / 32767;
+
+                                    if (value > ControlMapper.JoyMoveDeadzone)
+                                    {
+                                        ControlStates.MoveForward = false;
+                                        ControlStates.MoveBackward = true;
+                                    }
+                                    else
+                                    {
+                                        ControlStates.MoveForward = true;
+                                        ControlStates.MoveBackward = false;
+                                    }
+                                }
+                            }
+                            return;
+
+                        default:
+                            return;
+                    } // end switch((AXES)i)
+                } // end if(axis == ControlMapper.JoyAxisMap[i])
+            } // end for (var i = 0; i < (int) AXES.LASTINDEX; i++)
+        }
+
+        public static void JoyHat(int value)
+        {
+            // NOTE: Hat movements emulate keypresses
+            // with HAT direction + JOY_HAT_MASK (1100) index.
+
+            Key(JOY_HAT_MASK + SDL_HAT_UP, false); // Reset all directions.
+            Key(JOY_HAT_MASK + SDL_HAT_DOWN, false);
+            Key(JOY_HAT_MASK + SDL_HAT_LEFT, false);
+            Key(JOY_HAT_MASK + SDL_HAT_RIGHT, false);
+
+            if (value.HasFlagSig(SDL_HAT_UP))
+                Key(JOY_HAT_MASK + SDL_HAT_UP, true);
+            if (value.HasFlagSig(SDL_HAT_DOWN))
+                Key(JOY_HAT_MASK + SDL_HAT_DOWN, true);
+            if (value.HasFlagSig(SDL_HAT_LEFT))
+                Key(JOY_HAT_MASK + SDL_HAT_LEFT, true);
+            if (value.HasFlagSig(SDL_HAT_RIGHT))
+                Key(JOY_HAT_MASK + SDL_HAT_RIGHT, true);
+        }
+
+        public static void JoyRumble(float power, uint time)
+        {
+            // JoyRumble is a simple wrapper for SDL's haptic rumble play.
+
+            if (sdl_haptic != IntPtr.Zero)
+                SDL_HapticRumblePlay(sdl_haptic, power, time);
+        }
 
         public static void RefreshStates()
         {
@@ -406,6 +763,54 @@ namespace FreeRaider
             }
         }
 
-        public static void InitGlobals();
+        public static void InitGlobals()
+        {
+            ControlMapper.MouseSensitivity = 25.0f;
+            ControlMapper.UseJoy = false;
+
+            ControlMapper.JoyNumber = 0;                // FIXME: Replace with joystick scanner default value when done.
+            ControlMapper.JoyRumble = false;            // FIXME: Make it according to GetCaps of default joystick.
+
+            ControlMapper.JoyAxisMap[(int)AXES.MoveX] = 0;
+            ControlMapper.JoyAxisMap[(int)AXES.MoveY] = 1;
+            ControlMapper.JoyAxisMap[(int)AXES.LookX] = 2;
+            ControlMapper.JoyAxisMap[(int)AXES.LookY] = 3;
+
+            ControlMapper.JoyLookInvertX = false;
+            ControlMapper.JoyLookInvertY = false;
+            ControlMapper.JoyMoveInvertX = false;
+            ControlMapper.JoyMoveInvertY = false;
+
+            ControlMapper.JoyLookDeadzone = 1500;
+            ControlMapper.JoyMoveDeadzone = 1500;
+
+            ControlMapper.JoyLookSensitivity = 1.5f;
+            ControlMapper.JoyMoveSensitivity = 1.5f;
+
+            ControlMapper.ActionMap[(int)ACTIONS.Jump].Primary = (int) SDLK_SPACE;
+            ControlMapper.ActionMap[(int)ACTIONS.Action].Primary = (int) SDLK_LCTRL;
+            ControlMapper.ActionMap[(int)ACTIONS.Roll].Primary = (int) SDLK_x;
+            ControlMapper.ActionMap[(int)ACTIONS.Sprint].Primary = (int) SDLK_CAPSLOCK;
+            ControlMapper.ActionMap[(int)ACTIONS.Crouch].Primary = (int) SDLK_c;
+            ControlMapper.ActionMap[(int)ACTIONS.Walk].Primary = (int) SDLK_LSHIFT;
+
+            ControlMapper.ActionMap[(int)ACTIONS.Up].Primary = (int) SDLK_w;
+            ControlMapper.ActionMap[(int)ACTIONS.Down].Primary = (int) SDLK_s;
+            ControlMapper.ActionMap[(int)ACTIONS.Left].Primary = (int) SDLK_a;
+            ControlMapper.ActionMap[(int)ACTIONS.Right].Primary = (int) SDLK_d;
+
+            ControlMapper.ActionMap[(int)ACTIONS.StepLeft].Primary = (int) SDLK_h;
+            ControlMapper.ActionMap[(int)ACTIONS.StepRight].Primary = (int) SDLK_j;
+
+            ControlMapper.ActionMap[(int)ACTIONS.LookUp].Primary = (int) SDLK_UP;
+            ControlMapper.ActionMap[(int)ACTIONS.LookDown].Primary = (int) SDLK_DOWN;
+            ControlMapper.ActionMap[(int)ACTIONS.LookLeft].Primary = (int) SDLK_LEFT;
+            ControlMapper.ActionMap[(int)ACTIONS.LookRight].Primary = (int) SDLK_RIGHT;
+
+            ControlMapper.ActionMap[(int)ACTIONS.Screenshot].Primary = (int) SDLK_PRINTSCREEN;
+            ControlMapper.ActionMap[(int)ACTIONS.Console].Primary = (int) SDLK_F12;
+            ControlMapper.ActionMap[(int)ACTIONS.SaveGame].Primary = (int) SDLK_F5;
+            ControlMapper.ActionMap[(int)ACTIONS.LoadGame].Primary = (int) SDLK_F6;
+        }
     }
 }

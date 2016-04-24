@@ -19,6 +19,11 @@ namespace FreeRaider
 {
     public static partial class Extensions
     {
+        public static Vector3 Sum(this IEnumerable<Vector3>  src)
+        {
+            return src.Aggregate((a, b) => a + b);
+        }
+
         // http://stackoverflow.com/a/2601501/2196124
         public static TValue GetValueOrDefault<TKey, TValue>
             (this IDictionary<TKey, TValue> dictionary,
@@ -440,6 +445,14 @@ namespace FreeRaider
             return new Vector3(m.Row0.Dot(v), m.Row1.Dot(v), m.Row2.Dot(v));
         }
 
+        public static float[] Multiply(this float[] arr, float f)
+        {
+            var result = new float[arr.Length];
+            for (var i = 0; i < arr.Length; i++)
+                result[i] = arr[i] * f;
+            return result;
+        }
+
         public static Vector3 Dot3(this Vector3 v, Vector3 v0, Vector3 v1, Vector3 v2)
         {
             return new Vector3(v.Dot(v0), v.Dot(v1), v.Dot(v2));
@@ -652,12 +665,12 @@ namespace FreeRaider
 
         public static bool NotEqual(this object val, params object[] vals)
         {
-            return vals.All(x => !val.Equals(x) || !x.Equals(val));
+            return vals.All(x => val != x || x != val);
         }
 
         public static bool IsAnyOf(this object val, params object[] vals)
         {
-            return vals.Any(x => val.Equals(x) || x.Equals(val));
+            return vals.Any(x => val == x || x == val);
         }
 
         public static bool ToBool(this object obj)
