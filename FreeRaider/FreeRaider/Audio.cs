@@ -2478,7 +2478,7 @@ void Audio_LoadALExtFunctions(ALCdevice* device)
 
         public static AudioFxManager FXManager;
 
-        public static EffectsExtension EffectsExtension { get; set; } = new EffectsExtension();
+        public static EffectsExtension EffectsExtension { get; set; }
     }
 
     public enum SF_FORMAT

@@ -49,9 +49,9 @@ namespace FreeRaider
 
     public partial class Global
     {
-        public static ScreenInfo ScreenInfo;
+        public static ScreenInfo ScreenInfo = new ScreenInfo();
 
-        public static SystemSettings SystemSettings;
+        public static SystemSettings SystemSettings = new SystemSettings();
 
         public static TextLine SystemFps;
     }

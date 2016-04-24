@@ -1124,7 +1124,7 @@ namespace FreeRaider
             }
         }
 
-        public static void lua_RotateEntity(uint id1, uint id2, int axis, float? speed = null, float? smooth = null,
+        public static void lua_RotateEntityToEntity(uint id1, uint id2, int axis, float? speed = null, float? smooth = null,
             float? addAngle = null)
         {
             var ent1 = EngineWorld.GetEntityByID(id1);
@@ -2703,8 +2703,10 @@ namespace FreeRaider.Script
     {
         public ScriptEngine()
         {
+            state = new Lua();
             ExposeConstants();
-            RegisterFunction("print", print);
+            typeof (Lua).GetMethodIP("PushCSFunction").Invoke(state, new object[] {new LuaNativeFunction(print)});
+
             LuaLib.LuaAtPanic(state.GetLuaState(), panic);
             // MAYBE NOT NEEDED ANYMORE, NLua handles exceptions by itself
         }
@@ -2758,8 +2760,12 @@ namespace FreeRaider.Script
 
         public void RegisterFunction(string funcName, Func<Lua, int> func)
         {
-            state.RegisterFunction(funcName, func.Method);
+            //state.RegisterFunction(funcName, func.Method);
+            state.RegisterFunction(funcName, ((_runDelegate)(objects => func(state))).Method);
         }
+
+        delegate int _runDelegate(params object[] obj);
+
 
         public void RegisterFunction(string funcName, MethodBase func)
         {
@@ -3106,9 +3112,9 @@ namespace FreeRaider.Script
 
         private dynamic statedyn => (dynamic) state;
 
-        private static int print(NLua.Lua state)
+        private static int print(LuaState state)
         {
-            var top = LuaCore.LuaGetTop(state.GetLuaState());
+            var top = LuaCore.LuaGetTop(state);
 
             if(top == 0)
             {
@@ -3119,7 +3125,7 @@ namespace FreeRaider.Script
             for(var i = 1; i <= top; i++)
             {
                 string str;
-                switch(LuaCore.LuaType(state.GetLuaState(), i))
+                switch(LuaCore.LuaType(state, i))
                 {
                     case LUA_TNONE:
                         str = "<none>";
@@ -3128,7 +3134,7 @@ namespace FreeRaider.Script
                         str = "nil";
                         break;
                     case LUA_TBOOLEAN:
-                        str = LuaCore.LuaToBoolean(state.GetLuaState(), i) == 1 ? "true" : "false";
+                        str = LuaCore.LuaToBoolean(state, i) == 1 ? "true" : "false";
                         break;
                     case LUA_TLIGHTUSERDATA:
                         str = "<userdata>";
@@ -3136,7 +3142,7 @@ namespace FreeRaider.Script
                     case LUA_TNUMBER:
                     case LUA_TSTRING:
                         uint tmp;
-                        str = LuaCore.LuaToLString(state.GetLuaState(), i, out tmp).ToString(); // TODO: Maybe won't work
+                        str = LuaCore.LuaToLString(state, i, out tmp).ToString(); // TODO: Maybe won't work
                         break;
                     case LUA_TTABLE:
                         str = "<table>";
@@ -3331,7 +3337,7 @@ namespace FreeRaider.Script
 
             // Register script functions
 
-            RegisterC("checkStack", this, typeof(ScriptEngine).GetMethod("CheckStack"));
+            RegisterC("checkStack", this, typeof(ScriptEngine).GetMethodIP("CheckStack"));
             registerLuaFunc("dumpModel");
             registerLuaFunc("dumpRoom");
             registerLuaFunc("setRoomEnabled");

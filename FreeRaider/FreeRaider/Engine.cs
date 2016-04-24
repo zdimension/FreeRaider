@@ -476,8 +476,10 @@ namespace FreeRaider
             Gui.InitFontManager();
             ConsoleInfo.Instance.Init();
 
+            EngineLua= new MainEngine();
             EngineLua.Call("loadscript_pre");
 
+            GameflowManager = new Gameflow();
             GameflowManager.Init();
 
             FrameVertexBuffer.Resize(INIT_FRAME_VERTEX_BUFFER_SIZE);
@@ -510,6 +512,7 @@ namespace FreeRaider
             ConsoleInfo.Instance.InitGlobals();
             Controls.InitGlobals();
             Game.InitGlobals();
+            Renderer = new Render();
             Renderer.InitGlobals();
             Audio.InitGlobals();
         }
@@ -702,7 +705,6 @@ namespace FreeRaider
             sdl_gl_context = SDL_GL_CreateContext(sdl_window);
             SDL_GL_MakeCurrent(sdl_window, sdl_gl_context);
             GLContext = new GraphicsContext(new ContextHandle(sdl_gl_context), OpenTK.Platform.Utilities.CreateSdl2WindowInfo(sdl_window));
-
             if(SDL_GL_SetSwapInterval(Global.ScreenInfo.Vsync ? 1 : 0) != 0)
                 Sys.DebugLog(LOG_FILENAME, "Cannot set VSYNC: {0}\n", SDL_GetError());
 
@@ -816,6 +818,7 @@ namespace FreeRaider
             BtEngineDynamicsWorld.SetInternalTickCallback(InternalTickCallback);
             BtEngineDynamicsWorld.Gravity = new Vector3(0, 0, -4500.0f);
 
+            DebugDrawer = new RenderDebugDrawer();
             DebugDrawer.DebugMode = DebugDrawModes.DrawWireframe | DebugDrawModes.DrawConstraints;
             BtEngineDynamicsWorld.DebugDrawer = DebugDrawer;
             //Global.BtEngineDynamicsWorld.PairCache.SetInternalGhostPairCallback(Global.BtEngineFilterCallback);

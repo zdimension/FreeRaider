@@ -55,7 +55,7 @@ namespace FreeRaider
 
         private int historyPos;
 
-        private List<string> historyLines;
+        private List<string> historyLines = new List<string>();
         
         private List<Line> lines;
 

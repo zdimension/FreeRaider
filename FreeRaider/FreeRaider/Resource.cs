@@ -3955,7 +3955,8 @@ namespace FreeRaider
 
         public static void Assert(bool condition, string message = "Incorrect value")
         {
-            throw new Exception("Assert: " + message);
+            if (!condition)
+                throw new Exception("Assert: " + message);
         }
     }
 }

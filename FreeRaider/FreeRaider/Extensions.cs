@@ -19,6 +19,11 @@ namespace FreeRaider
 {
     public static partial class Extensions
     {
+        public static MethodInfo GetMethodIP(this Type type, string methName)
+        {
+            return type.GetMethod(methName, BindingFlags.Instance | BindingFlags.NonPublic);
+        }
+
         public static Vector3 Sum(this IEnumerable<Vector3>  src)
         {
             return src.Aggregate((a, b) => a + b);
