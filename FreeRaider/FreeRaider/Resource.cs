@@ -9,6 +9,7 @@ using FreeRaider.Script;
 using NLua;
 using NLua.Exceptions;
 using OpenTK;
+using OpenTK.Audio.OpenAL;
 using OpenTK.Graphics.OpenGL;
 using static FreeRaider.Global;
 using static FreeRaider.Constants;
@@ -2656,7 +2657,207 @@ namespace FreeRaider
             }
         }
 
-        public static void TR_GenSamples(World world, Level tr);
+        public static unsafe void TR_GenSamples(World world, Level tr)
+        {
+            world.AudioBuffers = new uint[tr.SamplesCount];
+            fixed (uint* ptr = world.AudioBuffers)
+                AL.GenBuffers(world.AudioBuffers.Length, ptr);
+
+            // Generate stream track map array.
+            // We use scripted amount of tracks to define map bounds.
+            // If script had no such parameter, we define map bounds by default.
+            var n = EngineLua.GetNumTracks();
+            world.StreamTrackMap.Resize(n == 0 ? TR_AUDIO_STREAM_MAP_SIZE : n);
+
+            // Generate new audio effects array.
+            world.AudioEffects.Resize(tr.SoundDetails.Length);
+
+            // Generate new audio emitters array.
+            world.AudioEmitters.Resize(tr.SoundSources.Length);
+
+            // Cycle through raw samples block and parse them to OpenAL buffers.
+
+            // Different TR versions have different ways of storing samples.
+            // TR1:     sample block size, sample block, num samples, sample offsets.
+            // TR2/TR3: num samples, sample offsets. (Sample block is in MAIN.SFX.)
+            // TR4/TR5: num samples, (uncomp_size-comp_size-sample_data) chain.
+            //
+            // Hence, we specify certain parse method for each game version.
+
+            if (tr.SamplesData.Length > 0)
+            {
+                fixed (byte* tmp = tr.SamplesData)
+                {
+                    var pointer = tmp;
+                    switch (tr.GameVersion)
+                    {
+                        case TRGame.TR1:
+                        case TRGame.TR1Demo:
+                        case TRGame.TR1UnfinishedBusiness:
+                        {
+                            world.AudioMap = tr.SoundMap.ToList();
+
+                            for (var i = 0; i < tr.SampleIndices.Length - 1; i++)
+                            {
+                                pointer = tmp + tr.SampleIndices[i];
+                                var size = tr.SampleIndices[i + 1] - tr.SampleIndices[i];
+                                Audio.LoadALBufferFromMem(world.AudioBuffers[i], pointer, size);
+                            }
+                        }
+                            break;
+
+                        case TRGame.TR2:
+                        case TRGame.TR2Demo:
+                        case TRGame.TR3:
+                        {
+                            // TODO: TR3 gold ??
+                            world.AudioMap = tr.SoundMap.ToList();
+                            uint ind1 = 0;
+                            uint ind2 = 0;
+                            var flag = false;
+                            var i = 0;
+                            while (pointer < tmp + tr.SamplesData.Length - 4)
+                            {
+                                pointer = tmp + ind2;
+                                if (*(int*) pointer == 0x46464952)
+                                {
+                                    // RIFF
+                                    if (!flag)
+                                    {
+                                        ind1 = ind2;
+                                        flag = true;
+                                    }
+                                    else
+                                    {
+                                        var uncompSize = ind2 - ind1;
+                                        var srcData = tmp + ind1;
+                                        Audio.LoadALBufferFromMem(world.AudioBuffers[i], srcData, uncompSize);
+                                        i++;
+                                        if (i >= world.AudioBuffers.Length)
+                                        {
+                                            break;
+                                        }
+                                        ind1 = ind2;
+                                    }
+                                }
+                                ind2++;
+                            }
+                            var uncomp_Size = (uint) tr.SamplesData.Length - ind1;
+                            pointer = tmp + ind1;
+                            if (i < world.AudioBuffers.Length)
+                            {
+                                Audio.LoadALBufferFromMem(world.AudioBuffers[i], pointer, uncomp_Size);
+                            }
+                            break;
+                        }
+
+                        case TRGame.TR4:
+                        case TRGame.TR4Demo:
+                        case TRGame.TR5:
+                            world.AudioMap = tr.SoundMap.ToList();
+
+                            for (var i = 0; i < tr.SamplesCount; i++)
+                            {
+                                // Parse sample sizes.
+                                // Always use comp_size as block length, as uncomp_size is used to cut raw sample data.
+                                var uncompSize = *(uint*) pointer;
+                                pointer += 4;
+                                var compSize = *(uint*) pointer;
+                                pointer += 4;
+
+                                // Load WAV sample into OpenAL buffer.
+                                Audio.LoadALBufferFromMem(world.AudioBuffers[i], pointer, compSize, uncompSize);
+
+                                // Now we can safely move pointer through current sample data.
+                                pointer += compSize;
+                            }
+                            break;
+
+                        default:
+                            world.AudioMap.Clear();
+                            tr.SamplesData.Clear();
+                            return;
+                    }
+                }
+            }
+
+            // Cycle through SoundDetails and parse them into native OpenTomb
+            // audio effects structure.
+            for (var i = 0; i < world.AudioEffects.Count; i++)
+            {
+                if (tr.GameVersion < TRGame.TR3)
+                {
+                    world.AudioEffects[i].Gain = tr.SoundDetails[i].Volume / 32767.0f;
+                        // Max. volume in TR1/TR2 is 32767.
+                    world.AudioEffects[i].Chance = tr.SoundDetails[i].Chance;
+                }
+                else if (tr.GameVersion > TRGame.TR3)
+                {
+                    world.AudioEffects[i].Gain = tr.SoundDetails[i].Volume / 255.0f; // Max. volume in TR3 is 255.
+                    world.AudioEffects[i].Chance = tr.SoundDetails[i].Chance * 255;
+                }
+                else
+                {
+                    world.AudioEffects[i].Gain = tr.SoundDetails[i].Volume / 255.0f; // Max. volume in TR3 is 255.
+                    world.AudioEffects[i].Chance = tr.SoundDetails[i].Chance * 127;
+                }
+
+                world.AudioEffects[i].RandomizeGainVar = 50;
+                world.AudioEffects[i].RandomizePitchVar = 50;
+
+                world.AudioEffects[i].Pitch = tr.SoundDetails[i].Pitch / 127.0f + 1.0f;
+                world.AudioEffects[i].Range = tr.SoundDetails[i].SoundRange * 1024.0f;
+
+                world.AudioEffects[i].RandomizePitch = tr.SoundDetails[i].UseRandomPitch;
+                world.AudioEffects[i].RandomizeGain = tr.SoundDetails[i].UseRandomVolume;
+
+                world.AudioEffects[i].Loop = tr.SoundDetails[i].GetLoopType(Helper.GameToEngine(tr.GameVersion));
+
+                world.AudioEffects[i].SampleIndex = tr.SoundDetails[i].Sample;
+                world.AudioEffects[i].SampleCount = tr.SoundDetails[i].SampleCount;
+            }
+
+            // Try to override samples via script.
+            // If there is no script entry exist, we just leave default samples.
+            // NB! We need to override samples AFTER audio effects array is inited, as override
+            //     routine refers to existence of certain audio effect in level.
+
+            Audio.LoadOverridedSamples(world);
+
+            // Hardcoded version-specific fixes!
+
+            switch (world.EngineVersion)
+            {
+                case Loader.Engine.TR1:
+                    // Fix for underwater looped sound.
+                    if (world.AudioMap[(int) TR_AUDIO_SOUND.Underwater] >= 0)
+                    {
+                        world.AudioEffects[world.AudioMap[(int) TR_AUDIO_SOUND.Underwater]].Loop = LoopType.Forward;
+                    }
+                    break;
+                case Loader.Engine.TR2:
+                    // Fix for helicopter sound range.
+                    if (world.AudioMap[297] >= 0)
+                    {
+                        world.AudioEffects[world.AudioMap[297]].Range *= 10.0f;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            // Cycle through sound emitters and
+            // parse them to native OpenTomb sound emitters structure.
+
+            for (var i = 0; i < world.AudioEmitters.Count; i++)
+            {
+                world.AudioEmitters[i].EmitterIndex = (uint) i;
+                world.AudioEmitters[i].SoundIndex = tr.SoundSources[i].SoundID;
+                world.AudioEmitters[i].Position = new Vector3(tr.SoundSources[i].X, tr.SoundSources[i].Z,
+                    -tr.SoundSources[i].Y); // TODO: - Inverted?
+                world.AudioEmitters[i].Flags = tr.SoundSources[i].Flags;
+            }
+        }
 
         // Helper functions to convert legacy TR structs to native OpenTomb structs.
 

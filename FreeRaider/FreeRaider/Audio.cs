@@ -1581,7 +1581,7 @@ else
 
             // CRITICAL: You must delete all sources before deleting buffers!
 
-            AL.DeleteBuffers(EngineWorld.AudioBuffers.ToArray());
+            AL.DeleteBuffers(EngineWorld.AudioBuffers);
             EngineWorld.AudioBuffers.Clear();
 
             EngineWorld.AudioEffects.Clear();
@@ -1693,7 +1693,7 @@ else
 
             // If there are no audio buffers or effect index is wrong, don't process.
 
-            if (EngineWorld.AudioBuffers.Count == 0 || effectID < 0) return TR_AUDIO_SEND.Ignored;
+            if (EngineWorld.AudioBuffers.Length == 0 || effectID < 0) return TR_AUDIO_SEND.Ignored;
 
             // Remap global engine effect ID to local effect ID.
 
@@ -2020,7 +2020,7 @@ else
             {
                 var bufferCount = 0;
 
-                for (var i = 0; i < world.AudioBuffers.Count; i++)
+                for (var i = 0; i < world.AudioBuffers.Length; i++)
                 {
                     if(world.AudioMap[i] != -1)
                     {

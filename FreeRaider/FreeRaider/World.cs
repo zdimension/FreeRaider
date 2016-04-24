@@ -1059,7 +1059,7 @@ namespace FreeRaider
         /// <summary>
         /// Samples
         /// </summary>
-        public List<uint> AudioBuffers; 
+        public uint[] AudioBuffers; 
 
         /// <summary>
         /// Channels
@@ -1259,7 +1259,7 @@ namespace FreeRaider
             Character = new Character(0);
 
             AudioSources = new List<AudioSource>();
-            AudioBuffers = new List<uint>();
+            AudioBuffers = new uint[0];
             AudioEffects = new List<AudioEffect>();
             AnimSequences = new List<AnimSeq>();
             StreamTracks = new List<StreamTrack>();
