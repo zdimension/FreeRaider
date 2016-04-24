@@ -15,16 +15,34 @@ namespace FreeRaider
 
     public class Program
     {
-        public static bool Done = false;
-
-        public static float TimeScale = 1.0f;
-
         [STAThread]
         public static void Main(string[] args)
         {
             Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
-            using (var game = new GameWindow())
+            // SDL
+            Engine.Start();
+
+            // Entering main loop.
+
+            var prev_time = DateTime.Now;
+
+            while(!Global.Done)
+            {
+                var now = DateTime.Now;
+                var delta = ((now - prev_time).TotalMilliseconds / 1000) / 1.0e6;
+                prev_time = now;
+
+                Engine.Frame((float)(delta * Global.TimeScale));
+                Engine.Display();
+            }
+
+            // Main loop interrupted; shutting down.
+
+            Engine.Shutdown(0);
+            Environment.Exit(0);
+
+            /*using (var game = new GameWindow())
             {
                 game.Load += (sender, e) =>
                 {
@@ -59,7 +77,7 @@ namespace FreeRaider
 
                 Engine.Shutdown(0);
                 Environment.Exit(0);
-            }
+            }*/
         }
     }
 }

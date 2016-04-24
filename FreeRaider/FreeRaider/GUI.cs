@@ -13,6 +13,7 @@ using PixelFormat = OpenTK.Graphics.OpenGL.PixelFormat;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
 using static FreeRaider.StaticFuncs;
+using static SDL2.SDL;
 
 namespace FreeRaider
 {
@@ -2578,7 +2579,7 @@ namespace FreeRaider
 
             SwitchGLMode(false);
 
-            // SDL_GL_SwapWindow(sdl_window);
+            SDL_GL_SwapWindow(sdl_window);
         }
 
         public static void DrawInventory()

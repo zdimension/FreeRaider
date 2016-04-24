@@ -7,6 +7,9 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
+using static SDL2.SDL;
+using static SDL2.SDL.SDL_Keycode;
+using static SDL2.SDL.SDL_Keymod;
 
 namespace FreeRaider
 {
@@ -217,12 +220,13 @@ namespace FreeRaider
 
         public void Edit(int key, int mod = -1)
         {
-            if (key == '`' || key == '\\' || !inited)
+            var sk = (SDL_Keycode) key;
+            if (sk == SDLK_UNKNOWN || sk == SDLK_BACKQUOTE || sk == SDLK_BACKSLASH || !inited)
             {
                 return;
             }
 
-            if (key == '\n')
+            if (sk == SDLK_RETURN)
             {
                 AddLog(editingLine);
                 AddLine("> " + editingLine, FontStyle.ConsoleInfo);
@@ -237,48 +241,47 @@ namespace FreeRaider
             showCursor = true;
 
             var oldLength = Helper.UTF8StrLen(editingLine);
-            var k = (Key) key;
-            switch (k)
+            switch (sk)
             {
-                case Key.Up:
-                case Key.Down:
+                case SDLK_UP:
+                case SDLK_DOWN:
                     if (historyLines.Count == 0) break;
                     Audio.Send((uint)EngineLua.GetGlobalSound((int)TR_AUDIO_SOUND_GLOBALID.MenuPage));
-                    if (k == Key.Up && historyPos < historyLines.Count)
+                    if (sk == SDLK_UP && historyPos < historyLines.Count)
                         historyPos++;
-                    else if (k == Key.Down && historyPos > 0)
+                    else if (sk == SDLK_DOWN && historyPos > 0)
                         historyPos--;
                     editingLine = historyPos > 0 ? historyLines[historyPos - 1] : "";
                     cursorPos = (short) Helper.UTF8StrLen(editingLine);
                     break;
-                case Key.Left:
+                case SDLK_LEFT:
                     if (cursorPos > 0)
                         cursorPos--;
                     break;
-                case Key.Right:
+                case SDLK_RIGHT:
                     if (cursorPos < oldLength)
                         cursorPos++;
                     break;
-                case Key.Home:
+                case SDLK_HOME:
                     cursorPos = 0;
                     break;
-                case Key.End:
+                case SDLK_END:
                     cursorPos = (short) oldLength;
                     break;
-                case Key.BackSpace:
+                case SDLK_BACKSPACE:
                     if (cursorPos > 0)
                     {
                         editingLine = editingLine.Remove(cursorPos - 1, 1);
                         cursorPos--;
                     }
                     break;
-                case Key.Delete:
+                case SDLK_DELETE:
                     if (cursorPos < oldLength)
                     {
                         editingLine = editingLine.Remove(cursorPos, 1);
                     }
                     break;
-                case Key.Tab:
+                case SDLK_TAB:
                     var needle = editingLine.Substring(0, cursorPos);
                     // find auto-completion terms, case-insensitive
                     var found = CompletionItems.Where(x => x.StartsWithLowercase(needle)).ToList();
@@ -333,9 +336,9 @@ namespace FreeRaider
                     }
                     break;
                 default:
-                    if (k == Key.V && mod > 0 && mod.HasFlagSig((int) KeyModifiers.Control))
+                    if (sk == SDLK_v && mod > 0 && mod.HasFlagUns((ushort) KMOD_CTRL))
                     {
-                        var clipboard = Helper.GetClipboardText();
+                        var clipboard = SDL_GetClipboardText();
                         if(!string.IsNullOrWhiteSpace(clipboard))
                         {
                             var textLength = Helper.UTF8StrLen(clipboard);
@@ -346,7 +349,7 @@ namespace FreeRaider
                             }
                         }
                     }
-                    else if(mod < 0 && oldLength < LineSize - 1 && k >= Key.Space)
+                    else if(mod < 0 && oldLength < LineSize - 1 && sk >= SDLK_SPACE)
                     {
                         editingLine = editingLine.Insert(cursorPos, ((char) key).ToString());
                         cursorPos++;

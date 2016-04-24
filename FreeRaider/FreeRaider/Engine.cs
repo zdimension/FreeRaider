@@ -15,6 +15,8 @@ using static FreeRaider.Constants;
 using static FreeRaider.Global;
 using static FreeRaider.Strings;
 using static FreeRaider.StaticFuncs;
+using static SDL2.SDL;
+using static SDL2.SDL_image;
 
 namespace FreeRaider
 {
@@ -508,11 +510,194 @@ namespace FreeRaider
             }
         }
 
-        public static void InitSDLControls();
+        public static void InitSDLControls()
+        {
+            var init_flags = SDL_INIT_VIDEO | SDL_INIT_EVENTS; // These flags are used in any case.
 
-        public static void InitSDLVideo();
+            if(ControlMapper.UseJoy)
+            {
+                init_flags |= SDL_INIT_GAMECONTROLLER; // Update init flags for joystick.
 
-        public static void InitSDLImage();
+                if(ControlMapper.JoyRumble)
+                {
+                    init_flags |= SDL_INIT_HAPTIC; // Update init flags for force feedback.
+                }
+
+                SDL_Init(init_flags);
+
+                var numJoysticks = SDL_NumJoysticks();
+
+                if(numJoysticks < 1 || numJoysticks - 1 < ControlMapper.JoyNumber)
+                {
+                    Sys.DebugLog(LOG_FILENAME, "Error: there is no joystick #{0} present.", ControlMapper.JoyNumber);
+                    return;
+                }
+
+                if(SDL_IsGameController(ControlMapper.JoyNumber) == SDL_bool.SDL_TRUE) // If joystick has mapping (e.g. X360 controller)
+                {
+                    SDL_GameControllerEventState(SDL_ENABLE); // Use GameController API
+                    sdl_controller = SDL_GameControllerOpen(ControlMapper.JoyNumber);
+
+                    if(sdl_controller == IntPtr.Zero)
+                    {
+                        Sys.DebugLog(LOG_FILENAME, "Error: can't open game controller #{0}.", ControlMapper.JoyNumber);
+                        SDL_GameControllerEventState(SDL_DISABLE); // If controller init failed, close state.
+                        ControlMapper.UseJoy = false;
+                    }
+                    else if(ControlMapper.JoyRumble) // Create force feedback interface.
+                    {
+                        sdl_haptic = SDL_HapticOpenFromJoystick(SDL_GameControllerGetJoystick(sdl_controller));
+                        if(sdl_haptic == IntPtr.Zero)
+                        {
+                            Sys.DebugLog(LOG_FILENAME, "Error: can't initialize haptic from game controller #{0}.", ControlMapper.JoyNumber);
+                        }
+                    }
+                }
+                else
+                {
+                    SDL_JoystickEventState(SDL_ENABLE); // If joystick isn't mapped, use generic API.
+                    sdl_joystick = SDL_JoystickOpen(ControlMapper.JoyNumber);
+
+                    if (sdl_joystick == IntPtr.Zero)
+                    {
+                        Sys.DebugLog(LOG_FILENAME, "Error: can't open joystick #{0}.", ControlMapper.JoyNumber);
+                        SDL_JoystickEventState(SDL_DISABLE); // If joystick init failed, close state.
+                        ControlMapper.UseJoy = false;
+                    }
+                    else if (ControlMapper.JoyRumble) // Create force feedback interface.
+                    {
+                        sdl_haptic = SDL_HapticOpenFromJoystick(sdl_joystick);
+                        if (sdl_haptic == IntPtr.Zero)
+                        {
+                            Sys.DebugLog(LOG_FILENAME, "Error: can't initialize haptic from joystick #{0}.", ControlMapper.JoyNumber);
+                        }
+                    }
+                }
+
+                if(sdl_haptic != null) // To check if force feedback is working or not.
+                {
+                    SDL_HapticRumbleInit(sdl_haptic);
+                    SDL_HapticRumblePlay(sdl_haptic, 1.0f, 300);
+                }
+            }
+            else
+            {
+                SDL_Init(init_flags);
+            }
+        }
+
+        public static void InitSDLVideo()
+        {
+            var video_flags = SDL_WindowFlags.SDL_WINDOW_OPENGL | SDL_WindowFlags.SDL_WINDOW_MOUSE_FOCUS |
+                              SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS;
+
+            if(Global.ScreenInfo.FSflag)
+            {
+                video_flags |= SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
+            }
+            else
+            {
+                video_flags |= SDL_WindowFlags.SDL_WINDOW_RESIZABLE | SDL_WindowFlags.SDL_WINDOW_SHOWN;
+            }
+
+            // TODO: is it really neede for correct work?
+
+            if(SDL_GL_LoadLibrary(null) < 0)
+            {
+                Sys.Error("Could not init OpenGL driver");
+            }
+
+            if(Renderer.Settings.UseGL3)
+            {
+                // Request opengl 3.2 context
+                SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_CONTEXT_PROFILE_MASK,
+                    (int) SDL_GLprofile.SDL_GL_CONTEXT_PROFILE_CORE);
+                SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_ACCELERATED_VISUAL, 1);
+                SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+                SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_CONTEXT_MINOR_VERSION, 2);
+            }
+
+            // Create temporary SDL window and GL context for checking capabilities.
+
+            sdl_window = SDL_CreateWindow(null, Global.ScreenInfo.X, Global.ScreenInfo.Y, Global.ScreenInfo.W,
+                Global.ScreenInfo.H, SDL_WindowFlags.SDL_WINDOW_OPENGL | SDL_WindowFlags.SDL_WINDOW_HIDDEN);
+            sdl_gl_context = SDL_GL_CreateContext(sdl_window);
+
+            if(sdl_gl_context == IntPtr.Zero)
+                Sys.Error("Can't create OpenGL context - shutting down. Try to disable use_gl3 option in config.");
+
+            Assert(sdl_gl_context != IntPtr.Zero);
+            SDL_GL_MakeCurrent(sdl_window, sdl_gl_context);
+
+            // Check for correct number of antialias samples.
+
+            if(Renderer.Settings.Antialias)
+            {
+                var maxSamples = 0;
+                GL.GetInteger(GetPName.MaxSamples, out maxSamples);
+                maxSamples = maxSamples > 16 ? 16 : maxSamples; // Fix for faulty GL max. sample number
+
+                if(Renderer.Settings.AntialiasSamples > maxSamples)
+                {
+                    if(maxSamples == 0)
+                    {
+                        Renderer.Settings.Antialias = false;
+                        Renderer.Settings.AntialiasSamples = 0;
+                        Sys.DebugLog(LOG_FILENAME, "InitSDLVideo: can't use antialiasing");
+                    }
+                    else
+                    {
+                        Renderer.Settings.AntialiasSamples = maxSamples; // Limit to max.
+                        Sys.DebugLog(LOG_FILENAME, "InitSDLVideo: wrong AA sample number, using {0}", maxSamples);
+                    }
+                }
+
+                SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_MULTISAMPLEBUFFERS, Renderer.Settings.Antialias ? 1 : 0);
+                SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_MULTISAMPLESAMPLES, Renderer.Settings.AntialiasSamples);
+            }
+            else
+            {
+                SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_MULTISAMPLEBUFFERS, 0);
+                SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_MULTISAMPLESAMPLES, 0);
+            }
+
+            // Remove temporary GL context and SDL window.
+
+            SDL_GL_DeleteContext(sdl_gl_context);
+            SDL_DestroyWindow(sdl_window);
+
+            SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_DOUBLEBUFFER, 1);
+            SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_DEPTH_SIZE, Renderer.Settings.Zdepth);
+
+            if (STENCIL_FRUSTUM)
+            {
+                SDL_GL_SetAttribute(SDL_GLattr.SDL_GL_STENCIL_SIZE, 8);
+            }
+
+            sdl_window = SDL_CreateWindow("FreeRaider", Global.ScreenInfo.X, Global.ScreenInfo.Y, Global.ScreenInfo.W,
+                Global.ScreenInfo.H, video_flags);
+            sdl_gl_context = SDL_GL_CreateContext(sdl_window);
+            SDL_GL_MakeCurrent(sdl_window, sdl_gl_context);
+
+            if(SDL_GL_SetSwapInterval(Global.ScreenInfo.Vsync ? 1 : 0) != 0)
+                Sys.DebugLog(LOG_FILENAME, "Cannot set VSYNC: {0}\n", SDL_GetError());
+
+            ConsoleInfo.Instance.AddLine(GL.GetString(StringName.Vendor), FontStyle.ConsoleInfo);
+            ConsoleInfo.Instance.AddLine(GL.GetString(StringName.Renderer), FontStyle.ConsoleInfo);
+            ConsoleInfo.Instance.AddLine("OpenGL version " + GL.GetString(StringName.Version), FontStyle.ConsoleInfo);
+            ConsoleInfo.Instance.AddLine(GL.GetString(StringName.ShadingLanguageVersion), FontStyle.ConsoleInfo);
+        }
+
+        public static void InitSDLImage()
+        {
+            var flags = IMG_InitFlags.IMG_INIT_JPG | IMG_InitFlags.IMG_INIT_PNG;
+            var init = IMG_Init(flags);
+
+            if((init & (int)flags) != (int)flags)
+            {
+                Sys.DebugLog(LOG_FILENAME, "SDL_Image error: failed to initialize JPG and/or PNG support.");
+            }
+        }
 
         public static void InitAL()
         {
@@ -612,9 +797,9 @@ namespace FreeRaider
             //Global.BtEngineDynamicsWorld.PairCache.SetInternalGhostPairCallback(Global.BtEngineFilterCallback);
         }
 
-        #endregion
+#endregion
 
-        #region Config parser
+#region Config parser
 
         public static void InitConfig(string filename)
         {
@@ -623,7 +808,7 @@ namespace FreeRaider
             if(!string.IsNullOrWhiteSpace(filename) && FileFound(filename))
             {
                 var state = new ScriptEngine();
-                state.RegisterC("bind", ((Action<int, int, object>) MainEngine.BindKey).Method); // get and set key bindings
+                state.RegisterC("bind", typeof(MainEngine).GetMethod("BindKey")); // get and set key bindings
                 try
                 {
                     state.DoFile(filename);
@@ -649,9 +834,9 @@ namespace FreeRaider
 
         //public static void SaveConfig();
 
-        #endregion
+#endregion
 
-        #region Core system routines - display and tick
+#region Core system routines - display and tick
 
         public static void Display()
         {
@@ -701,9 +886,9 @@ namespace FreeRaider
             GameflowManager.Do();
         }
 
-        #endregion
+#endregion
 
-        #region Resize event
+#region Resize event
 
         // Nominal values are used e.g. to set the size for the console.
         // pixel values are used for glViewport. Both will be the same on
@@ -727,9 +912,9 @@ namespace FreeRaider
             GL.Viewport(0, 0, pixelsW, pixelsH);
         }
 
-        #endregion
+#endregion
 
-        #region Debug functions
+#region Debug functions
 
         public static void PrimaryMouseDown()
         {
@@ -838,9 +1023,9 @@ namespace FreeRaider
             }
         }
 
-        #endregion
+#endregion
 
-        #region PC-specific level loader routines
+#region PC-specific level loader routines
 
         public static bool LoadPCLevel(string name)
         {
@@ -859,9 +1044,9 @@ namespace FreeRaider
             return true;
         }
 
-        #endregion
+#endregion
 
-        #region General level loading routines
+#region General level loading routines
 
         public static bool FileFound(string name, bool write = false)
         {
@@ -934,9 +1119,9 @@ namespace FreeRaider
             return true;
         }
 
-        #endregion
+#endregion
 
-        #region String getters
+#region String getters
 
         public static string GetLevelName(string path)
         {
@@ -976,9 +1161,9 @@ namespace FreeRaider
             return name;
         }
 
-        #endregion
+#endregion
 
-        #region Console command parser
+#region Console command parser
 
         public static bool ExecCmd(string cmd)
         {
@@ -1015,9 +1200,9 @@ namespace FreeRaider
             return false;
         }
 
-        #endregion
+#endregion
 
-        #region Bullet global methods
+#region Bullet global methods
 
         public static void RoomNearCallback(BroadphasePair collisionPair, CollisionDispatcher dispatcher,
             DispatcherInfo dispatchInfo)
@@ -1072,7 +1257,7 @@ namespace FreeRaider
             }
         }
 
-        #endregion
+#endregion
     }
 }
 

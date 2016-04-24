@@ -1,7 +1,12 @@
-﻿using BulletSharp;
+﻿using System;
+using System.Runtime.InteropServices;
+using BulletSharp;
 using OpenTK;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
+using static SDL2.SDL;
+using static SDL2.SDL.SDL_Keycode;
+using static SDL2.SDL.SDL_Keymod;
 
 namespace FreeRaider
 {
@@ -14,6 +19,19 @@ namespace FreeRaider
         public const int JOY_TRIGGER_MASK = 1200;
 
         public const int JOY_TRIGGER_DEADZONE = 10000;
+    }
+
+    public partial class Global
+    {
+        public static IntPtr sdl_joystick = IntPtr.Zero;
+
+        public static IntPtr sdl_controller = IntPtr.Zero;
+
+        public static IntPtr sdl_haptic = IntPtr.Zero;
+
+        public static IntPtr sdl_window = IntPtr.Zero;
+
+        public static IntPtr sdl_gl_context = IntPtr.Zero;
     }
 
     public enum ACTIONS
@@ -163,7 +181,134 @@ namespace FreeRaider
 
     public class Controls
     {
-        public static void PollSDLInput();
+        public static void PollSDLInput()
+        {
+            SDL_Event ev;
+
+            while(SDL_PollEvent(out ev) != 0)
+            {
+                switch(ev.type)
+                {
+                    case SDL_EventType.SDL_MOUSEMOTION:
+                        if(!ConsoleInfo.Instance.IsVisible && ControlStates.MouseLook)
+                        {
+                            ControlStates.LookAxisX = ev.motion.xrel * ControlMapper.MouseSensitivity *
+                                                      ControlMapper.MouseScaleX;
+                            ControlStates.LookAxisY = ev.motion.yrel * ControlMapper.MouseSensitivity *
+                                                      ControlMapper.MouseScaleY;
+                        }
+                        break;
+
+                    case SDL_EventType.SDL_MOUSEBUTTONDOWN:
+                        if(ev.button.button == 1) // LM = 1, MM = 2, RM = 3
+                        {
+                            PrimaryMouseDown();
+                        }
+                        else if(ev.button.button == 3)
+                        {
+                            SecondaryMouseDown();
+                        }
+                        break;
+
+                    // Controller events are only invoked when joystick is initialized as
+                    // game controller, otherwise, generic joystick event will be used.
+                    case SDL_EventType.SDL_CONTROLLERAXISMOTION:
+                        WrapGameControllerAxis(ev.caxis.axis, ev.caxis.axisValue);
+                        break;
+
+                    case SDL_EventType.SDL_CONTROLLERBUTTONDOWN:
+                    case SDL_EventType.SDL_CONTROLLERBUTTONUP:
+                        WrapGameControllerKey(ev.cbutton.button, ev.cbutton.state == SDL_PRESSED);
+                        break;
+
+                    // Joystick events are still invoked, even if joystick is initialized as game
+                    // controller - that's why we need sdl_joystick checking - to filter out
+                    // duplicate event calls.
+                    case SDL_EventType.SDL_JOYAXISMOTION:
+                        if(sdl_joystick != IntPtr.Zero)
+                            JoyAxis(ev.jaxis.axis, ev.jaxis.axisValue);
+                        break;
+
+                    case SDL_EventType.SDL_JOYHATMOTION:
+                        if(sdl_joystick != IntPtr.Zero)
+                            JoyHat(ev.jhat.hatValue);
+                        break;
+
+                    case SDL_EventType.SDL_JOYBUTTONDOWN:
+                    case SDL_EventType.SDL_JOYBUTTONUP:
+                        // NOTE: Joystick button numbers are passed with added JOY_BUTTON_MASK (1000).
+                        if (sdl_joystick != IntPtr.Zero)
+                            Key(ev.jbutton.button + JOY_BUTTON_MASK, ev.jbutton.state == SDL_PRESSED);
+                        break;
+
+                    case SDL_EventType.SDL_TEXTINPUT:
+                    case SDL_EventType.SDL_TEXTEDITING:
+                        if(ConsoleInfo.Instance.IsVisible && ev.key.state != 0)
+                        {
+                            unsafe
+                            {
+                                ConsoleInfo.Instance.Filter(Marshal.PtrToStringAuto((IntPtr) ev.text.text)); // TODO: Ansi instead?
+                            }
+                            return;
+                        }
+                        break;
+
+                    case SDL_EventType.SDL_KEYUP:
+                    case SDL_EventType.SDL_KEYDOWN:
+                        if(ev.key.keysym.sym == SDLK_F4 &&
+                            ev.key.state == SDL_PRESSED && 
+                            ev.key.keysym.mod.HasFlagUns(KMOD_ALT))
+                        {
+                            Done = true;
+                            break;
+                        }
+
+                        if(ConsoleInfo.Instance.IsVisible && ev.key.state != 0)
+                        {
+                            switch(ev.key.keysym.sym)
+                            {
+                                case SDLK_RETURN:
+                                case SDLK_UP:
+                                case SDLK_DOWN:
+                                case SDLK_LEFT:
+                                case SDLK_RIGHT:
+                                case SDLK_HOME:
+                                case SDLK_END:
+                                case SDLK_BACKSPACE:
+                                case SDLK_DELETE:
+                                case SDLK_TAB:
+                                case SDLK_v: // for Ctrl+V
+                                    ConsoleInfo.Instance.Edit((int)ev.key.keysym.sym, (int)ev.key.keysym.mod);
+                                    break;
+                                default:
+                                    break;
+                            }
+                            return;
+                        }
+                        else
+                        {
+                            Key((int)ev.key.keysym.sym, ev.key.state == SDL_PRESSED);
+                            // DEBUG KEYBOARD COMMANDS
+                            DebugKeys((int)ev.key.keysym.sym, ev.key.state);
+                        }
+                        break;
+
+                    case SDL_EventType.SDL_QUIT:
+                        Done = true;
+                        break;
+
+                    case SDL_EventType.SDL_WINDOWEVENT:
+                        if(ev.window.windowEvent == SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED)
+                        {
+                            Engine.Resize(ev.window.data1, ev.window.data2, ev.window.data1, ev.window.data2);
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+        }
 
         public static void DebugKeys(int button, int state);
 

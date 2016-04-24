@@ -121,6 +121,11 @@
     <Compile Include="Render.cs" />
     <Compile Include="Resource.cs" />
     <Compile Include="Script.cs" />
+    <Compile Include="SDL2-CS\LPUtf8StrMarshaler.cs" />
+    <Compile Include="SDL2-CS\SDL2.cs" />
+    <Compile Include="SDL2-CS\SDL2_image.cs" />
+    <Compile Include="SDL2-CS\SDL2_mixer.cs" />
+    <Compile Include="SDL2-CS\SDL2_ttf.cs" />
     <Compile Include="ShaderDescription.cs" />
     <Compile Include="ShaderManager.cs" />
     <Compile Include="Sprintf.cs" />

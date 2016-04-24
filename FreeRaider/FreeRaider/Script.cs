@@ -7,14 +7,17 @@ using System.Reflection;
 using System.Text;
 using BulletSharp;
 using FreeRaider.Loader;
+using FreeRaider.Script;
 using KeraLua;
 using NLua;
 using OpenTK;
+using SDL2;
 using Lua = NLua.Lua;
 using LuaCore = KeraLua.Lua;
 using static FreeRaider.Global;
 using static FreeRaider.Constants;
 using static FreeRaider.Strings;
+using static SDL2.SDL.SDL_Keycode;
 
 namespace FreeRaider
 {
@@ -38,7 +41,7 @@ namespace FreeRaider
 
     public partial class Global
     {
-        public static Script.MainEngine EngineLua;
+        public static MainEngine EngineLua;
     }
 
     public partial class luaFuncs
@@ -2864,8 +2867,50 @@ namespace FreeRaider.Script
 
             state["ACT_ACTION"] = (int) ACTIONS.Action;
 
-            TODO
-            SDL KEYS;
+            foreach (SDL.SDL_Keycode k in Enum.GetValues(typeof(SDL.SDL_Keycode)))
+            {
+                state["KEY_" + k.ToString().Substring(5).ToUpper()] = (int)k;
+            }
+
+            state["JOY_1"] = 1000;
+            state["JOY_2"] = 1001;
+            state["JOY_3"] = 1002;
+            state["JOY_4"] = 1003;
+            state["JOY_5"] = 1004;
+            state["JOY_6"] = 1005;
+            state["JOY_7"] = 1006;
+            state["JOY_8"] = 1007;
+            state["JOY_9"] = 1008;
+            state["JOY_10"] = 1009;
+            state["JOY_11"] = 1010;
+            state["JOY_12"] = 1011;
+            state["JOY_13"] = 1012;
+            state["JOY_14"] = 1013;
+            state["JOY_15"] = 1014;
+            state["JOY_16"] = 1015;
+            state["JOY_17"] = 1016;
+            state["JOY_18"] = 1017;
+            state["JOY_19"] = 1018;
+            state["JOY_20"] = 1019;
+            state["JOY_21"] = 1020;
+            state["JOY_22"] = 1021;
+            state["JOY_23"] = 1022;
+            state["JOY_24"] = 1023;
+            state["JOY_25"] = 1024;
+            state["JOY_26"] = 1025;
+            state["JOY_27"] = 1026;
+            state["JOY_28"] = 1027;
+            state["JOY_29"] = 1028;
+            state["JOY_30"] = 1029;
+            state["JOY_31"] = 1030;
+            state["JOY_32"] = 1031;
+            state["JOY_POVUP"] = 1101;
+            state["JOY_POVDOWN"] = 1104;
+            state["JOY_POVLEFT"] = 1108;
+            state["JOY_POVRIGHT"] = 1102;
+
+            state["JOY_TRIGGERLEFT"] = 1204; // Only for XBOX360-like controllers - analog triggers.
+            state["JOY_TRIGGERRIGHT"] = 1205;
 
             state["PARAM_HEALTH"] = (int) CharParameters.Health;
             state["PARAM_AIR"] = (int) CharParameters.Air;

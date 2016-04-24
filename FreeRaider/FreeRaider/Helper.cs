@@ -143,6 +143,7 @@ namespace FreeRaider
         }
 
         [STAThread]
+        [Obsolete]
         public static string GetClipboardText()
         {
             if (IsRunningOnMono)

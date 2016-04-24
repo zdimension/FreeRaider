@@ -8,6 +8,7 @@ using FreeRaider.Loader;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using SDL2;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
 
@@ -1433,7 +1434,7 @@ namespace FreeRaider
                 GL.UseProgram(shader.Program);
 
                 GL.Uniform4(shader.TintMult, 1, tint);
-                GL.Uniform1(shader.CurrentTick, (DateTime.Now - Process.GetCurrentProcess().StartTime).Ticks);
+                GL.Uniform1(shader.CurrentTick, SDL.SDL_GetTicks());
                 GL.Uniform1(shader.Sampler, 0);
                 GL.UniformMatrix4(shader.ModelViewProjection, false, ref modelViewProjectionTransform);
                 RenderMesh(room.Mesh);

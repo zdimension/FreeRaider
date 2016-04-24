@@ -31,6 +31,8 @@ namespace FreeRaider
     public partial class Global
     {
         public static Vector3 CamAngles;
+        public static bool Done = false;
+        public static float TimeScale = 1.0f;
     }
 
     public class Game
@@ -793,9 +795,9 @@ namespace FreeRaider
 
         public static void lua_timescale(float? scale = null)
         {
-            Program.TimeScale = scale ?? (Program.TimeScale == 1.0f ? 0.033f : 1.0f);
+            TimeScale = scale ?? (TimeScale == 1.0f ? 0.033f : 1.0f);
 
-            ConsoleInfo.Instance.Printf("time_scale = {0.000}", Program.TimeScale);
+            ConsoleInfo.Instance.Printf("time_scale = {0.000}", TimeScale);
         }
     }
 }
