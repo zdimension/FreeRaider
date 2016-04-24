@@ -24,7 +24,7 @@ namespace FreeRaider
 
         ~ShaderStage()
         {
-            GL.DeleteShader(Shader);
+            //GL.DeleteShader(Shader);
         }
     }
 

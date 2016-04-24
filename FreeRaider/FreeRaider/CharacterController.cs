@@ -396,7 +396,7 @@ namespace FreeRaider
         /// <summary>
         /// Character response info (collides, slide, next steps, drops, e.t.c.)
         /// </summary>
-        public CharacterResponse Response;
+        public CharacterResponse Response = new CharacterResponse();
 
         public List<InventoryNode> Inventory;
 
@@ -455,7 +455,7 @@ namespace FreeRaider
 
         public SphereShape ClimbSensor;
 
-        public HeightInfo HeightInfo = null;
+        public HeightInfo HeightInfo = new HeightInfo();
 
         public ClimbInfo Climb = null;
 

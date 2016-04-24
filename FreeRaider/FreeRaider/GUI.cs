@@ -275,7 +275,7 @@ namespace FreeRaider
                     return false;
                 }
 
-                styles.Insert(0, new FontStyleData {Index = index});
+                styles.Insert(0, desiredStyle = new FontStyleData {Index = index});
             }
 
             desiredStyle.RectBorder = rectBorder;
@@ -367,9 +367,9 @@ namespace FreeRaider
 
         private bool fadeDirection;
 
-        private List<FontStyleData> styles;
+        private List<FontStyleData> styles = new List<FontStyleData>();
 
-        private List<Font> fonts;
+        private List<Font> fonts = new List<Font>();
 
         /// <summary>
         /// GLF font library unit
@@ -2027,6 +2027,7 @@ namespace FreeRaider
 
         public static void InitNotifier()
         {
+            Notifier = new GuiItemNotifier();
             Notifier.SetPos(850.0f, 850.0f);
             Notifier.SetRot(180.0f, 270.0f);
             Notifier.SetSize(128.0f);
@@ -2085,7 +2086,7 @@ namespace FreeRaider
             };
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, CrosshairBuffer);
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) Marshal.SizeOf(crosshairBuf), crosshairBuf,
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) (Marshal.SizeOf(typeof(GuiBufferEntryS)) * crosshairBuf.Length), crosshairBuf,
                 BufferUsageHint.StaticDraw);
 
             var attribs = new[]

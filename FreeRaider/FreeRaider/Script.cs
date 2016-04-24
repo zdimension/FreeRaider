@@ -514,10 +514,10 @@ namespace FreeRaider
 
         public static void lua_AddFont(int index, string path, uint size)
         {
-            if (!Global.FontManager.AddFont((FontType) index, size, path))
+            /*if (!Global.FontManager.AddFont((FontType) index, size, path))
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_CREATE_FONT, Global.FontManager.FontCount, MaxFonts);
-            }
+            }*/
         }
 
         public static void lua_AddFontStyle(int style_index,
@@ -2989,39 +2989,39 @@ namespace FreeRaider.Script
         public void ParseScreen(ScreenInfo sc)
         {
             var scr = statedyn["screen"];
-            sc.X = (short) scr["x"];
-            sc.Y = (short) scr["y"];
-            sc.W = (short) scr["width"];
+            sc.X = (short?) scr["x"] ?? 0;
+            sc.Y = (short?) scr["y"] ?? 0;
+            sc.W = (short?) scr["width"] ?? 0;
             sc.Wunit = sc.W / ScreenMeteringResolution;
-            sc.H = (short) scr["height"];
+            sc.H = (short?) scr["height"] ?? 0;
             sc.Hunit = sc.H / ScreenMeteringResolution;
-            sc.FSflag = (bool) scr["fullscreen"];
-            sc.ShowDebugInfo = (bool) scr["debug_info"];
-            sc.Fov = (float) scr["fov"];
-            sc.Vsync = (bool) scr["vsync"];
+            sc.FSflag = (bool?) scr["fullscreen"] ?? false;
+            sc.ShowDebugInfo = (bool?) scr["debug_info"] ?? false;
+            sc.Fov = (float?) scr["fov"] ?? 0;
+            sc.Vsync = (bool?) scr["vsync"] ?? false;
         }
 
         public void ParseRender(RenderSettings rs)
         {
             var ren = statedyn["render"];
-            rs.MipmapMode = (uint) ren["mipmap_mode"];
-            rs.Mipmaps = (uint) ren["mipmaps"];
-            rs.LodBias = (float) ren["lod_bias"];
-            rs.Anisotropy = (uint) ren["anisotropy"];
-            rs.Antialias = (bool) ren["antialias"];
-            rs.AntialiasSamples = (int) ren["antialias_samples"];
-            rs.TextureBorder = (int) ren["texture_border"];
-            rs.SaveTextureMemory = (bool) ren["save_texture_memory"];
-            rs.Zdepth = (int) ren["z_depth"];
-            rs.FogEnabled = (bool) ren["fog_enabled"];
-            rs.FogStart_depth = (float) ren["fog_start_depth"];
-            rs.FogEnd_depth = (float) ren["fog_end_depth"];
-            rs.FogColor[0] = (float) ren["fog_color"]["r"] / 255.0f;
-            rs.FogColor[1] = (float) ren["fog_color"]["g"] / 255.0f;
-            rs.FogColor[2] = (float) ren["fog_color"]["b"] / 255.0f;
+            rs.MipmapMode = (uint?) ren["mipmap_mode"] ?? 0;
+            rs.Mipmaps = (uint?) ren["mipmaps"] ?? 0;
+            rs.LodBias = (float?) ren["lod_bias"] ?? 0;
+            rs.Anisotropy = (uint?) ren["anisotropy"] ?? 0;
+            rs.Antialias = (bool?) ren["antialias"] ?? false;
+            rs.AntialiasSamples = (int?) ren["antialias_samples"] ?? 0;
+            rs.TextureBorder = (int?) ren["texture_border"] ?? 0;
+            rs.SaveTextureMemory = (bool?) ren["save_texture_memory"] ?? false;
+            rs.Zdepth = (int?) ren["z_depth"] ?? 0;
+            rs.FogEnabled = (bool?) ren["fog_enabled"] ?? false;
+            rs.FogStart_depth = (float?) ren["fog_start_depth"] ?? 0;
+            rs.FogEnd_depth = (float?) ren["fog_end_depth"] ?? 0;
+            rs.FogColor[0] = (float?) ren["fog_color"]["r"] / 255.0f ?? 0;
+            rs.FogColor[1] = (float?) ren["fog_color"]["g"] / 255.0f ?? 0;
+            rs.FogColor[2] = (float?) ren["fog_color"]["b"] / 255.0f ?? 0;
             rs.FogColor[3] = 1;
 
-            rs.UseGL3 = (bool) ren["use_gl3"];
+            rs.UseGL3 = (bool?) ren["use_gl3"] ?? false;
 
             if (rs.Zdepth != 8 && rs.Zdepth != 16 && rs.Zdepth != 24)
                 rs.Zdepth = 24;
@@ -3030,11 +3030,11 @@ namespace FreeRaider.Script
         public void ParseAudio(AudioSettings au)
         {
             var aud = statedyn["audio"];
-            au.MusicVolume = (float) aud["music_volume"];
-            au.SoundVolume = (float) aud["sound_volume"];
-            au.UseEffects = (bool) aud["use_effects"];
-            au.ListenerIsPlayer = (bool) aud["listener_is_player"];
-            au.StreamBufferSize = (int) aud["stream_buffer_size"] * 1024;
+            au.MusicVolume = (float?) aud["music_volume"] ?? 0;
+            au.SoundVolume = (float?) aud["sound_volume"] ?? 0;
+            au.UseEffects = (bool?) aud["use_effects"] ?? false;
+            au.ListenerIsPlayer = (bool?) aud["listener_is_player"] ?? false;
+            au.StreamBufferSize = (int?) aud["stream_buffer_size"] * 1024 ?? 0;
             if (au.StreamBufferSize <= 0)
                 au.StreamBufferSize = 131072; // 128 * 1024
         }
@@ -3042,65 +3042,65 @@ namespace FreeRaider.Script
         public void ParseConsole(ConsoleInfo cn)
         {
             var con = statedyn["console"];
-            var r = (float) con["background_color"]["r"];
-            var g = (float) con["background_color"]["g"];
-            var b = (float) con["background_color"]["b"];
-            var a = (float) con["background_color"]["a"];
+            var r = (float?) con["background_color"]["r"] ?? 0;
+            var g = (float?) con["background_color"]["g"] ?? 0;
+            var b = (float?) con["background_color"]["b"] ?? 0;
+            var a = (float?) con["background_color"]["a"] ?? 0;
             cn.SetBackgroundColor(r / 255, g / 255, b / 255, a / 255);
 
-            var tmpF = (float) con["spacing"];
+            var tmpF = (float?) con["spacing"] ?? 0;
             if (tmpF.IsBetween(CON_MIN_LINE_INTERVAL, CON_MAX_LINE_INTERVAL))
                 cn.Spacing = tmpF;
 
-            var tmpI = (int) con["line_size"];
+            var tmpI = (int?) con["line_size"] ?? 0;
             if (tmpI.IsBetween(CON_MIN_LINE_SIZE, CON_MAX_LINE_SIZE))
-                cn.LineSize = (ushort)tmpI;
+                cn.LineSize = (ushort?) tmpI ?? 0;
 
-            tmpI = (ushort)con["showing_lines"];
+            tmpI = (ushort?) con["showing_lines"] ?? 0;
             if (tmpI.IsBetween(CON_MIN_LINES, CON_MAX_LINES))
                 cn.VisibleLines = tmpI;
 
-            tmpI = (ushort)con["log_size"];
+            tmpI = (ushort?) con["log_size"] ?? 0;
             if (tmpI.IsBetween(CON_MIN_LOG, CON_MAX_LOG))
                 cn.HistorySize = tmpI;
 
-            tmpI = (ushort)con["lines_count"];
+            tmpI = (ushort?) con["lines_count"] ?? 0;
             if (tmpI.IsBetween(CON_MIN_LOG, CON_MAX_LOG))
                 cn.BufferSize = tmpI;
 
-            var tmpB = (bool) con["show"];
+            var tmpB = (bool?) con["show"] ?? false;
             cn.IsVisible = tmpB;
 
-            tmpF = (float) con["show_cursor_period"];
+            tmpF = (float?) con["show_cursor_period"] ?? 0;
             cn.BlinkPeriod = tmpF;
         }
 
         public void ParseControls(ControlSettings cs)
         {
             var con = statedyn["controls"];
-            cs.MouseSensitivity = (float) con["mouse_sensitivity"];
-            cs.MouseScaleX = (float) con["mouse_scale_x"];
-            cs.MouseScaleY = (float) con["mouse_scale_y"];
-            cs.UseJoy = (bool) con["use_joy"];
-            cs.JoyNumber = (int) con["joy_number"];
-            cs.JoyRumble = (bool) con["joy_rumble"];
-            cs.JoyAxisMap[(int) AXES.LookX] = (int) con["joy_look_axis_x"];
-            cs.JoyAxisMap[(int) AXES.LookY] = (int) con["joy_look_axis_y"];
-            cs.JoyAxisMap[(int) AXES.MoveX] = (int) con["joy_move_axis_x"];
-            cs.JoyAxisMap[(int) AXES.MoveY] = (int) con["joy_move_axis_y"];
-            cs.JoyLookInvertX = (bool) con["joy_look_invert_x"];
-            cs.JoyLookInvertY = (bool) con["joy_look_invert_y"];
-            cs.JoyLookSensitivity = (float) con["joy_look_sensitivity"];
-            cs.JoyLookDeadzone = (short) con["joy_look_deadzone"];
-            cs.JoyMoveInvertX = (bool) con["joy_move_invert_x"];
-            cs.JoyMoveInvertY = (bool) con["joy_move_invert_y"];
-            cs.JoyMoveSensitivity = (float) con["joy_move_sensitivity"];
-            cs.JoyMoveDeadzone = (short) con["joy_move_deadzone"];
+            cs.MouseSensitivity = (float?) con["mouse_sensitivity"] ?? 0;
+            cs.MouseScaleX = (float?) con["mouse_scale_x"] ?? 0;
+            cs.MouseScaleY = (float?) con["mouse_scale_y"] ?? 0;
+            cs.UseJoy = (bool?) con["use_joy"] ?? false;
+            cs.JoyNumber = (int?) con["joy_number"] ?? 0;
+            cs.JoyRumble = (bool?) con["joy_rumble"] ?? false;
+            cs.JoyAxisMap[(int) AXES.LookX] = (int?) con["joy_look_axis_x"] ?? 0;
+            cs.JoyAxisMap[(int) AXES.LookY] = (int?) con["joy_look_axis_y"] ?? 0;
+            cs.JoyAxisMap[(int) AXES.MoveX] = (int?) con["joy_move_axis_x"] ?? 0;
+            cs.JoyAxisMap[(int) AXES.MoveY] = (int?) con["joy_move_axis_y"] ?? 0;
+            cs.JoyLookInvertX = (bool?) con["joy_look_invert_x"] ?? false;
+            cs.JoyLookInvertY = (bool?) con["joy_look_invert_y"] ?? false;
+            cs.JoyLookSensitivity = (float?) con["joy_look_sensitivity"] ?? 0;
+            cs.JoyLookDeadzone = (short?) con["joy_look_deadzone"] ?? 0;
+            cs.JoyMoveInvertX = (bool?) con["joy_move_invert_x"] ?? false;
+            cs.JoyMoveInvertY = (bool?) con["joy_move_invert_y"] ?? false;
+            cs.JoyMoveSensitivity = (float?) con["joy_move_sensitivity"] ?? 0;
+            cs.JoyMoveDeadzone = (short?) con["joy_move_deadzone"] ?? 0;
         }
 
         public void ParseSystem(SystemSettings ss)
         {
-            ss.Logging = (bool) statedyn["system"]["logging"];
+            ss.Logging = (bool?) statedyn["system"]["logging"] ?? false;
         }
 
         protected void CheckStack()

@@ -33,6 +33,11 @@ render =
     fog_color = {r = 255, g = 255, b = 255};
 }
 
+system =
+{
+    logging = true;
+}
+
 controls =
 {
     mouse_sensitivity = 80.0;

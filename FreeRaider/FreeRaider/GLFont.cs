@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL;
 using SharpFont;
+using PixelFormat = OpenTK.Graphics.OpenGL.PixelFormat;
 
 namespace FreeRaider
 {
@@ -236,6 +239,7 @@ namespace FreeRaider
                     glf.Glyphs[i].TexY1 = y + g.Bitmap.Rows;
 
                     glf.Glyphs[i].TexIndex = glf.GLTexIndexes[glf.GLRealTexIndexesCount];
+
                     for (var xx = 0; xx < g.Bitmap.Width; xx++)
                     {
                         for (var yy = 0; yy < g.Bitmap.Rows; yy++)

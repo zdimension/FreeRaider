@@ -12,6 +12,7 @@ using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Platform;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
 using static FreeRaider.Strings;
@@ -201,7 +202,7 @@ namespace FreeRaider
 
         public static float EngineFrameTime = 0.0f;
 
-        public static Camera EngineCamera;
+        public static Camera EngineCamera = new Camera();
 
         public static World EngineWorld;
 
@@ -238,6 +239,8 @@ namespace FreeRaider
         public static float FPSTime = 0.0f;
 
         public static GraphicsContext GLContext;
+
+        public static IWindowInfo TKWindow;
     }
 
     public partial class StaticFuncs
@@ -348,6 +351,8 @@ namespace FreeRaider
 
         public static void Start()
         {
+            Toolkit.Init();
+
             // Set defaults parameters and load config file.
             InitConfig("config.lua");
 
@@ -374,6 +379,7 @@ namespace FreeRaider
             ConsoleInfo.Instance.Notify(SYSNOTE_ENGINE_INITED);
 
             // Clearing up memory for initial level loading.
+            EngineWorld = new World();
             EngineWorld.Prepare();
 
             SDL_SetRelativeMouseMode(SDL_bool.SDL_TRUE);
@@ -476,7 +482,7 @@ namespace FreeRaider
             Gui.InitFontManager();
             ConsoleInfo.Instance.Init();
 
-            EngineLua= new MainEngine();
+            EngineLua = new MainEngine();
             EngineLua.Call("loadscript_pre");
 
             GameflowManager = new Gameflow();
@@ -501,7 +507,7 @@ namespace FreeRaider
         {
             EngineLua.Call("loadscript_post");
 
-            ConsoleInfo.Instance.InitFonts();
+            //ConsoleInfo.Instance.InitFonts();
 
             Gui.Init();
             Sys.Init();
@@ -704,7 +710,10 @@ namespace FreeRaider
                 Global.ScreenInfo.H, video_flags);
             sdl_gl_context = SDL_GL_CreateContext(sdl_window);
             SDL_GL_MakeCurrent(sdl_window, sdl_gl_context);
-            GLContext = new GraphicsContext(new ContextHandle(sdl_gl_context), OpenTK.Platform.Utilities.CreateSdl2WindowInfo(sdl_window));
+            //TKWindow = OpenTK.Platform.Utilities.CreateSdl2WindowInfo(sdl_window);
+            GLContext = new GraphicsContext(new ContextHandle(sdl_gl_context),
+                SDL_GL_GetProcAddress, // implement GetAddress via SDL
+                () => new ContextHandle(SDL_GL_GetCurrentContext()));
             if(SDL_GL_SetSwapInterval(Global.ScreenInfo.Vsync ? 1 : 0) != 0)
                 Sys.DebugLog(LOG_FILENAME, "Cannot set VSYNC: {0}\n", SDL_GetError());
 

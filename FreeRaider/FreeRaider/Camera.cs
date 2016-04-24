@@ -50,7 +50,7 @@ namespace FreeRaider
         public Matrix4 GLProjMat;
         public Matrix4 GLViewProjMat;
 
-        public Plane[] ClipPlanes = new Plane[4]; // frustum side clip planes
+        public Plane[] ClipPlanes = Helper.RepeatValue(4, () => new Plane()); // frustum side clip planes
         public Frustum Frustum; // camera frustum structure
 
         public float DistNear = 1;
@@ -213,7 +213,8 @@ namespace FreeRaider
             Height = 2.0f * DistNear / F;
             Width = Height * Aspect;
 
-            Frustum.Vertices = new List<Vector3>();
+            Frustum = new Frustum();
+            Frustum.Vertices = Helper.FillArray(Vector3.Zero, 3).ToList();
             Frustum.Planes = ClipPlanes.Take(4).ToList();
         }
     }

@@ -300,7 +300,7 @@ namespace FreeRaider
         [StringFormatMethod("format")]
         public static string Format(string format, params object[] args)
         {
-            if (Regex.IsMatch(format, @"(?:[^{}])({\d})(?:[^}])"))
+            if (Regex.IsMatch(format, @"{\d(?:[:\d\.A-Za-z]*)}"))
             {
                 try
                 {

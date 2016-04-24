@@ -176,7 +176,7 @@ namespace FreeRaider
         /// <summary>
         /// Actions array for action mapper.
         /// </summary>
-        public ControlAction[] ActionMap = new ControlAction[(int)ACTIONS.LastIndex];
+        public ControlAction[] ActionMap = Helper.RepeatValue((int) ACTIONS.LastIndex, () => new ControlAction());
     }
 
     public class Controls
@@ -787,30 +787,30 @@ namespace FreeRaider
             ControlMapper.JoyLookSensitivity = 1.5f;
             ControlMapper.JoyMoveSensitivity = 1.5f;
 
-            ControlMapper.ActionMap[(int) ACTIONS.Jump] = new ControlAction() {Primary = (int) SDLK_SPACE};
-            ControlMapper.ActionMap[(int)ACTIONS.Action] = new ControlAction {Primary = (int) SDLK_LCTRL};
-            ControlMapper.ActionMap[(int)ACTIONS.Roll] = new ControlAction {Primary = (int) SDLK_x};
-            ControlMapper.ActionMap[(int)ACTIONS.Sprint] = new ControlAction {Primary = (int) SDLK_CAPSLOCK};
-            ControlMapper.ActionMap[(int)ACTIONS.Crouch] = new ControlAction {Primary = (int) SDLK_c};
-            ControlMapper.ActionMap[(int)ACTIONS.Walk] = new ControlAction {Primary = (int) SDLK_LSHIFT};
+            ControlMapper.ActionMap[(int) ACTIONS.Jump].Primary = (int) SDLK_SPACE;
+            ControlMapper.ActionMap[(int)ACTIONS.Action].Primary = (int) SDLK_LCTRL;
+            ControlMapper.ActionMap[(int)ACTIONS.Roll].Primary = (int) SDLK_x;
+            ControlMapper.ActionMap[(int)ACTIONS.Sprint].Primary = (int) SDLK_CAPSLOCK;
+            ControlMapper.ActionMap[(int)ACTIONS.Crouch].Primary = (int) SDLK_c;
+            ControlMapper.ActionMap[(int)ACTIONS.Walk].Primary = (int) SDLK_LSHIFT;
 
-            ControlMapper.ActionMap[(int)ACTIONS.Up] = new ControlAction {Primary = (int) SDLK_w};
-            ControlMapper.ActionMap[(int)ACTIONS.Down] = new ControlAction {Primary = (int) SDLK_s};
-            ControlMapper.ActionMap[(int)ACTIONS.Left] = new ControlAction {Primary = (int) SDLK_a};
-            ControlMapper.ActionMap[(int)ACTIONS.Right] = new ControlAction {Primary = (int) SDLK_d};
+            ControlMapper.ActionMap[(int)ACTIONS.Up].Primary = (int) SDLK_w;
+            ControlMapper.ActionMap[(int)ACTIONS.Down].Primary = (int) SDLK_s;
+            ControlMapper.ActionMap[(int)ACTIONS.Left].Primary = (int) SDLK_a;
+            ControlMapper.ActionMap[(int)ACTIONS.Right].Primary = (int) SDLK_d;
 
-            ControlMapper.ActionMap[(int)ACTIONS.StepLeft] = new ControlAction {Primary = (int) SDLK_h};
-            ControlMapper.ActionMap[(int)ACTIONS.StepRight] = new ControlAction {Primary = (int) SDLK_j};
+            ControlMapper.ActionMap[(int)ACTIONS.StepLeft].Primary = (int) SDLK_h;
+            ControlMapper.ActionMap[(int)ACTIONS.StepRight].Primary = (int) SDLK_j;
 
-            ControlMapper.ActionMap[(int)ACTIONS.LookUp] = new ControlAction {Primary = (int) SDLK_UP};
-            ControlMapper.ActionMap[(int)ACTIONS.LookDown] = new ControlAction {Primary = (int) SDLK_DOWN};
-            ControlMapper.ActionMap[(int)ACTIONS.LookLeft] = new ControlAction {Primary = (int) SDLK_LEFT};
-            ControlMapper.ActionMap[(int)ACTIONS.LookRight] = new ControlAction {Primary = (int) SDLK_RIGHT};
+            ControlMapper.ActionMap[(int)ACTIONS.LookUp].Primary = (int) SDLK_UP;
+            ControlMapper.ActionMap[(int)ACTIONS.LookDown].Primary = (int) SDLK_DOWN;
+            ControlMapper.ActionMap[(int)ACTIONS.LookLeft].Primary = (int) SDLK_LEFT;
+            ControlMapper.ActionMap[(int)ACTIONS.LookRight].Primary = (int) SDLK_RIGHT;
 
-            ControlMapper.ActionMap[(int)ACTIONS.Screenshot] = new ControlAction {Primary = (int) SDLK_PRINTSCREEN};
-            ControlMapper.ActionMap[(int)ACTIONS.Console] = new ControlAction {Primary = (int) SDLK_F12};
-            ControlMapper.ActionMap[(int)ACTIONS.SaveGame] = new ControlAction {Primary = (int) SDLK_F5};
-            ControlMapper.ActionMap[(int)ACTIONS.LoadGame] = new ControlAction {Primary = (int) SDLK_F6};
+            ControlMapper.ActionMap[(int)ACTIONS.Screenshot].Primary = (int) SDLK_PRINTSCREEN;
+            ControlMapper.ActionMap[(int)ACTIONS.Console].Primary = (int) SDLK_F12;
+            ControlMapper.ActionMap[(int)ACTIONS.SaveGame].Primary = (int) SDLK_F5;
+            ControlMapper.ActionMap[(int)ACTIONS.LoadGame].Primary = (int) SDLK_F6;
         }
     }
 }

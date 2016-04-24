@@ -282,21 +282,26 @@ namespace FreeRaider
             MoveType = MoveType.OnFloor;
             Self = new EngineContainer();
 
+            Transform = new Transform();
             Transform.SetIdentity();
             Self.Object = this;
             Self.ObjectType = OBJECT_TYPE.Entity;
             Self.Room = null;
             Self.CollisionType = COLLISION_TYPE.None;
+            OBB = new OBB();
             OBB.Transform = Transform;
-            Bt.BtBody.Clear();
-            Bt.BtJoints.Clear();
+            Bt = new BtEntityData();
+            Bt.BtBody = new List<RigidBody>();
+            Bt.BtJoints = new List<TypedConstraint>();
             Bt.NoFixAll = false;
             Bt.NoFixBodyParts = 0x0000000;
             Bt.ManifoldArray = null;
-            Bt.Shapes.Clear();
-            Bt.GhostObjects.Clear();
-            Bt.LastCollisions.Clear();
+            Bt.Shapes = new List<CollisionShape>();
+            Bt.GhostObjects = new List<PairCachingGhostObject>();
+            Bt.LastCollisions = new List<EntityCollisionNode>();
 
+            Bf = new SSBoneFrame();
+            Bf.Animations = new SSAnimation();
             Bf.Animations.Model = null;
             Bf.Animations.ClearOnFrame();
             Bf.Animations.FrameTime = 0.0f;
@@ -308,7 +313,7 @@ namespace FreeRaider
             Bf.Animations.NextAnimation = TR_ANIMATION.LaraRun;
             Bf.Animations.NextFrame = 0;
             Bf.Animations.Next = null;
-            Bf.BoneTags.Clear();
+            Bf.BoneTags = new List<SSBoneTag>();
             Bf.BBMax = Vector3.Zero;
             Bf.BBMin = Vector3.Zero;
             Bf.Centre = Vector3.Zero;

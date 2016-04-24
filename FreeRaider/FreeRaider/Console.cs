@@ -57,7 +57,7 @@ namespace FreeRaider
 
         private List<string> historyLines = new List<string>();
         
-        private List<Line> lines;
+        private List<Line> lines = new List<Line>();
 
         private int visibleLines = 40;
 
@@ -141,7 +141,7 @@ namespace FreeRaider
             inited = false;
             spacing = interval;
             // font.FontSize has absolute size (after scaling)
-            LineHeight = (short)((1 + spacing) * font.FontSize);
+            //LineHeight = (short)((1 + spacing) * font.FontSize);
             cursorX = 8 + 1;
             CursorY = Math.Min((short)(Global.ScreenInfo.H - LineHeight * visibleLines), (short)8);
             inited = true;

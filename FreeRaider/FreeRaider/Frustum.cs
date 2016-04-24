@@ -22,7 +22,7 @@ namespace FreeRaider
         /// <summary>
         /// Main frustum clip plane (inv. plane of parent portal)
         /// </summary>
-        public Plane Normal { get; set; }
+        public Plane Normal { get; set; } = new Plane();
 
         public int ParentsCount { get; set; }
 

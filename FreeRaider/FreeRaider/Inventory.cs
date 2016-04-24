@@ -194,6 +194,7 @@ namespace FreeRaider
 
             inventory = new List<InventoryNode>();
 
+            LabelTitle = new TextLine();
             LabelTitle.X = 0.0f;
             LabelTitle.Y = 30.0f;
             LabelTitle.Xanchor = HorizontalAnchor.Center;
@@ -203,6 +204,7 @@ namespace FreeRaider
             LabelTitle.StyleID = FontStyle.MenuTitle;
             LabelTitle.Show = false;
 
+            LabelItemName = new TextLine();
             LabelItemName.X = 0.0f;
             LabelItemName.Y = 50.0f;
             LabelItemName.Xanchor = HorizontalAnchor.Center;
