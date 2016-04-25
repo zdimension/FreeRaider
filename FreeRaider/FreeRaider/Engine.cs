@@ -894,7 +894,7 @@ namespace FreeRaider
             Gui.SwitchGLMode(true);
             {
                 Gui.DrawNotifier();
-                if(EngineWorld.Character != null && MainInventoryManager != null)
+                if(Global.EngineWorld.Character != null && MainInventoryManager != null)
                 {
                     Gui.DrawInventory();
                 }
@@ -918,6 +918,8 @@ namespace FreeRaider
             EngineFrameTime = time;
             FPSCycle(time);
 
+         /*   if(EngineWorld.EngineVersion == Loader.Engine.Unknown)
+                GameflowManager.Do();*/
             Game.Frame(time);
             GameflowManager.Do();
         }

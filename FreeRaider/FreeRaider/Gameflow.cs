@@ -59,7 +59,7 @@ namespace FreeRaider
                             var t = EngineLua.Call("getNextLevel", GameID, LevelID, actions[i].Operand);
                             CurrentLevelPath = (string)t[0];
                             currentLevelName = (string) t[1];
-                            LevelID = (uint) t[2];
+                            LevelID = Convert.ToUInt32(t[2]);
                             Engine.LoadMap(CurrentLevelPath);
                             actions[i].Opcode = GF_OP.NoEntry;
                         }

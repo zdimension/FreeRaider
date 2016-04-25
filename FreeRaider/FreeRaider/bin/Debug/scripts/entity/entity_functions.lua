@@ -659,7 +659,7 @@ function boulder_init(id)
             setEntityBodyMass(object_id, getEntityMeshCount(object_id), 2000.0);
             setEntityActivity(object_id, true);
             
-            if(getLevelVersion() < TR_IV) then
+            if(getEngineVersion() < Engine.IV) then
                 pushEntityBody(object_id, 0, math.random(150) + 2500.0, 10.0, true);
                 lockEntityBodyLinearFactor(object_id, 0);
             end;
@@ -671,15 +671,11 @@ function dart_init(id)  -- TR1 dart / TR2 flying disks
 
     setEntityTypeFlag(id, ENTITY_TYPE_COLLCHECK);
     setEntityAnimFlag(id, ANIM_LOCK);
-    setEntityBodyPartFlag(id, 0, 0x01);
-    setEntityCollisionFlags(id, COLLISION_TYPE_GHOST, COLLISION_SHAPE_BOX);
     
     setEntityCallbackFlag(id, ENTITY_CALLBACK_COLLISION, true);
     setEntityCallbackFlag(id, ENTITY_CALLBACK_ROOMCOLLISION, true);
     
-    createEntityGhosts(id);
-    
-    entity_funcs[id].speed       = 100.0;
+    entity_funcs[id].speed       = 5120.0;
     entity_funcs[id].damage      = 50.0;
     entity_funcs[id].poison      = 0.0;   -- Poison appeared only in TR3.
     entity_funcs[id].coll_sound  = -1;
@@ -698,7 +694,7 @@ function dart_init(id)  -- TR1 dart / TR2 flying disks
     end
     
     entity_funcs[id].onLoop = function(object_id)
-        moveEntityLocal(object_id, 0.0, entity_funcs[object_id].speed, 0.0);
+        moveEntityLocal(object_id, 0.0, entity_funcs[object_id].speed * FRAME_TIME, 0.0);
         if(not isInRoom(object_id)) then entity_funcs[object_id].onRoomCollide(object_id) end;   -- Penetration fix
     end
     
@@ -832,7 +828,7 @@ function pickup_init(id, item_id)    -- Pick-ups
             -- Standing pickup anim makes action on frame 40 in TR1-3, in TR4-5
             -- it was generalized with all rest animations by frame 16.
 
-            if((a == 135) and (getLevelVersion() < TR_IV)) then
+            if((a == 135) and (getEngineVersion() < Engine.IV)) then
                 if(f < 40) then
                     return true;
                 end;
@@ -904,8 +900,8 @@ function fallceiling_init(id)  -- Falling ceiling (TR1-3)
     setEntitySpeed(id, 0.0, 0.0, 0.0);
     setEntityCallbackFlag(id, ENTITY_CALLBACK_COLLISION, true);
     
-    local level_version = getLevelVersion();
-    if((level_version < TR_II) or (level_version >= TR_III)) then setEntityVisibility(id, false) end;
+    local engine_version = getEngineVersion();
+    if((engine_version < Engine.II) or (engine_version >= Engine.III)) then setEntityVisibility(id, false) end;
     
     entity_funcs[id].onActivate = function(object_id, activator_id)
         if((object_id == nil) or (activator_id == nil)) then
@@ -962,12 +958,8 @@ function midastouch_init(id)    -- Midas gold touch
     setEntityTypeFlag(id, ENTITY_TYPE_GENERIC);
     
     entity_funcs[id].onLoop = function(object_id)
-        if(getEntityDistance(player, object_id) < 1024.0) then
-            local lara_anim, frame, count = getEntityAnim(player);
-            local lara_sector = getEntitySectorIndex(player);
-            local hand_sector = getEntitySectorIndex(object_id);
-            
-            if((lara_sector == hand_sector) and (getEntityMoveType(player) == MOVE_ON_FLOOR) and (getEntityAnim(player) ~= 50)) then
+        if(sameSector(player, object_id)) then            
+            if((getEntityMoveType(player) == MOVE_ON_FLOOR) and (getEntityAnim(player) ~= 50)) then
                 setCharacterParam(player, PARAM_HEALTH, 0);
                 setEntityAnim(player, 1, 0, 5);
                 disableEntity(object_id);
@@ -1212,7 +1204,6 @@ function oldspike_init(id)  -- Teeth spikes
             if(lz > (pz + 256.0)) then
                 local sx,sy,sz = getEntitySpeed(activator_id);
                 if(sz < -256.0) then
-                    setEntityCollision(object_id, false);
                     setEntityAnim(activator_id, 149, 0);
                     setEntityPos(activator_id, lx, ly, pz);
                     setCharacterParam(activator_id, PARAM_HEALTH, 0);
@@ -1420,20 +1411,20 @@ function spikewall_init(id)      -- Spike wall
     
     entity_funcs[id].onDeactivate = function(object_id, activator_id)
         setEntityActivity(object_id, false);
-        stopSound(getGlobalSound(getLevelVersion(), GLOBALID_MOVINGWALL), object_id);
+        stopSound(getGlobalSound(getEngineVersion(), GLOBALID_MOVINGWALL), object_id);
     end
     
     entity_funcs[id].onLoop = function(object_id)
-        local ver = getLevelVersion();
+        local ver = getEngineVersion();
         local scan_distance = 32.0;
-        if(ver < TR_II) then scan_distance = 1536.0 end; -- TR1's lava mass has different floor scan distance.
+        if(ver < Engine.II) then scan_distance = 1536.0 end; -- TR1's lava mass has different floor scan distance.
         
         if(similarSector(object_id, 0.0, scan_distance, 0.0, false)) then
             moveEntityLocal(object_id, 0.0, 8.0, 0.0);
-            playSound(getGlobalSound(getLevelVersion(), GLOBALID_MOVINGWALL), object_id);
+            playSound(getGlobalSound(getEngineVersion(), GLOBALID_MOVINGWALL), object_id);
         else
             setEntityActivity(object_id, false);    -- Stop
-            stopSound(getGlobalSound(getLevelVersion(), GLOBALID_MOVINGWALL), object_id);
+            stopSound(getGlobalSound(getEngineVersion(), GLOBALID_MOVINGWALL), object_id);
         end;
     end
     
@@ -1452,12 +1443,12 @@ function spikewall_init(id)      -- Spike wall
             
             if(getCharacterParam(activator_id, PARAM_HEALTH) > 0) then
                 changeCharacterParam(activator_id, PARAM_HEALTH, -20);
-                playSound(getGlobalSound(getLevelVersion(), GLOBALID_SPIKEHIT), activator_id);
+                playSound(getGlobalSound(getEngineVersion(), GLOBALID_SPIKEHIT), activator_id);
                 if(getCharacterParam(activator_id, PARAM_HEALTH) <= 0) then
                     addEntityRagdoll(activator_id, RD_TYPE_LARA);
                     playSound(SOUND_GEN_DEATH, activator_id);
                     setEntityActivity(object_id, false);
-                    stopSound(getGlobalSound(getLevelVersion(), GLOBALID_MOVINGWALL), object_id);
+                    stopSound(getGlobalSound(getEngineVersion(), GLOBALID_MOVINGWALL), object_id);
                 end;
             end;
         end;
@@ -1476,7 +1467,7 @@ function spikeceiling_init(id)
     
     entity_funcs[id].onDeactivate = function(object_id, activator_id)
         setEntityActivity(object_id, false);
-        stopSound(getGlobalSound(getLevelVersion(), GLOBALID_MOVINGWALL), object_id);
+        stopSound(getGlobalSound(getEngineVersion(), GLOBALID_MOVINGWALL), object_id);
     end
     
     entity_funcs[id].onLoop = function(object_id)
@@ -1484,10 +1475,10 @@ function spikeceiling_init(id)
 
         if(pz > (getSectorHeight(object_id) + 512.0)) then
             moveEntityLocal(object_id, 0.0, 0.0, -4.0);
-            playSound(getGlobalSound(getLevelVersion(), GLOBALID_MOVINGWALL), object_id);
+            playSound(getGlobalSound(getEngineVersion(), GLOBALID_MOVINGWALL), object_id);
         else
             setEntityActivity(object_id, false);    -- Stop
-            stopSound(getGlobalSound(getLevelVersion(), GLOBALID_MOVINGWALL), object_id);
+            stopSound(getGlobalSound(getEngineVersion(), GLOBALID_MOVINGWALL), object_id);
         end;
     end
     
@@ -1514,12 +1505,12 @@ function spikeceiling_init(id)
                     playSound(SOUND_IMPALE, activator_id);
                 else
                     changeCharacterParam(activator_id, PARAM_HEALTH, -20);
-                    playSound(getGlobalSound(getLevelVersion(), GLOBALID_SPIKEHIT), activator_id);
+                    playSound(getGlobalSound(getEngineVersion(), GLOBALID_SPIKEHIT), activator_id);
                     if(getCharacterParam(activator_id, PARAM_HEALTH) <= 0) then
                         addEntityRagdoll(activator_id, RD_TYPE_LARA);
                         playSound(SOUND_GEN_DEATH, activator_id);
                         setEntityActivity(object_id, false);
-                        stopSound(getGlobalSound(getLevelVersion(), GLOBALID_MOVINGWALL), object_id);
+                        stopSound(getGlobalSound(getEngineVersion(), GLOBALID_MOVINGWALL), object_id);
                     end;
                 end;
             end;
@@ -1744,6 +1735,33 @@ function damocles_init(id)      -- Sword of Damocles
     end
 end
 
+function tightrope_init(id)
+
+    setEntityTypeFlag(id, ENTITY_TYPE_GENERIC);
+    
+    entity_funcs[id].onLoop = function(object_id)
+    
+        local dist_to_Lara = getEntityDistance(player, object_id);
+        
+        if(dist_to_Lara < 512.0) then
+            local orient = getEntityOrientation(object_id, player);
+            
+            if(getActionState(ACT_ACTION) and ((orient > 320.0) or (orient < 40.0))) then
+                if(getEntityState(player) == 2) then
+                    setEntityPos(player, getEntityPos(object_id));
+                    rotateEntity(player,180);
+                    moveEntityLocal(player,0,384,0);
+                    setEntityState(player, 124);
+                end;
+            elseif((orient < 220.0) and (orient > 140.0)) then
+                if(getEntityState(player) == 121) then setEntityState(player, 125) end;
+            end;
+        end;
+    end;
+    
+    prepareEntity(id);
+end
+
 function snake_init(id)
 
     setEntityTypeFlag(id, ENTITY_TYPE_ACTOR);
@@ -1811,7 +1829,7 @@ function snake_init(id)
             if(dist_to_Lara < entity_funcs[object_id].suspend_dist) then
                 entity_funcs[object_id].time_since_disturb = entity_funcs[object_id].disturb_timeout;
             else
-                entity_funcs[object_id].time_since_disturb = entity_funcs[object_id].time_since_disturb - frame_time;
+                entity_funcs[object_id].time_since_disturb = entity_funcs[object_id].time_since_disturb - FRAME_TIME;
                 
                 if((entity_funcs[object_id].time_since_disturb <= 0.0) or (dist_to_Lara > entity_funcs[object_id].suspend_dist * 2) ) then
                     entity_funcs[object_id].time_since_disturb = 0.0;
@@ -1820,7 +1838,7 @@ function snake_init(id)
             end;
         else
             if(entity_funcs[object_id].mood > entity_funcs[object_id].min_mood) then
-                entity_funcs[object_id].current_mood_interval = entity_funcs[object_id].current_mood_interval - frame_time;
+                entity_funcs[object_id].current_mood_interval = entity_funcs[object_id].current_mood_interval - FRAME_TIME;
                 if(entity_funcs[object_id].current_mood_interval <= 0) then
                     entity_funcs[object_id].mood = entity_funcs[object_id].mood - 1;
                     entity_funcs[object_id].current_mood_interval = entity_funcs[object_id].mood_release_interval;

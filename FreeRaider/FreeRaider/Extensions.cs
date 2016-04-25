@@ -427,12 +427,12 @@ namespace FreeRaider
 
         public static bool HasFlagUns(this object a, object f)
         {
-            return ((ulong) a & (ulong) f) == (ulong) f;
+            return (Convert.ToUInt64(a) & Convert.ToUInt64(f)) == Convert.ToUInt64(f);
         }
 
         public static bool HasFlagSig(this object a, object f)
         {
-            return ((long) a & (long) f) == (long) f;
+            return (Convert.ToInt64(a) & Convert.ToInt64(f)) == Convert.ToInt64(f);
         }
 
         public static float Dot(this Vector3 v1, Vector3 v2)

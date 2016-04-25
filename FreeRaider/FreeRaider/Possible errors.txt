@@ -1,12 +1,8 @@
 ﻿
-Dans Mesh.cs, L1078, je fais tout en une seule ligne sur le Vector3 au lieu de faire une ligne par composante comme dans OpenTomb. A vérifier.
-
 Dans GLFont.cs, L212, j'utilise GL.TexParameter alors que OpenTomb utilise glTexParameterI.
 
 Dans GLFont.cs, L221 et quelques autres fois OpenTK a inversé format et internalFormat dans les paramètres de TexImage2D, du coup
 je cast manuellement.
-
-Dans Helper.cs, L173, j'incrémente direct le pointeur au lieu de faire sizeof(T)*i qui n'est peut-être pas nécessaire. A vérifier.
 
 Dans Hair.cs, L246, je modifie Joints[currJoint] alors que OpenTomb modifie Joints[i] (i E [0; Elements.Count] / for)
 
@@ -15,9 +11,6 @@ Dans BorderedTextureAtlas.cs, L165, j'utilise Constants.Sqrt2 au lieu de 1.41 (p
 Dans Render.cs, L166, je fais (IntPtr)Marshal.SizeOf(buffer) au lieu de (IntPtr)(buffer.Count * Marshal.SizeOf(buffer[0]))
 
 Dans Render.cs, L1500, je passe le float[] alors que OpenTomb le convertit d'abord en float*
-
-Dans Render.cs, L1434, j'utilise une méthode pour avoir les Ticks depuis le démarrage du jeu alors que OpenTomb utilise SDL_GetTicks donc 
-pas sûr que ça marche
 
 Dans AnimStateControl.cs, L979, nextFc.Cb = ent.RayCb mais après je modif certaines props de nextFc.Cb qui modif donc ent.RayCb
 

@@ -85,7 +85,7 @@ namespace FreeRaider
 
         ~VertexArray()
         {
-            GL.DeleteVertexArray(vertexArrayObject);
+            //GL.DeleteVertexArray(vertexArrayObject);
         }
 
         public void Bind()

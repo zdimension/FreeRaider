@@ -400,7 +400,7 @@ namespace FreeRaider
 
         public List<InventoryNode> Inventory;
 
-        public CharacterParam Parameters = null;
+        public CharacterParam Parameters = new CharacterParam();
 
         public CharacterStats Statistics;
 

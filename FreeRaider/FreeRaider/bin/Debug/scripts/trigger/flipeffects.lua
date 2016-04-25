@@ -116,23 +116,27 @@ flipeffects[32] = { -- Play footprint and overlay it on floor.
             local material = getEntitySectorMaterial(caller);
             local sound_id = -1;
             
-                if(material == SECTOR_MATERIAL_MUD     ) then sound_id = 288;
-            elseif(material == SECTOR_MATERIAL_SAND    ) then sound_id = 291;
-            elseif(material == SECTOR_MATERIAL_GRAVEL  ) then sound_id = 290;
-            elseif(material == SECTOR_MATERIAL_WOOD    ) then sound_id = 292;
-            elseif(material == SECTOR_MATERIAL_METAL   ) then sound_id = 294;
-            elseif(material == SECTOR_MATERIAL_GRASS   ) then sound_id = 291;
-            elseif(material == SECTOR_MATERIAL_OLDWOOD ) then sound_id = 292;
-            elseif(material == SECTOR_MATERIAL_OLDMETAL) then sound_id = 294;
+                if(material == SECTOR_MATERIAL_MUD       ) then sound_id = 288;
+            elseif(material == SECTOR_MATERIAL_SAND      ) then sound_id = 291;
+            elseif(material == SECTOR_MATERIAL_GRAVEL    ) then sound_id = 290;
+            elseif(material == SECTOR_MATERIAL_WOOD      ) then sound_id = 292;
+            elseif(material == SECTOR_MATERIAL_METAL     ) then sound_id = 294;
+            elseif(material == SECTOR_MATERIAL_GRASS     ) then sound_id = 291;
+            elseif(material == SECTOR_MATERIAL_OLDWOOD   ) then sound_id = 292;
+            elseif(material == SECTOR_MATERIAL_OLDMETAL  ) then sound_id = 294;
             
             elseif( (material == SECTOR_MATERIAL_WATER   ) or
                     (material == SECTOR_MATERIAL_STONE   ) or
-                    (material == SECTOR_MATERIAL_CONCRETE) )  then return;
+                    (material == SECTOR_MATERIAL_CONCRETE) ) then return;
 
-            elseif(getLevelVersion() ~= TR_IV) then
+            elseif(getEngineVersion() ~= Engine.IV) then
             
-                    if(material == SECTOR_MATERIAL_MARBLE) then sound_id = 293;
-                elseif(material == SECTOR_MATERIAL_ICE   ) then sound_id = 289; end;
+                    if(material == SECTOR_MATERIAL_SNOW) then sound_id = 293;
+                elseif(material == SECTOR_MATERIAL_ICE ) then sound_id = 289; end;
+                
+            elseif(getEngineVersion() == Engine.IV) then
+                    
+                    if(material == SECTOR_MATERIAL_MARBLE) then sound_id = 293; end;
                 
             end;
             
@@ -147,15 +151,15 @@ fe_Assign(3, 32,32); fe_Assign(4, 32,32); fe_Assign(5, 32,32);
 -- Get certain flipeffect array, regarding current version.
 
 function getFlipeffectArray(ver)
-    if(ver < TR_II) then
+    if(ver == Engine.I) then
         return tr1_flipeffects;
-    elseif(ver < TR_III) then
+    elseif(ver == Engine.II) then
         return tr2_flipeffects;
-    elseif(ver < TR_IV) then
+    elseif(ver == Engine.III) then
         return tr3_flipeffects;
-    elseif(ver < TR_V) then
+    elseif(ver == Engine.IV) then
         return tr4_flipeffects;
-    elseif(ver < TR_UNKNOWN) then
+    elseif(ver == Engine.V) then
         return tr5_flipeffects;
     else
         return nil;
@@ -165,7 +169,7 @@ end;
 -- Launch given flipeffect (id) for a given entity (caller) with given argument (operand).
 
 function execFlipeffect(id, caller, operand)
-    local flipeffects = getFlipeffectArray(getLevelVersion());
+    local flipeffects = getFlipeffectArray(getEngineVersion());
     if((not flipeffects) or (not flipeffects[id]) or (not flipeffects[id].onExec)) then return end;
     
     if(not caller ) then caller  = -1 end;
@@ -189,7 +193,7 @@ end;
 -- Clean up flipeffect temporary variables. Must be called on level end.
 
 function fe_Clear()
-    local flipeffects = getFlipeffectArray(getLevelVersion());
+    local flipeffects = getFlipeffectArray(getEngineVersion());
 
     for k,v in pairs(flipeffects) do
         fe_ClearEffect(flipeffects[k]);
@@ -200,7 +204,7 @@ end;
 -- Initialize flipeffect temporary variables. Must be called on level loading.
 
 function fe_Prepare()
-    local flipeffects = getFlipeffectArray(getLevelVersion());
+    local flipeffects = getFlipeffectArray(getEngineVersion());
 
     for k,v in pairs(flipeffects) do
         fe_PrepareEffect(flipeffects[k]);

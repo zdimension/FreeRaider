@@ -763,22 +763,22 @@ namespace FreeRaider
             switch (corner)
             {
                 case FaderCorner.TopLeft:
-                    topLeftColor = clr;
+                    Array.Copy(clr, topLeftColor, 3);
                     break;
                 case FaderCorner.TopRight:
-                    topRightColor = clr;
+                    Array.Copy(clr, topRightColor, 3);
                     break;
                 case FaderCorner.BottomLeft:
-                    bottomLeftColor = clr;
+                    Array.Copy(clr, bottomLeftColor, 3);
                     break;
                 case FaderCorner.BottomRight:
-                    bottomRightColor = clr;
+                    Array.Copy(clr, bottomRightColor, 3);
                     break;
                 default:
-                    topLeftColor = clr.ToArray();
-                    topRightColor = clr.ToArray();
-                    bottomLeftColor = clr.ToArray();
-                    bottomRightColor = clr.ToArray();
+                    Array.Copy(clr, topLeftColor, 3);
+                    Array.Copy(clr, topRightColor, 3);
+                    Array.Copy(clr, bottomLeftColor, 3);
+                    Array.Copy(clr, bottomRightColor, 3);
                     break;
             }
         }
@@ -2368,7 +2368,7 @@ namespace FreeRaider
                 RectanglePositionBuffer = Helper.GenBufferU();
                 GL.BindBuffer(BufferTarget.ArrayBuffer, RectanglePositionBuffer);
                 var rectCoords = new[] {0, 0, 1, 0, 1, 1, 0, 1};
-                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) Marshal.SizeOf(rectCoords), rectCoords,
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) sizeof(int), rectCoords,
                     BufferUsageHint.StaticDraw);
 
                 RectangleColorBuffer = Helper.GenBufferU();

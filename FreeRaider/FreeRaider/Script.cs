@@ -2736,7 +2736,7 @@ namespace FreeRaider.Script
 
         public object[] Call(string funcName, params object[] args)
         {
-            return (Get(funcName) as LuaFunction).Call(args);
+            return (Get(funcName) as LuaFunction)?.Call(args);
         }
 
         public void RegisterC(string funcName, MethodInfo m)
@@ -2797,7 +2797,7 @@ namespace FreeRaider.Script
             {
                 {"I", (int) TRGame.TR1},
                 {"I_DEMO", (int) TRGame.TR1Demo},
-                {"I_GOLD", (int) TRGame.TR1UnfinishedBusiness},
+                {"I_UB", (int) TRGame.TR1UnfinishedBusiness},
                 {"II", (int) TRGame.TR2},
                 {"II_DEMO", (int) TRGame.TR2Demo},
                 {"II_GOLD", (int) TRGame.TR2Gold},
