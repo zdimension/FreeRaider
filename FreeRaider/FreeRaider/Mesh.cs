@@ -741,12 +741,12 @@ namespace FreeRaider
         /// </summary>
         public float CurrentUVRotate;
 
-        public List<TexFrame> Frames;
+        public List<TexFrame> Frames = new List<TexFrame>();
 
         /// <summary>
         /// Offset into anim textures frame list.
         /// </summary>
-        public List<uint> FrameList;
+        public List<uint> FrameList = new List<uint>();
     }
 
     /// <summary>

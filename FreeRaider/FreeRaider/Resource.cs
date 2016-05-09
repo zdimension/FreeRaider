@@ -1252,7 +1252,7 @@ namespace FreeRaider
             mesh.Radius = trMesh.CollisionSize;
             mesh.TexturePageCount = world.TextureAtlas.NumAtlasPages + 1;
 
-            mesh.Vertices.Resize(trMesh.Vertices.Length);
+            mesh.Vertices.Resize(trMesh.Vertices.Length, () => new Vertex());
             for (var i = 0; i < mesh.Vertices.Count; i++)
             {
                 mesh.Vertices[i].Position = trMesh.Vertices[i].ToVector3();
@@ -1301,7 +1301,7 @@ namespace FreeRaider
             }
 
             // textured triangles
-            foreach (var face4 in trMesh.ColouredRectangles)
+            foreach (var face4 in trMesh.TexturedRectangles)
             {
                 var p = new Polygon();
 
@@ -2024,13 +2024,13 @@ namespace FreeRaider
 
                 var numSequences = *(pointer++); // First word in a stream is sequence count.
 
-                world.AnimSequences.Resize(numSequences);
+                world.AnimSequences.Resize(numSequences, () => new AnimSeq());
 
                 for(var i = 0; i < numSequences; i++)
                 {
                     var seq = world.AnimSequences[i];
 
-                    seq.Frames.Resize(*(pointer++) + 1);
+                    seq.Frames.Resize(*(pointer++) + 1, () => new TexFrame());
                     seq.FrameList.Resize(seq.Frames.Count);
 
                     // Fill up new sequence with frame list

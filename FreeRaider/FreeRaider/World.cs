@@ -1256,7 +1256,7 @@ namespace FreeRaider
             Textures = new List<uint>();
             EntityTree = new Dictionary<uint, Entity>();
             ItemsTree = new Dictionary<uint, BaseItem>();
-            Character = new Character(0);
+            Character = null;
 
             AudioSources = new List<AudioSource>();
             AudioBuffers = new uint[0];

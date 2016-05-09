@@ -675,7 +675,7 @@ namespace FreeRaider
 
         public static bool IsAnyOf(this object val, params object[] vals)
         {
-            return vals.Any(x => val == x || x == val);
+            return vals.Any(x => val == x || x == val || val.Equals(x) || x.Equals(val));
         }
 
         public static bool ToBool(this object obj)

@@ -478,7 +478,7 @@ namespace FreeRaider
                     if (canonical.NewPage != page)
                         continue;
 
-                    fixed (uint* pixels = originalPages[canonical.OriginalPage].Pixels[0])
+                    fixed (uint* pixels = &originalPages[canonical.OriginalPage].Pixels[0][0])
                     {
                         // Add top border
                         for (var border = 0; border < borderWidth; border++)

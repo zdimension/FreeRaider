@@ -1734,6 +1734,9 @@ namespace FreeRaider.Loader
 
             ret.Vertices = br.ReadArray(br.ReadInt16(), () => Vertex.Read16(br));
 
+            ret.Normals = new Vertex[0];
+            ret.Lights = new short[0];
+
             var numNormals = br.ReadInt16();
             if (numNormals >= 0)
                 ret.Normals = br.ReadArray(numNormals, () => Vertex.Read16(br));

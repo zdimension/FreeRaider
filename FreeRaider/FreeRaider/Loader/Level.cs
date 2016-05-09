@@ -196,44 +196,39 @@ namespace FreeRaider.Loader
         public static Level CreateLoader(string fileName)
         {
             Cerr.Write("Loading level '" + fileName + "'");
-            using (var fs = new FileStream(fileName, FileMode.Open))
+            var br = new BinaryReader(new FileStream(fileName, FileMode.Open));
+            var ver = Helper.ParseVersion(br, Path.GetExtension(fileName));
+            br.BaseStream.Position = 0;
+            Level lvl = null;
+            switch (ver)
             {
-                using (var br = new BinaryReader(fs))
-                {
-                    var ver = Helper.ParseVersion(br, Path.GetExtension(fileName));
-                    br.BaseStream.Position = 0;
-                    Level lvl = null;
-                    switch(ver)
-                    {
-                        case TRGame.TR1:
-                            lvl = new TR1Level(br, ver);
-                            break;
-                        case TRGame.TR1Demo:
-                            case TRGame.TR1UnfinishedBusiness:
-                            lvl = new TR1Level(br, ver);
-                            lvl.IsDemoOrUb = true;
-                            break;
-                        case TRGame.TR2:
-                            lvl = new TR2Level(br, ver);
-                            break;
-                        case TRGame.TR2Demo:
-                            lvl = new TR2Level(br, ver);
-                            lvl.IsDemoOrUb = true;
-                            break;
-                        case TRGame.TR3:
-                            lvl = new TR3Level(br, ver);
-                            break;
-                        case TRGame.TR4:
-                        case TRGame.TR4Demo:
-                            lvl = new TR4Level(br, ver);
-                            break;
-                        case TRGame.TR5:
-                            lvl = new TR5Level(br, ver);
-                            break;
-                    }
-                    return lvl;
-                }
+                case TRGame.TR1:
+                    lvl = new TR1Level(br, ver);
+                    break;
+                case TRGame.TR1Demo:
+                case TRGame.TR1UnfinishedBusiness:
+                    lvl = new TR1Level(br, ver);
+                    lvl.IsDemoOrUb = true;
+                    break;
+                case TRGame.TR2:
+                    lvl = new TR2Level(br, ver);
+                    break;
+                case TRGame.TR2Demo:
+                    lvl = new TR2Level(br, ver);
+                    lvl.IsDemoOrUb = true;
+                    break;
+                case TRGame.TR3:
+                    lvl = new TR3Level(br, ver);
+                    break;
+                case TRGame.TR4:
+                case TRGame.TR4Demo:
+                    lvl = new TR4Level(br, ver);
+                    break;
+                case TRGame.TR5:
+                    lvl = new TR5Level(br, ver);
+                    break;
             }
+            return lvl;
         }
 
         public StaticMesh FindStaticMeshById(uint objectID)

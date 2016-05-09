@@ -224,9 +224,11 @@ namespace FreeRaider
 
         public static OverlapFilterCallback BtEngineFilterCallback = null;
 
+        public static string ALDeviceString;
+
         public static IntPtr ALDevice;
 
-        public static ContextHandle ALContext;
+        public static AudioContext ALContext;
 
         // Debug globals
 
@@ -450,16 +452,7 @@ namespace FreeRaider
                 SDL_HapticClose(sdl_haptic);
             }
 
-            if(ALContext != ContextHandle.Zero)
-            {
-                Alc.MakeContextCurrent(ContextHandle.Zero);
-                Alc.DestroyContext(ALContext);
-            }
-
-            if(ALDevice != IntPtr.Zero)
-            {
-                Alc.CloseDevice(ALDevice);
-            }
+            ALContext.Dispose();
 
             // free temporary memory
             FrameVertexBuffer.Clear();
@@ -759,7 +752,19 @@ namespace FreeRaider
                 foreach (var s in devlist)
                 {
                     Sys.DebugLog(LOG_FILENAME, " Device: {0}", s);
-                    var dev = Alc.OpenDevice(s);
+
+                    try
+                    {
+                        ALContext = new AudioContext(s, 44100, 0, false, true);
+                        ALDevice = (IntPtr) ALContext.GetInstanceField("device_handle");
+                        break;
+                    }
+                    catch(Exception e)
+                    {
+                        Console.WriteLine("Failed to create OpenAL Context on device '" + s + "': " + e.Message);
+                    }
+
+                    /*var dev = Alc.OpenDevice(s);
 
                     if(Global.AudioSettings.UseEffects)
                     {
@@ -781,20 +786,16 @@ namespace FreeRaider
                         ALDevice = dev;
                         ALContext = Alc.CreateContext(dev, paramList);
                         break;
-                    }
+                    }*/
                 }
 
-                if(ALContext == ContextHandle.Zero)
+                /*if(ALContext == ContextHandle.Zero)
                 {
                     Sys.DebugLog(LOG_FILENAME, " Failed to create OpenAL context.");
                     Alc.CloseDevice(ALDevice);
                     ALDevice = IntPtr.Zero;
                     return;
-                }
-
-                Alc.MakeContextCurrent(ALContext);
-
-                Audio.LoadALExtFunctions(ALDevice);
+                }*/
 
                 var driver = "OpenAL library: " + Alc.GetString(ALDevice, AlcGetString.DeviceSpecifier);
                 ConsoleInfo.Instance.AddLine(driver, FontStyle.ConsoleInfo);
@@ -802,6 +803,8 @@ namespace FreeRaider
                 AL.SpeedOfSound(330.0f * 512.0f);
                 AL.DopplerVelocity(330.0f * 510.0f);
                 AL.DistanceModel(ALDistanceModel.LinearDistanceClamped);
+
+                Audio.EffectsExtension = new EffectsExtension();
             }
         }
 

@@ -29,7 +29,8 @@ namespace FreeRaider
             while(!Global.Done)
             {
                 var now = DateTime.Now;
-                var delta = ((now - prev_time).TotalMilliseconds / 1000) / 1.0e6;
+                //var delta = ((now - prev_time).TotalMilliseconds / 1000) / 1.0e6;
+                var delta = (now - prev_time).TotalSeconds;
                 prev_time = now;
 
                 Engine.Frame((float)(delta * Global.TimeScale));

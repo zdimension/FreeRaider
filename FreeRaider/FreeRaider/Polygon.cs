@@ -100,7 +100,7 @@ namespace FreeRaider
 
         public Polygon()
         {
-            Vertices = Helper.FillArray(default(Vertex), 4).ToList();
+            Vertices = Helper.RepeatValue(4, () => new Vertex()).ToList();
             Plane = new Plane();
         }
 

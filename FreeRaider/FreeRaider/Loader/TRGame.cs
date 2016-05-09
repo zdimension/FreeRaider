@@ -20,12 +20,12 @@ namespace FreeRaider.Loader
 
     public enum Engine
     {
-        Unknown,
         TR1,
         TR2,
         TR3,
         TR4,
-        TR5
+        TR5,
+        Unknown
     }
 }
 namespace FreeRaider
