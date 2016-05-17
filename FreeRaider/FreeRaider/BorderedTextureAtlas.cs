@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using FreeRaider.Loader;
 using OpenTK.Graphics.OpenGL;
 using static FreeRaider.Constants;
@@ -17,7 +18,7 @@ namespace FreeRaider
             var intb = (uint*) b;
             var patternValue = *(uint*) pattern;
             for (int i = 0; i < len / 4; i++)
-                intb[-i] = patternValue;
+                intb[i] = patternValue;
         }
     }
 
@@ -172,24 +173,25 @@ namespace FreeRaider
         {
             // Determine the canonical texture for this texture.
             // Use only first three vertices to find min, max, because for triangles the last will be 0,0 with no other marker that this is a triangle. As long as all textures are axis-aligned rectangles, this will always return the right result anyway.
+            var tmp = texture.Vertices.Take(3);
             var max = new[]
             {
-                texture.Vertices.Max(x => x.Xpixel),
-                texture.Vertices.Max(x => x.Ypixel)
+                tmp.Max(x => x.Xpixel),
+                tmp.Max(x => x.Ypixel)
             };
             var min = new[]
             {
-                texture.Vertices.Min(x => x.Xpixel),
-                texture.Vertices.Min(x => x.Ypixel)
+                tmp.Min(x => x.Xpixel),
+                tmp.Min(x => x.Ypixel)
             };
             var width = max[0] - min[0];
             var height = max[1] - min[1];
 
             // See whether it already exists
-            var canonicalIndex = -1;
-            for(var i = 0; i < canonicalObjectTextures.Count; i++)
+            var canonicalIndex = uint.MaxValue;
+            for(uint i = 0; i < canonicalObjectTextures.Count; i++)
             {
-                var cand = canonicalObjectTextures[i];
+                var cand = canonicalObjectTextures[(int)i];
 
                 if(cand.OriginalPage == (texture.TileAndFlag & TextureIndexMaskTr4)
                     && cand.OriginalX == min[0]
@@ -203,9 +205,9 @@ namespace FreeRaider
             }
 
             // Create it if not.
-            if(canonicalIndex == -1)
+            if(canonicalIndex == uint.MaxValue)
             {
-                canonicalIndex = canonicalObjectTextures.Count;
+                canonicalIndex = (uint)canonicalObjectTextures.Count;
 
                 canonicalObjectTextures.Add(new CanonicalObjectTexture
                 {
@@ -326,9 +328,11 @@ namespace FreeRaider
                 resultPageWidth = Helper.NextPowerOf2((uint) maxTextureEdgeLength);
             }
 
+            int a = 0;
             foreach (var tex in objectTextures)
             {
                 addObjectTexture(tex);
+                a++;
             }
 
             foreach (var tex in spriteTextures)
@@ -468,7 +472,7 @@ namespace FreeRaider
         public unsafe void CreateTextures(uint* textureNames, uint additionalTextureNames)
         {
             GL.GenTextures(resultPageHeights.Count + (int)additionalTextureNames, textureNames);
-
+           
             for (var page = 0; page < resultPageHeights.Count; page++)
             {
                 var data = new byte[4 * resultPageWidth * resultPageWidth];
@@ -477,8 +481,8 @@ namespace FreeRaider
                     var canonical = canonicalObjectTextures[texture];
                     if (canonical.NewPage != page)
                         continue;
-
-                    fixed (uint* pixels = &originalPages[canonical.OriginalPage].Pixels[0][0])
+                    var flattened = originalPages[canonical.OriginalPage].Pixels.Flatten();
+                    fixed (uint* pixels = flattened)
                     {
                         // Add top border
                         for (var border = 0; border < borderWidth; border++)
@@ -496,7 +500,7 @@ namespace FreeRaider
                                     4 * borderWidth);
                                 // copy top line
                                 Helper.memcpy(&ptr[(y * resultPageWidth + x + borderWidth) * 4],
-                                    &pixels[oldY * 256 + oldY],
+                                    &pixels[oldY * 256 + oldX],
                                     canonical.Width * 4);
                                 // expand top-right pixel
                                 Helper.memset_pattern4(
@@ -522,7 +526,7 @@ namespace FreeRaider
                                     4 * borderWidth);
                                 // copy line
                                 Helper.memcpy(&ptr[(y * resultPageWidth + x + borderWidth) * 4],
-                                    &pixels[oldY * 256 + oldY],
+                                    &pixels[oldY * 256 + oldX],
                                     canonical.Width * 4);
                                 // expand right pixel
                                 Helper.memset_pattern4(
@@ -548,7 +552,7 @@ namespace FreeRaider
                                     4 * borderWidth);
                                 // copy bottom line
                                 Helper.memcpy(&ptr[(y * resultPageWidth + x + borderWidth) * 4],
-                                    &pixels[oldY * 256 + oldY],
+                                    &pixels[oldY * 256 + oldX],
                                     canonical.Width * 4);
                                 // expand bottom-right pixel
                                 Helper.memset_pattern4(

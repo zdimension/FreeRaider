@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using BulletSharp;
 using FreeRaider.Loader;
 using FreeRaider.Script;
@@ -19,6 +23,7 @@ using static FreeRaider.Strings;
 using static FreeRaider.StaticFuncs;
 using static SDL2.SDL;
 using static SDL2.SDL_image;
+using PixelFormat = OpenTK.Graphics.OpenGL.PixelFormat;
 
 namespace FreeRaider
 {
@@ -520,7 +525,7 @@ namespace FreeRaider
         {
             GL.GetError();
 
-            GL.ClearColor(Color.Black);
+            GL.ClearColor(Color.Red);
 
             GL.Enable(EnableCap.DepthTest);
             GL.DepthFunc(DepthFunction.Lequal);
@@ -645,7 +650,7 @@ namespace FreeRaider
             // Create temporary SDL window and GL context for checking capabilities.
 
             sdl_window = SDL_CreateWindow(null, Global.ScreenInfo.X, Global.ScreenInfo.Y, Global.ScreenInfo.W,
-                Global.ScreenInfo.H, SDL_WindowFlags.SDL_WINDOW_OPENGL | SDL_WindowFlags.SDL_WINDOW_HIDDEN);
+                Global.ScreenInfo.H, SDL_WindowFlags.SDL_WINDOW_OPENGL/* | SDL_WindowFlags.SDL_WINDOW_HIDDEN*/);
             sdl_gl_context = SDL_GL_CreateContext(sdl_window);
 
             if(sdl_gl_context == IntPtr.Zero)
@@ -707,7 +712,32 @@ namespace FreeRaider
             GLContext = new GraphicsContext(new ContextHandle(sdl_gl_context),
                 SDL_GL_GetProcAddress, // implement GetAddress via SDL
                 () => new ContextHandle(SDL_GL_GetCurrentContext()));
-            if(SDL_GL_SetSwapInterval(Global.ScreenInfo.Vsync ? 1 : 0) != 0)
+            /*GLContext = new OpenTK.Platform.SDL2.Sdl2GraphicsContext(GraphicsMode.Default,
+                new OpenTK.Platform.SDL2.Sdl2WindowInfo(sdl_window, null), null, 0, 0, GraphicsContextFlags.Default);*/
+            var tka = typeof(GraphicsContext).Assembly;
+            var wi = (IWindowInfo)tka.GetType("OpenTK.Platform.SDL2.Sdl2WindowInfo")
+                .GetConstructor(BindingFlags.Instance | BindingFlags.Public, null,
+                    new[] {typeof (IntPtr), tka.GetType("OpenTK.Platform.SDL2.Sdl2WindowInfo")},
+                    new ParameterModifier[0])
+                .Invoke(new object[] {sdl_window, null});
+            GLContext.MakeCurrent(wi);
+            /*var pms = new object[]
+            {
+                GraphicsMode.Default,
+                tka.GetType("OpenTK.Platform.SDL2.Sdl2WindowInfo")
+                .GetConstructor(BindingFlags.Instance | BindingFlags.Public, null, new [] {typeof(IntPtr), tka.GetType("OpenTK.Platform.SDL2.Sdl2WindowInfo")}, new ParameterModifier[0])
+                .Invoke(new object[] {sdl_window, null}),
+                null,
+                0,
+                0,
+                GraphicsContextFlags.Default
+            };
+            GLContext = (GraphicsContext) (tka.GetType("OpenTK.Platform.SDL2.Sdl2GraphicsContext")
+                .GetConstructor(BindingFlags.Instance | BindingFlags.Public, null,
+                    new [] {typeof(GraphicsMode), tka.GetType("OpenTK.Platform.SDL2.Sdl2WindowInfo"), typeof(IGraphicsContext), typeof(int), typeof(int), typeof(GraphicsContextFlags)}, new ParameterModifier[0])
+                .Invoke(pms));*/
+
+            if (SDL_GL_SetSwapInterval(Global.ScreenInfo.Vsync ? 1 : 0) != 0)
                 Sys.DebugLog(LOG_FILENAME, "Cannot set VSYNC: {0}\n", SDL_GetError());
 
             ConsoleInfo.Instance.AddLine(GL.GetString(StringName.Vendor), FontStyle.ConsoleInfo);
@@ -741,7 +771,23 @@ namespace FreeRaider
 
                 Sys.DebugLog(LOG_FILENAME, "Probing OpenAL devices...");
 
-                var devlist = Alc.GetString(IntPtr.Zero, AlcGetStringList.DeviceSpecifier);
+                IList<string> devlist = null;
+
+                var t = new Thread(() => 
+                {
+                    var tmp = Alc.GetString(IntPtr.Zero, AlcGetStringList.DeviceSpecifier);
+                    devlist = tmp;
+                });
+                t.Start();
+                if(!t.Join(10000))
+                {
+                    t.Abort();
+                    if (devlist == null || devlist.Count == 0)
+                    { 
+                        Sys.DebugLog(LOG_FILENAME, "InitAL: Error while probing OpenAL devices. Exiting.");
+                        Shutdown(1);
+                    }
+                }
 
                 if(devlist.Count == 0)
                 {
@@ -903,7 +949,7 @@ namespace FreeRaider
                 }
             }
 
-            Gui.Render();
+            //Gui.Render();
             Gui.SwitchGLMode(false);
 
             Renderer.DrawListDebugLines();
@@ -921,8 +967,6 @@ namespace FreeRaider
             EngineFrameTime = time;
             FPSCycle(time);
 
-         /*   if(EngineWorld.EngineVersion == Loader.Engine.Unknown)
-                GameflowManager.Do();*/
             Game.Frame(time);
             GameflowManager.Do();
         }
@@ -1260,13 +1304,13 @@ namespace FreeRaider
                 {
                     return; // No self interaction
                 }
-                dispatcher.NearCallback(collisionPair, dispatcher, dispatchInfo);
+                CollisionDispatcher.DefaultNearCallback(collisionPair, dispatcher, dispatchInfo);
                 return;
             }
 
             if(r0 == null && r1 == null)
             {
-                dispatcher.NearCallback(collisionPair, dispatcher, dispatchInfo); // Both are out of rooms
+                CollisionDispatcher.DefaultNearCallback(collisionPair, dispatcher, dispatchInfo); // Both are out of rooms
                 return;
             }
 
@@ -1274,7 +1318,7 @@ namespace FreeRaider
             {
                 if(r0.IsInNearRoomsList(r1))
                 {
-                    dispatcher.NearCallback(collisionPair, dispatcher, dispatchInfo);
+                    CollisionDispatcher.DefaultNearCallback(collisionPair, dispatcher, dispatchInfo);
                 }
             }
         }

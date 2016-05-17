@@ -427,6 +427,7 @@ namespace FreeRaider
         public void ToggleVisibility()
         {
             IsVisible = !IsVisible;
+            Sys.DebugLog(LOG_FILENAME, IsVisible ? "Showing console" : "Hiding console");
         }
 
         /// <summary>

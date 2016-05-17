@@ -34,6 +34,8 @@ namespace FreeRaider
 
         public const float LARA_HANG_SENSOR_Z = 800.0f;
         // It works more stable than 1024 (after collision critical fix, of course)
+
+        public const bool OSCILLATE_HANG_USE = false;
     }
 
 
@@ -2453,14 +2455,15 @@ namespace FreeRaider
                     {
                         ent.Speed = Vector3.Zero;
                         ssAnim.NextState = TR_STATE.LaraHang;
-#if OSCILLATE_HANG_USE
-                        move = ent.Transform.Basis.Column1 * Constants.PENETRATION_TEST_OFFSET;
-                        if (ent.CheckNextPenetration(cmd, move) == 0)
+                        if (OSCILLATE_HANG_USE)
                         {
-                            ent.SetAnimation(TR_ANIMATION.LaraOscillateHangOn, 0);
-                            ent_to_edge_climb(ent);
+                            /*move = ent.Transform.Basis.Column1 * Constants.PENETRATION_TEST_OFFSET;
+                            if (ent.CheckNextPenetration(cmd, move) == 0)
+                            {
+                                ent.SetAnimation(TR_ANIMATION.LaraOscillateHangOn, 0);
+                                ent_to_edge_climb(ent);
+                            }*/
                         }
-#endif
                     }
                     break;
 

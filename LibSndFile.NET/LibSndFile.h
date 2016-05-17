@@ -25,7 +25,9 @@
 #include <Fcntl.h>
 #include "SndFileFormat.h"
 #include "SndFileException.h"
+#include "SndFileEnums.h"
 #include <iostream>
+#include <vector>
 
 
 using namespace System;
@@ -44,10 +46,25 @@ namespace LibSndFile {
 	{
 		
 
-		MemBufferFileIo(const byte* data, sf_count_t dataSize)
+		MemBufferFileIo(const unsigned char* data, sf_count_t dataSize)
 			: SF_VIRTUAL_IO()
 			, m_data(data)
 			, m_dataSize(dataSize)
+		{
+			//assert(data != nullptr);
+
+			get_filelen = &MemBufferFileIo::getFileLength;
+			seek = &MemBufferFileIo::doSeek;
+			read = &MemBufferFileIo::doRead;
+			write = &MemBufferFileIo::doWrite;
+			tell = &MemBufferFileIo::doTell;
+		}
+
+		MemBufferFileIo(std::vector<byte> data, sf_count_t dataSize)
+			: SF_VIRTUAL_IO()
+			, m_datavec(data)
+			, m_dataSize(dataSize)
+			, m_data(data.data())
 		{
 			//assert(data != nullptr);
 
@@ -118,21 +135,8 @@ namespace LibSndFile {
 		const byte* const m_data;
 		const sf_count_t m_dataSize;
 		sf_count_t m_where = 0;
+		std::vector<byte> m_datavec;
 	};
-
-	public ref class MBFIHelper
-	{
-	public:
-		static MemBufferFileIo Ctor(const System::Byte* data, System::Int64^ dataSize)
-		{
-			int a = 0;
-			int b = 0;
-			MemBufferFileIo ttt = MemBufferFileIo(data, *dataSize);
-			int c = 0;
-			return ttt;
-		}
-	};
-
 
     [SerializableAttribute]
     [ComVisibleAttribute(true)]
@@ -176,6 +180,8 @@ namespace LibSndFile {
         ///</summary>
         property IO::FileStream^ InnerFileStream
         { IO::FileStream^ get() { return _InnerFileStream; } }
+
+		property SndFileInfo^ FileInfo {SndFileInfo^ get() { return sndFileInfo; }}
         
         ///<summary>
         ///Initializes a new instance of the SndFile class.
@@ -328,10 +334,10 @@ namespace LibSndFile {
         int Read( short* samples, int countOfSamples)
         {
             int count = (int) sf_read_short( sndfileHandle, samples, countOfSamples);
-            int error = sf_error( sndfileHandle );
+            /*int error = sf_error( sndfileHandle );
 
             if( error != SF_ERR_NO_ERROR )
-                throw gcnew SndFileException( error );
+                throw gcnew SndFileException( error );*/
             return count;
        }
 
@@ -360,10 +366,10 @@ namespace LibSndFile {
         int Read( int* samples, int countOfSamples)
         {
             int count = (int) sf_read_int( sndfileHandle, samples, countOfSamples);
-            int error = sf_error( sndfileHandle );
+            /*int error = sf_error( sndfileHandle );
 
             if( error != SF_ERR_NO_ERROR )
-                throw gcnew SndFileException( error );
+                throw gcnew SndFileException( error );*/
             return count;
         }
 
@@ -392,10 +398,10 @@ namespace LibSndFile {
         int Read( float* samples, int countOfSamples)
         {
             int count = (int) sf_read_float( sndfileHandle, samples, countOfSamples);
-            int error = sf_error( sndfileHandle );
+            /*int error = sf_error( sndfileHandle );
 
             if( error != SF_ERR_NO_ERROR )
-                throw gcnew SndFileException( error );
+                throw gcnew SndFileException( error );*/
             return count;
         }
 
@@ -424,10 +430,10 @@ namespace LibSndFile {
         int Read( double* samples, int countOfSamples)
         {
             int count = (int) sf_read_double( sndfileHandle, samples, countOfSamples);
-            int error = sf_error( sndfileHandle );
+            /*int error = sf_error( sndfileHandle );
 
             if( error != SF_ERR_NO_ERROR )
-                throw gcnew SndFileException( error );
+                throw gcnew SndFileException( error );*/
             return count;
         }
 
@@ -605,10 +611,10 @@ namespace LibSndFile {
         int Write( short* samples, int countOfSamples)
         {
             int count = (int) sf_write_short( sndfileHandle, samples, countOfSamples);
-            int error = sf_error( sndfileHandle );
+            /*int error = sf_error( sndfileHandle );
 
             if( error != SF_ERR_NO_ERROR )
-                throw gcnew SndFileException( error );
+                throw gcnew SndFileException( error );*/
             return count;
         }
 
@@ -634,10 +640,10 @@ namespace LibSndFile {
         int Write( int* samples, int countOfSamples)
         {
             int count = (int) sf_write_int( sndfileHandle, samples, countOfSamples);
-            int error = sf_error( sndfileHandle );
+            /*int error = sf_error( sndfileHandle );
 
             if( error != SF_ERR_NO_ERROR )
-                throw gcnew SndFileException( error );
+                throw gcnew SndFileException( error );*/
             return count;
         }
 
@@ -663,10 +669,10 @@ namespace LibSndFile {
         int Write( float* samples, int countOfSamples)
         {
             int count = (int) sf_write_float( sndfileHandle, samples, countOfSamples);
-            int error = sf_error( sndfileHandle );
+            /*int error = sf_error( sndfileHandle );
 
             if( error != SF_ERR_NO_ERROR )
-                throw gcnew SndFileException( error );
+                throw gcnew SndFileException( error );*/
             return count;
         }
 
@@ -694,8 +700,8 @@ namespace LibSndFile {
             int count = (int) sf_write_double( sndfileHandle, samples, countOfSamples);
             int error = sf_error( sndfileHandle );
 
-            if( error != SF_ERR_NO_ERROR )
-                throw gcnew SndFileException( error );
+            /*if( error != SF_ERR_NO_ERROR )
+                throw gcnew SndFileException( error );*/
             return count;
         }
 
@@ -820,20 +826,77 @@ namespace LibSndFile {
             int get()
             {
                 SF_INFO sf_info;
-                int error;
+                //int error;
 
                 sf_command( sndfileHandle, SFC_GET_CURRENT_SF_INFO, &sf_info, sizeof(sf_info) );
-                error = sf_error( sndfileHandle );
+                /*error = sf_error( sndfileHandle );
 
                 if( error != SF_ERR_NO_ERROR )
-                    throw gcnew SndFileException( error );
+                    throw gcnew SndFileException( error );*/
 
                 return (int) sf_info.frames;
             }
         }
 
+		SndFileError GetError()
+		{
+			return (SndFileError)sf_error(sndfileHandle);
+		}
+
+		sf_count_t Seek(sf_count_t frames, SndFileSeek whence)
+		{
+			return sf_seek(sndfileHandle, frames, (int)whence);
+		}
+
+		SndFile(byte* samplePointer, unsigned long sampleSize, int mode, SndFileInfo^ info) :
+			_InnerFileStream()
+		{
+			SF_INFO sf_info;
+			memset(&sf_info, 0, sizeof(sf_info));
+			int _Flags;
+
+			sndFileInfo = info;
+
+			sf_info.samplerate = info->SamplesPerSecond;
+			sf_info.channels = info->Channels;
+			sf_info.format = info->Format;
+			sf_info.frames = info->Frames;
+			sf_info.sections = info->Sections;
+			sf_info.seekable = info->Seekable;
+
+			MemBufferFileIo wavMem(samplePointer, sampleSize);
+
+			sndfileHandle = sf_open_virtual(&wavMem, mode, &sf_info, &wavMem);
+
+			if (sndfileHandle == NULL)
+			{
+				//TODO: return a sndfile error code
+				throw gcnew SndFileException(NULL);
+			}
+
+			if (mode == SFM_RDWR)
+			{
+				_Flags = _O_RDWR;
+			}
+			else if (mode == SFM_READ)
+			{
+				_Flags = _O_RDONLY;
+			}
+			else if (mode == SFM_WRITE)
+			{
+				_Flags = _O_WRONLY;
+			}
+
+			sndFileInfo->SamplesPerSecond = sf_info.samplerate;
+			sndFileInfo->Channels = sf_info.channels;
+			sndFileInfo->Format = sf_info.format;
+			sndFileInfo->Frames = sf_info.frames;
+			sndFileInfo->Sections = sf_info.sections;
+			sndFileInfo->Seekable = sf_info.seekable;	
+		}
+
 		SndFile(
-			[InAttribute][OutAttribute] MemBufferFileIo sfvirtual,
+			[InAttribute][OutAttribute] MemBufferFileIo* sfvirtual,
 			[InAttribute] int mode,
 			[InAttribute][OutAttribute] SndFileInfo^ info,
 			[InAttribute][OutAttribute] void* userdata) :
@@ -864,7 +927,7 @@ namespace LibSndFile {
 				_Flags = _O_WRONLY;
 			}
 
-			sndfileHandle = sf_open_virtual(&sfvirtual, mode, &sf_info, &userdata);
+			sndfileHandle = sf_open_virtual(sfvirtual, mode, &sf_info, &userdata);
 
 			if (sndfileHandle == NULL)
 			{

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using FreeRaider.Loader;
 using LibSndFile;
 using OpenTK;
@@ -1021,9 +1022,9 @@ namespace FreeRaider
             {
                 if (!stream(buffersToPlay))
                 {
-                    if (buffersToPlay != 1)
+                    if (buffersToPlay == 0)
                     {
-                        // TODO: Error preparing buffers
+                        Sys.DebugLog(LOG_FILENAME, "StreamTrack: error preparing buffers.");
                         return false;
                     }
                     else break;
@@ -1311,23 +1312,10 @@ namespace FreeRaider
 
             sfInfo = sndFile.GetSndFileInfo();
 
-            /* TODO:
-# ifdef AUDIO_OPENAL_FLOAT
-
-            if (sf_info.channels == 1)
-                format = AL_FORMAT_MONO_FLOAT32;
+            if (AUDIO_OPENAL_FLOAT)
+                format = sfInfo.Channels == 1 ? ALFormat.MonoFloat32Ext : ALFormat.StereoFloat32Ext;
             else
-                format = AL_FORMAT_STEREO_FLOAT32;
-#else
-            if (sf_info.channels == 1)
-                format = AL_FORMAT_MONO16;
-            else
-                format = AL_FORMAT_STEREO16;
-#endif
-
-    */
-
-            format = sfInfo.Channels == 1 ? ALFormat.MonoFloat32Ext : ALFormat.StereoFloat32Ext;
+                format = sfInfo.Channels == 1 ? ALFormat.Mono16 : ALFormat.Stereo16;
 
             rate = sfInfo.SamplesPerSecond;
 
@@ -1341,7 +1329,7 @@ namespace FreeRaider
         {
             if (index >= TR_AUDIO_STREAM_WAD_COUNT)
             {
-                // TODO: Warning: WAD out of bounds
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WAD_OUT_OF_BOUNDS, TR_AUDIO_STREAM_WAD_COUNT);
                 return false;
             }
 
@@ -1351,16 +1339,20 @@ namespace FreeRaider
             }
             catch
             {
-                // TODO: handle exception
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_FILE_NOT_FOUND, filename);
                 return false;
             }
+
+            var trackName = "";
+            uint offset = 0;
+            uint length = 0;
 
             using (var br = new BinaryReader(wadFile))
             {
                 br.BaseStream.Position = index * TR_AUDIO_STREAM_WAD_NAMELENGTH;
-                var trackName = br.ParseString(TR_AUDIO_STREAM_WAD_NAMELENGTH);
-                var length = br.ReadUInt32();
-                var offset = br.ReadUInt32();
+                trackName = br.ParseString(TR_AUDIO_STREAM_WAD_NAMELENGTH);
+                length = br.ReadUInt32();
+                offset = br.ReadUInt32();
                 br.BaseStream.Position = offset;
             }
 
@@ -1374,26 +1366,15 @@ namespace FreeRaider
                 return false;
             }
 
+            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_WAD_PLAYING, filename, offset, length);
+            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_TRACK_OPENED, trackName, sfInfo.Channels, sfInfo.SamplesPerSecond);
+
             sfInfo = sndFile.GetSndFileInfo();
 
-
-            /* TODO:
-# ifdef AUDIO_OPENAL_FLOAT
-
-if (sf_info.channels == 1)
-    format = AL_FORMAT_MONO_FLOAT32;
-else
-    format = AL_FORMAT_STEREO_FLOAT32;
-#else
-if (sf_info.channels == 1)
-    format = AL_FORMAT_MONO16;
-else
-    format = AL_FORMAT_STEREO16;
-#endif
-
-*/
-
-            format = sfInfo.Channels == 1 ? ALFormat.MonoFloat32Ext : ALFormat.StereoFloat32Ext;
+            if (AUDIO_OPENAL_FLOAT)
+                format = sfInfo.Channels == 1 ? ALFormat.MonoFloat32Ext : ALFormat.StereoFloat32Ext;
+            else
+                format = sfInfo.Channels == 1 ? ALFormat.Mono16 : ALFormat.Stereo16;
 
             rate = sfInfo.SamplesPerSecond;
 
@@ -1406,43 +1387,57 @@ else
         private unsafe bool stream(uint buffer)
         {
             StaticFuncs.Assert(Global.AudioSettings.StreamBufferSize >= sfInfo.Channels - 1);
-            /*
-#ifdef AUDIO_OPENAL_FLOAT
-    std::vector<ALfloat> pcm(Global.AudioSettings.stream_buffer_size);
-#else
-    std::vector<ALshort> pcm(Global.AudioSettings.stream_buffer_size);
-#endif
-*/
-            var pcm = new float[Global.AudioSettings.StreamBufferSize];
+
+            dynamic pcm;
+            if (AUDIO_OPENAL_FLOAT)
+                pcm = new float[Global.AudioSettings.StreamBufferSize];
+            else
+                pcm = new short[Global.AudioSettings.StreamBufferSize];
             var size = 0;
+
+            // SBS - C + 1 is important to avoid endless loops if the buffer size isn't a multiple of the channels
             while (size < pcm.Length - sfInfo.Channels + 1)
             {
+                // we need to read a multiple of sf_info.channels here
                 var samplesToRead = (Global.AudioSettings.StreamBufferSize - size) / sfInfo.Channels * sfInfo.Channels;
-                /*
-#ifdef AUDIO_OPENAL_FLOAT
-        const sf_count_t samplesRead = sf_read_float(snd_file, pcm.data() + size, samplesToRead);
-#else
-        const sf_count_t samplesRead = sf_read_short(snd_file, pcm.data() + size, samplesToRead);
-#endif
-                */
                 var samplesRead = 0;
-                fixed (float* ptr = pcm)
-                    samplesRead = sndFile.Read(ptr + size, samplesToRead);
+                if(AUDIO_OPENAL_FLOAT)
+                    fixed (float* ptr = (float[])pcm)
+                        samplesRead = sndFile.Read(ptr + size, samplesToRead);
+                else
+                    fixed (short* ptr = (short[]) pcm)
+                        samplesRead = sndFile.Read(ptr + size, samplesToRead);
 
-                if(samplesRead > 0)
+                if (samplesRead > 0)
                 {
                     size += samplesRead;
                 }
                 else
                 {
-                    // TODO: Handle error (Audio.cpp L950)
+                    var error = sndFile.GetError();
+                    if(error != SndFileError.NoError)
+                    {
+                        Audio.LogSndFileError((int)error);
+                        return false;
+                    }
+                    else
+                    {
+                        if(streamType == TR_AUDIO_STREAM_TYPE.Background)
+                        {
+                            sndFile.Seek(0, SndFileSeek.Set);
+                        }
+                        else
+                        {
+                            break; // Stream is ending - do nothing.
+                        }
+                    }
                 }
             }
 
             if (size == 0)
                 return false;
 
-            AL.BufferData((int)buffer, format, pcm, size * sizeof(float), rate);
+            AL.BufferData((int)buffer, format, pcm, size * (AUDIO_OPENAL_FLOAT ? sizeof(float) : sizeof(short)), rate);
             return true;
         }
 
@@ -1557,11 +1552,11 @@ else
             // Generate new source array.
 
             numSources -= TR_AUDIO_STREAM_NUMSOURCES; // Subtract sources reserved for music.
-            EngineWorld.AudioSources.Resize(numSources);
+            EngineWorld.AudioSources.Resize(numSources, () => new AudioSource());
 
             // Generate stream tracks array.
 
-            EngineWorld.StreamTracks.Resize(TR_AUDIO_STREAM_NUMSOURCES);
+            EngineWorld.StreamTracks.Resize(TR_AUDIO_STREAM_NUMSOURCES, () => new StreamTrack());
 
             // Reset last room type used for assigning reverb.
 
@@ -1929,15 +1924,22 @@ else
         {
             if (sfInfo.Channels > 1) // We can't use non-mono samples
             {
-                // TODO: Warn "Error: sample %bufNumber% is not mono!"
+                Sys.DebugLog(LOG_FILENAME, "Error: sample {0:D3} is not mono!", bufNumber);
                 return false;
             }
 
-            // TODO: See line 1845
-
-            var frames = new float[bufSize / sizeof (float)];
-            wavFile.Read(frames, frames.Length);
-            AL.BufferData((int)bufNumber, ALFormat.MonoFloat32Ext, frames, (int)bufSize, sfInfo.SamplesPerSecond);
+            if (AUDIO_OPENAL_FLOAT)
+            {
+                var frames = new float[bufSize / sizeof (float)];
+                wavFile.Read(frames, frames.Length);
+                AL.BufferData((int) bufNumber, ALFormat.MonoFloat32Ext, frames, (int) bufSize, sfInfo.SamplesPerSecond);
+            }
+            else
+            {
+                var frames = new short[bufSize / sizeof(short)];
+                wavFile.Read(frames, frames.Length);
+                AL.BufferData((int)bufNumber, ALFormat.Mono16, frames, (int)bufSize, sfInfo.SamplesPerSecond);
+            }
 
             LogALError();
             return true;
@@ -1948,14 +1950,9 @@ else
         {
             try
             {
-                var wavMem = new MemBufferFileIo();
-                var b1 = Pointer.Box(&wavMem, typeof (MemBufferFileIo));
-                var b2 = Pointer.Box(samplePointer, typeof (byte));
-                typeof(MBFIHelper).GetMethod("Ctor", BindingFlags.Public | BindingFlags.Static).Invoke(null, new [] {b1, b2, sampleSize});
-
-                using (var file = new SndFile(wavMem, SFM_READ, new SndFileInfo(), &wavMem))
+                using (var sample = new SndFile(samplePointer, sampleSize, SFM_READ, new SndFileInfo()))
                 {
-                    var sfInfo = new SndFileInfo();
+                    var sfInfo = sample.FileInfo;
 
                     // Uncomp_sample_size explicitly specifies amount of raw sample data
                     // to load into buffer. It is only used in TR4/5 with ADPCM samples,
@@ -1973,19 +1970,21 @@ else
                     }
 
                     // We need to change buffer size, as we're using floats here.
-                    uncompSampleSize = (uncompSampleSize / sizeof (ushort)) * sizeof (float);
+
+                    if (AUDIO_OPENAL_FLOAT)
+                        uncompSampleSize = (uncompSampleSize / sizeof (ushort)) * sizeof (float);
+                    else
+                        uncompSampleSize = (uncompSampleSize / sizeof(ushort)) * sizeof(short);
 
                     // Find out sample format and load it correspondingly.
                     // Note that with OpenAL, we can have samples of different formats in same level.
 
-                    return FillALBuffer(bufNumber, file, uncompSampleSize, sfInfo) ? 0 : -3;
-                    // Zero means success
+                    return FillALBuffer(bufNumber, sample, uncompSampleSize, sfInfo) ? 0 : -3; // Zero means success
                 }
-
             }
             catch
             {
-                Sys.DebugLog(LOG_FILENAME, "Error: can't load sample {0} from sample block!", bufNumber);
+                Sys.DebugLog(LOG_FILENAME, "Error: can't load sample #{0:D3} from sample block!", bufNumber);
                 return -1;
             }
         }
@@ -2000,7 +1999,7 @@ else
                     {
                         var sfInfo = file.GetSndFileInfo();
 
-                        return FillALBuffer(bufNumber, file, (uint) file.FramesCount * sizeof (float), sfInfo) ? 0 : -3; // Zero means success
+                        return FillALBuffer(bufNumber, file, (uint) file.FramesCount * (AUDIO_OPENAL_FLOAT ? sizeof(float) : sizeof(short)), sfInfo) ? 0 : -3; // Zero means success
                     }
                 }
             }
@@ -2070,7 +2069,7 @@ else
             }
             else
             {
-                // TODO: Handle error: "OpenAL error: no effect %effect%"
+                Sys.DebugLog(LOG_FILENAME, "OpenAL error: no effect {0}", effect);
                 return false;
             }
 
@@ -2272,7 +2271,7 @@ else
 
                 if(targetStream == -1)
                 {
-                    // TODO: Warning No free stream
+                    ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_FREE_STREAM);
                     return TR_AUDIO_STREAMPLAY.NoFreeStream; // No success, exit and don't play anything.
                 }
             }
@@ -2290,7 +2289,7 @@ else
 
             if(!EngineWorld.StreamTracks[targetStream].Load(filePath, (int)trackID, streamType, loadMethod))
             {
-                // TODO: Warning Stream load error
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_STREAM_LOAD_ERROR);
                 return TR_AUDIO_STREAMPLAY.LoadError;
             }
 
@@ -2298,7 +2297,7 @@ else
 
             if (!EngineWorld.StreamTracks[targetStream].Play(doFadeIn))
             {
-                // TODO: Warning Stream play error
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_STREAM_PLAY_ERROR);
                 return TR_AUDIO_STREAMPLAY.PlayError;
             }
 
@@ -2317,7 +2316,7 @@ else
             var err = AL.GetError();
             if(err != ALError.NoError)
             {
-                Sys.DebugLog(LOG_FILENAME, $"OpenAL error: {AL.GetErrorString(err)} / {errorMarker}");
+                Sys.DebugLog(LOG_FILENAME, "OpenAL error: {0} / {1}", AL.GetErrorString(err), errorMarker);
                 return true;
             }
             return false;
@@ -2462,7 +2461,7 @@ void Audio_LoadALExtFunctions(ALCdevice* device)
             {
                 if(sw.Elapsed.Seconds > TR_AUDIO_DEINIT_DELAY)
                 {
-                    // TODO: Handle "Audio deinit timeout reached! Something is wrong with the audio driver!"
+                    Sys.DebugLog(LOG_FILENAME, "Audio deinit timeout reached! Something is wrong with the audio driver!");
                     break;
                 }
             }

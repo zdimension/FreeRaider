@@ -101,9 +101,9 @@ namespace FreeRaider
 
             HitFunc = rds["hit_callback"];
 
-            JointSetup.Resize((int) rds["joint_count"]);
+            JointSetup.Resize((int) rds["joint_count"], () => new RDJointSetup());
 
-            BodySetup.Resize((int) rds["body_count"]);
+            BodySetup.Resize((int) rds["body_count"], () => new RDBodySetup());
 
             JointCfm = rds["joint_cfm"];
             JointErp = rds["joint_erp"];

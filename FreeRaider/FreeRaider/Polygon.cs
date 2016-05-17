@@ -173,7 +173,7 @@ namespace FreeRaider
 
         public void Transform(Polygon src, Transform tr)
         {
-            Vertices.Resize(src.Vertices.Count);
+            Vertices.Resize(src.Vertices.Count, () => new Vertex());
 
             Plane.Normal = tr.Basis.MultiplyByVector(src.Plane.Normal);
             for (var i = 0; i < src.Vertices.Count; i++)

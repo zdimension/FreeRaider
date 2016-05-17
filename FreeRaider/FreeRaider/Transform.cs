@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using OpenTK;
 using OpenTK.Graphics;
 
@@ -69,7 +70,7 @@ namespace FreeRaider
 
         public static explicit operator Matrix4(Transform t)
         {
-            return Helper.CreateInstance<Matrix4>(t.GetOpenGLMatrix());
+            return Helper.CreateInstance<Matrix4>(t.GetOpenGLMatrix().Cast<object>().ToArray());
         }
 
         public static explicit operator Transform(Matrix4 t)

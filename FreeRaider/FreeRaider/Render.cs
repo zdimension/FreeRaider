@@ -163,7 +163,7 @@ namespace FreeRaider
                         new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.Color, 3,
                             VertexAttribPointerType.Float, false, glBuffer, 6 * sizeof(float), 3 * sizeof(float))
                     };
-                    vertexArray = new VertexArray(0, attribs);
+                    vertexArray = new VertexArray(0, 2, attribs);
                 }
 
                 GL.BindBuffer(BufferTarget.ArrayBuffer, glBuffer);
@@ -516,7 +516,7 @@ namespace FreeRaider
 
             foreach (var room in renderList)
             {
-                room.Frustum.Clear();
+                room?.Frustum.Clear();
             }
 
             drawSkybox = false;
@@ -1214,6 +1214,7 @@ namespace FreeRaider
                     }
 
                     GL.BindTexture(TextureTarget.Texture2D, World.Textures[texture]);
+                    mesh.MainVertexArray.Bind();
                     GL.DrawElements(PrimitiveType.Triangles, (int)mesh.ElementsPerTexture[texture], DrawElementsType.UnsignedInt, elementsbase + offset);
                     offset += (int)mesh.ElementsPerTexture[texture];
                 }
@@ -1392,7 +1393,7 @@ namespace FreeRaider
                                 VertexAttribPointerType.Float, false, stencilVBO, 3 * sizeof(float), 0),
                         };
 
-                        var array = new VertexArray(0, attribs);
+                        var array = new VertexArray(0, 1, attribs);
                         array.Bind();
 
                         foreach (var f in room.Frustum)

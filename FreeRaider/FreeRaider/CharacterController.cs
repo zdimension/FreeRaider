@@ -398,11 +398,11 @@ namespace FreeRaider
         /// </summary>
         public CharacterResponse Response = new CharacterResponse();
 
-        public List<InventoryNode> Inventory;
+        public List<InventoryNode> Inventory = new List<InventoryNode>();
 
         public CharacterParam Parameters = new CharacterParam();
 
-        public CharacterStats Statistics;
+        public CharacterStats Statistics = new CharacterStats();
 
         public List<Hair> Hairs = new List<Hair>();
 
@@ -457,7 +457,7 @@ namespace FreeRaider
 
         public HeightInfo HeightInfo = new HeightInfo();
 
-        public ClimbInfo Climb = null;
+        public ClimbInfo Climb = new ClimbInfo();
 
         public Entity TraversedObject = null;
 

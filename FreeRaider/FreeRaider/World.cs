@@ -233,13 +233,13 @@ namespace FreeRaider
 
         public Vector3 Position;
 
-        public Vector3[] CeilingCorners;
+        public Vector3[] CeilingCorners = new Vector3[4];
 
         public TR_SECTOR_DIAGONAL_TYPE CeilingDiagonalType;
 
         public TR_PENETRATION_CONFIG CeilingPenetrationConfig;
 
-        public Vector3[] FloorCorners;
+        public Vector3[] FloorCorners = new Vector3[4];
 
         public TR_SECTOR_DIAGONAL_TYPE FloorDiagonalType;
 
@@ -460,12 +460,12 @@ namespace FreeRaider
 
     public class SectorTween
     {
-        public Vector3[] FloorCorners;
-        public SectorTweenType FloorTweenType;
+        public Vector3[] FloorCorners = new Vector3[4];
+        public SectorTweenType FloorTweenType = SectorTweenType.None;
 
-        public Vector3[] CeilingCorners;
+        public Vector3[] CeilingCorners = new Vector3[4];
 
-        public SectorTweenType CeilingTweenType;
+        public SectorTweenType CeilingTweenType = SectorTweenType.None;
     }
 
     public class RoomSprite
@@ -523,11 +523,11 @@ namespace FreeRaider
         /// </summary>
         public SpriteBuffer SpriteBuffer;
 
-        public List<StaticMesh> StaticMesh;
+        public List<StaticMesh> StaticMesh = new List<StaticMesh>();
 
-        public List<RoomSprite> Sprites;
+        public List<RoomSprite> Sprites = new List<RoomSprite>();
 
-        public List<EngineContainer> Containers;
+        public List<EngineContainer> Containers = new List<EngineContainer>();
 
         /// <summary>
         /// Room's bounding box
@@ -546,12 +546,12 @@ namespace FreeRaider
 
         public float[] AmbientLighting;
 
-        public List<Light> Lights;
+        public List<Light> Lights = new List<Light>();
 
         /// <summary>
         /// Room portals array
         /// </summary>
-        public List<Portal> Portals;
+        public List<Portal> Portals = new List<Portal>();
 
         /// <summary>
         /// Alternative room pointer
@@ -881,7 +881,7 @@ namespace FreeRaider
                 UsesVertexColors = true // This is implicitly true on room meshes
             };
 
-            Mesh.Vertices.Resize(trRoom.Vertices.Length);
+            Mesh.Vertices.Resize(trRoom.Vertices.Length, () => new Vertex());
             for (var i = 0; i < Mesh.Vertices.Count; i++)
             {
                 Mesh.Vertices[i].Position = trRoom.Vertices[i].Vertex.ToVector3();
@@ -890,7 +890,7 @@ namespace FreeRaider
 
             Mesh.FindBB();
 
-            Mesh.Polygons.Resize(trRoom.Triangles.Length + trRoom.Rectangles.Length);
+            Mesh.Polygons.Resize(trRoom.Triangles.Length + trRoom.Rectangles.Length, () => new Polygon());
             var p = 0;
 
             // triangles
@@ -1261,6 +1261,7 @@ namespace FreeRaider
             AudioSources = new List<AudioSource>();
             AudioBuffers = new uint[0];
             AudioEffects = new List<AudioEffect>();
+            AudioEmitters = new List<AudioEmitter>();
             AnimSequences = new List<AnimSeq>();
             StreamTracks = new List<StreamTrack>();
             StreamTrackMap = new List<byte>();

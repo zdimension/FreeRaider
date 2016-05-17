@@ -831,6 +831,7 @@ namespace FreeRaider
                     System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                 GL.TexImage2D(TextureTarget.Texture2D, 0, colorDepth, data.Width, data.Height, 0,
                     textureFormat, PixelType.UnsignedByte, data.Scan0);
+
                 bmp.UnlockBits(data);
             }
             catch (Exception ex)
@@ -2100,7 +2101,7 @@ namespace FreeRaider
                     Marshal.SizeOf(typeof (GuiBufferEntryS)),
                     (int) Marshal.OffsetOf(typeof (GuiBufferEntryS), "Color"))
             };
-            CrosshairArray = new VertexArray(0, attribs);
+            CrosshairArray = new VertexArray(0, 2, attribs);
         }
 
         public static void AddLine(TextLine line)
@@ -2381,7 +2382,7 @@ namespace FreeRaider
                         VertexAttribPointerType.Float, false, RectangleColorBuffer,4 * sizeof(float),
                         0)
                 };
-                RectangleArray = new VertexArray(0, attribs);
+                RectangleArray = new VertexArray(0, 2, attribs);
             }
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, RectangleColorBuffer);

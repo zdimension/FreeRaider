@@ -331,7 +331,7 @@ namespace FreeRaider
                 var original = model.MeshTree[i].MeshBase;
 
                 // Copy vertices
-                var verticesStart = Mesh.Vertices.Count; // TODO: Wut... size == 0 (cf. L313)
+                var verticesStart = Mesh.Vertices.Count; // TODO: Wut... size == 0 (cf. L328)
                 Mesh.Vertices.AddRange(original.Vertices);
 
                 // Copy elements

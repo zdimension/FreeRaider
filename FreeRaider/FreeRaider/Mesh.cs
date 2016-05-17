@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using BulletSharp;
@@ -24,6 +25,8 @@ namespace FreeRaider
         /// Fully transparency or has transparency and opaque polygon / object
         /// </summary>
         public const byte MESH_HAS_TRANSPARENCY = 0x01;
+
+        public const bool SHOW_ENTITY_OFFSET_WARNINGS = false;
     }
 
     [Flags]
@@ -70,7 +73,14 @@ namespace FreeRaider
         /// <summary>
         /// Mesh's ID
         /// </summary>
-        public uint ID;
+        public uint ID
+        {
+            get { return _id; }
+            set
+            {
+                _id = value;
+            }
+        }
 
         /// <summary>
         /// Does this mesh have prebaked vertex lighting
@@ -181,6 +191,7 @@ namespace FreeRaider
         public uint AnimatedVBOIndexArray;
 
         public VertexArray AnimatedVertexArray;
+        private uint _id;
 
         ~BaseMesh()
         {
@@ -226,7 +237,7 @@ namespace FreeRaider
 
         public void GenVBO(Render renderer)
         {
-            if (((uint)0).IsAnyOf(VBOIndexArray, VBOVertexArray, VBOSkinArray))
+            if (VBOIndexArray != 0 || VBOVertexArray != 0 || VBOSkinArray != 0)
                 return;
 
             // now, begin VBO filling!
@@ -279,7 +290,7 @@ namespace FreeRaider
                     VertexAttribPointerType.UnsignedByte, false, VBOSkinArray, 2, 0)
             };
             var numAttribs = MatrixIndices.Count == 0 ? 4 : 5;
-            MainVertexArray = new VertexArray(VBOIndexArray, attribs);
+            MainVertexArray = new VertexArray(VBOIndexArray, numAttribs, attribs);
 
             // Now for animated polygons, if any
             if (AllAnimatedElements.Count > 0)
@@ -321,7 +332,7 @@ namespace FreeRaider
                     new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.TexCoord, 2,
                         VertexAttribPointerType.Float, false, AnimatedVBOTexCoordArray, 2 * sizeof(float), 0)
                 };
-                AnimatedVertexArray = new VertexArray(AnimatedVBOIndexArray, attribs2);
+                AnimatedVertexArray = new VertexArray(AnimatedVBOIndexArray, 4, attribs2);
             }
             else
             {
@@ -420,14 +431,21 @@ namespace FreeRaider
             uint animatedStart = 0;
             var animatedStartTransparent = AnimatedElementCount;
 
-            TransparentPolygons.Resize(transparent);
+            TransparentPolygons.Resize(transparent, () => new TransparentPolygonReference());
             var transparentPolygonStart = 0;
 
+            var tmp = new Dictionary<int, int>();
+            var itmp = 0;
             foreach (var p in Polygons.Where(p => !p.IsBroken))
             {
                 var elementCount = (uint) (p.Vertices.Count - 2) * 3;
                 var backwardsStartOffset = elementCount;
                 if (p.DoubleSide) elementCount *= 2;
+
+                if (Vertices.Count == 60)
+                {
+                    //Debugger.Break();
+                }
 
                 if (p.AnimID == 0)
                 {
@@ -508,23 +526,39 @@ namespace FreeRaider
                         var thisElement = AddAnimatedVertex(p.Vertices[j]);
 
                         var offset1 = (int) oldStart + (j - 2) * 3;
-                        Elements[offset1 + 0] = startElement;
-                        Elements[offset1 + 1] = previousElement;
-                        Elements[offset1 + 2] = thisElement;
+                        if (offset1 >= Elements.Count)
+                        {
+                            if(SHOW_ENTITY_OFFSET_WARNINGS) Console.WriteLine("offset1 >= elements.count, shouldn't happen");
+                        }
+                        else
+                        {
+                            Elements[offset1 + 0] = startElement;
+                            Elements[offset1 + 1] = previousElement;
+                            Elements[offset1 + 2] = thisElement;
+                        }
 
                         if (p.DoubleSide)
                         {
                             var offset2 = (int) backwardsStart + (j - 2) * 3;
-                            Elements[offset2 + 0] = startElement;
-                            Elements[offset2 + 1] = thisElement;
-                            Elements[offset2 + 2] = previousElement;
+                            if (offset2 >= Elements.Count)
+                            {
+                                if (SHOW_ENTITY_OFFSET_WARNINGS) Console.WriteLine("offset2 >= elements.count, shouldn't happen");
+                            }
+                            else
+                            {
+                                Elements[offset2 + 0] = startElement;
+                                Elements[offset2 + 1] = thisElement;
+                                Elements[offset2 + 2] = previousElement;
+                            }
                         }
 
                         previousElement = thisElement;
                     }
                 }
+                tmp.Add(itmp, Vertices.Count);
+                itmp++;
             }
-
+            var a = 5;
             // Now same for animated triangles
         }
 
@@ -809,9 +843,9 @@ namespace FreeRaider
         /// <summary>
         /// GL transformation matrix
         /// </summary>
-        public Transform Transform;
+        public Transform Transform = new Transform();
 
-        public OBB OBB;
+        public OBB OBB = new OBB();
 
         public EngineContainer Self;
 
@@ -865,12 +899,12 @@ namespace FreeRaider
         /// <summary>
         /// 4x4 OpenGL matrix for stack usage
         /// </summary>
-        public Transform Transform;
+        public Transform Transform = new Transform();
 
         /// <summary>
         /// 4x4 OpenGL matrix for global usage
         /// </summary>
-        public Transform FullTransform;
+        public Transform FullTransform = new Transform();
 
         /// <summary>
         /// Flag: BODY, LEFT_LEG_1, RIGHT_HAND_2, HEAD...
@@ -950,7 +984,7 @@ namespace FreeRaider
         /// <summary>
         /// Array of bones
         /// </summary>
-        public List<SSBoneTag> BoneTags;
+        public List<SSBoneTag> BoneTags = new List<SSBoneTag>();
 
         /// <summary>
         /// Position (base offset)
@@ -991,13 +1025,12 @@ namespace FreeRaider
             Position = Vector3.Zero;
             Animations = new SSAnimation();
 
-            /*Animations.Next = null; TODO: Not needed
-            Animations.OnFrame = null;*/
             Animations.Model = model;
-            BoneTags.Resize(model.MeshCount);
+            BoneTags.Resize(model.MeshCount, () => new SSBoneTag());
 
             var stack = 0;
-            var parents = new List<SSBoneTag>(BoneTags.Count);
+            var parents = new List<SSBoneTag>();
+            parents.Resize(BoneTags.Count, () => new SSBoneTag());
             parents[0] = null;
             BoneTags[0].Parent = null;
             for (ushort i = 0; i < BoneTags.Count; i++)
@@ -1065,7 +1098,7 @@ namespace FreeRaider
         /// <summary>
         /// Array of bones
         /// </summary>
-        public List<BoneTag> BoneTags;
+        public List<BoneTag> BoneTags = new List<BoneTag>();
 
         /// <summary>
         /// Position (base offset)
@@ -1104,7 +1137,7 @@ namespace FreeRaider
 
         public static void Copy(BoneFrame dst, BoneFrame src)
         {
-            dst.BoneTags.Resize(src.BoneTags.Count);
+            dst.BoneTags.Resize(src.BoneTags.Count, () => new BoneTag());
             dst.Position = src.Position;
             dst.Centre = src.Centre;
             dst.BBMax = src.BBMax;
@@ -1189,7 +1222,7 @@ namespace FreeRaider
     {
         public TR_STATE ID;
 
-        public List<AnimDispatch> AnimDispatch;
+        public List<AnimDispatch> AnimDispatch = new List<AnimDispatch>();
     }
 
     /// <summary>
@@ -1230,12 +1263,12 @@ namespace FreeRaider
         /// <summary>
         /// Frame data
         /// </summary>
-        public List<BoneFrame> Frames;
+        public List<BoneFrame> Frames = new List<BoneFrame>();
 
         /// <summary>
         /// Animation statechanges data
         /// </summary>
-        public List<StateChange> StateChange;
+        public List<StateChange> StateChange = new List<StateChange>();
 
         /// <summary>
         /// Next default animation
@@ -1281,7 +1314,7 @@ namespace FreeRaider
         /// <summary>
         /// Animations data
         /// </summary>
-        public List<AnimationFrame> Animations = Helper.FillArray((AnimationFrame) null, (int) TR_ANIMATION.LastIndex).ToList();
+        public List<AnimationFrame> Animations = new List<AnimationFrame>();
 
         /// <summary>
         /// Number of model meshes
@@ -1291,15 +1324,15 @@ namespace FreeRaider
         /// <summary>
         /// Base mesh tree
         /// </summary>
-        public List<MeshTreeTag> MeshTree;
+        public List<MeshTreeTag> MeshTree = new List<MeshTreeTag>();
 
-        public List<ushort> CollisionMap;
+        public List<ushort> CollisionMap = new List<ushort>();
 
         public void Clear()
         {
             MeshTree.Clear();
             CollisionMap.Clear();
-            Animations = Helper.FillArray((AnimationFrame)null, (int)TR_ANIMATION.LastIndex).ToList();
+            Animations.Clear();
         }
 
         public void FillTransparency()
@@ -1315,18 +1348,24 @@ namespace FreeRaider
             }
         }
 
-        public void InterpolateFrames()
+        public unsafe void InterpolateFrames()
         {
             foreach (var anim in Animations)
             {
                 if (anim.Frames.Count > 1 && anim.OriginalFrameRate > 1) // we can't interpolate one frame or rate < 2!
                 {
-                    var newBoneFrames = new BoneFrame[anim.OriginalFrameRate * (anim.Frames.Count - 1) + 1].ToList();
+                    var newBoneFrames = new List<BoneFrame>();
+                    newBoneFrames.Resize(anim.OriginalFrameRate * (anim.Frames.Count - 1) + 1, () => new BoneFrame());
 
                     // the first frame does not change
                     var bfi = 0;
                     var bf = newBoneFrames[bfi];
-                    bf.BoneTags.Resize(MeshCount);
+                    var inc = new Action(() =>
+                    {
+                        bfi++;
+                        bf = bfi == newBoneFrames.Count ? null : newBoneFrames[bfi];
+                    });
+                    bf.BoneTags.Resize(MeshCount, () => new BoneTag());
                     bf.Position = Vector3.Zero;
                     bf.Move = Vector3.Zero;
                     bf.Command = 0x00;
@@ -1339,9 +1378,7 @@ namespace FreeRaider
                         bf.BoneTags[k].Offset = anim.Frames[0].BoneTags[k].Offset;
                         bf.BoneTags[k].QRotate = anim.Frames[0].BoneTags[k].QRotate;
                     }
-
-                    bfi++;
-                    bf = newBoneFrames[bfi];
+                    inc();
 
                     for (var j = 1; j < anim.Frames.Count; j++)
                     {
@@ -1353,7 +1390,7 @@ namespace FreeRaider
                             var lerp = (float) l / anim.OriginalFrameRate;
                             var t = 1 - lerp;
 
-                            bf.BoneTags.Resize(MeshCount);
+                            bf.BoneTags.Resize(MeshCount, () => new BoneTag());
 
                             var prev = anim.Frames[j - 1];
                             var cur = anim.Frames[j];
@@ -1379,8 +1416,7 @@ namespace FreeRaider
                                     cur.BoneTags[k].QRotate, lerp);
                             }
 
-                            bfi++;
-                            bf = newBoneFrames[bfi];
+                            inc();
                         }
                     }
 
@@ -1403,7 +1439,7 @@ namespace FreeRaider
                     return;
                 }
 
-                treeTag.MeshSkin.MatrixIndices.Resize(treeTag.MeshSkin.Vertices.Count);
+                treeTag.MeshSkin.MatrixIndices.Resize(treeTag.MeshSkin.Vertices.Count, () => new BaseMesh.MatrixIndex());
                 var chI = 0;
                 var ch = treeTag.MeshSkin.MatrixIndices[chI];
                 var vI = 0;
@@ -1520,23 +1556,28 @@ namespace FreeRaider
         public static CollisionShape BT_CSfromBBox(Vector3 bbMin, Vector3 bbMax, bool useCompression, bool buildBvh)
         {
             var trimesh = new TriangleMesh();
-            var cnt = 0;
 
             var obb = new OBB();
-            var pI = 0;
-            var p = obb.Polygons[pI];
-            for (var i = 0; i < 6; i++, p = obb.Polygons[++pI])
+            var i = 0;
+            var cnt = 0;
+            Polygon p;
+            while(i < 6)
             {
-                if (p.IsBroken) continue;
+                p = obb.Polygons[i];
 
-                for (var j = 1; j + 1 < p.Vertices.Count; j++)
+                if (!p.IsBroken)
                 {
-                    var v0 = p.Vertices[j + 1].Position;
-                    var v1 = p.Vertices[j].Position;
-                    var v2 = p.Vertices[0].Position;
-                    trimesh.AddTriangle(v0, v1, v2, true);
+                    for (var j = 1; j + 1 < p.Vertices.Count; j++)
+                    {
+                        var v0 = p.Vertices[j + 1].Position;
+                        var v1 = p.Vertices[j].Position;
+                        var v2 = p.Vertices[0].Position;
+                        trimesh.AddTriangle(v0, v1, v2, true);
+                    }
+                    cnt++;
                 }
-                cnt++;
+
+                i++;
             }
 
             if (cnt == 0)

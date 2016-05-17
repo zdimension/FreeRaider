@@ -247,7 +247,7 @@ namespace FreeRaider
                         {
                             unsafe
                             {
-                                ConsoleInfo.Instance.Filter(Marshal.PtrToStringAuto((IntPtr) ev.text.text)); // TODO: Ansi instead?
+                                ConsoleInfo.Instance.Filter(Marshal.PtrToStringAnsi((IntPtr) ev.text.text)); // TODO: Ansi instead?
                             }
                             return;
                         }
@@ -424,12 +424,12 @@ namespace FreeRaider
 
             // Compare ALL mapped buttons.
 
-            foreach (ACTIONS act in Enum.GetValues(typeof (ACTIONS)))
+            for(var i = 0; i < (int)ACTIONS.LastIndex; i++)
             {
-                if (button.IsAnyOf(ControlMapper.ActionMap[(int) act].Primary, // If button = mapped action...
-                    ControlMapper.ActionMap[(int) act].Secondary))
+                if (button.IsAnyOf(ControlMapper.ActionMap[i].Primary, // If button = mapped action...
+                    ControlMapper.ActionMap[i].Secondary))
                 {
-                    switch(act) // ...Choose corresponding action.
+                    switch((ACTIONS)i) // ...Choose corresponding action.
                     {
                         case ACTIONS.Up:
                             ControlStates.MoveForward = state;
@@ -492,14 +492,14 @@ namespace FreeRaider
                             break;
 
                         case ACTIONS.BigMedi:
-                            if(!ControlMapper.ActionMap[(int)act].AlreadyPressed)
+                            if(!ControlMapper.ActionMap[i].AlreadyPressed)
                             {
                                 ControlStates.UseBigMedipack = state;
                             }
                             break;
 
                         case ACTIONS.SmallMedi:
-                            if(!ControlMapper.ActionMap[(int)act].AlreadyPressed)
+                            if(!ControlMapper.ActionMap[i].AlreadyPressed)
                             {
                                 ControlStates.UseSmallMedipack = state;
                             }
@@ -553,7 +553,7 @@ namespace FreeRaider
                             return;
                     }
 
-                    ControlMapper.ActionMap[(int) act].State = state;
+                    ControlMapper.ActionMap[i].State = state;
                 }
             }
         }

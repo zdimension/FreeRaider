@@ -40,7 +40,7 @@ namespace FreeRaider
         /// </summary>
         public const int TR_METERING_WALLHEIGHT = 32512;
 
-        public const int LOG_ANIM_DISPATCHES = 0;
+        public const bool LOG_ANIM_DISPATCHES = false;
     }
 
     /// <summary>
@@ -208,7 +208,7 @@ namespace FreeRaider
                     VertexAttribPointerType.Float, false, (uint) arrayBuffer, 7 * sizeof (float), 5 * sizeof (float))
             };
 
-            room.SpriteBuffer.Data = new VertexArray((uint)elementBuffer, attribs);
+            room.SpriteBuffer.Data = new VertexArray((uint)elementBuffer, 3, attribs);
         }
 
         public static void Res_GenRoomCollision(World world)
@@ -249,7 +249,7 @@ namespace FreeRaider
         public static void Res_GenRoomFlipMap(World world)
         {
             // Flipmap count is hardcoded, as no original levels contain such info.
-            world.FlipData.Resize(FLIPMAX_MAX_NUMBER);
+            world.FlipData.Resize(FLIPMAX_MAX_NUMBER, () => new FlipInfo());
         }
 
         public static void Res_GenBaseItems(World world)
@@ -1006,7 +1006,7 @@ namespace FreeRaider
         public static void Res_CreateEntityFunc(ScriptEngine lua, string func_name, int entity_id)
         {
             if(((LuaTable)lua["entity_funcs"])[entity_id] == null)
-                lua.state.NewTable("entity_funcs." + entity_id);
+                lua.DoString("entity_funcs[" + entity_id + "] = {}");
             ((LuaFunction) lua[func_name + "_init"]).Call(entity_id);
         }
 
@@ -1031,7 +1031,8 @@ namespace FreeRaider
                                     select ent)
                 {
                     if (((LuaTable) EngineLua["entity_funcs"])[ent.ID] == null)
-                        EngineLua.state.NewTable("entity_funcs." + ent.ID);
+                        EngineLua.DoString("entity_funcs[" + ent.ID + "] = {}");
+                        //EngineLua.state.NewTable("entity_funcs." + ent.ID);
 
                     ((LuaFunction) EngineLua["pickup_init"]).Call(ent.ID, item.ID);
 
@@ -1048,9 +1049,9 @@ namespace FreeRaider
             {
                 var tmp = EngineLua.Call("getEntityModelProperties", (int) EngineWorld.EngineVersion,
                     ent.Bf.Animations.Model.ID);
-                ent.Self.CollisionType = (COLLISION_TYPE) tmp[0];
-                ent.Self.CollisionShape = (COLLISION_SHAPE) tmp[1];
-                var flg = (ENTITY_TYPE) tmp[2];
+                ent.Self.CollisionType = (COLLISION_TYPE) (int)(tmp[0] ?? 0);
+                ent.Self.CollisionShape = (COLLISION_SHAPE) (int)(tmp[1] ?? 0);
+                var flg = (ENTITY_TYPE) Convert.ToInt32(tmp[2] ?? 0);
 
                 ent.Visible = !ent.Visible;
                 ent.TypeFlags |= flg;
@@ -1060,12 +1061,13 @@ namespace FreeRaider
         public static void Res_SetStaticMeshProperties(StaticMesh r_static)
         {
             var tmp = EngineLua.Call("getStaticMeshProperties", r_static.ObjectID);
-            var collisionType = (COLLISION_TYPE) tmp[0];
-            var collisionShape = (COLLISION_SHAPE) tmp[1];
-            var hide = (bool) tmp[2];
+            var collisionType = (COLLISION_TYPE) tmp[0];    
 
             if(collisionType > 0)
             {
+                var collisionShape = (COLLISION_SHAPE)tmp[1];
+                var hide = (bool)tmp[2];
+
                 r_static.Self.CollisionType = collisionType;
                 r_static.Self.CollisionShape = collisionShape;
                 r_static.Hide = hide;
@@ -1217,10 +1219,9 @@ namespace FreeRaider
 
         public static void TR_GenMeshes(World world, Level tr)
         {
-            world.Meshes.Resize(tr.Meshes.Length);
+            world.Meshes.Resize(tr.Meshes.Length, () => new BaseMesh());
             for (var i = 0; i < world.Meshes.Count; i++)
             {
-                world.Meshes[i] = new BaseMesh();
                 TR_GenMesh(world, i, world.Meshes[i], tr);
             }
         }
@@ -1289,18 +1290,18 @@ namespace FreeRaider
             {
                 var p = new Polygon();
 
-                //var col = face3.Texture & 0xff; // TODO: Useless
+                var col = face3.Texture & 0xff;
                 p.TexIndex = (ushort)world.TextureAtlas.NumAtlasPages;
                 p.BlendMode = BlendingMode.Opaque;
                 p.AnimID = 0;
 
                 tr_accumulateNormals(trMesh, mesh, 3, face3.Vertices, p);
-                tr_setupTexturedFace(trMesh, mesh, face3.Vertices, p);
+                tr_setupColoredFace(trMesh, tr, mesh, face3.Vertices, col, p);
 
                 mesh.Polygons.Add(p);
             }
 
-            // textured triangles
+            // textured rectangles
             foreach (var face4 in trMesh.TexturedRectangles)
             {
                 var p = new Polygon();
@@ -1326,13 +1327,13 @@ namespace FreeRaider
             {
                 var p = new Polygon();
 
-                //var col = face4.Texture & 0xff; // TODO: Useless
+                var col = face4.Texture & 0xff;
                 p.TexIndex = (ushort)world.TextureAtlas.NumAtlasPages;
                 p.BlendMode = BlendingMode.Opaque;
                 p.AnimID = 0;
 
                 tr_accumulateNormals(trMesh, mesh, 4, face4.Vertices, p);
-                tr_setupTexturedFace(trMesh, mesh, face4.Vertices, p);
+                tr_setupColoredFace(trMesh, tr, mesh, face4.Vertices, col, p);
 
                 mesh.Polygons.Add(p);
             }
@@ -1392,32 +1393,33 @@ namespace FreeRaider
             var trMoveable = tr.Moveables[model_num]; // original tr structure
 
             model.CollisionMap.Resize(model.MeshCount);
-            for(ushort i = 0; i < model.MeshCount; i++)
+            for (ushort i = 0; i < model.MeshCount; i++)
             {
                 model.CollisionMap[i] = i;
             }
 
-            model.MeshTree.Resize(model.MeshCount);
+            model.MeshTree.Resize(model.MeshCount, () => new MeshTreeTag());
             var treeTag = model.MeshTree[0];
 
             var meshIndex = tr.MeshIndices.SkipEx(trMoveable.StartingMesh);
 
-            for(var k = 0; k < model.MeshCount; k++, treeTag = model.MeshTree[k])
+            for (var k = 0; k < model.MeshCount; k++)
             {
-                treeTag.MeshBase = world.Meshes[(int)meshIndex[k]];
+                treeTag = model.MeshTree[k];
+                treeTag.MeshBase = world.Meshes[(int) meshIndex[k]];
                 treeTag.MeshSkin = null; // PARANOID: I use calloc for tree_tag's
                 treeTag.ReplaceAnim = 0x00;
                 treeTag.ReplaceMesh = 0x00;
                 treeTag.BodyPart = 0x00;
                 treeTag.Offset = Vector3.Zero;
-                if(k == 0)
+                if (k == 0)
                 {
                     treeTag.Flag = 0x02;
                 }
                 else
                 {
-                    var tr_mesh_tree = tr.MeshTreeData.SkipEx((int)trMoveable.MeshTreeIndex + (k - 1) * 4);
-                    treeTag.Flag = (ushort)(tr_mesh_tree[0] & 0xFF);
+                    var tr_mesh_tree = tr.MeshTreeData.SkipEx((int) trMoveable.MeshTreeIndex + (k - 1) * 4);
+                    treeTag.Flag = (ushort) (tr_mesh_tree[0] & 0xFF);
                     treeTag.Offset.X = tr_mesh_tree[1];
                     treeTag.Offset.Y = tr_mesh_tree[3];
                     treeTag.Offset.Z = -tr_mesh_tree[2];
@@ -1428,11 +1430,11 @@ namespace FreeRaider
              * =================    now, animation loading    ========================
              */
 
-            if(trMoveable.AnimationIndex >= tr.Animations.Length)
+            if (trMoveable.AnimationIndex >= tr.Animations.Length)
             {
                 // model has no start offset and any animation
-                model.Animations.Resize(1);
-                model.Animations[0].Frames.Resize(1);
+                model.Animations.Resize(1, () => new AnimationFrame());
+                model.Animations[0].Frames.Resize(1, () => new BoneFrame());
                 var boneFrame = model.Animations[0].Frames[0];
 
                 model.Animations[0].ID = TR_ANIMATION.LaraRun;
@@ -1441,14 +1443,14 @@ namespace FreeRaider
                 model.Animations[0].StateChange.Clear();
                 model.Animations[0].OriginalFrameRate = 1;
 
-                boneFrame.BoneTags.Resize(model.MeshCount);
+                boneFrame.BoneTags.Resize(model.MeshCount, () => new BoneTag());
 
                 boneFrame.Position = Vector3.Zero;
                 boneFrame.Move = Vector3.Zero;
                 boneFrame.V_Horizontal = 0.0f;
                 boneFrame.V_Vertical = 0.0f;
                 boneFrame.Command = 0x00;
-                for(var k = 0; k < boneFrame.BoneTags.Count; k++)
+                for (var k = 0; k < boneFrame.BoneTags.Count; k++)
                 {
                     treeTag = model.MeshTree[k];
                     var boneTag = boneFrame.BoneTags[k];
@@ -1459,7 +1461,8 @@ namespace FreeRaider
                 return;
             }
             //Sys.DebugLog(LOG_FILENAME, "model = {0}, anims = {1}", trMoveable.ObjectID, TR_GetNumAnimationsForMoveable(tr, model_num));
-            model.Animations.Resize(Math.Max(1, TR_GetNumAnimationsForMoveable(tr, model_num))); // the animation count must be >= 1
+            model.Animations.Resize(Math.Max(1, TR_GetNumAnimationsForMoveable(tr, model_num)),
+                () => new AnimationFrame()); // the animation count must be >= 1
 
             /*
              *   Ok, let us calculate animations;
@@ -1497,7 +1500,7 @@ namespace FreeRaider
                 anim.NumAnimCommands = trAnimation.NumAnimCommands;
                 anim.StateID = (TR_STATE) trAnimation.StateID;
 
-                anim.Frames.Resize(TR_GetNumFramesForAnimation(tr, trMoveable.AnimationIndex + i));
+                anim.Frames.Resize(TR_GetNumFramesForAnimation(tr, trMoveable.AnimationIndex + i), () => new BoneFrame());
 
                 //Sys.DebugLog(LOG_FILENAME, "Anim[{0}], {1}", trMoveable.AnimationIndex, TR_GetNumFramesForAnimation(tr, trMoveable.AnimationIndex));
 
@@ -1514,25 +1517,25 @@ namespace FreeRaider
                         fixed (short* tmp = &world.AnimCommands[(int) anim.AnimCommand])
                         {
                             var pointer = tmp;
-                            for(uint count = 0; count < anim.NumAnimCommands; count++)
+                            for (uint count = 0; count < anim.NumAnimCommands; count++)
                             {
                                 var command = *pointer;
                                 ++pointer;
-                                switch((TR_ANIMCOMMAND)command)
+                                switch ((TR_ANIMCOMMAND) command)
                                 {
                                     case TR_ANIMCOMMAND.PlayEffect:
-                                        case TR_ANIMCOMMAND.PlaySound:
+                                    case TR_ANIMCOMMAND.PlaySound:
                                         // Recalculate absolute frame number to relative.
-                                        pointer[0] -= (short)trAnimation.FrameStart;
+                                        pointer[0] -= (short) trAnimation.FrameStart;
                                         pointer += 2;
                                         break;
 
-                                        case TR_ANIMCOMMAND.SetPosition:
+                                    case TR_ANIMCOMMAND.SetPosition:
                                         // Parse through 3 operands.
                                         pointer += 3;
                                         break;
 
-                                        case TR_ANIMCOMMAND.JumpDistance:
+                                    case TR_ANIMCOMMAND.JumpDistance:
                                         // Parse through 2 operands.
                                         pointer += 2;
                                         break;
@@ -1546,23 +1549,23 @@ namespace FreeRaider
                     }
                 }
 
-                if(anim.Frames.Count == 0)
+                if (anim.Frames.Count == 0)
                 {
                     // number of animations must be >= 1, because frame contains base model offset
-                    anim.Frames.Resize(1);
+                    anim.Frames.Resize(1, () => new BoneFrame());
                 }
 
                 // let us begin to load animations
                 foreach (var boneFrame in anim.Frames)
                 {
-                    boneFrame.BoneTags.Resize(model.MeshCount);
+                    boneFrame.BoneTags.Resize(model.MeshCount, () => new BoneTag());
                     boneFrame.Position = Vector3.Zero;
                     boneFrame.Move = Vector3.Zero;
-                    TR_GetBFrameBB_Pos(tr, (int)frameOffset, boneFrame);
+                    TR_GetBFrameBB_Pos(tr, (int) frameOffset, boneFrame);
 
-                    if(frameOffset >= tr.FrameData.Length)
+                    if (frameOffset >= tr.FrameData.Length)
                     {
-                        for(var k = 0; k < boneFrame.BoneTags.Count; k++)
+                        for (var k = 0; k < boneFrame.BoneTags.Count; k++)
                         {
                             treeTag = model.MeshTree[k];
                             var boneTag = boneFrame.BoneTags[k];
@@ -1601,7 +1604,7 @@ namespace FreeRaider
                                 default:
                                     temp1 = tr.FrameData[frameOffset + l];
                                     l++;
-                                    if(tr.GameVersion >= TRGame.TR4)
+                                    if (tr.GameVersion >= TRGame.TR4)
                                     {
                                         ang = (temp1 & 0x0fff) * (360.0f / 4096.0f);
                                     }
@@ -1610,7 +1613,7 @@ namespace FreeRaider
                                         ang = (temp1 & 0x03ff) * (360.0f / 1024.0f);
                                     }
 
-                                    switch(temp1 & 0xc000)
+                                    switch (temp1 & 0xc000)
                                     {
                                         case 0x4000: // x only
                                             VMath.Vec4_SetTRRotations(ref boneTag.QRotate, new Vector3(ang, 0, 0));
@@ -1646,19 +1649,21 @@ namespace FreeRaider
             model.InterpolateFrames();
             // state change's loading
 
-#if LOG_ANIM_DISPATCHES
-            if(model.Animations.Count > 1)
+            if (LOG_ANIM_DISPATCHES)
             {
-                Sys.DebugLog(LOG_FILENAME, "MODEL[{0}], anims = {1}", model_num, model.Animations.Count);
-            } 
-#endif
-            for(var i = 0; i < model.Animations.Count; i++)
+                if (model.Animations.Count > 1)
+                {
+                    Sys.DebugLog(LOG_FILENAME, "MODEL[{0}], anims = {1}", model_num, model.Animations.Count);
+                }
+            }
+            for (var i = 0; i < model.Animations.Count; i++)
             {
                 var anim = model.Animations[i];
                 anim.StateChange.Clear();
 
                 var trAnimation = tr.Animations[trMoveable.AnimationIndex + i];
-                var animId = (trAnimation.NextAnimation - trMoveable.AnimationIndex) & 0x7fff; // this masks out the sign bit
+                var animId = (trAnimation.NextAnimation - trMoveable.AnimationIndex) & 0x7fff;
+                    // this masks out the sign bit
                 Assert(animId >= 0);
                 if (animId < model.Animations.Count)
                 {
@@ -1667,10 +1672,12 @@ namespace FreeRaider
                         (trAnimation.NextFrame - tr.Animations[trAnimation.NextAnimation].FrameStart) %
                         anim.NextAnim.Frames.Count);
 
-#if LOG_ANIM_DISPATCHES
-                    Sys.DebugLog(LOG_FILENAME, "ANIM[{0}], next_anim = {1}, next_frame = {2}", i, (int) anim.NextAnim.ID,
-                        anim.NextFrame);
-#endif
+                    if (LOG_ANIM_DISPATCHES)
+                    {
+                        Sys.DebugLog(LOG_FILENAME, "ANIM[{0}], next_anim = {1}, next_frame = {2}", i,
+                            (int) anim.NextAnim.ID,
+                            anim.NextFrame);
+                    }
                 }
                 else
                 {
@@ -1680,19 +1687,20 @@ namespace FreeRaider
 
                 anim.StateChange.Clear(); // TODO: Needed?
 
-                if(trAnimation.NumStateChanges > 0 && model.Animations.Count > 1)
+                if (trAnimation.NumStateChanges > 0 && model.Animations.Count > 1)
                 {
-#if LOG_ANIM_DISPATCHES
-                    Sys.DebugLog(LOG_FILENAME, "ANIM[{0}], next_anim = {1}, next_frame = {2}", i,
-                        anim.NextAnim == null ? -1 : (int) anim.NextAnim.ID, anim.NextFrame);
-#endif
-                    anim.StateChange.Resize(trAnimation.NumStateChanges);
-                    
-                    for(var j = 0; j < trAnimation.NumStateChanges; j++)
+                    if (LOG_ANIM_DISPATCHES)
+                    {
+                        Sys.DebugLog(LOG_FILENAME, "ANIM[{0}], next_anim = {1}, next_frame = {2}", i,
+                            anim.NextAnim == null ? -1 : (int) anim.NextAnim.ID, anim.NextFrame);
+                    }
+                    anim.StateChange.Resize(trAnimation.NumStateChanges, () => new StateChange());
+
+                    for (var j = 0; j < trAnimation.NumStateChanges; j++)
                     {
                         var schP = anim.StateChange[j];
                         var trSch = tr.StateChanges[j + trAnimation.StateChangeOffset];
-                        schP.ID = (TR_STATE)trSch.StateID;
+                        schP.ID = (TR_STATE) trSch.StateID;
                         schP.AnimDispatch.Clear();
                         for (var l = 0; l < trSch.NumAnimDispatches; l++)
                         {
@@ -1716,11 +1724,13 @@ namespace FreeRaider
 
                                 schP.AnimDispatch.Add(adsp);
 
-#if !LOG_ANIM_DISPATCHES
-                                Sys.DebugLog(LOG_FILENAME,
-                                    "anim_disp[{0}], frames.size() = {1}: interval[{3}.. {4}], next_anim = {5}, next_frame = {6}",
-                                    l, anim.Frames.Count, adsp.FrameLow, adsp.FrameHigh, (int)adsp.NextAnim, adsp.NextFrame);
-#endif
+                                if (LOG_ANIM_DISPATCHES)
+                                {
+                                    Sys.DebugLog(LOG_FILENAME,
+                                        "anim_disp[{0}], frames.size() = {1}: interval[{2}.. {3}], next_anim = {4}, next_frame = {5}",
+                                        l, anim.Frames.Count, adsp.FrameLow, adsp.FrameHigh, (int) adsp.NextAnim,
+                                        adsp.NextFrame);
+                                }
                             }
                         }
                     }
@@ -1762,10 +1772,10 @@ namespace FreeRaider
                     entity.Bf.Animations.Model = world.GetModelByID((uint) id);
                 }
 
-                var replaceAnimId = (uint)EngineLua.Call("getOverridedAnim", Helper.GameToEngine(tr.GameVersion), trItem.ObjectID)[0];
+                var replaceAnimId = (int)EngineLua.Call("getOverridedAnim", Helper.GameToEngine(tr.GameVersion), trItem.ObjectID)[0];
                 if(replaceAnimId > 0)
                 {
-                    var replaceAnimModel = world.GetModelByID(replaceAnimId);
+                    var replaceAnimModel = world.GetModelByID((uint)replaceAnimId);
                     var tmp = entity.Bf.Animations.Model.Animations;
                     entity.Bf.Animations.Model.Animations = replaceAnimModel.Animations;
                     replaceAnimModel.Animations = tmp;
@@ -2014,8 +2024,8 @@ namespace FreeRaider
             var p0 = new Polygon();
             var p = new Polygon();
 
-            p0.Vertices.Resize(3);
-            p.Vertices.Resize(3);
+            p0.Vertices.Resize(3, () => new Vertex());
+            p.Vertices.Resize(3, () => new Vertex());
 
             fixed(ushort* tmp = tr.AnimatedTextures)
             {
@@ -2074,7 +2084,7 @@ namespace FreeRaider
                         // Get texture height and divide it in half.
                         // This way, we get a reference value which is used to identify
                         // if scrolling is completed or not.
-                        seq.Frames.Resize(8);
+                        seq.Frames.Resize(8, () => new TexFrame());
                         seq.UVRotateMax = world.TextureAtlas.GetTextureHeight(seq.FrameList[0]) / 2;
                         seq.UVRotateSpeed = seq.UVRotateMax / seq.Frames.Count;
                         seq.FrameList.Resize(8);
@@ -2195,15 +2205,17 @@ namespace FreeRaider
 
             room.ID = (uint) roomIndex;
             room.Active = true;
-            room.Frustum.Clear();
+            room.Frustum = new List<Frustum>();
             room.Flags = trRoom.Flags;
             room.LightMode = trRoom.LightMode;
             room.ReverbInfo = (byte) trRoom.ReverbInfo;
             room.WaterScheme = trRoom.WaterScheme;
             room.AlternateGroup = (byte) trRoom.AlternateGroup;
 
+            room.Transform = new Transform();
             room.Transform.SetIdentity();
             room.Transform.Origin = trRoom.Offset.ToVector3();
+            room.AmbientLighting = new float[3];
             room.AmbientLighting[0] = trRoom.LightColor.R * 2;
             room.AmbientLighting[1] = trRoom.LightColor.G * 2;
             room.AmbientLighting[2] = trRoom.LightColor.B * 2;
@@ -2211,14 +2223,14 @@ namespace FreeRaider
             room.Self.Room = room;
             room.Self.Object = room;
             room.Self.ObjectType = OBJECT_TYPE.RoomBase;
-            room.NearRoomList.Clear();
-            room.OverlappedRoomList.Clear();
+            room.NearRoomList = new List<Room>();
+            room.OverlappedRoomList = new List<Room>();
 
             room.GenMesh(world, (uint) roomIndex, tr);
 
             room.BtBody = null;
             // let's load static room meshes
-            room.StaticMesh.Clear();
+            room.StaticMesh = new List<StaticMesh>();
 
             #endregion
 
@@ -2361,7 +2373,8 @@ namespace FreeRaider
 
             room.SectorsX = trRoom.Num_X_Sectors;
             room.SectorsY = trRoom.Num_Z_Sectors;
-            room.Sectors.Resize(room.SectorsX * room.SectorsY);
+            room.Sectors = new List<RoomSector>();
+            room.Sectors.Resize(room.SectorsX * room.SectorsY, () => new RoomSector());
 
             // base sectors information loading and collisional mesh creation
 
@@ -2495,7 +2508,7 @@ namespace FreeRaider
 
             #region Lights
 
-            room.Lights.Resize(trRoom.Lights.Length);
+            room.Lights.Resize(trRoom.Lights.Length, () => new Light());
 
             for (var i = 0; i < trRoom.Lights.Length; i++)
             {
@@ -2533,7 +2546,7 @@ namespace FreeRaider
 
             #region Portals
 
-            room.Portals.Resize(trRoom.Portals.Length);
+            room.Portals.Resize(trRoom.Portals.Length, () => new Portal());
             for (var i = 0; i < room.Portals.Count; i++)
             {
                 var trp = trRoom.Portals[i];
@@ -2671,10 +2684,10 @@ namespace FreeRaider
             world.StreamTrackMap.Resize(n == 0 ? TR_AUDIO_STREAM_MAP_SIZE : n);
 
             // Generate new audio effects array.
-            world.AudioEffects.Resize(tr.SoundDetails.Length);
+            world.AudioEffects.Resize(tr.SoundDetails.Length, () => new AudioEffect());
 
             // Generate new audio emitters array.
-            world.AudioEmitters.Resize(tr.SoundSources.Length);
+            world.AudioEmitters.Resize(tr.SoundSources.Length, () => new AudioEmitter());
 
             // Cycle through raw samples block and parse them to OpenAL buffers.
 
@@ -2855,7 +2868,7 @@ namespace FreeRaider
                 world.AudioEmitters[i].EmitterIndex = (uint) i;
                 world.AudioEmitters[i].SoundIndex = tr.SoundSources[i].SoundID;
                 world.AudioEmitters[i].Position = new Vector3(tr.SoundSources[i].X, tr.SoundSources[i].Z,
-                    -tr.SoundSources[i].Y); // TODO: - Inverted?
+                    -tr.SoundSources[i].Y);
                 world.AudioEmitters[i].Flags = tr.SoundSources[i].Flags;
             }
         }
@@ -3390,7 +3403,7 @@ namespace FreeRaider
                                                 {
                                                     item_events +=
                                                         Helper.Format(
-                                                            "   activateEntity({0}, entity_index, {1:X2}, {2}, {3}, {4}); \n",
+                                                            "   activateEntity({0}, entity_index, 0x{1:X2}, {2}, {3}, {4}); \n",
                                                             operands, triggerMask, maskMode,
                                                             onlyOnce != 0 ? "true" : "false",
                                                             timerField);
@@ -3566,7 +3579,7 @@ namespace FreeRaider
                                     // in cycle with other continous commands. It is needed to prevent timer dispatch
                                     // before activator leaves trigger sector.
 
-                                    if (actionType == ActionType.Anti) // TODO: Duplicate of L3522?
+                                    if (actionType == ActionType.Anti) // TODO: Duplicate of L3543?
                                     {
                                         script += anti_events;
                                     }
@@ -3863,7 +3876,7 @@ namespace FreeRaider
         public static void tr_setupRoomVertices(World world, Level tr, Loader.Room tr_room, BaseMesh mesh,
             int numCorners, ushort[] vertices, ushort masked_texture, Polygon p)
         {
-            p.Vertices.Resize(numCorners);
+            p.Vertices.Resize(numCorners, () => new Vertex());
 
             for (var i = 0; i < numCorners; i++)
             {
@@ -3895,7 +3908,7 @@ namespace FreeRaider
 
         public static void tr_accumulateNormals(Mesh trMesh, BaseMesh mesh, int numCorners, ushort[] vertexIndices, Polygon p)
         {
-            p.Vertices.Resize(numCorners);
+            p.Vertices.Resize(numCorners, () => new Vertex());
 
             for (var i = 0; i < numCorners; i++)
             {

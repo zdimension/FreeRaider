@@ -25,7 +25,7 @@ namespace FreeRaider
 
             FontBufferVBO = Helper.GenBufferU();
 
-            FontBufferVAO = new VertexArray(0, new []
+            FontBufferVAO = new VertexArray(0, 3, new []
             {
                 new VertexArrayAttribute((int)TextShaderDescription.VertexAttribs.Position, 2, VertexAttribPointerType.Float, false, FontBufferVBO, 8 * sizeof(float), 0), 
                 new VertexArrayAttribute((int)TextShaderDescription.VertexAttribs.TexCoord, 2, VertexAttribPointerType.Float, false, FontBufferVBO, 8 * sizeof(float), 2 * sizeof(float)), 

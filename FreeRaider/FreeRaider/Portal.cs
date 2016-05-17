@@ -15,7 +15,7 @@ namespace FreeRaider
 
     public class Portal
     {
-        public List<Vector3> Vertices { get; set; }
+        public List<Vector3> Vertices { get; set; } = new List<Vector3>();
 
         public Plane Normal { get; set; }
 
@@ -64,6 +64,7 @@ namespace FreeRaider
             StaticFuncs.Assert(Vertices.Count > 3);
             var v1 = Vertices[1] - Vertices[0];
             var v2 = Vertices[2] - Vertices[1];
+            Normal = new Plane();
             Normal.Assign(v1, v2, Vertices[0]);
         }
     }

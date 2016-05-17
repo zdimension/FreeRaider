@@ -189,6 +189,16 @@ namespace FreeRaider
             return ret;
         }
 
+        public static unsafe byte[] GetArrayFromPointer(byte* ptr, int count)
+        {
+            var ret = new byte[count];
+            for (var i = 0; i < count; i++)
+            {
+                ret[i] = ptr[i];
+            }
+            return ret;
+        }
+
         public static void SetValue(ref Matrix3 mat, float m00, float m01, float m02, float m10, float m11, float m12,
             float m20, float m21, float m22)
         {

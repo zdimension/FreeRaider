@@ -292,7 +292,7 @@ namespace FreeRaider
 
                 // Set character statistics to default.
 
-                EngineWorld.Character.Statistics.Distance = 0.0f;
+                EngineWorld.Character.Statistics.Distance = 0.0f; // TODO: Useless?
                 EngineWorld.Character.Statistics.AmmoUsed = 0;
                 EngineWorld.Character.Statistics.Hits = 0;
                 EngineWorld.Character.Statistics.Kills = 0;
@@ -433,6 +433,7 @@ namespace FreeRaider
             else
             {
                 var ch = (Character) ent;
+                ch.Command = new CharacterCommand();
                 // Apply controls to Lara
                 ch.Command.Action = ControlStates.StateAction;
                 ch.Command.ReadyWeapon = ControlStates.DoDrawWeapon;
@@ -553,8 +554,13 @@ namespace FreeRaider
 
         private static void UpdateCharactersTree(Dictionary<uint, Entity> entities)
         {
-            foreach (Character ent in entities.Values.Where(ent => ent != null))
+            foreach (var it in entities.Values)
             {
+                var ent = it as Character;
+                if (ent == null)
+                    continue;
+
+
                 if(ent.Command.Action && ent.TypeFlags.HasFlag(ENTITY_TYPE.TriggerActivator))
                 {
                     ent.CheckActivators();
@@ -604,7 +610,7 @@ namespace FreeRaider
                     // Target is the target angle which is the entity's angle itself
                 var rotSpeed = 2.0f; // Speed of rotation
 
-                // TODO FIX
+                //@FIXME
                 // If Lara is in a specific state we want to rotate -75 deg or +75 deg depending on camera collision
                 if(ent.Bf.Animations.LastState == TR_STATE.LaraReach)
                 {

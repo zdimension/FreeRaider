@@ -124,6 +124,9 @@ namespace FreeRaider
         {
             if (!Global.SystemSettings.Logging) return;
 
+            var str = Helper.Format(fmt, args);
+            if(REDIRECT_LOG) Console.WriteLine(str);
+
             Stream fp;
             try
             {
@@ -135,7 +138,7 @@ namespace FreeRaider
             }
             using (var sw = new StreamWriter(fp))
             {
-                sw.WriteLine(Helper.Format(fmt, args));
+                sw.WriteLine(str);
             }
             fp.Close();
         }

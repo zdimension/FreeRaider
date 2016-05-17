@@ -115,7 +115,7 @@ namespace FreeRaider
 
     public class EntityCollisionNode
     {
-        public List<CollisionObject> Obj;
+        public List<CollisionObject> Obj = new List<CollisionObject>();
     }
 
     public class BtEntityData
@@ -405,7 +405,7 @@ namespace FreeRaider
                 BtEngineDynamicsWorld.AddCollisionObject(pcg, CollisionFilterGroups.CharacterFilter, CollisionFilterGroups.AllFilter);
                 Bt.GhostObjects.Add(pcg);
 
-                Bt.LastCollisions.Add(null);
+                Bt.LastCollisions.Add(new EntityCollisionNode());
             }
         }
 
@@ -500,21 +500,21 @@ namespace FreeRaider
                     switch (Self.CollisionType)
                     {
                         case COLLISION_TYPE.Kinematic:
-                            Bt.BtBody.Last().CollisionFlags |= CollisionFlags.KinematicObject;
+                            Bt.BtBody[Bt.BtBody.Count - 1].CollisionFlags |= CollisionFlags.KinematicObject;
                             break;
 
                         case COLLISION_TYPE.Ghost:
-                            Bt.BtBody.Last().CollisionFlags |= CollisionFlags.NoContactResponse;
+                            Bt.BtBody[Bt.BtBody.Count - 1].CollisionFlags |= CollisionFlags.NoContactResponse;
                             break;
 
                         case COLLISION_TYPE.Actor:
                         case COLLISION_TYPE.Vehicle:
-                            Bt.BtBody.Last().CollisionFlags |= CollisionFlags.CharacterObject;
+                            Bt.BtBody[Bt.BtBody.Count - 1].CollisionFlags |= CollisionFlags.CharacterObject;
                             break;
 
                         case COLLISION_TYPE.Static:
                         default:
-                            Bt.BtBody.Last().CollisionFlags |= CollisionFlags.StaticObject;
+                            Bt.BtBody[Bt.BtBody.Count - 1].CollisionFlags |= CollisionFlags.StaticObject;
                             break;
                     }
 
@@ -1148,8 +1148,7 @@ namespace FreeRaider
             var next_btag = nextBf.BoneTags[0];
             var src_btag = currBf.BoneTags[0];
             for (var k = 0;
-                k < currBf.BoneTags.Count;
-                k++, btag = bf.BoneTags[k], src_btag = currBf.BoneTags[k], next_btag = nextBf.BoneTags[k])
+                k < currBf.BoneTags.Count;)
             {
                 btag.Offset = src_btag.Offset.Lerp(next_btag.Offset, bf.Animations.Lerp);
                 btag.Transform.Origin = btag.Offset;
@@ -1181,15 +1180,27 @@ namespace FreeRaider
                     btag.QRotate = Quaternion.Slerp(ov_src_btag.QRotate, ov_next_btag.QRotate, ov_lerp);
                 }
                 btag.Transform.Rotation = btag.QRotate;
+                k++;
+                if (k < bf.BoneTags.Count)
+                {
+                    btag = bf.BoneTags[k];
+                    src_btag = currBf.BoneTags[k];
+                    next_btag = nextBf.BoneTags[k];
+                }
             }
 
             // build absolute coordinate matrix system
-            btag = bf.BoneTags[0];
+            var btagI = 0;
+            btag = bf.BoneTags[btagI];
             btag.FullTransform = btag.Transform;
-            btag = bf.BoneTags[1];
-            for(var k = 1; k < currBf.BoneTags.Count; k++, btag = bf.BoneTags[k])
+            var incBtag = new Action(() =>
             {
-                btag.FullTransform = btag.Parent.FullTransform * btag.Transform;
+                btagI++;
+                btag = btagI < bf.BoneTags.Count ? bf.BoneTags[btagI] : null;
+            });
+            for(var k = 1; k < currBf.BoneTags.Count; k++, incBtag())
+            {
+                btag.FullTransform = (btag.Parent?.FullTransform ?? new Transform()) * btag.Transform;
             }
         }
 
@@ -1209,12 +1220,12 @@ namespace FreeRaider
                 {
                     fixed (short* tmp = &EngineWorld.AnimCommands[(int)af.AnimCommand])
                     {
-                        fixed (short* back = &EngineWorld.AnimCommands[EngineWorld.AnimCommands.Length])
+                        fixed (short* back = &EngineWorld.AnimCommands[EngineWorld.AnimCommands.Length - 1])
                         {
                             var pointer = tmp;
                             for (uint count = 0; count < af.NumAnimCommands; count++)
                             {
-                                Assert(pointer < back);
+                                Assert(pointer <= back);
                                 var command = *pointer;
                                 ++pointer;
                                 switch ((TR_ANIMCOMMAND) command)
@@ -1298,7 +1309,6 @@ namespace FreeRaider
             // (e.g. first trapdoor in The Great Wall, etc.)
             // Sector above primarily needed for paranoid cases of monkeyswing.
 
-            Assert(CurrentSector != null); // TODO: Useless?
             var lowestSector = CurrentSector.GetLowestSector();
             Assert(lowestSector != null);
 

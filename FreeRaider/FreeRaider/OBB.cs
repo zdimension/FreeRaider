@@ -16,9 +16,9 @@ namespace FreeRaider
     /// </summary>
     public class OBB
     {
-        public Polygon[] BasePolygons = new Polygon[6]; // bv base surface
+        public Polygon[] BasePolygons = Helper.RepeatValue(6, () => new Polygon()); // bv base surface
 
-        public Polygon[] Polygons = new Polygon[6]; // bv world coordinate surface
+        public Polygon[] Polygons = Helper.RepeatValue(6, () => new Polygon()); // bv world coordinate surface
 
         public Transform Transform = new Transform(); // Object transform matrix
 

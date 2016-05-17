@@ -420,7 +420,7 @@ namespace FreeRaider
             if (Vertices.Count == 0)
                 return;
 
-            Planes.Resize(Vertices.Count);
+            Planes.Resize(Vertices.Count, () => new Plane());
 
             var curr_v = Vertices.Last();
             var prev_v = Vertices[Vertices.Count - 2];

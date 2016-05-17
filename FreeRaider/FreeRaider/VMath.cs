@@ -25,7 +25,6 @@ namespace FreeRaider
         /// <summary>
         /// The plane's normal
         /// </summary>
-
         public Vector3 Normal;
 
         /// <summary>
@@ -58,7 +57,7 @@ namespace FreeRaider
         public void Assign(Vector3 v1, Vector3 v2, Vector3 pos)
         {
             Normal = v1.Cross(v2);
-            Normal.SafeNormalize();
+            Normal = Normal.SafeNormalize();
             Dot = Normal.Dot(pos);
         }
 

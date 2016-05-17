@@ -490,7 +490,7 @@ namespace FreeRaider
 
         public static void MoveTo<T>(this List<T> a, List<T> dest)
         {
-            foreach (var it in a)
+            foreach (var it in a.ToArray())
             {
                 a.Remove(it);
                 dest.Add(it);
@@ -889,6 +889,11 @@ namespace FreeRaider
                 result[i] = g[i + count];
             }
             return result;
+        }
+
+        public static T[] Flatten<T>(this T[][] arr)
+        {
+            return arr.SelectMany(a => a).ToArray();
         }
     }
 

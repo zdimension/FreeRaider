@@ -131,6 +131,7 @@
     <ClInclude Include="..\LibSndFile.NET\SndFileException.h" />
     <ClInclude Include="..\LibSndFile.NET\SndFileFormat.h" />
     <ClInclude Include="..\LibSndFile.NET\Stdafx.h" />
+    <ClInclude Include="SndFileEnums.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\LibSndFile.NET\app.ico" />

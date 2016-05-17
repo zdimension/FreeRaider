@@ -365,7 +365,7 @@ namespace AT.MIN
                 else
                 {
                     o = Parameters[paramIx];
-
+                    if (o is Enum) o = Convert.ChangeType(o, Enum.GetUnderlyingType(o.GetType()));
                     if (shortLongIndicator == 'h')
                     {
                         if (o is int)

@@ -111,6 +111,8 @@ namespace FreeRaider
         {
             var compileStatus = 0;
 
+            Sys.DebugLog(GL_LOG_FILENAME, "GL_Loading {0}", fileName);
+
             var version = "#version 150\n";
 
             try

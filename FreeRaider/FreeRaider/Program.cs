@@ -10,6 +10,10 @@ namespace FreeRaider
     public partial class Constants
     {
         public const bool NO_AUDIO = false;
+
+        public const bool REDIRECT_LOG = true;
+
+        public const bool AUDIO_OPENAL_FLOAT = false;
     }
 
     public class Program
@@ -24,14 +28,18 @@ namespace FreeRaider
 
             // Entering main loop.
 
-            var prev_time = DateTime.Now;
+            //var prev_time = DateTime.Now;
+            var sw = new Stopwatch();
+            sw.Start();
 
             while(!Global.Done)
             {
-                var now = DateTime.Now;
+                //var now = DateTime.Now;
                 //var delta = ((now - prev_time).TotalMilliseconds / 1000) / 1.0e6;
-                var delta = (now - prev_time).TotalSeconds;
-                prev_time = now;
+                //var delta = (now - prev_time).TotalSeconds;
+                //prev_time = now;
+
+                var delta = sw.Elapsed.TotalSeconds;
 
                 Engine.Frame((float)(delta * Global.TimeScale));
                 Engine.Display();
@@ -39,45 +47,9 @@ namespace FreeRaider
 
             // Main loop interrupted; shutting down.
 
+            sw.Stop();
             Engine.Shutdown(0);
             Environment.Exit(0);
-
-            /*using (var game = new GameWindow())
-            {
-                game.Load += (sender, e) =>
-                {
-                    game.VSync = VSyncMode.On;
-                    Engine.Start();
-                };
-
-                game.Resize += (sender, e) =>
-                {
-                    GL.Viewport(0, 0, game.Width, game.Height);
-                };
-
-                game.UpdateFrame += (sender, e) =>
-                {
-                    if (game.Keyboard[Key.Escape] || Done)
-                    {
-                        game.Exit();
-                    }
-                };
-                var sp = new Stopwatch();
-                game.RenderFrame += (sender, e) =>
-                {
-                    var delta = (float)sp.ElapsedMicroseconds() / 1.0e6f;
-                    sp.Restart();
-
-                    Engine.Frame(delta * TimeScale);
-                    Engine.Display();
-                };
-
-                sp.Start();
-                game.Run(60.0f);
-
-                Engine.Shutdown(0);
-                Environment.Exit(0);
-            }*/
         }
     }
 }

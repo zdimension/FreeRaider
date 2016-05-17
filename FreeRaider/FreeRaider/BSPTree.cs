@@ -20,9 +20,9 @@ namespace FreeRaider
     {
         public Plane Plane { get; set; }
 
-        public List<BSPFaceRef> PolygonsFront { get; set; }
-        
-        public List<BSPFaceRef> PolygonsBack { get; set; }
+        public List<BSPFaceRef> PolygonsFront { get; set; } = new List<BSPFaceRef>();
+
+        public List<BSPFaceRef> PolygonsBack { get; set; } = new List<BSPFaceRef>();
 
         public BSPNode Front;
 
@@ -86,7 +86,7 @@ namespace FreeRaider
             foreach (var pp in p)
             {
                 var transformed = new Polygon();
-                transformed.Vertices.Resize(pp.Polygon.Vertices.Count);
+                transformed.Vertices.Resize(pp.Polygon.Vertices.Count, () => new Vertex());
                 transformed.Transform(pp.Polygon, transform);
                 transformed.DoubleSide = pp.Polygon.DoubleSide;
 
