@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using BulletSharp;
 using FreeRaider.Script;
-using NLua;
 using NLua.Exceptions;
 using OpenTK;
 using static FreeRaider.Constants;
@@ -803,7 +802,7 @@ namespace FreeRaider
         {
             TimeScale = scale ?? (TimeScale == 1.0f ? 0.033f : 1.0f);
 
-            ConsoleInfo.Instance.Printf("time_scale = {0.000}", TimeScale);
+            ConsoleInfo.Instance.Printf("time_scale = {0:0.000}", TimeScale);
         }
     }
 }

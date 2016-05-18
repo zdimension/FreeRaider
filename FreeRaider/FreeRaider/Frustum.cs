@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using OpenTK;
 using static FreeRaider.Constants;
-using static FreeRaider.Global;
 
 namespace FreeRaider
 {

@@ -105,52 +105,52 @@ namespace FreeRaider
 
             BodySetup.Resize((int) rds["body_count"], () => new RDBodySetup());
 
-            JointCfm = rds["joint_cfm"];
-            JointErp = rds["joint_erp"];
+            JointCfm = (float)rds["joint_cfm"];
+            JointErp = (float)rds["joint_erp"];
 
             for (var i = 0; i < BodySetup.Count; i++)
             {
                 var b = rds["body"][i + 1];
-                BodySetup[i].Mass = b["mass"];
-                BodySetup[i].Restitution = b["restitution"];
-                BodySetup[i].Friction = b["friction"];
+                BodySetup[i].Mass = (float)b["mass"];
+                BodySetup[i].Restitution = (float)b["restitution"];
+                BodySetup[i].Friction = (float)b["friction"];
                 var damp = b["damping"];
                 if (damp is LuaTable)
                 {
-                    BodySetup[i].Damping[0] = damp[1];
-                    BodySetup[i].Damping[1] = damp[2];
+                    BodySetup[i].Damping[0] = (float)damp[1];
+                    BodySetup[i].Damping[1] = (float)damp[2];
                 }
             }
 
             for (var i = 0; i < JointSetup.Count; i++)
             {
                 var j = rds["joint"][i + 1];
-                JointSetup[i].BodyIndex = j["body_index"];
+                JointSetup[i].BodyIndex = (ushort)j["body_index"];
                 JointSetup[i].JointType = (RDJointSetup.Type) j["joint_type"];
                 if(j["body1_offset"] is LuaTable)
                 {
                     for (var k = 0; k < 3; k++)
-                        JointSetup[i].Body1Offset[k] = j["body1_offset"][k + 1];
+                        JointSetup[i].Body1Offset[k] = (float)j["body1_offset"][k + 1];
                 }
                 if (j["body2_offset"] is LuaTable)
                 {
                     for (var k = 0; k < 3; k++)
-                        JointSetup[i].Body2Offset[k] = j["body2_offset"][k + 1];
+                        JointSetup[i].Body2Offset[k] = (float)j["body2_offset"][k + 1];
                 }
                 if (j["body1_angle"] is LuaTable)
                 {
                     for (var k = 0; k < 3; k++)
-                        JointSetup[i].Body1Angle[k] = j["body1_angle"][k + 1];
+                        JointSetup[i].Body1Angle[k] = (float)j["body1_angle"][k + 1];
                 }
                 if (j["body2_angle"] is LuaTable)
                 {
                     for (var k = 0; k < 3; k++)
-                        JointSetup[i].Body2Angle[k] = j["body2_angle"][k + 1];
+                        JointSetup[i].Body2Angle[k] = (float)j["body2_angle"][k + 1];
                 }
                 if (j["joint_limit"] is LuaTable)
                 {
                     for (var k = 0; k < 3; k++)
-                        JointSetup[i].JointLimit[k] = j["joint_limit"][k + 1];
+                        JointSetup[i].JointLimit[k] = (float)j["joint_limit"][k + 1];
                 }
             }
 

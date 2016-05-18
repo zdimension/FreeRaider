@@ -4,7 +4,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using FreeRaider.Loader;
 using LibSndFile;
@@ -1950,6 +1949,9 @@ namespace FreeRaider
         {
             try
             {
+                /*var tmp = Marshal.AllocHGlobal((int)sampleSize);
+                Helper.memcpy((byte*) tmp, samplePointer, sampleSize);*/
+
                 using (var sample = new SndFile(samplePointer, sampleSize, SFM_READ, new SndFileInfo()))
                 {
                     var sfInfo = sample.FileInfo;
@@ -1974,7 +1976,7 @@ namespace FreeRaider
                     if (AUDIO_OPENAL_FLOAT)
                         uncompSampleSize = (uncompSampleSize / sizeof (ushort)) * sizeof (float);
                     else
-                        uncompSampleSize = (uncompSampleSize / sizeof(ushort)) * sizeof(short);
+                        uncompSampleSize = uncompSampleSize / sizeof(ushort) * sizeof(short);
 
                     // Find out sample format and load it correspondingly.
                     // Note that with OpenAL, we can have samples of different formats in same level.

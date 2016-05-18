@@ -59,8 +59,7 @@ namespace FreeRaider
 
         public static int CPPRand()
         {
-            if (Random == null) return 0;
-            return Random.Next(0, ushort.MaxValue);
+            return Random?.Next(0, ushort.MaxValue) ?? 0;
         }
 
         public static string __FILE__ => new StackTrace(new StackFrame(true)).GetFrame(0).GetFileName();
@@ -167,7 +166,7 @@ namespace FreeRaider
             }
         }
 
-        private static bool IsRunningOnMono => (Type.GetType("Mono.Runtime") != null);
+        private static bool IsRunningOnMono => Type.GetType("Mono.Runtime") != null;
 
         public static MethodInfo GetMethodInfo(Delegate d)
         {
@@ -318,8 +317,8 @@ namespace FreeRaider
                 }
                 catch(FormatException e)
                 {
-                    format = format.Replace("{", "{{").Replace("}", "}}");
-                    return string.Format(format, args);
+                    var res = string.Format(format.Replace("{", "{{").Replace("}", "}}"), args);
+                    return res.Equals(format) ? Tools.sprintf(format, args) : res;
                 }
             }
             else

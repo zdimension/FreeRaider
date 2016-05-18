@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL;
 using SharpFont;
 using PixelFormat = OpenTK.Graphics.OpenGL.PixelFormat;

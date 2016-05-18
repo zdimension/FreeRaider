@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using BulletSharp;
@@ -1390,7 +1389,7 @@ namespace FreeRaider
                         var attribs = new[]
                         {
                             new VertexArrayAttribute((int) UnlitShaderDescription.VertexAttribs.Position, 3,
-                                VertexAttribPointerType.Float, false, stencilVBO, 3 * sizeof(float), 0),
+                                VertexAttribPointerType.Float, false, stencilVBO, 3 * sizeof(float), 0)
                         };
 
                         var array = new VertexArray(0, 1, attribs);

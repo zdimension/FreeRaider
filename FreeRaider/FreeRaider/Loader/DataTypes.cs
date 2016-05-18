@@ -267,8 +267,7 @@ namespace FreeRaider.Loader
         /// <returns>A 32-bit integer <see cref="Vertex"/></returns>
         public static Vertex Read32(BinaryReader br, bool negate = true)
         {
-            if (!negate) return new Vertex(br.ReadInt32(), br.ReadInt32(), br.ReadInt32());
-            return new Vertex(br.ReadInt32(), -br.ReadInt32(), -br.ReadInt32());
+            return negate ? new Vertex(br.ReadInt32(), -br.ReadInt32(), -br.ReadInt32()) : new Vertex(br.ReadInt32(), br.ReadInt32(), br.ReadInt32());
         }
 
         /// <summary>

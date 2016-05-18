@@ -31,13 +31,9 @@ namespace FreeRaider
     {
         private class Line
         {
-            public string Text = "";
+            public string Text;
 
-            public FontStyle StyleID = FontStyle.Generic;
-
-            public Line()
-            {
-            }
+            public FontStyle StyleID;
 
             public Line(string t, FontStyle s = FontStyle.Generic)
             {

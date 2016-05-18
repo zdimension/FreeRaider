@@ -255,6 +255,12 @@ namespace FreeRaider
 
                     case SDL_EventType.SDL_KEYUP:
                     case SDL_EventType.SDL_KEYDOWN:
+                        if(ev.key.keysym.sym == SDLK_PAGEDOWN)
+                        {
+                            ConsoleInfo.Instance.AddLine(Helper.Format("pos = {0}", EngineWorld.Character.Bf.Position), FontStyle.ConsoleNotify);
+                            break;
+                        }
+
                         if(ev.key.keysym.sym == SDLK_F4 &&
                             ev.key.state == SDL_PRESSED && 
                             ev.key.keysym.mod.HasFlagUns(KMOD_ALT))
@@ -620,7 +626,7 @@ namespace FreeRaider
                             }
                             else
                             {
-                                ControlMapper.JoyLookX = (value * ControlMapper.JoyLookSensitivity) / 32767;
+                                ControlMapper.JoyLookX = value * ControlMapper.JoyLookSensitivity / 32767;
                                 if (ControlMapper.JoyLookInvertX) ControlMapper.JoyLookX = -ControlMapper.JoyLookX;
                             }
                             return;
@@ -632,7 +638,7 @@ namespace FreeRaider
                             }
                             else
                             {
-                                ControlMapper.JoyLookY = (value * ControlMapper.JoyLookSensitivity) / 32767;
+                                ControlMapper.JoyLookY = value * ControlMapper.JoyLookSensitivity / 32767;
                                 if (ControlMapper.JoyLookInvertY) ControlMapper.JoyLookY = -ControlMapper.JoyLookY;
                             }
                             return;
@@ -647,7 +653,7 @@ namespace FreeRaider
                             {
                                 if (ControlMapper.JoyMoveInvertX)
                                 {
-                                    ControlMapper.JoyMoveX = -((value * ControlMapper.JoyMoveSensitivity) / 32767);
+                                    ControlMapper.JoyMoveX = -(value * ControlMapper.JoyMoveSensitivity / 32767);
 
                                     if (value > ControlMapper.JoyMoveDeadzone)
                                     {
@@ -662,7 +668,7 @@ namespace FreeRaider
                                 }
                                 else
                                 {
-                                    ControlMapper.JoyMoveX = (value * ControlMapper.JoyMoveSensitivity) / 32767;
+                                    ControlMapper.JoyMoveX = value * ControlMapper.JoyMoveSensitivity / 32767;
 
                                     if (value > ControlMapper.JoyMoveDeadzone)
                                     {
@@ -689,7 +695,7 @@ namespace FreeRaider
                             {
                                 if (ControlMapper.JoyMoveInvertY)
                                 {
-                                    ControlMapper.JoyMoveY = -((value * ControlMapper.JoyMoveSensitivity) / 32767);
+                                    ControlMapper.JoyMoveY = -(value * ControlMapper.JoyMoveSensitivity / 32767);
 
                                     if (value > ControlMapper.JoyMoveDeadzone)
                                     {
@@ -704,7 +710,7 @@ namespace FreeRaider
                                 }
                                 else
                                 {
-                                    ControlMapper.JoyMoveY = (value * ControlMapper.JoyMoveSensitivity) / 32767;
+                                    ControlMapper.JoyMoveY = value * ControlMapper.JoyMoveSensitivity / 32767;
 
                                     if (value > ControlMapper.JoyMoveDeadzone)
                                     {

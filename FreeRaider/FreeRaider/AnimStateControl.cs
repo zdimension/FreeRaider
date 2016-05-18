@@ -1,7 +1,5 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Linq;
-using System.Windows.Forms;
 using OpenTK;
 using static FreeRaider.Constants;
 
@@ -3090,7 +3088,7 @@ namespace FreeRaider
                 case TR_STATE.LaraWaterDeath:
                     if (ent.MoveType != MoveType.OnWater)
                     {
-                        pos.Z = (TR_METERING_SECTORSIZE / 4) * Global.EngineFrameTime; // go to the air
+                        pos.Z = TR_METERING_SECTORSIZE / 4 * Global.EngineFrameTime; // go to the air
                     }
                     break;
                 case TR_STATE.LaraUnderwaterForward:
@@ -3247,14 +3245,10 @@ namespace FreeRaider
                                 ent.Speed = Vector3.Zero;
                                 cmd.Rotation.X = 0.0f;
                                 ent.Bt.NoFixAll = true;
-                                if (lowVerticalSpace)
-                                {
-                                    ent.SetAnimation(TR_ANIMATION.LaraOnwaterToLandLow, 0);
-                                }
-                                else
-                                {
-                                    ent.SetAnimation(TR_ANIMATION.LaraClimbOutOfWater, 0);
-                                }
+                                ent.SetAnimation(
+                                    lowVerticalSpace
+                                        ? TR_ANIMATION.LaraOnwaterToLandLow
+                                        : TR_ANIMATION.LaraClimbOutOfWater, 0);
                                 ent_climb_out_of_water(ent, ssAnim, ENTITY_ANIM.NewAnim);
                             }
                         }

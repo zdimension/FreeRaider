@@ -540,7 +540,7 @@ namespace FreeRaider
 
         public static string Left(this string input, int length)
         {
-            return (input.Length < length) ? input : input.Substring(0, length);
+            return input.Length < length ? input : input.Substring(0, length);
         }
 
         public static T[] CloneArr<T>(this T[] arr)
@@ -818,7 +818,6 @@ namespace FreeRaider
         /// Uses reflection to get the field value from an object.
         /// </summary>
         ///
-        /// <param name="type">The instance type.</param>
         /// <param name="instance">The instance object.</param>
         /// <param name="fieldName">The field's name which is to be fetched.</param>
         ///
@@ -894,6 +893,12 @@ namespace FreeRaider
         public static T[] Flatten<T>(this T[][] arr)
         {
             return arr.SelectMany(a => a).ToArray();
+        }
+
+        public static T ToStruct<T>(this IntPtr ptr)
+            where T : struct
+        {
+            return (T) Marshal.PtrToStructure(ptr, typeof(T));
         }
     }
 

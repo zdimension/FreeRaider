@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Net.Http.Headers;
-using System.Runtime.InteropServices;
 using BulletSharp;
 using FreeRaider.Loader;
 using FreeRaider.Script;
@@ -2032,7 +2029,7 @@ namespace FreeRaider
                 var pointer = tmp;
                 var numUvrotates = tr.AnimatedTexturesUVCount;
 
-                var numSequences = *(pointer++); // First word in a stream is sequence count.
+                var numSequences = *pointer++; // First word in a stream is sequence count.
 
                 world.AnimSequences.Resize(numSequences, () => new AnimSeq());
 
@@ -2040,7 +2037,7 @@ namespace FreeRaider
                 {
                     var seq = world.AnimSequences[i];
 
-                    seq.Frames.Resize(*(pointer++) + 1, () => new TexFrame());
+                    seq.Frames.Resize(*pointer++ + 1, () => new TexFrame());
                     seq.FrameList.Resize(seq.Frames.Count);
 
                     // Fill up new sequence with frame list
@@ -2054,7 +2051,7 @@ namespace FreeRaider
 
                     for(var j = 0; j < seq.Frames.Count; j++)
                     {
-                        seq.FrameList[j] = *(pointer++); // Add one frame.
+                        seq.FrameList[j] = *pointer++; // Add one frame.
                     }
 
                     // UVRotate textures case.
@@ -2528,9 +2525,9 @@ namespace FreeRaider
                 }
                 else
                 {
-                    l.Colour[0] = (tl.Color.R / 255.0f) * tl.Intensity;
-                    l.Colour[1] = (tl.Color.G / 255.0f) * tl.Intensity;
-                    l.Colour[2] = (tl.Color.B / 255.0f) * tl.Intensity;
+                    l.Colour[0] = tl.Color.R / 255.0f * tl.Intensity;
+                    l.Colour[1] = tl.Color.G / 255.0f * tl.Intensity;
+                    l.Colour[2] = tl.Color.B / 255.0f * tl.Intensity;
                     l.Colour[3] = 1.0f;
                 }
 

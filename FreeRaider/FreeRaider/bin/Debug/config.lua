@@ -100,7 +100,7 @@ bind(act.lookleft, KEY_LEFT, JOY_POVLEFT);
 bind(act.lookright, KEY_RIGHT, JOY_POVRIGHT);
 
 bind(act.inventory, KEY_ESCAPE);
-bind(act.screenshot, KEY_PRINTSCREEN);
+bind(act.screenshot, KEY_F7);
 bind(act.console, KEY_BACKQUOTE);
 bind(act.savegame, KEY_F5);
 bind(act.loadgame, KEY_F6);

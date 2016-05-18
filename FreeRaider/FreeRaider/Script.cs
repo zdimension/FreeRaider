@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Reflection;
-using System.Text;
-using BulletSharp;
 using FreeRaider.Loader;
 using FreeRaider.Script;
 using KeraLua;
@@ -17,7 +13,6 @@ using LuaCore = KeraLua.Lua;
 using static FreeRaider.Global;
 using static FreeRaider.Constants;
 using static FreeRaider.Strings;
-using static SDL2.SDL.SDL_Keycode;
 
 namespace FreeRaider
 {
@@ -51,7 +46,7 @@ namespace FreeRaider
             var sm = EngineWorld.GetModelByID((uint)id);
             if (sm == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_MODEL_ID, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_MODEL_ID, id);
                 return;
             }
 
@@ -70,7 +65,7 @@ namespace FreeRaider
             }
             if (id >= EngineWorld.Rooms.Count)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ROOM, (int) id);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_ROOM, (int) id);
                 return;
             }
             Engine.DumpRoom(EngineWorld.Rooms[(int) id]);
@@ -80,7 +75,7 @@ namespace FreeRaider
         {
             if (!id.IsBetween(0, EngineWorld.Rooms.Count - 1))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ROOM, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_ROOM, id);
                 return;
             }
 
@@ -101,7 +96,7 @@ namespace FreeRaider
             var sm = EngineWorld.GetModelByID((uint)id);
             if (sm == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_MODELID_OVERFLOW, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_MODELID_OVERFLOW, id);
                 return;
             }
 
@@ -116,7 +111,7 @@ namespace FreeRaider
             var sm = EngineWorld.GetModelByID((uint)id);
             if (sm == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_MODELID_OVERFLOW, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_MODELID_OVERFLOW, id);
                 return;
             }
 
@@ -228,7 +223,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return false;
             }
 
@@ -287,7 +282,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
 
@@ -302,7 +297,7 @@ namespace FreeRaider
 
             if (parameter >= (int) CharParameters.Sentinel)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_OPTION_INDEX, (int) CharParameters.Sentinel);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_OPTION_INDEX, (int) CharParameters.Sentinel);
                 return -1;
             }
 
@@ -312,7 +307,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_CHARACTER, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_CHARACTER, id);
                 return -1;
             }
         }
@@ -323,13 +318,13 @@ namespace FreeRaider
 
             if (parameter >= (int) CharParameters.Sentinel)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_OPTION_INDEX, (int) CharParameters.Sentinel);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_OPTION_INDEX, (int) CharParameters.Sentinel);
                 return;
             }
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_CHARACTER, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_CHARACTER, id);
                 return;
             }
             else if (maxValue == null)
@@ -361,7 +356,7 @@ namespace FreeRaider
 
             if (parameter >= (int) CharParameters.Sentinel)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_OPTION_INDEX, (int) CharParameters.Sentinel);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_OPTION_INDEX, (int) CharParameters.Sentinel);
                 return;
             }
 
@@ -371,7 +366,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_CHARACTER, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_CHARACTER, id);
             }
         }
 
@@ -388,13 +383,13 @@ namespace FreeRaider
 
                 if (!ent.Hairs.Last().Create(hairSetup, ent))
                 {
-                    ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_CREATE_HAIR, entID);
+                    ConsoleInfo.Instance.Warning(SYSWARN_CANT_CREATE_HAIR, entID);
                     ent.Hairs.RemoveAt(ent.Hairs.Count - 1);
                 }
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_CHARACTER, entID);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_CHARACTER, entID);
             }
         }
 
@@ -406,7 +401,7 @@ namespace FreeRaider
             {
                 if (ent.Hairs.Count == 0)
                 {
-                    ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_RESET_HAIR, entID);
+                    ConsoleInfo.Instance.Warning(SYSWARN_CANT_RESET_HAIR, entID);
                 }
                 else
                 {
@@ -415,7 +410,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_CHARACTER, entID);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_CHARACTER, entID);
             }
         }
 
@@ -429,19 +424,19 @@ namespace FreeRaider
 
                 if (!ragdollSetup.GetSetup(setupIndex))
                 {
-                    ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_RAGDOLL_SETUP, setupIndex);
+                    ConsoleInfo.Instance.Warning(SYSWARN_NO_RAGDOLL_SETUP, setupIndex);
                 }
                 else
                 {
                     if (!ent.CreateRagdoll(ragdollSetup))
                     {
-                        ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_CREATE_RAGDOLL, entID);
+                        ConsoleInfo.Instance.Warning(SYSWARN_CANT_CREATE_RAGDOLL, entID);
                     }
                 }
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entID);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, entID);
             }
         }
 
@@ -453,7 +448,7 @@ namespace FreeRaider
             {
                 if (ent.Bt.BtJoints.Count == 0)
                 {
-                    ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_REMOVE_RAGDOLL, entID);
+                    ConsoleInfo.Instance.Warning(SYSWARN_CANT_REMOVE_RAGDOLL, entID);
                 }
                 else
                 {
@@ -462,7 +457,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entID);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, entID);
             }
         }
 
@@ -491,7 +486,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ACTION_NUMBER);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_ACTION_NUMBER);
                 return false;
             }
         }
@@ -504,7 +499,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ACTION_NUMBER);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_ACTION_NUMBER);
                 return false;
             }
         }
@@ -534,7 +529,7 @@ namespace FreeRaider
                 rect, rect_border, new[] {rect_R, rect_G, rect_B, rect_A},
                 hide))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_CREATE_STYLE, Global.FontManager.FontStyleCount,
+                ConsoleInfo.Instance.Warning(SYSWARN_CANT_CREATE_STYLE, Global.FontManager.FontStyleCount,
                     (int) FontStyle.Sentinel);
             }
         }
@@ -543,7 +538,7 @@ namespace FreeRaider
         {
             if (!Global.FontManager.RemoveFont((FontType) fontindex))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_REMOVE_FONT);
+                ConsoleInfo.Instance.Warning(SYSWARN_CANT_REMOVE_FONT);
             }
         }
 
@@ -551,7 +546,7 @@ namespace FreeRaider
         {
             if (!Global.FontManager.RemoveFontStyle((FontStyle) styleindex))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_REMOVE_STYLE);
+                ConsoleInfo.Instance.Warning(SYSWARN_CANT_REMOVE_STYLE);
             }
         }
 
@@ -565,7 +560,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entID);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, entID);
                 return -1;
             }
         }
@@ -580,7 +575,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entID);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, entID);
                 return -1;
             }
         }
@@ -595,7 +590,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entID);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, entID);
             }
         }
 
@@ -609,7 +604,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entID);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, entID);
                 return -1;
             }
         }
@@ -630,7 +625,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetCharacterByID((uint)entityID);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, entityID);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, entityID);
                 return;
             }
 
@@ -647,13 +642,13 @@ namespace FreeRaider
 
             if (model == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_SKELETAL_MODEL, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_SKELETAL_MODEL, id);
                 return;
             }
 
             if (!anim.IsBetween(0, model.Animations.Count - 1))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ANIM_NUMBER);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_ANIM_NUMBER);
                 return;
             }
 
@@ -673,7 +668,7 @@ namespace FreeRaider
                     }
                     else
                     {
-                        ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_DISPATCH_NUMBER, dispatch);
+                        ConsoleInfo.Instance.Warning(SYSWARN_WRONG_DISPATCH_NUMBER, dispatch);
                     }
                     break;
                 }
@@ -687,14 +682,14 @@ namespace FreeRaider
 
             if (model == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_SKELETAL_MODEL, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_SKELETAL_MODEL, id);
                 command = moveX = moveY = moveZ = null;
                 return;
             }
 
             if (!anim.IsBetween(0, model.Animations.Count - 1))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ANIM_NUMBER);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_ANIM_NUMBER);
                 command = moveX = moveY = moveZ = null;
                 return;
             }
@@ -708,7 +703,7 @@ namespace FreeRaider
 
             if (!frame.IsBetween(0, an.Frames.Count - 1))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FRAME_NUMBER);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_FRAME_NUMBER);
                 command = moveX = moveY = moveZ = null;
                 return;
             }
@@ -728,13 +723,13 @@ namespace FreeRaider
 
             if (model == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_SKELETAL_MODEL, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_SKELETAL_MODEL, id);
                 return;
             }
 
             if (!anim.IsBetween(0, model.Animations.Count - 1))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ANIM_NUMBER);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_ANIM_NUMBER);
                 return;
             }
 
@@ -747,7 +742,7 @@ namespace FreeRaider
 
             if (!frame.IsBetween(0, an.Frames.Count - 1))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FRAME_NUMBER);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_FRAME_NUMBER);
                 return;
             }
 
@@ -763,13 +758,13 @@ namespace FreeRaider
 
             if (model == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_SKELETAL_MODEL, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_SKELETAL_MODEL, id);
                 return;
             }
 
             if (!anim.IsBetween(0, model.Animations.Count - 1))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ANIM_NUMBER);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_ANIM_NUMBER);
                 return;
             }
 
@@ -782,7 +777,7 @@ namespace FreeRaider
 
             if (!frame.IsBetween(0, an.Frames.Count - 1))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FRAME_NUMBER);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_FRAME_NUMBER);
                 return;
             }
 
@@ -820,13 +815,13 @@ namespace FreeRaider
             var e1 = EngineWorld.GetEntityByID((uint)id1);
             if (e1 == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id1);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id1);
                 return new float[0];
             }
             var e2 = EngineWorld.GetEntityByID((uint)id2);
             if (e2 == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id2);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id2);
                 return new float[0];
             }
 
@@ -838,13 +833,13 @@ namespace FreeRaider
             var e1 = EngineWorld.GetEntityByID((uint)id1);
             if (e1 == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id1);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id1);
                 return float.MaxValue;
             }
             var e2 = EngineWorld.GetEntityByID((uint)id2);
             if (e2 == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id2);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id2);
                 return float.MaxValue;
             }
 
@@ -856,13 +851,13 @@ namespace FreeRaider
             var e1 = EngineWorld.GetEntityByID((uint)id1);
             if (e1 == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id1);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id1);
                 return float.MaxValue;
             }
             var e2 = EngineWorld.GetEntityByID((uint)id2);
             if (e2 == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id2);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id2);
                 return float.MaxValue;
             }
 
@@ -884,7 +879,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint) id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 x = y = z = ax = ay = az = roomID = null;
                 return;
             }
@@ -903,7 +898,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return new float[0];
             }
 
@@ -915,7 +910,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return new float[0];
             }
 
@@ -929,7 +924,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return false;
             }
 
@@ -956,7 +951,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return 0;
             }
 
@@ -979,7 +974,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
             ent.Transform.Origin = new Vector3(x, y, z);
@@ -994,7 +989,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
             }
             else
             {
@@ -1011,7 +1006,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
             }
             else
             {
@@ -1041,7 +1036,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
             ent.Transform.Origin += new Vector3(x, y, z);
@@ -1055,7 +1050,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
 
@@ -1126,7 +1121,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
             }
             else
             {
@@ -1146,11 +1141,11 @@ namespace FreeRaider
 
             if (ent1 == null || ent2 == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, ent1?.ID ?? ent2.ID);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, ent1?.ID ?? ent2.ID);
             }
             else if (axis < 0 || axis > 2)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_AXIS, axis);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_AXIS, axis);
                 // TODO: OpenTomb uses entity's ID here? wtf?
             }
             else
@@ -1237,7 +1232,7 @@ namespace FreeRaider
 
             if (ent1 == null || ent2 == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, ent1?.ID ?? ent2.ID);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, ent1?.ID ?? ent2.ID);
                 return 0;
             }
             else
@@ -1258,7 +1253,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return new float[0];
             }
 
@@ -1270,7 +1265,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return 0;
             }
 
@@ -1282,7 +1277,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
             }
             else
             {
@@ -1299,7 +1294,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
 
@@ -1311,7 +1306,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
 
@@ -1323,13 +1318,13 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint)id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
 
             if (!boneID.IsBetween(0, ent.Bf.BoneTags.Count - 1))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_OPTION_INDEX, boneID);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_OPTION_INDEX, boneID);
                 return;
             }
 
@@ -1341,13 +1336,13 @@ namespace FreeRaider
             var model = EngineWorld.GetModelByID((uint)id);
             if (model == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_SKELETAL_MODEL, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_SKELETAL_MODEL, id);
                 return;
             }
 
             if (!boneID.IsBetween(0, model.MeshCount - 1))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_OPTION_INDEX, boneID);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_OPTION_INDEX, boneID);
                 return;
             }
 
@@ -1359,7 +1354,7 @@ namespace FreeRaider
             var ent = EngineWorld.GetEntityByID((uint) id);
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 anim = frame = count = null;
                 return;
             }
@@ -1402,7 +1397,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return false;
             }
 
@@ -1415,7 +1410,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
 
@@ -1428,7 +1423,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return false;
             }
 
@@ -1441,7 +1436,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return false;
             }
 
@@ -1454,7 +1449,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
 
@@ -1484,7 +1479,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
 
@@ -1613,7 +1608,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 active = enabled = visible = typeFlags = callbackFlags = null;
                 return;
             }
@@ -1632,7 +1627,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
 
@@ -1650,7 +1645,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return uint.MaxValue;
             }
 
@@ -1666,7 +1661,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
             if (value == null)
@@ -1691,7 +1686,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return false;
             }
 
@@ -1714,7 +1709,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
 
@@ -1740,7 +1735,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return uint.MaxValue;
             }
 
@@ -1756,7 +1751,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
             if (value == null)
@@ -1792,20 +1787,20 @@ namespace FreeRaider
             ent.Timer = timer;
         }
 
-        public static ushort lua_GetEntityMoveType(int id, ushort? flag = null)
+        public static ushort lua_GetEntityMoveType(int id, int? flag = null)
         {
             var ent = EngineWorld.GetEntityByID((uint)id);
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return ushort.MaxValue;
             }
 
             return (ushort) ent.MoveType;
         }
 
-        public static void lua_SetEntityMoveType(int id, ushort type)
+        public static void lua_SetEntityMoveType(int id, int type)
         {
             var ent = EngineWorld.GetEntityByID((uint)id);
             // TODO: Add warning if null
@@ -1838,7 +1833,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return 0;
             }
         }
@@ -1870,7 +1865,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
             }
         }
 
@@ -1880,7 +1875,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return -1;
             }
 
@@ -1893,7 +1888,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return uint.MaxValue;
             }
 
@@ -1906,7 +1901,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
 
@@ -1921,7 +1916,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return;
             }
 
@@ -1950,7 +1945,7 @@ namespace FreeRaider
 
             if (ent == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return 0;
             }
 
@@ -1982,12 +1977,12 @@ namespace FreeRaider
                 }
                 else
                 {
-                    ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_BONE_NUMBER, bone);
+                    ConsoleInfo.Instance.Warning(SYSWARN_WRONG_BONE_NUMBER, bone);
                 }
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_MODEL_ID, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_MODEL_ID, id);
             }
         }
 
@@ -2002,12 +1997,12 @@ namespace FreeRaider
                 }
                 else
                 {
-                    ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_BONE_NUMBER, bone);
+                    ConsoleInfo.Instance.Warning(SYSWARN_WRONG_BONE_NUMBER, bone);
                 }
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_MODEL_ID, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_MODEL_ID, id);
             }
         }
 
@@ -2016,14 +2011,14 @@ namespace FreeRaider
             var sm1 = EngineWorld.GetModelByID((uint)id1);
             if (sm1 == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_MODEL_ID, id1);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_MODEL_ID, id1);
                 return;
             }
 
             var sm2 = EngineWorld.GetModelByID((uint)id2);
             if (sm2 == null)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_MODEL_ID, id2);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_MODEL_ID, id2);
                 return;
             }
 
@@ -2037,11 +2032,11 @@ namespace FreeRaider
             }
             if (!tmp1)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_BONE_NUMBER, bone1);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_BONE_NUMBER, bone1);
             }
             if (!tmp2)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_BONE_NUMBER, bone2);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_BONE_NUMBER, bone2);
             }
         }
 
@@ -2078,7 +2073,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_APPLY_FORCE, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_CANT_APPLY_FORCE, id);
             }
         }
 
@@ -2086,7 +2081,7 @@ namespace FreeRaider
         {
             if (masses.Length == 0)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ARGS,
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_ARGS,
                     "[entity_id, body_number, (mass / each body mass)]");
                 return 0;
             }
@@ -2154,7 +2149,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ENTITY_OR_BODY, id, bodyNumber);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_ENTITY_OR_BODY, id, bodyNumber);
                     // TODO: Replace bodyNumber by ent.Bf.BoneTags.Count
             }
 
@@ -2178,7 +2173,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_APPLY_FORCE, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_CANT_APPLY_FORCE, id);
             }
         }
 
@@ -2192,7 +2187,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
             }
         }
 
@@ -2206,7 +2201,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
                 return -1;
             }
         }
@@ -2221,7 +2216,7 @@ namespace FreeRaider
             }
             else
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_NO_ENTITY, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_NO_ENTITY, id);
             }
         }
 
@@ -2280,7 +2275,7 @@ namespace FreeRaider
         {
             if (id < 0)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_STREAM_ID);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_STREAM_ID);
                 return;
             }
 
@@ -2298,7 +2293,7 @@ namespace FreeRaider
 
             if (id > EngineWorld.AudioMap.Count)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_SOUND_ID, EngineWorld.AudioMap.Count);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_SOUND_ID, EngineWorld.AudioMap.Count);
                 return;
             }
 
@@ -2315,11 +2310,11 @@ namespace FreeRaider
                 switch (result)
                 {
                     case TR_AUDIO_SEND.NoChannel:
-                        ConsoleInfo.Instance.Warning(Strings.SYSWARN_AS_NOCHANNEL);
+                        ConsoleInfo.Instance.Warning(SYSWARN_AS_NOCHANNEL);
                         break;
 
                     case TR_AUDIO_SEND.NoSample:
-                        ConsoleInfo.Instance.Warning(Strings.SYSWARN_AS_NOSAMPLE);
+                        ConsoleInfo.Instance.Warning(SYSWARN_AS_NOSAMPLE);
                         break;
                 }
             }
@@ -2329,7 +2324,7 @@ namespace FreeRaider
         {
             if (id > EngineWorld.AudioMap.Count)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_SOUND_ID, EngineWorld.AudioMap.Count);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_SOUND_ID, EngineWorld.AudioMap.Count);
                 return;
             }
 
@@ -2344,7 +2339,7 @@ namespace FreeRaider
                 : Audio.Send((uint)id, TR_AUDIO_EMITTER.Entity, eid);
 
             if (result < 0)
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_AK_NOTPLAYED, id);
+                ConsoleInfo.Instance.Warning(SYSWARN_AK_NOTPLAYED, id);
         }
 
         public static uint lua_GetLevel()
@@ -2354,7 +2349,7 @@ namespace FreeRaider
 
         public static void lua_SetLevel(int id)
         {
-            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_CHANGING_LEVEL, id);
+            ConsoleInfo.Instance.Notify(SYSNOTE_CHANGING_LEVEL, id);
 
             Game.LevelTransition((ushort) id);
             GameflowManager.Send(GF_OP.LevelComplete, id); // Next level
@@ -2370,14 +2365,14 @@ namespace FreeRaider
             Gui.FadeAssignPic(FaderType.LoadScreen, str);
             Gui.FadeStart(FaderType.LoadScreen, FaderDir.Out);
 
-            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_CHANGING_GAME, gameID);
+            ConsoleInfo.Instance.Notify(SYSNOTE_CHANGING_GAME, gameID);
             Game.LevelTransition((ushort) GameflowManager.LevelID);
             GameflowManager.Send(GF_OP.LevelComplete, (int) GameflowManager.LevelID);
         }
 
         public static void lua_LoadMap(string mapName, int? gameID = null, int? mapID = null)
         {
-            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_LOADING_MAP, mapName);
+            ConsoleInfo.Instance.Notify(SYSNOTE_LOADING_MAP, mapName);
 
             if (!string.IsNullOrWhiteSpace(mapName) && mapName != GameflowManager.CurrentLevelPath)
             {
@@ -2404,7 +2399,7 @@ namespace FreeRaider
         {
             if (group >= EngineWorld.FlipData.Count)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FLIPMAP_INDEX, group);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_FLIPMAP_INDEX, group);
                 return;
             }
 
@@ -2446,7 +2441,7 @@ namespace FreeRaider
 
             if (group >= EngineWorld.FlipData.Count)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FLIPMAP_INDEX, group);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_FLIPMAP_INDEX, group);
                 return;
             }
 
@@ -2464,7 +2459,7 @@ namespace FreeRaider
         {
             if (group >= EngineWorld.FlipData.Count)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FLIPMAP_INDEX, group);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_FLIPMAP_INDEX, group);
                 return 0;
             }
 
@@ -2475,7 +2470,7 @@ namespace FreeRaider
         {
             if (group >= EngineWorld.FlipData.Count)
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_FLIPMAP_INDEX, group);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_FLIPMAP_INDEX, group);
                 return 0;
             }
 
@@ -2813,7 +2808,7 @@ namespace FreeRaider.Script
                 {"IV", (int) TRGame.TR4},
                 {"IV_DEMO", (int) TRGame.TR4Demo},
                 {"V", (int) TRGame.TR5},
-                {"Unknown", (int) TRGame.Unknown},
+                {"Unknown", (int) TRGame.Unknown}
             };
 
             state["Engine"] = new Dictionary<string, int>
@@ -2823,7 +2818,7 @@ namespace FreeRaider.Script
                 {"III", (int) Loader.Engine.TR3},
                 {"IV", (int) Loader.Engine.TR4},
                 {"V", (int) Loader.Engine.TR5},
-                {"Unknown", (int) Loader.Engine.Unknown},
+                {"Unknown", (int) Loader.Engine.Unknown}
             };
 
             state["ENTITY_TYPE_GENERIC"] = (int) ENTITY_TYPE.Generic;
@@ -3059,9 +3054,9 @@ namespace FreeRaider.Script
             if (tmpF.IsBetween(CON_MIN_LINE_INTERVAL, CON_MAX_LINE_INTERVAL))
                 cn.Spacing = tmpF;
 
-            var tmpI = (int?) con["line_size"] ?? 0;
+            var tmpI = (ushort?) con["line_size"] ?? 0;
             if (tmpI.IsBetween(CON_MIN_LINE_SIZE, CON_MAX_LINE_SIZE))
-                cn.LineSize = (ushort?) tmpI ?? 0;
+                cn.LineSize = tmpI;
 
             tmpI = (ushort?) con["showing_lines"] ?? 0;
             if (tmpI.IsBetween(CON_MIN_LINES, CON_MAX_LINES))
@@ -3112,10 +3107,10 @@ namespace FreeRaider.Script
 
         protected void CheckStack()
         {
-            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_LUA_STACK_INDEX, LuaCore.LuaGetTop(state.GetLuaState()));
+            ConsoleInfo.Instance.Notify(SYSNOTE_LUA_STACK_INDEX, LuaCore.LuaGetTop(state.GetLuaState()));
         }
 
-        public NLua.Lua state;
+        public Lua state;
 
         private dynamic statedyn => (dynamic) state;
 
@@ -3262,7 +3257,7 @@ namespace FreeRaider.Script
         {
             if(!act.IsBetween(0, (int)ACTIONS.LastIndex - 1))
             {
-                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WRONG_ACTION_NUMBER);
+                ConsoleInfo.Instance.Warning(SYSWARN_WRONG_ACTION_NUMBER);
             }
             ControlMapper.ActionMap[act].Primary = primary;
             if (secondary != null)

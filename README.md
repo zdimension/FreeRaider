@@ -137,7 +137,7 @@ FreeRaider uses the following libraries:
 * SharpFont 3.0.1.200 (https://github.com/Robmaister/SharpFont)
 * Zlib.Portable 1.11.0.0 (https://github.com/advancedrei/Zlib.Portable)
 * LibSndFile.NET 0.3.0.34074 (modified) (https://code.google.com/archive/p/libsndfile-dotnet/)
-* SDL2-CS (https://github.com/flibitijibibo/SDL2-CS)
+* SDL2-CS (modified) (https://github.com/flibitijibibo/SDL2-CS)
 
 All these libraries are included in the project file.
 To compile FreeRaider, you need Visual Studio 2015 and the .NET Framework 4.0.

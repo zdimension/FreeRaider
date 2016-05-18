@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using FreeRaider.Loader;
 using OpenTK;
 using static FreeRaider.Constants;
-using static FreeRaider.Global;
 
 namespace FreeRaider
 {
@@ -33,32 +32,33 @@ namespace FreeRaider
 
         public float[] TexCoord = new float[2];
 
-        public VertexStruct ToStruct()
+        public unsafe VertexStruct ToStruct()
         {
-            return new VertexStruct
+            var ret = new VertexStruct
             {
                 Position = Position,
-                Normal = Normal,
-                Color = Color,
-                TexCoord = TexCoord
+                Normal = Normal
             };
+            fixed (float* ptr = Color)
+                Helper.PointerCopy(ptr, ret.Color, 4);
+            fixed (float* ptr = TexCoord)
+                Helper.PointerCopy(ptr, ret.TexCoord, 2);
+            return ret;
         }
     }
 
     /// <summary>
     /// TODO: UGLY!!!!!
     /// </summary>
-    public struct VertexStruct
+    public unsafe struct VertexStruct
     {
         public Vector3 Position;
 
         public Vector3 Normal;
 
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public float[] Color;
+        public fixed float Color[4];
 
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-        public float[] TexCoord;
+        public fixed float TexCoord[2];
     }
 
     public class Polygon

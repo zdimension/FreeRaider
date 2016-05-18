@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using BulletSharp;
@@ -53,16 +52,24 @@ namespace FreeRaider
     /// <summary>
     /// Animated version of vertex. Does not contain texture coordinate, because that is in a different VBO.
     /// </summary>
-    public struct AnimatedVertex
+    public unsafe struct AnimatedVertex
     {
         public Vector3 Position;
 
         /// <summary>
         /// Length 4
         /// </summary>
-        public float[] Color;
+        public fixed float Color[4];
 
         public Vector3 Normal;
+
+        public static AnimatedVertex ctor(Vector3 position, float[] color, Vector3 normal)
+        {
+            var ret = new AnimatedVertex {Position = position, Normal = normal};
+            fixed (float* ptr = color)
+                Helper.PointerCopy(ptr, ret.Color, 4);
+            return ret;
+        }
     }
 
     /// <summary>
@@ -73,14 +80,7 @@ namespace FreeRaider
         /// <summary>
         /// Mesh's ID
         /// </summary>
-        public uint ID
-        {
-            get { return _id; }
-            set
-            {
-                _id = value;
-            }
-        }
+        public uint ID;
 
         /// <summary>
         /// Does this mesh have prebaked vertex lighting
@@ -191,7 +191,6 @@ namespace FreeRaider
         public uint AnimatedVBOIndexArray;
 
         public VertexArray AnimatedVertexArray;
-        private uint _id;
 
         ~BaseMesh()
         {
@@ -235,7 +234,7 @@ namespace FreeRaider
             }
         }
 
-        public void GenVBO(Render renderer)
+        public unsafe void GenVBO(Render renderer)
         {
             if (VBOIndexArray != 0 || VBOVertexArray != 0 || VBOSkinArray != 0)
                 return;
@@ -244,18 +243,22 @@ namespace FreeRaider
             VBOVertexArray = (uint) GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, VBOVertexArray);
             var vsa = Vertices.Select(x => x.ToStruct()).ToArray();
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) vsa.GetSize(), vsa,
-                BufferUsageHint.StaticDraw);
+            fixed (VertexStruct* ptr = vsa)
+            {
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) (vsa.Length * sizeof(VertexStruct)), (IntPtr)ptr, BufferUsageHint.StaticDraw);
+            }
 
             // Store additional skinning information
             if (MatrixIndices.Count > 0)
             {
                 VBOSkinArray = (uint) GL.GenBuffer();
                 GL.BindBuffer(BufferTarget.ArrayBuffer, VBOSkinArray);
-                GL.BufferData(BufferTarget.ArrayBuffer,
-                    (IntPtr) (Marshal.SizeOf(typeof (MatrixIndexStruct)) * MatrixIndices.Count),
-                    MatrixIndices.Select(x => x.ToStruct()).ToArray(),
-                    BufferUsageHint.StaticDraw);
+                var tmp = MatrixIndices.Select(x => x.ToStruct()).ToArray();
+                fixed (MatrixIndexStruct* ptr = tmp)
+                    GL.BufferData(BufferTarget.ArrayBuffer,
+                        (IntPtr) (Marshal.SizeOf(typeof (MatrixIndexStruct)) * MatrixIndices.Count),
+                        (IntPtr) ptr,
+                        BufferUsageHint.StaticDraw);
             }
 
             // Fill indices vbo
@@ -267,8 +270,12 @@ namespace FreeRaider
             {
                 elementsSize += sizeof (uint) * (long) ElementsPerTexture[i];
             }
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) elementsSize, Elements.ToArray(),
-                BufferUsageHint.StaticDraw);
+            {
+                var tmp = Elements.ToArray();
+                fixed (uint* ptr = tmp)
+                    GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) elementsSize, (IntPtr) ptr,
+                        BufferUsageHint.StaticDraw);
+            }
 
             // Prepare vertex array
             var attribs = new[]
@@ -298,16 +305,22 @@ namespace FreeRaider
                 // And upload.
                 AnimatedVBOVertexArray = (uint) GL.GenBuffer();
                 GL.BindBuffer(BufferTarget.ArrayBuffer, AnimatedVBOVertexArray);
-                GL.BufferData(BufferTarget.ArrayBuffer,
-                    (IntPtr) (Marshal.SizeOf(typeof (AnimatedVertex)) * AnimatedVertices.Count),
-                    AnimatedVertices.ToArray(), BufferUsageHint.StaticDraw);
-
+                {
+                    var tmp = AnimatedVertices.ToArray();
+                    fixed (AnimatedVertex* ptr = tmp)
+                        GL.BufferData(BufferTarget.ArrayBuffer,
+                            (IntPtr) (Marshal.SizeOf(typeof (AnimatedVertex)) * AnimatedVertices.Count),
+                            (IntPtr) ptr, BufferUsageHint.StaticDraw);
+                }
                 AnimatedVBOIndexArray = (uint) GL.GenBuffer();
                 GL.BindBuffer(BufferTarget.ArrayBuffer, AnimatedVBOIndexArray);
-                GL.BufferData(BufferTarget.ArrayBuffer,
-                    (IntPtr) (sizeof (uint) * AllAnimatedElements.Count),
-                    AllAnimatedElements.ToArray(), BufferUsageHint.StaticDraw);
-
+                {
+                    var tmp = AllAnimatedElements.ToArray();
+                    fixed (uint* ptr = tmp)
+                        GL.BufferData(BufferTarget.ArrayBuffer,
+                            (IntPtr) (sizeof (uint) * AllAnimatedElements.Count),
+                            (IntPtr) ptr, BufferUsageHint.StaticDraw);
+                }
                 // Prepare empty buffer for tex coords
                 AnimatedVBOTexCoordArray = (uint) GL.GenBuffer();
                 GL.BindBuffer(BufferTarget.ArrayBuffer, AnimatedVBOTexCoordArray);
@@ -589,12 +602,7 @@ namespace FreeRaider
             // Skip search for equal vertex; tex coords may differ but aren't stored in
             // animated_vertex_s
 
-            AnimatedVertices.Add(new AnimatedVertex
-            {
-                Position = v.Position,
-                Color = v.Color,
-                Normal = v.Normal
-            });
+            AnimatedVertices.Add(AnimatedVertex.ctor(v.Position, v.Color, v.Normal));
 
             return (uint) AnimatedVertices.Count - 1;
         }
@@ -1348,7 +1356,7 @@ namespace FreeRaider
             }
         }
 
-        public unsafe void InterpolateFrames()
+        public void InterpolateFrames()
         {
             foreach (var anim in Animations)
             {

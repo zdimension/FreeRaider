@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Threading;
 using BulletSharp;
 using NLua;
 using NLua.Exceptions;
 using OpenTK;
-using SharpFont;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
 using static FreeRaider.StaticFuncs;

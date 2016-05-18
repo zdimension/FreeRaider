@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using OpenTK;
-using OpenTK.Graphics;
 
 namespace FreeRaider
 {

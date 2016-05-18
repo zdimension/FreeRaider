@@ -864,7 +864,10 @@ namespace LibSndFile {
 			sf_info.sections = info->Sections;
 			sf_info.seekable = info->Seekable;
 
-			MemBufferFileIo wavMem(samplePointer, sampleSize);
+			byte* tmp = (byte*)malloc(sampleSize);
+			memcpy(tmp, samplePointer, sampleSize);
+
+			MemBufferFileIo wavMem(tmp, sampleSize);
 
 			sndfileHandle = sf_open_virtual(&wavMem, mode, &sf_info, &wavMem);
 

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BulletSharp;
 using OpenTK;
-using OpenTK.Graphics.ES20;
-using SharpFont;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
 using static FreeRaider.StaticFuncs;
@@ -1123,6 +1121,7 @@ namespace FreeRaider
 
         public override void Kill()
         {
+            ConsoleInfo.Instance.AddLine("Lara dies", FontStyle.ConsoleNotify);
             Response.Killed = true;
         }
 
@@ -1130,14 +1129,7 @@ namespace FreeRaider
         {
             if (Self.Room.Flags.HasFlagUns(RoomFlag.Quicksand))
             {
-                if (HeightInfo.TransitionLevel > Transform.Origin.Z + Height)
-                {
-                    return Substance.QuicksandConsumed;
-                }
-                else
-                {
-                    return Substance.QuicksandShallow;
-                }
+                return HeightInfo.TransitionLevel > Transform.Origin.Z + Height ? Substance.QuicksandConsumed : Substance.QuicksandShallow;
             }
             else if (!HeightInfo.Water)
             {
@@ -2932,10 +2924,7 @@ namespace FreeRaider
 
         public float GetParam(CharParameters parameter)
         {
-            if (parameter >= CharParameters.Sentinel)
-                return 0;
-
-            return Parameters.Param[(int) parameter];
+            return parameter >= CharParameters.Sentinel ? 0 : Parameters.Param[(int) parameter];
         }
 
         public bool SetParam(CharParameters parameter, float value)

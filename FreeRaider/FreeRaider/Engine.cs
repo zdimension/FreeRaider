@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
-using System.Threading.Tasks;
 using BulletSharp;
 using FreeRaider.Loader;
 using FreeRaider.Script;
-using NLua.Exceptions;
 using OpenTK;
 using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
@@ -23,7 +19,6 @@ using static FreeRaider.Strings;
 using static FreeRaider.StaticFuncs;
 using static SDL2.SDL;
 using static SDL2.SDL_image;
-using PixelFormat = OpenTK.Graphics.OpenGL.PixelFormat;
 
 namespace FreeRaider
 {
@@ -108,7 +103,7 @@ namespace FreeRaider
 
         public COLLISION_SHAPE CollisionShape = COLLISION_SHAPE.None;
 
-        public Object Object = null;
+        public object Object = null;
 
         public Room Room = null;
     }
@@ -527,6 +522,24 @@ namespace FreeRaider
 
             GL.ClearColor(Color.Red);
 
+            /*GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadIdentity();
+            GL.Ortho(0.0, 800, 600, 1.0, -1.0, 1.0);
+            GL.Enable(EnableCap.Blend);
+            GL.Enable(EnableCap.Texture2D);*/
+            /*GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+
+            var image_ = SDL_image.IMG_Load("resource/graphics/legal.png");
+            var image = (SDL.SDL_Surface)Marshal.PtrToStructure(image_, typeof(SDL.SDL_Surface));
+            GL.GenTextures(1, out Program.texture);
+            GL.BindTexture(TextureTarget.Texture2D, Program.texture);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, image.w, image.h, 0, PixelFormat.Rgba, PixelType.UnsignedByte, image.pixels);
+            SDL.SDL_FreeSurface(image_);*/
+
             GL.Enable(EnableCap.DepthTest);
             GL.DepthFunc(DepthFunction.Lequal);
 
@@ -708,34 +721,11 @@ namespace FreeRaider
                 Global.ScreenInfo.H, video_flags);
             sdl_gl_context = SDL_GL_CreateContext(sdl_window);
             SDL_GL_MakeCurrent(sdl_window, sdl_gl_context);
-            //TKWindow = OpenTK.Platform.Utilities.CreateSdl2WindowInfo(sdl_window);
+            TKWindow = Utilities.CreateSdl2WindowInfo(sdl_window);
             GLContext = new GraphicsContext(new ContextHandle(sdl_gl_context),
                 SDL_GL_GetProcAddress, // implement GetAddress via SDL
                 () => new ContextHandle(SDL_GL_GetCurrentContext()));
-            /*GLContext = new OpenTK.Platform.SDL2.Sdl2GraphicsContext(GraphicsMode.Default,
-                new OpenTK.Platform.SDL2.Sdl2WindowInfo(sdl_window, null), null, 0, 0, GraphicsContextFlags.Default);*/
-            var tka = typeof(GraphicsContext).Assembly;
-            var wi = (IWindowInfo)tka.GetType("OpenTK.Platform.SDL2.Sdl2WindowInfo")
-                .GetConstructor(BindingFlags.Instance | BindingFlags.Public, null,
-                    new[] {typeof (IntPtr), tka.GetType("OpenTK.Platform.SDL2.Sdl2WindowInfo")},
-                    new ParameterModifier[0])
-                .Invoke(new object[] {sdl_window, null});
-            GLContext.MakeCurrent(wi);
-            /*var pms = new object[]
-            {
-                GraphicsMode.Default,
-                tka.GetType("OpenTK.Platform.SDL2.Sdl2WindowInfo")
-                .GetConstructor(BindingFlags.Instance | BindingFlags.Public, null, new [] {typeof(IntPtr), tka.GetType("OpenTK.Platform.SDL2.Sdl2WindowInfo")}, new ParameterModifier[0])
-                .Invoke(new object[] {sdl_window, null}),
-                null,
-                0,
-                0,
-                GraphicsContextFlags.Default
-            };
-            GLContext = (GraphicsContext) (tka.GetType("OpenTK.Platform.SDL2.Sdl2GraphicsContext")
-                .GetConstructor(BindingFlags.Instance | BindingFlags.Public, null,
-                    new [] {typeof(GraphicsMode), tka.GetType("OpenTK.Platform.SDL2.Sdl2WindowInfo"), typeof(IGraphicsContext), typeof(int), typeof(int), typeof(GraphicsContextFlags)}, new ParameterModifier[0])
-                .Invoke(pms));*/
+            GLContext.MakeCurrent(TKWindow);
 
             if (SDL_GL_SetSwapInterval(Global.ScreenInfo.Vsync ? 1 : 0) != 0)
                 Sys.DebugLog(LOG_FILENAME, "Cannot set VSYNC: {0}\n", SDL_GetError());
@@ -943,16 +933,29 @@ namespace FreeRaider
             Gui.SwitchGLMode(true);
             {
                 Gui.DrawNotifier();
-                if(Global.EngineWorld.Character != null && MainInventoryManager != null)
+                if(EngineWorld.Character != null && MainInventoryManager != null)
                 {
                     Gui.DrawInventory();
                 }
             }
 
-            //Gui.Render();
+            Gui.Render();
             Gui.SwitchGLMode(false);
 
             Renderer.DrawListDebugLines();
+
+            /*GL.BindTexture(TextureTarget.Texture2D, Program.texture);
+            GL.Begin(PrimitiveType.Quads);
+            GL.TexCoord2(0, 0);
+            GL.Vertex2(0, 0);
+            GL.TexCoord2(1, 0);
+            GL.Vertex2(500, 0);
+            GL.TexCoord2(1, 1);
+            GL.Vertex2(500, 500);
+            GL.TexCoord2(0, 1);
+            GL.Vertex2(0, 500);
+            GL.End();
+            GL.Flush();*/
 
             SDL_GL_SwapWindow(sdl_window);
         }
@@ -1063,17 +1066,14 @@ namespace FreeRaider
                 }
             }
 
-            if(EngineCamera.CurrentRoom != null)
+            var rs = EngineCamera.CurrentRoom?.GetSectorRaw(EngineCamera.Position);
+            if(rs != null)
             {
-                var rs = EngineCamera.CurrentRoom.GetSectorRaw(EngineCamera.Position);
-                if(rs != null)
-                {
-                    Gui.OutTextXY(30.0f, 90.0f, "room = (id = {0}, sx = {1}, sy = {2})",
-                        EngineCamera.CurrentRoom.ID, rs.IndexX, rs.IndexY);
-                    Gui.OutTextXY(30.0f, 120.0f, "room_below = {0}, room_above = {1}",
-                        rs.SectorBelow == null ? -1 : (long) rs.SectorBelow.OwnerRoom.ID,
-                        rs.SectorAbove == null ? -1 : (long) rs.SectorAbove.OwnerRoom.ID);
-                }
+                Gui.OutTextXY(30.0f, 90.0f, "room = (id = {0}, sx = {1}, sy = {2})",
+                    EngineCamera.CurrentRoom.ID, rs.IndexX, rs.IndexY);
+                Gui.OutTextXY(30.0f, 120.0f, "room_below = {0}, room_above = {1}",
+                    rs.SectorBelow == null ? -1 : (long) rs.SectorBelow.OwnerRoom.ID,
+                    rs.SectorAbove == null ? -1 : (long) rs.SectorAbove.OwnerRoom.ID);
             }
             Gui.OutTextXY(30.0f, 150.0f, "cam_pos = {0}", EngineCamera.Position);
         }

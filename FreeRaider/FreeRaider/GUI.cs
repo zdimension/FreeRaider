@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
 using FreeRaider.Loader;
 using JetBrains.Annotations;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using SDL2;
 using SharpFont;
 using PixelFormat = OpenTK.Graphics.OpenGL.PixelFormat;
 using static FreeRaider.Constants;
@@ -649,7 +648,7 @@ namespace FreeRaider
                     if(textureWide)
                     {
                         Gui.DrawRect(
-                            -(((Global.ScreenInfo.H / textureAspectRatio) - Global.ScreenInfo.W) / 2),
+                            -((Global.ScreenInfo.H / textureAspectRatio - Global.ScreenInfo.W) / 2),
                             0.0f,
                             Global.ScreenInfo.H / textureAspectRatio,
                             Global.ScreenInfo.H,
@@ -661,7 +660,7 @@ namespace FreeRaider
                     {
                         Gui.DrawRect(
                         0.0f,
-                        -(((Global.ScreenInfo.W / textureAspectRatio) - Global.ScreenInfo.H) / 2),
+                        -((Global.ScreenInfo.W / textureAspectRatio - Global.ScreenInfo.H) / 2),
                         Global.ScreenInfo.W,
                         Global.ScreenInfo.W / textureAspectRatio,
                         texColor, texColor, texColor, texColor,
@@ -804,9 +803,9 @@ namespace FreeRaider
             maxTime = delayMs / 1000.0f;
         }
 
-        public bool SetTexture(string texturePath)
+        public unsafe bool SetTexture(string texturePath)
         {
-            Bitmap bmp = null;
+            /*Bitmap bmp = null;
             try
             {
                 bmp = (Bitmap) Image.FromFile(texturePath);
@@ -862,6 +861,95 @@ namespace FreeRaider
                 ConsoleInfo.Instance.Notify(Strings.SYSNOTE_LOADED_FADER, texturePath);
                 bmp.Dispose();
                 return true;
+            }*/
+
+
+            var surface_ = SDL_image.IMG_Load(texturePath);
+            PixelFormat textureFormat;
+            int colorDepth;
+
+            if(surface_ != IntPtr.Zero)
+            {
+                var surface = (SDL_Surface*) surface_;
+
+                // Get the color depth of the SDL surface
+                colorDepth = surface->format->BytesPerPixel;
+
+                if(colorDepth == 4) // Contains an alpha channel
+                {
+                    if(surface->format->Rmask == 0x000000ff)
+                        textureFormat = PixelFormat.Rgba;
+                    else
+                        textureFormat = PixelFormat.Bgra;
+
+                    colorDepth = (int) PixelFormat.Rgba;
+                }
+                else if (colorDepth == 3) // No alpha channel
+                {
+                    if (surface->format->Rmask == 0x000000ff)
+                        textureFormat = PixelFormat.Rgb;
+                    else
+                        textureFormat = PixelFormat.Bgr;
+
+                    colorDepth = (int)PixelFormat.Rgb;
+                }
+                else
+                {
+                    ConsoleInfo.Instance.Warning(Strings.SYSWARN_NOT_TRUECOLOR_IMG, texturePath);
+                    SDL_FreeSurface(surface_);
+                    return false;
+                }
+
+                // Drop previously assigned texture, if it exists.
+                dropTexture();
+
+                // Have OpenGL generate a texture object handle for us
+                GL.GenTextures(1, out texture);
+
+                // Bind the texture object
+                GL.BindTexture(TextureTarget.Texture2D, texture);
+
+                // Set the texture's stretching properties
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+                // Edit the texture object's image data using the information SDL_Surface gives us
+                GL.TexImage2D(TextureTarget.Texture2D, 0, (PixelInternalFormat) colorDepth, surface->w, surface->h, 0,
+                    textureFormat, PixelType.UnsignedByte, (IntPtr)surface->pixels);
+            }
+            else
+            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_IMG_NOT_LOADED_SDL, texturePath, SDL_GetError());
+                return false;
+            }
+
+            // Unbind the texture - is it really necessary?
+            // GL.BindTexture(TextureTarget.Texture2D, 0);
+
+            // Free the SDL_Surface only if it was successfully created
+            if(surface_ != IntPtr.Zero)
+            {
+                var surface = surface_.ToStruct<SDL_Surface>();
+
+                // Set additional parameters
+                textureWidth = (ushort) surface.w;
+                textureHeight = (ushort)surface.h;
+
+                setAspect();
+
+                ConsoleInfo.Instance.Notify(Strings.SYSNOTE_LOADED_FADER, texturePath);
+                SDL_FreeSurface(surface_);
+                return true;
+            }
+            else
+            {
+                // if mTexture == 0 then trouble
+                if(GL.IsTexture(texture))
+                {
+                    GL.DeleteTexture(texture);
+                }
+                texture = 0;
+                return false;
             }
         }
 
@@ -1149,7 +1237,7 @@ namespace FreeRaider
             // Border rect should be rendered first, as it lies beneath actual bar,
             // and additionally, we need to show it in any case, even if bar is in
             // warning state (blinking).
-            Gui.DrawRect(x, y, width + (borderWidth * 2), height + (borderHeight * 2),
+            Gui.DrawRect(x, y, width + borderWidth * 2, height + borderHeight * 2,
                 borderMainColor, borderMainColor, borderFadeColor, borderFadeColor,
                 BlendingMode.Opaque);
 
@@ -2053,42 +2141,38 @@ namespace FreeRaider
             }
         }
 
-        public struct GuiBufferEntryS
+        public unsafe struct GuiBufferEntryS
         {
-            public float[] Position;
+            public fixed float Position[2];
 
-            public byte[] Color;
+            public fixed byte Color[4];
+
+            public static GuiBufferEntryS ctor(float[] pos, byte[] color)
+            {
+                var ret = new GuiBufferEntryS();
+                fixed (float* ptr = pos)
+                    Helper.PointerCopy(ptr, ret.Position, 2);
+                fixed (byte* ptr = color)
+                    Helper.memcpy(ret.Color, ptr, 4);
+                return ret;
+            }
         }
 
-        public static void FillCrosshairBuffer()
+        public static unsafe void FillCrosshairBuffer()
         {
             var crosshairBuf = new[]
             {
-                new GuiBufferEntryS
-                {
-                    Position = new[] {Global.ScreenInfo.W / 2.0f - 5, Global.ScreenInfo.H / 2.0f},
-                    Color = new byte[] {255, 0, 0, 255}
-                },
-                new GuiBufferEntryS
-                {
-                    Position = new[] {Global.ScreenInfo.W / 2.0f + 5, Global.ScreenInfo.H / 2.0f},
-                    Color = new byte[] {255, 0, 0, 255}
-                },
-                new GuiBufferEntryS
-                {
-                    Position = new[] {Global.ScreenInfo.W / 2.0f, Global.ScreenInfo.H / 2.0f - 5},
-                    Color = new byte[] {255, 0, 0, 255}
-                },
-                new GuiBufferEntryS
-                {
-                    Position = new[] {Global.ScreenInfo.W / 2.0f, Global.ScreenInfo.H / 2.0f + 5},
-                    Color = new byte[] {255, 0, 0, 255}
-                }
+                GuiBufferEntryS.ctor(new[] {Global.ScreenInfo.W / 2.0f - 5, Global.ScreenInfo.H / 2.0f}, new byte[] {255, 0, 0, 255}),
+                GuiBufferEntryS.ctor(new[] {Global.ScreenInfo.W / 2.0f + 5, Global.ScreenInfo.H / 2.0f}, new byte[] {255, 0, 0, 255}),
+                GuiBufferEntryS.ctor(new[] {Global.ScreenInfo.W / 2.0f, Global.ScreenInfo.H / 2.0f - 5}, new byte[] {255, 0, 0, 255}),
+                GuiBufferEntryS.ctor(new[] {Global.ScreenInfo.W / 2.0f, Global.ScreenInfo.H / 2.0f + 5}, new byte[] {255, 0, 0, 255})
             };
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, CrosshairBuffer);
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) (Marshal.SizeOf(typeof(GuiBufferEntryS)) * crosshairBuf.Length), crosshairBuf,
-                BufferUsageHint.StaticDraw);
+            fixed (GuiBufferEntryS* ptr = crosshairBuf)
+                GL.BufferData(BufferTarget.ArrayBuffer,
+                    (IntPtr) (Marshal.SizeOf(typeof (GuiBufferEntryS)) * crosshairBuf.Length), (IntPtr) ptr,
+                    BufferUsageHint.StaticDraw);
 
             var attribs = new[]
             {

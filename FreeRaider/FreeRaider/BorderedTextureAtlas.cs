@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using FreeRaider.Loader;
 using OpenTK.Graphics.OpenGL;
 using static FreeRaider.Constants;
@@ -374,7 +373,7 @@ namespace FreeRaider
 
                         if (split)
                         {
-                            yCoord += (canonical.Height / 2);
+                            yCoord += canonical.Height / 2;
                         }
                         break;
                     case CornerLocation.TopRight:
@@ -383,7 +382,7 @@ namespace FreeRaider
 
                         if (split)
                         {
-                            yCoord += (canonical.Height / 2);
+                            yCoord += canonical.Height / 2;
                         }
                         break;
                     case CornerLocation.BottomLeft:
@@ -396,7 +395,7 @@ namespace FreeRaider
                         break;
                 }
 
-                var index = reverse ? (poly.Vertices.Count - i - 1) : i;
+                var index = reverse ? poly.Vertices.Count - i - 1 : i;
 
                 poly.Vertices[index].TexCoord[0] = (float) xCoord / resultPageWidth;
                 poly.Vertices[index].TexCoord[1] = (float) yCoord / resultPageHeights[(int) canonical.NewPage];
