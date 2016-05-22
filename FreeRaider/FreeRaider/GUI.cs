@@ -239,7 +239,8 @@ namespace FreeRaider
                     return false;
                 }
 
-                fonts.Insert(0, new Font {Size = (ushort) size, Index = index});
+                desiredFont = new Font {Size = (ushort) size, Index = index};
+                fonts.Insert(0, desiredFont);
             }
 
             desiredFont.GLFont = GLF.CreateFont(fontLibrary, path, (ushort) size);

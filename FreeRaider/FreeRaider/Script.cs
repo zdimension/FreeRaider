@@ -511,10 +511,10 @@ namespace FreeRaider
 
         public static void lua_AddFont(int index, string path, int size)
         {
-            /*if (!Global.FontManager.AddFont((FontType) index, size, path))
+            if (!Global.FontManager.AddFont((FontType) index, (uint)size, path))
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_CREATE_FONT, Global.FontManager.FontCount, MaxFonts);
-            }*/
+            }
         }
 
         public static void lua_AddFontStyle(int style_index,

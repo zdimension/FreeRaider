@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Text;
 using OpenTK.Graphics.OpenGL;
 using SharpFont;
+using Encoding = SharpFont.Encoding;
 using PixelFormat = OpenTK.Graphics.OpenGL.PixelFormat;
 
 namespace FreeRaider
@@ -145,7 +147,7 @@ namespace FreeRaider
 
                 // resize base font
                 glf.FontSize = fontSize;
-                glf.FTFace.SetCharSize(fontSize << 6, fontSize << 6, 0, 0);
+                glf.FTFace.SetCharSize(fontSize, fontSize, 0, 0);
 
                 // calculate texture atlas size
                 var charsInRow = 1 + (int) Math.Sqrt(glf.Glyphs.Length);
@@ -188,8 +190,8 @@ namespace FreeRaider
                     g = glf.FTFace.Glyph;
                     glf.Glyphs[i].Width = g.Bitmap.Width;
                     glf.Glyphs[i].Height = g.Bitmap.Rows;
-                    glf.Glyphs[i].AdvanceX = g.Advance.X.ToSingle();
-                    glf.Glyphs[i].AdvanceY = g.Advance.Y.ToSingle();
+                    glf.Glyphs[i].AdvanceX = g.Advance.X.ToSingle() * 64;
+                    glf.Glyphs[i].AdvanceY = g.Advance.Y.ToSingle() * 64;
                     glf.Glyphs[i].Left = g.BitmapLeft;
                     glf.Glyphs[i].Top = g.BitmapTop;
 
@@ -291,25 +293,31 @@ namespace FreeRaider
 
         public static unsafe float GetStringLen(FontTexture glf, string text, int n)
         {
+            text = text.NullCheck();
+
             var x = 0.0f;
 
             if (glf?.FTFace != null)
             {
-                var ch = Helper.GetStringBPUTF8(text);
-                uint curr_utf32, next_utf32;
-                var nch = Helper.UTF8ToUTF32(ch, &curr_utf32);
-                curr_utf32 = glf.FTFace.GetCharIndex(curr_utf32);
-
-                for (var i = 0; (*ch != 0) && !(n >= 0 && i >= n); i++)
+                var charr = Helper.GetStringBPUTF8(text);
+                fixed (byte* ptr = charr)
                 {
-                    var nch2 = Helper.UTF8ToUTF32(nch, &next_utf32);
-                    next_utf32 = glf.FTFace.GetCharIndex(next_utf32);
-                    ch = nch;
-                    nch = nch2;
+                    var ch = ptr;
+                    uint curr_utf32, next_utf32;
+                    var nch = Helper.UTF8ToUTF32(ch, &curr_utf32);
+                    curr_utf32 = glf.FTFace.GetCharIndex(curr_utf32);
 
-                    var kern = glf.FTFace.GetKerning(curr_utf32, next_utf32, KerningMode.Unscaled);
-                    curr_utf32 = next_utf32;
-                    x += (kern.X.ToSingle() + glf.Glyphs[(int)curr_utf32].AdvanceX) / 64.0f;
+                    for (var i = 0; (*ch != 0) && !(n >= 0 && i >= n); i++)
+                    {
+                        var nch2 = Helper.UTF8ToUTF32(nch, &next_utf32);
+                        next_utf32 = glf.FTFace.GetCharIndex(next_utf32);
+                        ch = nch;
+                        nch = nch2;
+
+                        var kern = glf.FTFace.GetKerning(curr_utf32, next_utf32, KerningMode.Unscaled);
+                        curr_utf32 = next_utf32;
+                        x += (kern.X.ToSingle() + glf.Glyphs[(int) curr_utf32].AdvanceX) / 64.0f;
+                    }
                 }
             }
 
@@ -338,6 +346,8 @@ namespace FreeRaider
 
         public static unsafe void GetStringBB(FontTexture glf, string text, int n, ref float x0, ref float y0, ref float x1, ref float y1)
         {
+            text = text.NullCheck();
+
             x0 = 0;
             x1 = 0;
             y0 = 0;
@@ -346,36 +356,40 @@ namespace FreeRaider
             if(glf?.FTFace != null)
             {
                 byte* nch2;
-                byte* ch = Helper.GetStringBPUTF8(text);
-                var x = 0.0f;
-                var y = 0.0f;
-                float xx0, xx1, yy0, yy1;
-                uint curr_utf32, next_utf32;
-
-                var nch = Helper.UTF8ToUTF32(ch, &curr_utf32);
-                curr_utf32 = glf.FTFace.GetCharIndex(curr_utf32);
-
-                for (var i = 0; (*ch != 0) && !(n >= 0 && i >= n); i++)
+                var charr = Helper.GetStringBPUTF8(text);
+                fixed (byte* tmp = charr)
                 {
-                    fixed (CharInfo* g = &glf.Glyphs[(int) curr_utf32])
+                    var ch = tmp;
+                    var x = 0.0f;
+                    var y = 0.0f;
+                    float xx0, xx1, yy0, yy1;
+                    uint curr_utf32, next_utf32;
+
+                    var nch = Helper.UTF8ToUTF32(ch, &curr_utf32);
+                    curr_utf32 = glf.FTFace.GetCharIndex(curr_utf32);
+
+                    for (var i = 0; (*ch != 0) && !(n >= 0 && i >= n); i++)
                     {
-                        nch2 = Helper.UTF8ToUTF32(nch, &next_utf32);
+                        fixed (CharInfo* g = &glf.Glyphs[(int) curr_utf32])
+                        {
+                            nch2 = Helper.UTF8ToUTF32(nch, &next_utf32);
 
-                        next_utf32 = glf.FTFace.GetCharIndex(next_utf32);
-                        ch = nch;
-                        nch = nch2;
+                            next_utf32 = glf.FTFace.GetCharIndex(next_utf32);
+                            ch = nch;
+                            nch = nch2;
 
-                        var kern = glf.FTFace.GetKerning(curr_utf32, next_utf32, KerningMode.Unscaled);
-                        curr_utf32 = next_utf32;
+                            var kern = glf.FTFace.GetKerning(curr_utf32, next_utf32, KerningMode.Unscaled);
+                            curr_utf32 = next_utf32;
 
-                        xx0 = x + g->Left;
-                        xx1 = xx0 + g->Width;
-                        yy0 = y + g->Top;
-                        yy1 = yy0 - g->Height;
-                        Helper.BBoxAdd(xx0, xx1, yy0, yy1, ref x0, ref x1, ref y0, ref y1);
+                            xx0 = x + g->Left;
+                            xx1 = xx0 + g->Width;
+                            yy0 = y + g->Top;
+                            yy1 = yy0 - g->Height;
+                            Helper.BBoxAdd(xx0, xx1, yy0, yy1, ref x0, ref x1, ref y0, ref y1);
 
-                        x += (kern.X.ToSingle() + g->AdvanceX) / 64.0f;
-                        y += (kern.Y.ToSingle() + g->AdvanceY) / 64.0f;
+                            x += (kern.X.ToSingle() + g->AdvanceX) / 64.0f;
+                            y += (kern.Y.ToSingle() + g->AdvanceY) / 64.0f;
+                        }
                     }
                 }
             }
@@ -383,8 +397,10 @@ namespace FreeRaider
 
         public static unsafe void RenderStr(FontTexture glf, float x, float y, string text)
         {
+            text = text.NullCheck();
+
             byte* nch;
-            byte* ch = Helper.GetStringBPUTF8(text);
+            var charr = Helper.GetStringBPUTF8(text);
             FTVector26Dot6 kern;
 
             if(glf?.FTFace == null || text == null || text[0] == '\0')
@@ -394,197 +410,201 @@ namespace FreeRaider
 
             FontBuffer.Bind();
 
-            if (glf.GLRealTexIndexesCount == 1)
+            fixed (byte* ptr = charr)
             {
-                var p = FontBuffer.ResizeAndMap(48 * (int)Helper.UTF8StrLen(text) * sizeof (float));
-                uint elementsCount = 0;
-                uint curr_utf32, next_utf32;
-                nch = Helper.UTF8ToUTF32(ch, &curr_utf32);
-                curr_utf32 = glf.FTFace.GetCharIndex(curr_utf32);
-
-                while(*ch != 0)
+                var ch = ptr;
+                if (glf.GLRealTexIndexesCount == 1)
                 {
-                    byte* nch2 = Helper.UTF8ToUTF32(nch, &next_utf32);
+                    var p = FontBuffer.ResizeAndMap(48 * (int) Helper.UTF8StrLen(text) * sizeof (float));
+                    uint elementsCount = 0;
+                    uint curr_utf32, next_utf32;
+                    nch = Helper.UTF8ToUTF32(ch, &curr_utf32);
+                    curr_utf32 = glf.FTFace.GetCharIndex(curr_utf32);
 
-                    next_utf32 = glf.FTFace.GetCharIndex(next_utf32);
-                    ch = nch;
-                    nch = nch2;
-
-                    fixed (CharInfo* g = &glf.Glyphs[(int) curr_utf32])
+                    while (*ch != 0)
                     {
-                        kern = glf.FTFace.GetKerning(curr_utf32, next_utf32, KerningMode.Unscaled);
-                        curr_utf32 = next_utf32;
+                        byte* nch2 = Helper.UTF8ToUTF32(nch, &next_utf32);
 
-                        if (g->TexIndex != 0)
+                        next_utf32 = glf.FTFace.GetCharIndex(next_utf32);
+                        ch = nch;
+                        nch = nch2;
+
+                        fixed (CharInfo* g = &glf.Glyphs[(int) curr_utf32])
                         {
-                            var x0 = x + g->Left;
-                            var x1 = x0 + g->Width;
-                            var y0 = y + g->Top;
-                            var y1 = y0 - g->Height;
+                            kern = glf.FTFace.GetKerning(curr_utf32, next_utf32, KerningMode.Unscaled);
+                            curr_utf32 = next_utf32;
 
-                            *p = x0;
-                            p++;
-                            *p = y0;
-                            p++;
-                            *p = g->TexX0;
-                            p++;
-                            *p = g->TexY0;
-                            p++;
-                            fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
-                            p += 4;
+                            if (g->TexIndex != 0)
+                            {
+                                var x0 = x + g->Left;
+                                var x1 = x0 + g->Width;
+                                var y0 = y + g->Top;
+                                var y1 = y0 - g->Height;
 
-                            *p = x1;
-                            p++;
-                            *p = y0;
-                            p++;
-                            *p = g->TexX1;
-                            p++;
-                            *p = g->TexY0;
-                            p++;
-                            fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
-                            p += 4;
+                                *p = x0;
+                                p++;
+                                *p = y0;
+                                p++;
+                                *p = g->TexX0;
+                                p++;
+                                *p = g->TexY0;
+                                p++;
+                                fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
+                                p += 4;
 
-                            *p = x1;
-                            p++;
-                            *p = y1;
-                            p++;
-                            *p = g->TexX1;
-                            p++;
-                            *p = g->TexY1;
-                            p++;
-                            fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
-                            p += 4;
-                            elementsCount++;
+                                *p = x1;
+                                p++;
+                                *p = y0;
+                                p++;
+                                *p = g->TexX1;
+                                p++;
+                                *p = g->TexY0;
+                                p++;
+                                fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
+                                p += 4;
 
-                            *p = x0;
-                            p++;
-                            *p = y0;
-                            p++;
-                            *p = g->TexX0;
-                            p++;
-                            *p = g->TexY0;
-                            p++;
-                            fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
-                            p += 4;
+                                *p = x1;
+                                p++;
+                                *p = y1;
+                                p++;
+                                *p = g->TexX1;
+                                p++;
+                                *p = g->TexY1;
+                                p++;
+                                fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
+                                p += 4;
+                                elementsCount++;
 
-                            *p = x1;
-                            p++;
-                            *p = y1;
-                            p++;
-                            *p = g->TexX1;
-                            p++;
-                            *p = g->TexY1;
-                            p++;
-                            fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
-                            p += 4;
+                                *p = x0;
+                                p++;
+                                *p = y0;
+                                p++;
+                                *p = g->TexX0;
+                                p++;
+                                *p = g->TexY0;
+                                p++;
+                                fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
+                                p += 4;
 
-                            *p = x0;
-                            p++;
-                            *p = y1;
-                            p++;
-                            *p = g->TexX0;
-                            p++;
-                            *p = g->TexY1;
-                            p++;
-                            fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
-                            p += 4;
-                            elementsCount++;
+                                *p = x1;
+                                p++;
+                                *p = y1;
+                                p++;
+                                *p = g->TexX1;
+                                p++;
+                                *p = g->TexY1;
+                                p++;
+                                fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
+                                p += 4;
+
+                                *p = x0;
+                                p++;
+                                *p = y1;
+                                p++;
+                                *p = g->TexX0;
+                                p++;
+                                *p = g->TexY1;
+                                p++;
+                                fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
+                                p += 4;
+                                elementsCount++;
+                            }
+                            x += (kern.X.ToSingle() + g->AdvanceX) / 64.0f;
+                            y += (kern.Y.ToSingle() + g->AdvanceY) / 64.0f;
                         }
-                        x += (kern.X.ToSingle() + g->AdvanceX) / 64.0f;
-                        y += (kern.Y.ToSingle() + g->AdvanceY) / 64.0f;
+                    }
+                    FontBuffer.Unmap();
+                    // RENDER
+                    if (elementsCount != 0)
+                    {
+                        GL.BindTexture(TextureTarget.Texture2D, glf.GLTexIndexes[0]);
+                        GL.DrawArrays(PrimitiveType.TriangleStrip, 0, (int) elementsCount * 3);
                     }
                 }
-                FontBuffer.Unmap();
-                // RENDER
-                if(elementsCount != 0)
+                else
                 {
-                    GL.BindTexture(TextureTarget.Texture2D, glf.GLTexIndexes[0]);
-                    GL.DrawArrays(PrimitiveType.Triangles, 0, (int)elementsCount * 3);
-                }
-            }
-            else
-            {
-                uint activeTexture = 0;
-                uint curr_utf32, next_utf32;
-                nch = Helper.UTF8ToUTF32(ch, &curr_utf32);
-                curr_utf32 = glf.FTFace.GetCharIndex(curr_utf32);
+                    uint activeTexture = 0;
+                    uint curr_utf32, next_utf32;
+                    nch = Helper.UTF8ToUTF32(ch, &curr_utf32);
+                    curr_utf32 = glf.FTFace.GetCharIndex(curr_utf32);
 
-                for (;*ch != 0;)
-                {
-                    var p = FontBuffer.ResizeAndMap(32 * sizeof(float));
-
-                    byte* nch2 = Helper.UTF8ToUTF32(nch, &next_utf32);
-
-                    next_utf32 = glf.FTFace.GetCharIndex(next_utf32);
-                    ch = nch;
-                    nch = nch2;
-
-                    fixed (CharInfo* g = &glf.Glyphs[(int)curr_utf32])
+                    for (; *ch != 0;)
                     {
-                        kern = glf.FTFace.GetKerning(curr_utf32, next_utf32, KerningMode.Unscaled);
-                        curr_utf32 = next_utf32;
+                        var p = FontBuffer.ResizeAndMap(32 * sizeof (float));
 
-                        if (g->TexIndex != 0)
+                        byte* nch2 = Helper.UTF8ToUTF32(nch, &next_utf32);
+
+                        next_utf32 = glf.FTFace.GetCharIndex(next_utf32);
+                        ch = nch;
+                        nch = nch2;
+
+                        fixed (CharInfo* g = &glf.Glyphs[(int) curr_utf32])
                         {
-                            if(activeTexture != g->TexIndex)
+                            kern = glf.FTFace.GetKerning(curr_utf32, next_utf32, KerningMode.Unscaled);
+                            curr_utf32 = next_utf32;
+
+                            if (g->TexIndex != 0)
                             {
-                                GL.BindTexture(TextureTarget.Texture2D, g->TexIndex);
+                                if (activeTexture != g->TexIndex)
+                                {
+                                    GL.BindTexture(TextureTarget.Texture2D, g->TexIndex);
+                                }
+                                // RENDER
+                                var x0 = x + g->Left;
+                                var x1 = x0 + g->Width;
+                                var y0 = y + g->Top;
+                                var y1 = y0 - g->Height;
+
+                                *p = x0;
+                                p++;
+                                *p = y0;
+                                p++;
+                                *p = g->TexX0;
+                                p++;
+                                *p = g->TexY0;
+                                p++;
+                                fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
+                                p += 4;
+
+                                *p = x1;
+                                p++;
+                                *p = y0;
+                                p++;
+                                *p = g->TexX1;
+                                p++;
+                                *p = g->TexY0;
+                                p++;
+                                fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
+                                p += 4;
+
+                                *p = x1;
+                                p++;
+                                *p = y1;
+                                p++;
+                                *p = g->TexX1;
+                                p++;
+                                *p = g->TexY1;
+                                p++;
+                                fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
+                                p += 4;
+
+                                *p = x0;
+                                p++;
+                                *p = y1;
+                                p++;
+                                *p = g->TexX0;
+                                p++;
+                                *p = g->TexY1;
+                                p++;
+                                fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
+
+                                FontBuffer.Unmap();
+
+                                GL.DrawArrays(PrimitiveType.TriangleFan, 0, 4);
                             }
-                            // RENDER
-                            var x0 = x + g->Left;
-                            var x1 = x0 + g->Width;
-                            var y0 = y + g->Top;
-                            var y1 = y0 - g->Height;
-
-                            *p = x0;
-                            p++;
-                            *p = y0;
-                            p++;
-                            *p = g->TexX0;
-                            p++;
-                            *p = g->TexY0;
-                            p++;
-                            fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
-                            p += 4;
-
-                            *p = x1;
-                            p++;
-                            *p = y0;
-                            p++;
-                            *p = g->TexX1;
-                            p++;
-                            *p = g->TexY0;
-                            p++;
-                            fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
-                            p += 4;
-
-                            *p = x1;
-                            p++;
-                            *p = y1;
-                            p++;
-                            *p = g->TexX1;
-                            p++;
-                            *p = g->TexY1;
-                            p++;
-                            fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
-                            p += 4;
-
-                            *p = x0;
-                            p++;
-                            *p = y1;
-                            p++;
-                            *p = g->TexX0;
-                            p++;
-                            *p = g->TexY1;
-                            p++;
-                            fixed (float* glfc = glf.GLFontColor) Helper.Vec4CopyPointer(p, glfc);
-
-                            FontBuffer.Unmap();
-
-                            GL.DrawArrays(PrimitiveType.TriangleFan, 0, 4);
+                            x += (kern.X.ToSingle() + g->AdvanceX) / 64.0f;
+                            y += (kern.Y.ToSingle() + g->AdvanceY) / 64.0f;
                         }
-                        x += (kern.X.ToSingle() + g->AdvanceX) / 64.0f;
-                        y += (kern.Y.ToSingle() + g->AdvanceY) / 64.0f;
                     }
                 }
             }
@@ -593,36 +613,41 @@ namespace FreeRaider
 
     public partial class Helper
     {
-        public static string UTF8NextSymbol(string utf8)
+        public static unsafe byte* UTF8NextSymbol(byte* utf8)
         {
-            var b = (byte)utf8[0];
+            var b = *utf8;
 
             // save ASC symbol as is
-            if(!b.HasFlagUns(0x80))
+            if (!b.HasFlagUns(0x80))
             {
-                return utf8.Substring(1);
+                return utf8 + 1;
             }
 
             // calculate length
-            while(b.HasFlagUns(0x80))
+            while (b.HasFlagUns(0x80))
             {
                 b <<= 1;
-                utf8 = utf8.Substring(1);
+                utf8++;
             }
 
             return utf8;
         }
 
-        public static uint UTF8StrLen(string str)
+        public static unsafe uint UTF8StrLen(string str)
         {
+            str = str.NullCheck();
+
             uint i = 0;
-            var ch = str;
-
-            for (; ch.Length > 0; i++)
+            var b = System.Text.Encoding.UTF8.GetBytes(str);
+            fixed (byte* ptr = b)
             {
-                ch = UTF8NextSymbol(ch);
+                var ch = ptr;
+                
+                for(; *ch != 0; i++)
+                {
+                    ch = UTF8NextSymbol(ch);
+                }
             }
-
             return i;
         }
 
@@ -716,13 +741,9 @@ namespace FreeRaider
             ymax = Math.Max(ymax, max);
         }
 
-        public static unsafe byte* GetStringBPUTF8(string str)
+        public static unsafe byte[] GetStringBPUTF8(string str)
         {
-            var bytes = System.Text.Encoding.UTF8.GetBytes(str);
-            fixed(byte* p = bytes)
-            {
-                return p;
-            }
+            return System.Text.Encoding.UTF8.GetBytes(str.NullCheck());
         }
     }
 }

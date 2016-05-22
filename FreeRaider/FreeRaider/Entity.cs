@@ -320,55 +320,62 @@ namespace FreeRaider
 
         ~Entity()
         {
-            Bt.LastCollisions.Clear();
-
-            if(Bt.BtJoints.Count > 0)
+            /*try
             {
-                DeleteRagdoll();
-            }
+                Bt.LastCollisions.Clear();
 
-            foreach (var ghost in Bt.GhostObjects)
-            {
-                ghost.UserObject = null;
-                BtEngineDynamicsWorld.RemoveCollisionObject(ghost);
-            }
-            Bt.GhostObjects.Clear();
-
-            Bt.Shapes.Clear();
-
-            Bt.ManifoldArray.Clear();
-
-            if(Bt.BtBody.Count > 0)
-            {
-                foreach (var body in Bt.BtBody)
+                if (Bt.BtJoints.Count > 0)
                 {
-                    if(body != null)
-                    {
-                        body.UserObject = null;
-                        if(body.MotionState != null)
-                        {
-                            body.MotionState.Dispose();
-                            body.MotionState = null;
-                        }
-                        body.CollisionShape = null;
-
-                        BtEngineDynamicsWorld.RemoveRigidBody(body);
-                    }
+                    DeleteRagdoll();
                 }
-                Bt.BtBody.Clear();
+
+                foreach (var ghost in Bt.GhostObjects)
+                {
+                    ghost.UserObject = null;
+                    BtEngineDynamicsWorld?.RemoveCollisionObject(ghost);
+                }
+                Bt.GhostObjects.Clear();
+
+                Bt.Shapes.Clear();
+
+                Bt.ManifoldArray?.Clear();
+
+                if (Bt.BtBody.Count > 0)
+                {
+                    foreach (var body in Bt.BtBody)
+                    {
+                        if (body != null)
+                        {
+                            body.UserObject = null;
+                            if (body.MotionState != null)
+                            {
+                                body.MotionState.Dispose();
+                                body.MotionState = null;
+                            }
+                            body.CollisionShape = null;
+
+                            BtEngineDynamicsWorld?.RemoveRigidBody(body);
+                        }
+                    }
+                    Bt.BtBody.Clear();
+                }
+
+                Self = null;
+
+                Bf.BoneTags.Clear();
+
+                for (var ssAnim = Bf.Animations.Next; ssAnim != null;)
+                {
+                    var ssAnimNext = ssAnim.Next;
+                    ssAnim.Next = null;
+                    ssAnim = ssAnimNext;
+                }
+                Bf.Animations.Next = null;
             }
-
-            Self = null;
-
-            Bf.BoneTags.Clear();
-
-            for (var ssAnim = Bf.Animations.Next; ssAnim != null;)
+            catch
             {
-                var ssAnimNext = ssAnim.Next;
-                ssAnim.Next = null;
-                ssAnim = ssAnimNext;
-            }
-            Bf.Animations.Next = null;
+
+            }*/
         }
 
         public void CreateGhosts()

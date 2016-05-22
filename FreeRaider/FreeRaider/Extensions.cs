@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using BulletSharp;
-using LibSndFile;
+using NLibsndfile.Native;
 using NLua;
 using OpenTK;
 using OpenTK.Audio.OpenAL;
@@ -373,13 +373,6 @@ namespace FreeRaider
         public static string ClampStr(this string str, int length)
         {
             return str.Length > length ? str.Substring(0, length) : str;
-        }
-
-        public static SndFileInfo GetSndFileInfo(this SndFile f)
-        {
-            return
-                typeof (SndFileInfo).GetField("sndFileInfo", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(f)
-                    as SndFileInfo;
         }
 
         public static EffectsExtension.EfxEaxReverb ToEfxEaxReverb(this EffectsExtension.EaxReverb rb)
@@ -899,6 +892,11 @@ namespace FreeRaider
             where T : struct
         {
             return (T) Marshal.PtrToStructure(ptr, typeof(T));
+        }
+
+        public static string NullCheck(this string str)
+        {
+            return (str ?? "") == "" ? "\0" : str;
         }
     }
 

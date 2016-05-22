@@ -136,7 +136,7 @@ FreeRaider uses the following libraries:
 * NLua with KeraLua 1.3.2.0 (https://github.com/NLua/NLua)
 * SharpFont 3.0.1.200 (https://github.com/Robmaister/SharpFont)
 * Zlib.Portable 1.11.0.0 (https://github.com/advancedrei/Zlib.Portable)
-* LibSndFile.NET 0.3.0.34074 (modified) (https://code.google.com/archive/p/libsndfile-dotnet/)
+* NLibsndfile 1.0.0.0 (modified) (https://github.com/ahawker/NLibsndfile)
 * SDL2-CS (modified) (https://github.com/flibitijibibo/SDL2-CS)
 
 All these libraries are included in the project file.
@@ -155,7 +155,7 @@ their licenses:
 * NLua — MIT
 * SharpFont — MIT
 * Zlib.Portable — Apache 2.0
-* LibSndFile.NET — GNU Lesser GPL
+* NLibsndfile — None
 * SDL2-CS — zlib
     
 10. Credits

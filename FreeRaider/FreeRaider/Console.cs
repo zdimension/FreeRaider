@@ -84,7 +84,7 @@ namespace FreeRaider
         /// </summary>
         private bool inited;
 
-        private string editingLine;
+        private string editingLine = "";
 
         
 
@@ -137,7 +137,7 @@ namespace FreeRaider
             inited = false;
             spacing = interval;
             // font.FontSize has absolute size (after scaling)
-            //LineHeight = (short)((1 + spacing) * font.FontSize);
+            LineHeight = (short)((1 + spacing) * font.FontSize);
             cursorX = 8 + 1;
             CursorY = Math.Min((short)(Global.ScreenInfo.H - LineHeight * visibleLines), (short)8);
             inited = true;

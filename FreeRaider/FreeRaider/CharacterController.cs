@@ -472,11 +472,11 @@ namespace FreeRaider
             ClimbSensor.Margin = COLLISION_MARGIN_DEFAULT;
 
             RayCb = new BtEngineClosestRayResultCallback(Self, true);
-            RayCb.CollisionFilterMask = CollisionFilterGroups.StaticFilter | CollisionFilterGroups.KinematicFilter;
+            RayCb.CollisionFilterMask = (CollisionFilterGroups.StaticFilter | CollisionFilterGroups.KinematicFilter);
             HeightInfo.Cb = RayCb;
 
             ConvexCb = new BtEngineClosestConvexResultCallback(Self, true);
-            ConvexCb.CollisionFilterMask = CollisionFilterGroups.StaticFilter | CollisionFilterGroups.KinematicFilter;
+            ConvexCb.CollisionFilterMask = (CollisionFilterGroups.StaticFilter | CollisionFilterGroups.KinematicFilter);
             HeightInfo.Ccb = ConvexCb;
 
             DirFlag = ENT_MOVE.Stay;

@@ -6,14 +6,22 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using FreeRaider.Loader;
-using LibSndFile;
+using NLibsndfile.Native;
+using NLibsndfile.Native.Types;
 using OpenTK;
 using OpenTK.Audio.OpenAL;
+using SharpFont;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
+using Encoding = System.Text.Encoding;
 
 namespace FreeRaider
 {
+    public partial class Global
+    {
+        public static LibsndfileApi sndFileApi = new LibsndfileApi();
+    }
+
     public partial class Constants
     {
         public const int AL_FILTER_NULL = 0;
@@ -914,7 +922,7 @@ namespace FreeRaider
             IsDampable = false;
 
             wadFile = null;
-            sndFile = null;
+            sndFile = IntPtr.Zero;
 
             if(AL.IsSource(source))
             {
@@ -985,11 +993,10 @@ namespace FreeRaider
                 }
             }
 
-            if(sndFile != null)
+            if(sndFile != IntPtr.Zero)
             {
-                sndFile.Dispose();
-                sndFile = null;
-                sndFile_FileStream.Dispose();
+                sndFileApi.Close(sndFile);
+                sndFile = IntPtr.Zero;
                 res = true;
             }
 
@@ -1298,25 +1305,22 @@ namespace FreeRaider
         /// </summary>
         private bool loadTrack(string path)
         {
-            sndFile_FileStream = File.OpenRead(path);
-            try
+            sfInfo = new LibsndfileInfo();
+            if((sndFile = sndFileApi.Open(path, LibsndfileMode.Read, ref sfInfo)) == IntPtr.Zero)
             {
-                sndFile = new SndFile(sndFile_FileStream, new SndFileInfo());
-            }
-            catch
-            {
-                method = TR_AUDIO_STREAM_METHOD.Unknown;
+                Sys.DebugLog(LOG_FILENAME, "Load_Track: Couldn't open file: {0}.", path);
+                method = TR_AUDIO_STREAM_METHOD.Unknown; // T4Larson <t4larson@gmail.com>: stream is uninitialised, avoid clear.
                 return false;
             }
 
-            sfInfo = sndFile.GetSndFileInfo();
+            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_TRACK_OPENED, path, sfInfo.Channels, sfInfo.SampleRate);
 
             if (AUDIO_OPENAL_FLOAT)
                 format = sfInfo.Channels == 1 ? ALFormat.MonoFloat32Ext : ALFormat.StereoFloat32Ext;
             else
                 format = sfInfo.Channels == 1 ? ALFormat.Mono16 : ALFormat.Stereo16;
 
-            rate = sfInfo.SamplesPerSecond;
+            rate = sfInfo.SampleRate;
 
             return true; // Success!
         }
@@ -1355,27 +1359,25 @@ namespace FreeRaider
                 br.BaseStream.Position = offset;
             }
 
-            try
+            if (
+                (sndFile =
+                    sndFileApi.OpenFileDescriptor((int) wadFile.SafeFileHandle.DangerousGetHandle(), LibsndfileMode.Read,
+                        ref sfInfo, 0)) == IntPtr.Zero)
             {
-                sndFile = new SndFile(wadFile, new SndFileInfo());
-            }
-            catch
-            {
+                ConsoleInfo.Instance.Warning(Strings.SYSWARN_WAD_SEEK_FAILED, offset);
                 method = TR_AUDIO_STREAM_METHOD.Unknown;
                 return false;
             }
 
             ConsoleInfo.Instance.Notify(Strings.SYSNOTE_WAD_PLAYING, filename, offset, length);
-            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_TRACK_OPENED, trackName, sfInfo.Channels, sfInfo.SamplesPerSecond);
-
-            sfInfo = sndFile.GetSndFileInfo();
+            ConsoleInfo.Instance.Notify(Strings.SYSNOTE_TRACK_OPENED, trackName, sfInfo.Channels, sfInfo.SampleRate);
 
             if (AUDIO_OPENAL_FLOAT)
                 format = sfInfo.Channels == 1 ? ALFormat.MonoFloat32Ext : ALFormat.StereoFloat32Ext;
             else
                 format = sfInfo.Channels == 1 ? ALFormat.Mono16 : ALFormat.Stereo16;
 
-            rate = sfInfo.SamplesPerSecond;
+            rate = sfInfo.SampleRate;
 
             return true; // Success!
         }
@@ -1392,20 +1394,18 @@ namespace FreeRaider
                 pcm = new float[Global.AudioSettings.StreamBufferSize];
             else
                 pcm = new short[Global.AudioSettings.StreamBufferSize];
-            var size = 0;
+            long size = 0;
 
             // SBS - C + 1 is important to avoid endless loops if the buffer size isn't a multiple of the channels
             while (size < pcm.Length - sfInfo.Channels + 1)
             {
                 // we need to read a multiple of sf_info.channels here
                 var samplesToRead = (Global.AudioSettings.StreamBufferSize - size) / sfInfo.Channels * sfInfo.Channels;
-                var samplesRead = 0;
+                long samplesRead = 0;
                 if(AUDIO_OPENAL_FLOAT)
-                    fixed (float* ptr = (float[])pcm)
-                        samplesRead = sndFile.Read(ptr + size, samplesToRead);
+                    samplesRead = sndFileApi.ReadItems(sndFile, (float[]) pcm, samplesToRead);
                 else
-                    fixed (short* ptr = (short[]) pcm)
-                        samplesRead = sndFile.Read(ptr + size, samplesToRead);
+                    samplesRead = sndFileApi.ReadItems(sndFile, (short[])pcm, samplesToRead);
 
                 if (samplesRead > 0)
                 {
@@ -1413,8 +1413,8 @@ namespace FreeRaider
                 }
                 else
                 {
-                    var error = sndFile.GetError();
-                    if(error != SndFileError.NoError)
+                    var error = sndFileApi.Error(sndFile);
+                    if(error != LibsndfileError.NoError)
                     {
                         Audio.LogSndFileError((int)error);
                         return false;
@@ -1423,7 +1423,7 @@ namespace FreeRaider
                     {
                         if(streamType == TR_AUDIO_STREAM_TYPE.Background)
                         {
-                            sndFile.Seek(0, SndFileSeek.Set);
+                            sndFileApi.Seek(sndFile, 0, SEEK.SEEK_SET);
                         }
                         else
                         {
@@ -1436,7 +1436,7 @@ namespace FreeRaider
             if (size == 0)
                 return false;
 
-            AL.BufferData((int)buffer, format, pcm, size * (AUDIO_OPENAL_FLOAT ? sizeof(float) : sizeof(short)), rate);
+            AL.BufferData((int)buffer, format, pcm, (int)(size * (AUDIO_OPENAL_FLOAT ? sizeof(float) : sizeof(short))), rate);
             return true;
         }
 
@@ -1448,11 +1448,11 @@ namespace FreeRaider
         /// <summary>
         /// Sndfile file reader needs its own handle
         /// </summary>
-        private SndFile sndFile;
+        private IntPtr sndFile;
 
         private FileStream sndFile_FileStream;
 
-        private SndFileInfo sfInfo;
+        private LibsndfileInfo sfInfo;
 
         #region General OpenAL fields
 
@@ -1612,7 +1612,7 @@ namespace FreeRaider
             }
             else
             {
-                UpdateListenerByCamera(Renderer.Camera);
+                UpdateListenerByCamera(Global.Renderer.Camera);
             }
         }
 
@@ -1919,7 +1919,7 @@ namespace FreeRaider
             // TODO: Add entity listener updater here
         }
 
-        public static bool FillALBuffer(uint bufNumber, SndFile wavFile, uint bufSize, SndFileInfo sfInfo)
+        public static bool FillALBuffer(uint bufNumber, IntPtr wavFile, long bufSize, LibsndfileInfo sfInfo)
         {
             if (sfInfo.Channels > 1) // We can't use non-mono samples
             {
@@ -1930,14 +1930,14 @@ namespace FreeRaider
             if (AUDIO_OPENAL_FLOAT)
             {
                 var frames = new float[bufSize / sizeof (float)];
-                wavFile.Read(frames, frames.Length);
-                AL.BufferData((int) bufNumber, ALFormat.MonoFloat32Ext, frames, (int) bufSize, sfInfo.SamplesPerSecond);
+                sndFileApi.ReadFrames(wavFile, frames, frames.Length);
+                AL.BufferData((int) bufNumber, ALFormat.MonoFloat32Ext, frames, (int) bufSize, sfInfo.SampleRate);
             }
             else
             {
                 var frames = new short[bufSize / sizeof(short)];
-                wavFile.Read(frames, frames.Length);
-                AL.BufferData((int)bufNumber, ALFormat.Mono16, frames, (int)bufSize, sfInfo.SamplesPerSecond);
+                sndFileApi.ReadFrames(wavFile, frames, frames.Length);
+                AL.BufferData((int)bufNumber, ALFormat.Mono16, frames, (int)bufSize, sfInfo.SampleRate);
             }
 
             LogALError();
@@ -1947,69 +1947,75 @@ namespace FreeRaider
         public static unsafe int LoadALBufferFromMem(uint bufNumber, byte* samplePointer, uint sampleSize,
             uint uncompSampleSize = 0)
         {
-            try
-            {
-                /*var tmp = Marshal.AllocHGlobal((int)sampleSize);
-                Helper.memcpy((byte*) tmp, samplePointer, sampleSize);*/
+            var wavMem = new MemBufferFileIo(samplePointer, sampleSize);
+            var tmp = wavMem.ToSfVirtualIo();
+            var sfInfo = new LibsndfileInfo();
+            var sample = sndFileApi.OpenVirtual(ref tmp, LibsndfileMode.Read, ref sfInfo, &wavMem);
 
-                using (var sample = new SndFile(samplePointer, sampleSize, SFM_READ, new SndFileInfo()))
-                {
-                    var sfInfo = sample.FileInfo;
-
-                    // Uncomp_sample_size explicitly specifies amount of raw sample data
-                    // to load into buffer. It is only used in TR4/5 with ADPCM samples,
-                    // because full-sized ADPCM sample contains a bit of silence at the end,
-                    // which should be removed. That's where uncomp_sample_size comes into
-                    // business.
-                    // Note that we also need to compare if uncomp_sample_size is smaller
-                    // than native wav length, because for some reason many TR5 uncomp sizes
-                    // are messed up and actually more than actual sample size.
-                    var realSize = sfInfo.Frames * sizeof (ushort);
-
-                    if(uncompSampleSize == 0 || realSize < uncompSampleSize)
-                    {
-                        uncompSampleSize = (uint)realSize;
-                    }
-
-                    // We need to change buffer size, as we're using floats here.
-
-                    if (AUDIO_OPENAL_FLOAT)
-                        uncompSampleSize = (uncompSampleSize / sizeof (ushort)) * sizeof (float);
-                    else
-                        uncompSampleSize = uncompSampleSize / sizeof(ushort) * sizeof(short);
-
-                    // Find out sample format and load it correspondingly.
-                    // Note that with OpenAL, we can have samples of different formats in same level.
-
-                    return FillALBuffer(bufNumber, sample, uncompSampleSize, sfInfo) ? 0 : -3; // Zero means success
-                }
-            }
-            catch
+            if(sample == IntPtr.Zero)
             {
                 Sys.DebugLog(LOG_FILENAME, "Error: can't load sample #{0:D3} from sample block!", bufNumber);
                 return -1;
             }
+
+            // Uncomp_sample_size explicitly specifies amount of raw sample data
+            // to load into buffer. It is only used in TR4/5 with ADPCM samples,
+            // because full-sized ADPCM sample contains a bit of silence at the end,
+            // which should be removed. That's where uncomp_sample_size comes into
+            // business.
+            // Note that we also need to compare if uncomp_sample_size is smaller
+            // than native wav length, because for some reason many TR5 uncomp sizes
+            // are messed up and actually more than actual sample size.
+
+            var realSize = sfInfo.Frames * sizeof(ushort);
+
+            if (uncompSampleSize == 0 || realSize < uncompSampleSize)
+            {
+                uncompSampleSize = (uint)realSize;
+            }
+
+            // We need to change buffer size, as we're using floats here.
+
+            if (AUDIO_OPENAL_FLOAT)
+                uncompSampleSize = (uncompSampleSize / sizeof(ushort)) * sizeof(float);
+            else
+                uncompSampleSize = uncompSampleSize / sizeof(ushort) * sizeof(short);
+
+            // Find out sample format and load it correspondingly.
+            // Note that with OpenAL, we can have samples of different formats in same level.
+
+            var result = FillALBuffer(bufNumber, sample, uncompSampleSize, sfInfo);
+
+            sndFileApi.Close(sample);
+
+            return result ? 0 : -3; // Zero means success
         }
 
         public static int LoadALBufferFromFile(uint bufNumber, string filename)
         {
-            try
-            {
-                using (var fs = File.OpenRead(filename))
-                {
-                    using (var file = new SndFile(fs, new SndFileInfo()))
-                    {
-                        var sfInfo = file.GetSndFileInfo();
+            var sfInfo = new LibsndfileInfo();
+            var file = sndFileApi.Open(filename, LibsndfileMode.Read, ref sfInfo);
 
-                        return FillALBuffer(bufNumber, file, (uint) file.FramesCount * (AUDIO_OPENAL_FLOAT ? sizeof(float) : sizeof(short)), sfInfo) ? 0 : -3; // Zero means success
-                    }
-                }
-            }
-            catch
+            if(file == IntPtr.Zero)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_OPEN_FILE);
                 return -1;
             }
+
+            bool result;
+
+            if(AUDIO_OPENAL_FLOAT)
+            {
+                result = FillALBuffer(bufNumber, file, sfInfo.Frames * sizeof (float), sfInfo);
+            }
+            else
+            {
+                result = FillALBuffer(bufNumber, file, sfInfo.Frames * sizeof(short), sfInfo);
+            }
+
+            sndFileApi.Close(file);
+
+            return result ? 0 : -3; // Zero means success.
         }
 
         public static void LoadOverridedSamples(World world)
@@ -2329,30 +2335,30 @@ namespace FreeRaider
         /// </summary>
         public static void LogSndFileError(int code)
         {
-            Sys.DebugLog(LOG_FILENAME, SndFile.SfErrorNumber(code));
+            Sys.DebugLog(LOG_FILENAME, sndFileApi.ErrorNumber(code));
         }
 
         #endregion
 
         #region Helper functions
 
-        public static float GetByteDepth(SndFileInfo sfInfo)
+        public static float GetByteDepth(LibsndfileInfo sfInfo)
         {
-            switch ((SndFileSubFormat) (sfInfo.Format & SF_FORMAT_SUBMASK))
+            switch ((LibsndfileFormat) (sfInfo.Format & LibsndfileFormat.Submask))
             {
-                case SndFileSubFormat.PCM_S8:
-                case SndFileSubFormat.PCM_U8:
+                case LibsndfileFormat.PcmS8:
+                case LibsndfileFormat.PcmU8:
                     return 1;
-                case SndFileSubFormat.PCM_16:
+                case LibsndfileFormat.Pcm16:
                     return 2;
-                case SndFileSubFormat.PCM_24:
+                case LibsndfileFormat.Pcm24:
                     return 3;
-                case SndFileSubFormat.PCM_32:
-                case SndFileSubFormat.FLOAT:
+                case LibsndfileFormat.Pcm32:
+                case LibsndfileFormat.Float:
                     return 4;
-                case SndFileSubFormat.DOUBLE:
+                case LibsndfileFormat.Double:
                     return 8;
-                case SndFileSubFormat.MS_ADPCM:
+                case LibsndfileFormat.MsAdpcm:
                     return 0.5f;
                 default:
                     return 1;

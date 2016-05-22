@@ -1159,6 +1159,7 @@ namespace FreeRaider.Loader
     {
         None = 0,
         FilledWithWater = 0x0001,
+        SkyVisible = 0x0008,
         WindBlowPonytail = 0x0020,
         Quicksand = 0x0080
         // TR1 has only the water flag and the extra unknown flag 0x0100.

@@ -541,7 +541,7 @@ namespace FreeRaider
                         var offset1 = (int) oldStart + (j - 2) * 3;
                         if (offset1 >= Elements.Count)
                         {
-                            if(SHOW_ENTITY_OFFSET_WARNINGS) Console.WriteLine("offset1 >= elements.count, shouldn't happen");
+                            if(SHOW_ENTITY_OFFSET_WARNINGS) Sys.DebugLog(LOG_FILENAME, "offset1 >= elements.count, shouldn't happen");
                         }
                         else
                         {
@@ -555,7 +555,7 @@ namespace FreeRaider
                             var offset2 = (int) backwardsStart + (j - 2) * 3;
                             if (offset2 >= Elements.Count)
                             {
-                                if (SHOW_ENTITY_OFFSET_WARNINGS) Console.WriteLine("offset2 >= elements.count, shouldn't happen");
+                                if (SHOW_ENTITY_OFFSET_WARNINGS) Sys.DebugLog(LOG_FILENAME, "offset2 >= elements.count, shouldn't happen");
                             }
                             else
                             {

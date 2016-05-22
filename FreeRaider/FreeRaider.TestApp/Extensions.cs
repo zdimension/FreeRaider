@@ -188,6 +188,11 @@ namespace FreeRaider
             return (Enum.ToObject(theFlag.GetType(), theField) as Enum).HasFlag(theFlag as Enum);
         }
 
+        public static bool HasFlagUns(this object theField, object theFlag)
+        {
+            return ((ulong) theField & (ulong) theFlag) == (ulong) theFlag;
+        }
+
         public static KeraLua.LuaState GetLuaState(this Lua lua)
         {
             return (KeraLua.LuaState)lua.GetInstanceField("luaState");

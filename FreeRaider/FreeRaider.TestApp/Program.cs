@@ -83,11 +83,9 @@ namespace FreeRaider.TestApp
 
         static void Main(string[] args)
         {
-            abc("lol");
+            /*abc("lol");
             abc("help");
             abc("  save  \"test.sav\" ");
-            /*var fmt = "Can't create style. Possibly max. styles? (%d / %d)";
-            Console.WriteLine(Tools.sprintf(fmt, 5, GGG.F));*/
             var state = new Lua();
             var n = DateTime.Now;
             state.RegisterFunction("test", typeof (Program).GetMethod("test"));
@@ -164,7 +162,7 @@ end");
 
             state.DoString("abclol = {abc=5, def=8, ghi=9}");
 
-           Console.WriteLine(((dynamic)state["abclol"])["def"]);
+           Console.WriteLine(((dynamic)state["abclol"])["def"]);*/
 
 
             /*state.DoString(
@@ -269,6 +267,19 @@ end");
             var tr5_1 = Level.CreateLoader("tr5\\Andrea3.trc");
             var tr5_2 = Level.CreateLoader("tr5\\joby4.trc");
             var tr5_3 = Level.CreateLoader("tr5\\rich3.trc");*/
+
+            /*var lvl = Level.CreateLoader(args[0]);
+            for (int i = 0; i < lvl.Rooms.Length; i++)
+            {
+                var r = lvl.Rooms[i];
+                Console.WriteLine("R #{0}: {{{1};{2};{3}}}\tD{4}\tW{5}\tH{6}\t{7}\t{8}\t{9}\t{10}", i, Math.Ceiling(r.Offset.X / 1024),
+                    Math.Ceiling((r.Y_Bottom + 32768) / 1024), Math.Ceiling(-r.Offset.Z / 1024), r.Num_Z_Sectors - 2, r.Num_X_Sectors - 2,
+                    Math.Ceiling((r.Y_Top - r.Y_Bottom) / 1024),
+                    r.Flags.HasFlagUns(RoomFlags.FilledWithWater) ? "Water" : "",
+                    r.Flags.HasFlagUns(RoomFlags.None) ? "Sky" : "",
+                    r.Flags.HasFlagUns(RoomFlags.Outdoor) ? "Outdoor" : "",
+                    r.Flags.HasFlagUns(RoomFlags.Quicksand) ? "Quicksand" : "");
+            }*/
 
 
             Console.ReadLine();

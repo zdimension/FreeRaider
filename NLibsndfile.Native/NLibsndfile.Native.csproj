@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{C0D015CE-3201-4106-9254-12CC9863F7D3}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>NLibsndfile.Native</RootNamespace>
+    <AssemblyName>NLibsndfile.Native</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Api\DllImports.cs" />
+    <Compile Include="Api\ILibsndfileApi.cs" />
+    <Compile Include="Api\LibsndfileApi.cs" />
+    <Compile Include="Api\LibsndfileApiNative.cs" />
+    <Compile Include="Api\LibsndfileApiNativeWrapper.cs" />
+    <Compile Include="Command\ILibsndfileCommandApi.cs" />
+    <Compile Include="Marshalling\ILibsndfileArrayMarshaller.cs" />
+    <Compile Include="Marshalling\ILibsndfileMarshaller.cs" />
+    <Compile Include="Command\LibsndfileCommandApi.cs" />
+    <Compile Include="Command\LibsndfileCommandApiNativeWrapper.cs" />
+    <Compile Include="Marshalling\LibsndfileArrayMarshaller.cs" />
+    <Compile Include="Marshalling\LibsndfileMarshaller.cs" />
+    <Compile Include="Command\LibsndfileCommandUtilities.cs" />
+    <Compile Include="LibsndfileException.cs" />
+    <Compile Include="Marshalling\UnmanagedMemoryHandle.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Types\LibsndfileBroadcastInfo.cs" />
+    <Compile Include="Types\LibsndfileCommand.cs" />
+    <Compile Include="Types\LibsndfileEmbedFileInfo.cs" />
+    <Compile Include="Types\LibsndfileError.cs" />
+    <Compile Include="Types\LibsndfileFormat.cs" />
+    <Compile Include="Types\LibsndfileFormatInfo.cs" />
+    <Compile Include="Types\LibsndfileInfo.cs" />
+    <Compile Include="Types\LibsndfileInstrumentInfo.cs" />
+    <Compile Include="Types\LibsndfileLoopInfo.cs" />
+    <Compile Include="Types\LibsndfileLoopMode.cs" />
+    <Compile Include="Types\LibsndfileMode.cs" />
+    <Compile Include="Types\LibsndfileSeek.cs" />
+    <Compile Include="Types\LibsndfileStringType.cs" />
+    <Compile Include="Types\SF_VIRTUAL_IO.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>xcopy /y $(ProjectDir)$(OutDir)$(TargetFileName) $(SolutionDir)bin\</PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

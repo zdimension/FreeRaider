@@ -500,7 +500,7 @@ namespace FreeRaider
         {
             EngineLua.Call("loadscript_post");
 
-            //ConsoleInfo.Instance.InitFonts();
+            ConsoleInfo.Instance.InitFonts();
 
             Gui.Init();
             Sys.Init();
@@ -797,7 +797,7 @@ namespace FreeRaider
                     }
                     catch(Exception e)
                     {
-                        Console.WriteLine("Failed to create OpenAL Context on device '" + s + "': " + e.Message);
+                        Sys.DebugLog(LOG_FILENAME, "Failed to create OpenAL Context on device '{0}': {1}", s, e.Message);
                     }
 
                     /*var dev = Alc.OpenDevice(s);
