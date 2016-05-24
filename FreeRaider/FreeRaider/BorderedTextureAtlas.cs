@@ -16,7 +16,7 @@ namespace FreeRaider
         {
             var intb = (uint*) b;
             var patternValue = *(uint*) pattern;
-            for (int i = 0; i < len / 4; i++)
+            for (var i = 0; i < len / 4; i++)
                 intb[i] = patternValue;
         }
     }
@@ -314,7 +314,7 @@ namespace FreeRaider
 
             if (conserveMemory)
             {
-                long areaSum = objectTextures.Sum(t => t.Width * t.Height) +
+                var areaSum = objectTextures.Sum(t => t.Width * t.Height) +
                                spriteTextures.Sum(t => Math.Abs((t.X1 - t.X0) * (t.Y1 - t.Y0)));
 
                 resultPageWidth =
@@ -327,7 +327,7 @@ namespace FreeRaider
                 resultPageWidth = Helper.NextPowerOf2((uint) maxTextureEdgeLength);
             }
 
-            int a = 0;
+            var a = 0;
             foreach (var tex in objectTextures)
             {
                 addObjectTexture(tex);

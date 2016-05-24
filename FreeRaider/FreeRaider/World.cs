@@ -335,7 +335,7 @@ namespace FreeRaider
         {
             if (PortalToRoom >= 0)
             {
-                Room r = EngineWorld.Rooms[PortalToRoom];
+                var r = EngineWorld.Rooms[PortalToRoom];
                 var ind_x = (int) ((Position.X - r.Transform.Origin.X) / TR_METERING_SECTORSIZE);
                 var ind_y = (int) ((Position.Y - r.Transform.Origin.Y) / TR_METERING_SECTORSIZE);
                 if (ind_x.IsBetween(0, r.SectorsX - 1) && ind_y.IsBetween(0, r.SectorsY - 1))
@@ -350,7 +350,7 @@ namespace FreeRaider
         {
             if (PortalToRoom >= 0)
             {
-                Room r = EngineWorld.Rooms[PortalToRoom];
+                var r = EngineWorld.Rooms[PortalToRoom];
                 if (OwnerRoom.BaseRoom != null && OwnerRoom.AlternateRoom != null)
                 {
                     r = r.AlternateRoom;
@@ -668,9 +668,9 @@ namespace FreeRaider
 
         public void SwapPortals(Room dest)
         {
-            foreach (Room r in EngineWorld.Rooms)
+            foreach (var r in EngineWorld.Rooms)
             {
-                foreach (Portal p in r.Portals)
+                foreach (var p in r.Portals)
                 {
                     if (p.DestRoom != null && p.DestRoom.ID == ID)
                         p.DestRoom = dest;
@@ -1246,7 +1246,6 @@ namespace FreeRaider
 
         public SkeletalModel GetModelByID(uint modelID)
         {
-            // TODO: This code maybe doesn't work
             return SkeletalModels.FirstOrDefault(sm => sm.ID == modelID);
         }
 

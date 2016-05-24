@@ -960,7 +960,7 @@ namespace FreeRaider
         {
             GL.UniformMatrix4(shader.Projection, false, ref pMatrix);
 
-            for (int i = 0; i < ent.Bf.BoneTags.Count; i++)
+            for (var i = 0; i < ent.Bf.BoneTags.Count; i++)
             {
                 var mat0 = mvMatrix * ent.Bt.BtBody[i].GetWorldTransform();
                 var tr1 = new Matrix4();

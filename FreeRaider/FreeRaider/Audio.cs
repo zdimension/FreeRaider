@@ -579,7 +579,7 @@ namespace FreeRaider
         /// <param name="buffer">Buffer</param>
         public void SetBuffer(int buffer)
         {
-            uint bufferID = EngineWorld.AudioBuffers[buffer];
+            var bufferID = EngineWorld.AudioBuffers[buffer];
 
             if(AL.IsSource(sourceIndex) && AL.IsBuffer(bufferID))
             {
@@ -1868,7 +1868,7 @@ namespace FreeRaider
             AL.GetListener(ALListener3f.Position, out listenerPos);
             ListenerPosition = listenerPos;
 
-            for (int i = 0; i < EngineWorld.AudioEmitters.Count; i++)
+            for (var i = 0; i < EngineWorld.AudioEmitters.Count; i++)
             {
                 Send(EngineWorld.AudioEmitters[i].SoundIndex, TR_AUDIO_EMITTER.SoundSource, i);
             }

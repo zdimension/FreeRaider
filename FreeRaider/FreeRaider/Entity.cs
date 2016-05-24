@@ -493,7 +493,7 @@ namespace FreeRaider
                     var motionState = new DefaultMotionState(((Matrix4)startTransform).ToBullet());
                     Bt.BtBody[Bt.BtBody.Count - 1] = new RigidBody(new RigidBodyConstructionInfo(0.0f, motionState, cshape, localInertia));
 
-                    CollisionFlags cf = CollisionFlags.None;
+                    var cf = CollisionFlags.None;
                     switch (Self.CollisionType)
                     {
                         case COLLISION_TYPE.Kinematic:

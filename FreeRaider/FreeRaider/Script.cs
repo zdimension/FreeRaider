@@ -1154,7 +1154,7 @@ namespace FreeRaider
                 var ent2pos = ent2.Transform.Origin;
                 var facing = ent1pos - ent2pos;
 
-                int targAngleId = -1;
+                var targAngleId = -1;
                 float theta = -1;
 
                 switch (axis)

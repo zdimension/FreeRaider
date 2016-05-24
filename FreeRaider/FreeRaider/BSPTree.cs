@@ -49,7 +49,7 @@ namespace FreeRaider
             var negative = 0;
             var inPlane = 0;
 
-            foreach(Vertex v in transformed.Vertices)
+            foreach(var v in transformed.Vertices)
             {
                 var dist = root.Plane.Distance(v.Position);
                 if (dist > SPLIT_EPSILON)

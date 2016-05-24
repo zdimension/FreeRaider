@@ -1,7 +1,7 @@
--- OPENTOMB GENERIC STRINGS - ENGLISH LANGUAGE
+-- OPENTOMB GENERIC STRINGS - FRENCH LANGUAGE
 -- by Lwmte, Jan 2015
--- French Translation by: Joey79100.
--- Translation Version: 1.0.0.0 (January 11th, 2015)
+-- French Translation by: Joey79100 and zdimension.
+-- Translation Version: 1.1.0.0 (May 24th, 2016)
 
 --------------------------------------------------------------------------------
 -- This set of strings is used globally in all engine versions for various
@@ -92,11 +92,11 @@ strings[093] = "%d days, %02d:%02d" -- Time passed
 -- Game names - to use with Select Game menu...
 
 strings[100] = "Tomb Raider I";
-strings[101] = "Tomb Raider I Gold: Unfinished Business";      -- This title wasn't translated
+strings[101] = "Tomb Raider I : Unfinished Business";      -- This title wasn't translated
 strings[200] = "Tomb Raider II";
-strings[201] = "Tomb Raider II Gold: Le Masque d'Or";         -- This title wasn't translated either... -- actually (on my TR2 CD from 1997) it's written "Tomb Raider II : Le Masque d'Or"
+strings[201] = "Tomb Raider II : Le Masque d'Or";         -- This title wasn't translated either... -- actually (on my TR2 CD from 1997) it's written "Tomb Raider II : Le Masque d'Or"
 strings[300] = "Tomb Raider III";
-strings[301] = "Tomb Raider III Gold: Le Dernier Artefact";    -- And this one has been translated badly... the French title means the "LAST" Artifact instead of the "LOST".
+strings[301] = "Tomb Raider III : Le Dernier Artefact";    -- And this one has been translated badly... the French title means the "LAST" Artifact instead of the "LOST".
 strings[400] = "Tomb Raider IV: La Révélation Finale";
 strings[401] = "Tomb Raider IV Bonus: L'Exclusivité du Times"; -- Title taken from the French Translation by Alex Fly, ErisGoddessDiscord and C'hoari Del Croft.
 strings[500] = "Tomb Raider V: Sur les Traces de Lara Croft";

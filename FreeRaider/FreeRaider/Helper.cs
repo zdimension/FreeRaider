@@ -68,9 +68,9 @@ namespace FreeRaider
 
         public static void Quat_SetRotation(ref Quaternion quat, Vector3 axis, float angle)
         {
-            float d = axis.Length;
+            var d = axis.Length;
             StaticFuncs.Assert(d != 0);
-            float s = (float) Math.Sin(angle * 0.5) / d;
+            var s = (float) Math.Sin(angle * 0.5) / d;
             quat = new Quaternion(axis * s, (float) Math.Cos(angle * 0.5));
         }
 
@@ -104,7 +104,7 @@ namespace FreeRaider
             // set the initial array value
             Array.Copy(value, destinationArray, value.Length);
 
-            int arrayToFillHalfLength = destinationArray.Length / 2;
+            var arrayToFillHalfLength = destinationArray.Length / 2;
             int copyLength;
 
             for (copyLength = value.Length; copyLength < arrayToFillHalfLength; copyLength <<= 1)
@@ -127,7 +127,7 @@ namespace FreeRaider
             // set the initial array value
             Array.Copy(value, destinationArray, value.Length);
 
-            int arrayToFillHalfLength = destinationArray.Length / 2;
+            var arrayToFillHalfLength = destinationArray.Length / 2;
             int copyLength;
 
             for (copyLength = value.Length; copyLength < arrayToFillHalfLength; copyLength <<= 1)

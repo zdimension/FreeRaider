@@ -153,7 +153,7 @@ namespace FreeRaider
 
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
 
-            TextShaderDescription shader = Renderer.ShaderManager.GetTextShader();
+            var shader = Renderer.ShaderManager.GetTextShader();
             GL.UseProgram(shader.Program);
             GL.Uniform1(shader.Sampler, 0);
             var screenSize = new float[] {Global.ScreenInfo.W, Global.ScreenInfo.H};

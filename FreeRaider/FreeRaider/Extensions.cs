@@ -913,7 +913,7 @@ namespace FreeRaider
 
         public static BulletSharp.Math.Matrix ToBullet(this global::OpenTK.Matrix4 m)
         {
-            BulletSharp.Math.Matrix r = new BulletSharp.Math.Matrix();
+            var r = new BulletSharp.Math.Matrix();
             r.M11 = m.M11; r.M12 = m.M12; r.M13 = m.M13; r.M14 = m.M14;
             r.M21 = m.M21; r.M22 = m.M22; r.M23 = m.M23; r.M24 = m.M24;
             r.M31 = m.M31; r.M32 = m.M32; r.M33 = m.M33; r.M34 = m.M34;

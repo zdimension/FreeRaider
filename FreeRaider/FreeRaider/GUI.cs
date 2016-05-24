@@ -2304,7 +2304,7 @@ namespace FreeRaider
 
                 GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
 
-                TextShaderDescription shader = Global.Renderer.ShaderManager.GetTextShader();
+                var shader = Global.Renderer.ShaderManager.GetTextShader();
                 GL.UseProgram(shader.Program);
                 var screenSize = new float[] {Global.ScreenInfo.W, Global.ScreenInfo.H};
                 GL.Uniform2(shader.ScreenSize, 1, screenSize);
@@ -2496,7 +2496,7 @@ namespace FreeRaider
             var offset = new[] {x / (Global.ScreenInfo.W * 0.5f) - 1.0f, y / (Global.ScreenInfo.Y * 0.5f) - 1.0f};
             var factor = new[] {width / Global.ScreenInfo.W * 2.0f, height / Global.ScreenInfo.H * 2.0f};
 
-            GuiShaderDescription shader = Global.Renderer.ShaderManager.GetGuiShader(texture != 0);
+            var shader = Global.Renderer.ShaderManager.GetGuiShader(texture != 0);
             GL.UseProgram(shader.Program);
             GL.Uniform1(shader.Sampler, 0);
             if(texture != 0)
@@ -2618,7 +2618,7 @@ namespace FreeRaider
 
         public static void DrawCrosshair()
         {
-            GuiShaderDescription shader = Global.Renderer.ShaderManager.GetGuiShader(false);
+            var shader = Global.Renderer.ShaderManager.GetGuiShader(false);
 
             GL.UseProgram(shader.Program);
             var factor = new[] {2.0f / Global.ScreenInfo.W, 2.0f / Global.ScreenInfo.H};
@@ -2810,7 +2810,7 @@ namespace FreeRaider
 
         public static void RenderItem(SSBoneFrame bf, float size, Transform mvMatrix)
         {
-            LitShaderDescription shader = Global.Renderer.ShaderManager.GetEntityShader(0, false);
+            var shader = Global.Renderer.ShaderManager.GetEntityShader(0, false);
             GL.UseProgram(shader.Program);
             GL.Uniform1(shader.NumberOfLights, 0);
             GL.Uniform4(shader.LightAmbient, 1.0f, 1.0f, 1.0f, 1.0f);

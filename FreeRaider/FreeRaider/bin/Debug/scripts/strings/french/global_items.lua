@@ -1,5 +1,7 @@
 ﻿-- OPENTOMB INVENTORY GLOBAL ITEM NAMES
 -- by Lwmte, Sep 2014
+-- French Translation by: Joey79100 and zdimension.
+-- Translation Version: 1.1.0.0 (May 24th, 2016)
 
 --------------------------------------------------------------------------------
 -- In this file, we list all the global item names used across all games.
@@ -39,8 +41,8 @@ ITEM_NAME_LASERSIGHT = "Viseur laser"
 ITEM_NAME_BINOCULARS = "Jumelles"
 ITEM_NAME_SILENCER   = "Silencieux"
 
-ITEM_NAME_REVOLVER_LASERSIGHT = "Revolver + Viseur laser"
-ITEM_NAME_CROSSBOW_LASERSIGHT = "Arbalète + Viseur laser"
+ITEM_NAME_REVOLVER_LASERSIGHT = "Revolver et viseur laser"
+ITEM_NAME_CROSSBOW_LASERSIGHT = "Arbalète et viseur laser"
 ITEM_NAME_HK_LASERSIGHT       = "H&K + Viseur laser"
 
 -- We don't need to specify each ammo name, as usually one weapon
@@ -50,7 +52,7 @@ ITEM_NAME_HK_LASERSIGHT       = "H&K + Viseur laser"
 ITEM_NAME_PISTOL_AMMO = "Munitions pour pistolets"
 ITEM_NAME_SHOTGUN_AMMO = "Munitions pour fusil"
 ITEM_NAME_SHOTGUN_NORMAL_AMMO = "Cartouches normales"
-ITEM_NAME_SHOTGUN_WIDESHOT_AMMO = "Chevrotine pour fusil"
+ITEM_NAME_SHOTGUN_WIDESHOT_AMMO = "Chevrotine pour Fusil"
 ITEM_NAME_MAGNUM_AMMO = "Munitions pour magnums"
 ITEM_NAME_AUTOMAG_AMMO = "Munitions pour pistolets automatiques"
 ITEM_NAME_DESERTEAGLE_AMMO = "Munitions pour Desert Eagle"
@@ -58,7 +60,7 @@ ITEM_NAME_REVOLVER_AMMO = "Balles revolver"
 ITEM_NAME_UZI_AMMO = "Munitions pour uzis"
 ITEM_NAME_M16_AMMO = "Munitions pour M16"
 ITEM_NAME_MP5_AMMO = "Munitions pour MP5"
-ITEM_NAME_HK_AMMO = "Munitions pour H&K"
+ITEM_NAME_HK_AMMO = "Balles de H&K"
 ITEM_NAME_GRENADEGUN_AMMO = "Munitions pour lance-grenades"
 ITEM_NAME_GRENADEGUN_NORMAL_AMMO = "Grenades normales"
 ITEM_NAME_GRENADEGUN_SUPER_AMMO = "Super-grenades"

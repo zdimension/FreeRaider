@@ -3131,12 +3131,12 @@ namespace FreeRaider
                         {
                             #region Trigger
 
-                            string header = ""; // Header condition
-                            string once_condition = ""; // One-shot condition
-                            string cont_events = ""; // Continous trigger events
-                            string single_events = ""; // One-shot trigger events
-                            string item_events = ""; // Item activation events
-                            string anti_events = ""; // Item deactivation events, if needed
+                            var header = ""; // Header condition
+                            var once_condition = ""; // One-shot condition
+                            var cont_events = ""; // Continous trigger events
+                            var single_events = ""; // One-shot trigger events
+                            var item_events = ""; // Item activation events
+                            var anti_events = ""; // Item deactivation events, if needed
 
                             var script = ""; // Final script compile
 

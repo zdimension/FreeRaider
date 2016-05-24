@@ -424,7 +424,7 @@ namespace FreeRaider
 
                     while (*ch != 0)
                     {
-                        byte* nch2 = Helper.UTF8ToUTF32(nch, &next_utf32);
+                        var nch2 = Helper.UTF8ToUTF32(nch, &next_utf32);
 
                         next_utf32 = glf.FTFace.GetCharIndex(next_utf32);
                         ch = nch;
@@ -533,7 +533,7 @@ namespace FreeRaider
                     {
                         var p = FontBuffer.ResizeAndMap(32 * sizeof (float));
 
-                        byte* nch2 = Helper.UTF8ToUTF32(nch, &next_utf32);
+                        var nch2 = Helper.UTF8ToUTF32(nch, &next_utf32);
 
                         next_utf32 = glf.FTFace.GetCharIndex(next_utf32);
                         ch = nch;

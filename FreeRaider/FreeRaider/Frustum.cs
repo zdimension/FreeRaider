@@ -360,8 +360,8 @@ namespace FreeRaider
             if (portal.DestRoom.Frustum.Count > 0 && emitter.HasParent(portal.DestRoom.Frustum[0]))
                 return null; // Abort infinite loop!
 
-            bool inDist = false;
-            bool inFace = false;
+            var inDist = false;
+            var inFace = false;
             foreach (var v in portal.Vertices)
             {
                 if (!inDist && render.Camera.Frustum.Normal.Distance(v) < render.Camera.DistFar)
