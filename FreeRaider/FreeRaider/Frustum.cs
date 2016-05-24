@@ -11,7 +11,7 @@ namespace FreeRaider
         /// <summary>
         /// Clip planes
         /// </summary>
-        public List<Plane> Planes { get; set; }
+        public List<Plane> Planes { get; set; } = new List<Plane>();
 
         /// <summary>
         /// Frustum vertices

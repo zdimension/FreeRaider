@@ -75,7 +75,7 @@ namespace FreeRaider
     /// <summary>
     /// Base mesh, uses everywhere
     /// </summary>
-    public class BaseMesh
+    public class BaseMesh : IDisposable
     {
         /// <summary>
         /// Mesh's ID
@@ -192,7 +192,7 @@ namespace FreeRaider
 
         public VertexArray AnimatedVertexArray;
 
-        ~BaseMesh()
+        public void Dispose()
         {
             Clear();
         }
@@ -1580,7 +1580,7 @@ namespace FreeRaider
                         var v0 = p.Vertices[j + 1].Position;
                         var v1 = p.Vertices[j].Position;
                         var v2 = p.Vertices[0].Position;
-                        trimesh.AddTriangle(v0, v1, v2, true);
+                        trimesh.AddTriangle(v0.ToBullet(), v1.ToBullet(), v2.ToBullet(), true);
                     }
                     cnt++;
                 }
@@ -1590,6 +1590,7 @@ namespace FreeRaider
 
             if (cnt == 0)
             {
+                trimesh.Dispose();
                 trimesh = null;
                 return null;
             }
@@ -1615,13 +1616,14 @@ namespace FreeRaider
                     var v0 = p.Vertices[j + 1].Position;
                     var v1 = p.Vertices[j].Position;
                     var v2 = p.Vertices[0].Position;
-                    trimesh.AddTriangle(v0, v1, v2, true);
+                    trimesh.AddTriangle(v0.ToBullet(), v1.ToBullet(), v2.ToBullet(), true);
                 }
                 cnt++;
             }
 
             if (cnt == 0)
             {
+                trimesh.Dispose();
                 trimesh = null;
                 return null;
             }
@@ -1658,9 +1660,9 @@ namespace FreeRaider
                         if (hm.FloorPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalA)
                         {
                             trimesh.AddTriangle(
-                                hm.FloorCorners[3],
-                                hm.FloorCorners[2],
-                                hm.FloorCorners[0],
+                                hm.FloorCorners[3].ToBullet(),
+                                hm.FloorCorners[2].ToBullet(),
+                                hm.FloorCorners[0].ToBullet(),
                                 true);
                             cnt++;
                         }
@@ -1668,9 +1670,9 @@ namespace FreeRaider
                         if (hm.FloorPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalB)
                         {
                             trimesh.AddTriangle(
-                                hm.FloorCorners[2],
-                                hm.FloorCorners[1],
-                                hm.FloorCorners[0],
+                                hm.FloorCorners[2].ToBullet(),
+                                hm.FloorCorners[1].ToBullet(),
+                                hm.FloorCorners[0].ToBullet(),
                                 true);
                             cnt++;
                         }
@@ -1680,9 +1682,9 @@ namespace FreeRaider
                         if (hm.FloorPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalA)
                         {
                             trimesh.AddTriangle(
-                                hm.FloorCorners[3],
-                                hm.FloorCorners[2],
-                                hm.FloorCorners[1],
+                                hm.FloorCorners[3].ToBullet(),
+                                hm.FloorCorners[2].ToBullet(),
+                                hm.FloorCorners[1].ToBullet(),
                                 true);
                             cnt++;
                         }
@@ -1690,9 +1692,9 @@ namespace FreeRaider
                         if (hm.FloorPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalB)
                         {
                             trimesh.AddTriangle(
-                                hm.FloorCorners[3],
-                                hm.FloorCorners[1],
-                                hm.FloorCorners[0],
+                                hm.FloorCorners[3].ToBullet(),
+                                hm.FloorCorners[1].ToBullet(),
+                                hm.FloorCorners[0].ToBullet(),
                                 true);
                             cnt++;
                         }
@@ -1708,9 +1710,9 @@ namespace FreeRaider
                         if (hm.CeilingPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalA)
                         {
                             trimesh.AddTriangle(
-                                hm.FloorCorners[0],
-                                hm.FloorCorners[2],
-                                hm.FloorCorners[3],
+                                hm.FloorCorners[0].ToBullet(),
+                                hm.FloorCorners[2].ToBullet(),
+                                hm.FloorCorners[3].ToBullet(),
                                 true);
                             cnt++;
                         }
@@ -1718,9 +1720,9 @@ namespace FreeRaider
                         if (hm.CeilingPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalB)
                         {
                             trimesh.AddTriangle(
-                                hm.FloorCorners[0],
-                                hm.FloorCorners[1],
-                                hm.FloorCorners[2],
+                                hm.FloorCorners[0].ToBullet(),
+                                hm.FloorCorners[1].ToBullet(),
+                                hm.FloorCorners[2].ToBullet(),
                                 true);
                             cnt++;
                         }
@@ -1730,9 +1732,9 @@ namespace FreeRaider
                         if (hm.CeilingPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalA)
                         {
                             trimesh.AddTriangle(
-                                hm.FloorCorners[0],
-                                hm.FloorCorners[1],
-                                hm.FloorCorners[3],
+                                hm.FloorCorners[0].ToBullet(),
+                                hm.FloorCorners[1].ToBullet(),
+                                hm.FloorCorners[3].ToBullet(),
                                 true);
                             cnt++;
                         }
@@ -1740,9 +1742,9 @@ namespace FreeRaider
                         if (hm.CeilingPenetrationConfig != TR_PENETRATION_CONFIG.DoorVerticalB)
                         {
                             trimesh.AddTriangle(
-                                hm.FloorCorners[1],
-                                hm.FloorCorners[2],
-                                hm.FloorCorners[3],
+                                hm.FloorCorners[1].ToBullet(),
+                                hm.FloorCorners[2].ToBullet(),
+                                hm.FloorCorners[3].ToBullet(),
                                 true);
                             cnt++;
                         }
@@ -1762,43 +1764,43 @@ namespace FreeRaider
                         var o = new Vector3();
                         Helper.SetInterpolate3(out o, tween.CeilingCorners[0], tween.CeilingCorners[2], t);
                         trimesh.AddTriangle(
-                            tween.CeilingCorners[0],
-                            tween.CeilingCorners[1],
-                            o,
+                            tween.CeilingCorners[0].ToBullet(),
+                            tween.CeilingCorners[1].ToBullet(),
+                            o.ToBullet(),
                             true);
                         trimesh.AddTriangle(
-                            tween.CeilingCorners[3],
-                            tween.CeilingCorners[2],
-                            o,
+                            tween.CeilingCorners[3].ToBullet(),
+                            tween.CeilingCorners[2].ToBullet(),
+                            o.ToBullet(),
                             true);
                         cnt += 2;
                         break;
                     case SectorTweenType.TriangleLeft:
                         trimesh.AddTriangle(
-                            tween.CeilingCorners[0],
-                            tween.CeilingCorners[1],
-                            tween.CeilingCorners[3],
+                            tween.CeilingCorners[0].ToBullet(),
+                            tween.CeilingCorners[1].ToBullet(),
+                            tween.CeilingCorners[3].ToBullet(),
                             true);
                         cnt++;
                         break;
                     case SectorTweenType.TriangleRight:
                         trimesh.AddTriangle(
-                            tween.CeilingCorners[2],
-                            tween.CeilingCorners[1],
-                            tween.CeilingCorners[3],
+                            tween.CeilingCorners[2].ToBullet(),
+                            tween.CeilingCorners[1].ToBullet(),
+                            tween.CeilingCorners[3].ToBullet(),
                             true);
                         cnt++;
                         break;
                     case SectorTweenType.Quad:
                         trimesh.AddTriangle(
-                            tween.CeilingCorners[0],
-                            tween.CeilingCorners[1],
-                            tween.CeilingCorners[3],
+                            tween.CeilingCorners[0].ToBullet(),
+                            tween.CeilingCorners[1].ToBullet(),
+                            tween.CeilingCorners[3].ToBullet(),
                             true);
                         trimesh.AddTriangle(
-                            tween.CeilingCorners[2],
-                            tween.CeilingCorners[1],
-                            tween.CeilingCorners[3],
+                            tween.CeilingCorners[2].ToBullet(),
+                            tween.CeilingCorners[1].ToBullet(),
+                            tween.CeilingCorners[3].ToBullet(),
                             true);
                         cnt += 2;
                         break;
@@ -1814,43 +1816,43 @@ namespace FreeRaider
                         var o = new Vector3();
                         Helper.SetInterpolate3(out o, tween.FloorCorners[0], tween.FloorCorners[2], t);
                         trimesh.AddTriangle(
-                            tween.FloorCorners[0],
-                            tween.FloorCorners[1],
-                            o,
+                            tween.FloorCorners[0].ToBullet(),
+                            tween.FloorCorners[1].ToBullet(),
+                            o.ToBullet(),
                             true);
                         trimesh.AddTriangle(
-                            tween.FloorCorners[3],
-                            tween.FloorCorners[2],
-                            o,
+                            tween.FloorCorners[3].ToBullet(),
+                            tween.FloorCorners[2].ToBullet(),
+                            o.ToBullet(),
                             true);
                         cnt += 2;
                         break;
                     case SectorTweenType.TriangleLeft:
                         trimesh.AddTriangle(
-                            tween.FloorCorners[0],
-                            tween.FloorCorners[1],
-                            tween.FloorCorners[3],
+                            tween.FloorCorners[0].ToBullet(),
+                            tween.FloorCorners[1].ToBullet(),
+                            tween.FloorCorners[3].ToBullet(),
                             true);
                         cnt++;
                         break;
                     case SectorTweenType.TriangleRight:
                         trimesh.AddTriangle(
-                            tween.FloorCorners[2],
-                            tween.FloorCorners[1],
-                            tween.FloorCorners[3],
+                            tween.FloorCorners[2].ToBullet(),
+                            tween.FloorCorners[1].ToBullet(),
+                            tween.FloorCorners[3].ToBullet(),
                             true);
                         cnt++;
                         break;
                     case SectorTweenType.Quad:
                         trimesh.AddTriangle(
-                            tween.FloorCorners[0],
-                            tween.FloorCorners[1],
-                            tween.FloorCorners[3],
+                            tween.FloorCorners[0].ToBullet(),
+                            tween.FloorCorners[1].ToBullet(),
+                            tween.FloorCorners[3].ToBullet(),
                             true);
                         trimesh.AddTriangle(
-                            tween.FloorCorners[2],
-                            tween.FloorCorners[1],
-                            tween.FloorCorners[3],
+                            tween.FloorCorners[2].ToBullet(),
+                            tween.FloorCorners[1].ToBullet(),
+                            tween.FloorCorners[3].ToBullet(),
                             true);
                         cnt += 2;
                         break;
@@ -1859,6 +1861,7 @@ namespace FreeRaider
 
             if(cnt == 0)
             {
+                trimesh.Dispose();
                 trimesh = null;
                 return null;
             }

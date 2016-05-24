@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using static FreeRaider.Global;
 using static FreeRaider.Strings;
 
@@ -95,7 +97,7 @@ namespace FreeRaider
         }
     }
 
-    public class InventoryManager
+    public class InventoryManager : IDisposable
     {
         public enum InventoryState
         {
@@ -216,7 +218,7 @@ namespace FreeRaider
             Gui.AddLine(LabelTitle);
         }
 
-        ~InventoryManager()
+        public void Dispose()
         {
             CurrentState = InventoryState.Disabled;
             NextState = InventoryState.Disabled;

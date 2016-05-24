@@ -1,4 +1,5 @@
-﻿using OpenTK.Graphics.OpenGL;
+﻿using System;
+using OpenTK.Graphics.OpenGL;
 
 namespace FreeRaider
 {
@@ -57,7 +58,7 @@ namespace FreeRaider
         }
     }
 
-    public class VertexArray
+    public class VertexArray : IDisposable
     {
         private int vertexArrayObject;
 
@@ -83,10 +84,9 @@ namespace FreeRaider
 
             GL.BindVertexArray(0);
         }
-
-        ~VertexArray()
+        public void Dispose()
         {
-            //GL.DeleteVertexArray(vertexArrayObject);
+            GL.DeleteVertexArray(vertexArrayObject);
         }
 
         public void Bind()

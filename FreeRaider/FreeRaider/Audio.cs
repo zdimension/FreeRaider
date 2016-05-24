@@ -433,7 +433,7 @@ namespace FreeRaider
     /// Number of simultaneously existing sound sources is fixed, and can't be more than
     /// MAX_CHANNELS global constant.
     /// </summary>
-    public class AudioSource
+    public class AudioSource : IDisposable
     {
         public AudioSource()
         {
@@ -465,7 +465,7 @@ namespace FreeRaider
             }
         }
 
-        ~AudioSource()
+        public void Dispose()
         {
             if(AL.IsSource(sourceIndex))
             {
@@ -907,7 +907,7 @@ namespace FreeRaider
     /// previous one. With flexible class handling, we now can implement multitrack
     /// player with automatic channel and crossfade management.
     /// </summary>
-    public class StreamTrack
+    public class StreamTrack : IDisposable
     {
         public StreamTrack()
         {
@@ -948,7 +948,7 @@ namespace FreeRaider
             }
         }
 
-        ~StreamTrack()
+        public void Dispose()
         {
             Stop(); // In case we haven't stopped yet.
 

@@ -231,8 +231,8 @@ namespace FreeRaider
                 if(cshape != null)
                 {
                     var localInertia = Vector3.Zero;
-                    var motionState = new DefaultMotionState((Matrix4) room.Transform);
-                    room.BtBody = new RigidBody(new RigidBodyConstructionInfo(0.0f, motionState, cshape, localInertia));
+                    var motionState = new DefaultMotionState(((Matrix4) room.Transform).ToBullet());
+                    room.BtBody = new RigidBody(new RigidBodyConstructionInfo(0.0f, motionState, cshape, localInertia.ToBullet()));
                     BtEngineDynamicsWorld.AddRigidBody(room.BtBody, CollisionFilterGroups.AllFilter, CollisionFilterGroups.AllFilter);
                     room.BtBody.UserObject = room.Self;
                     room.BtBody.Restitution = 1.0f;
@@ -2336,10 +2336,10 @@ namespace FreeRaider
                     if (cshape != null)
                     {
                         var startTransform = rStatic.Transform;
-                        var motionState = new DefaultMotionState((Matrix4) startTransform);
+                        var motionState = new DefaultMotionState(((Matrix4) startTransform).ToBullet());
                         var localInertia = Vector3.Zero;
                         rStatic.BtBody =
-                            new RigidBody(new RigidBodyConstructionInfo(0.0f, motionState, cshape, localInertia));
+                            new RigidBody(new RigidBodyConstructionInfo(0.0f, motionState, cshape, localInertia.ToBullet()));
                         BtEngineDynamicsWorld.AddRigidBody(rStatic.BtBody, CollisionFilterGroups.AllFilter,
                             CollisionFilterGroups.AllFilter);
                         rStatic.BtBody.UserObject = rStatic.Self;

@@ -53,7 +53,7 @@ namespace FreeRaider
         public Vector3 Position;
     }
 
-    public class Hair
+    public class Hair : IDisposable
     {
         public EngineContainer Container;
 
@@ -97,7 +97,7 @@ namespace FreeRaider
         /// </summary>
         public BaseMesh Mesh;
 
-        ~Hair()
+        public void Dispose()
         {
             foreach (var joint in Joints.Where(joint => joint != null))
             {
@@ -160,7 +160,7 @@ namespace FreeRaider
                 Elements[i].Mesh = model.MeshTree[i].MeshBase;
 
                 // Begin creating ACTUAL physical hair mesh.
-                var localInertia = Vector3.Zero;
+                var localInertia = BulletSharp.Math.Vector3.Zero;
 
                 // Make collision shape out of mesh.
                 Elements[i].Shape = BT_CSfromMesh(Elements[i].Mesh, true, true, false);
@@ -171,7 +171,7 @@ namespace FreeRaider
 
                 // Initialize motion state for body.
                 var startTransform = ownerBodyTransform;
-                var motionState = new DefaultMotionState((Matrix4)startTransform);
+                var motionState = new DefaultMotionState(((Matrix4)startTransform).ToBullet());
 
                 // Make rigid body.
                 Elements[i].Body = new RigidBody(new RigidBodyConstructionInfo(currentWeight, motionState, Elements[i].Shape, localInertia));
@@ -251,8 +251,8 @@ namespace FreeRaider
                 }
 
                 // Create 6DOF constraint.
-                Joints[currJoint] = new Generic6DofConstraint(prevBody, Elements[i].Body, (Matrix4) localA,
-                    (Matrix4) localB, true);
+                Joints[currJoint] = new Generic6DofConstraint(prevBody, Elements[i].Body, ((Matrix4) localA).ToBullet(),
+                    ((Matrix4) localB).ToBullet(), true);
 
                 // CFM and ERP parameters are critical for making joint "hard" and link
                 // to Lara's head. With wrong values, constraints may become "elastic".
@@ -262,15 +262,15 @@ namespace FreeRaider
                     Joints[currJoint].SetParam(ConstraintParam.StopErp, setup.JointErp, axis);
                 }
 
-                Joints[currJoint].LinearLowerLimit = Vector3.Zero;
-                Joints[currJoint].LinearUpperLimit = Vector3.Zero;
+                Joints[currJoint].LinearLowerLimit = BulletSharp.Math.Vector3.Zero;
+                Joints[currJoint].LinearUpperLimit = BulletSharp.Math.Vector3.Zero;
 
                 if(i == 0)
                 {
                     // First joint group should be more limited in motion, as it is connected
                     // right to the head. NB: Should we make it scriptable as well?
-                    Joints[currJoint].AngularLowerLimit = new Vector3(-HalfPI, 0.0f, -HalfPI * 0.4f);
-                    Joints[currJoint].AngularLowerLimit = new Vector3(-HalfPI * 0.3f, 0.0f, HalfPI * 0.4f);
+                    Joints[currJoint].AngularLowerLimit = new BulletSharp.Math.Vector3(-HalfPI, 0.0f, -HalfPI * 0.4f);
+                    Joints[currJoint].AngularLowerLimit = new BulletSharp.Math.Vector3(-HalfPI * 0.3f, 0.0f, HalfPI * 0.4f);
 
                     // Increased solver iterations make constraint even more stable.
                     Joints[currJoint].OverrideNumSolverIterations = 100;
@@ -278,8 +278,8 @@ namespace FreeRaider
                 else
                 {
                     // Normal joint with more movement freedom.
-                    Joints[currJoint].AngularLowerLimit = new Vector3(-HalfPI * 0.5f, 0.0f, -HalfPI * 0.5f);
-                    Joints[currJoint].AngularLowerLimit = new Vector3(HalfPI * 0.5f, 0.0f, HalfPI * 0.5f);
+                    Joints[currJoint].AngularLowerLimit = new BulletSharp.Math.Vector3(-HalfPI * 0.5f, 0.0f, -HalfPI * 0.5f);
+                    Joints[currJoint].AngularLowerLimit = new BulletSharp.Math.Vector3(HalfPI * 0.5f, 0.0f, HalfPI * 0.5f);
                 }
 
                 Joints[currJoint].DebugDrawSize = 5.0f; // Draw constraint axes.

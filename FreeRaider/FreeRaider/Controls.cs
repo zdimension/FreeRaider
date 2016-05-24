@@ -354,7 +354,7 @@ namespace FreeRaider
             var dbgR = 128.0f;
             var v = EngineCamera.Position;
             var dir = EngineCamera.ViewDirection;
-            var localInertia = Vector3.Zero;
+            var localInertia = BulletSharp.Math.Vector3.Zero;
 
             var cshape = new SphereShape(dbgR);
             cshape.Margin = COLLISION_MARGIN_DEFAULT;
@@ -364,10 +364,10 @@ namespace FreeRaider
             var newPos = v;
             startTransform.Origin = newPos;
             cshape.CalculateLocalInertia(12.0f, out localInertia);
-            var motionState = new DefaultMotionState((Matrix4)startTransform);
+            var motionState = new DefaultMotionState(((Matrix4)startTransform).ToBullet());
             var body = new RigidBody(new RigidBodyConstructionInfo(12.0f, motionState, cshape, localInertia));
             BtEngineDynamicsWorld.AddRigidBody(body);
-            body.LinearVelocity = dir * 6000;
+            body.LinearVelocity = (dir * 6000).ToBullet();
             cont.Room = Room.FindPosCogerrence(newPos, EngineCamera.CurrentRoom);
             cont.ObjectType = OBJECT_TYPE.BulletMisc; // bullet have to destroy this user pointer
             body.UserObject = cont;
@@ -384,7 +384,7 @@ namespace FreeRaider
 
             var cbc = new BtEngineClosestRayResultCallback(camCont);
             //cbc.CollisionFilterMask = CollisionFilterGroups.StaticFilter | CollisionFilterGroups.KinematicFilter;
-            BtEngineDynamicsWorld.RayTest(from, to, cbc);
+            BtEngineDynamicsWorld.RayTest(from.ToBullet(), to.ToBullet(), cbc);
             if(cbc.HasHit)
             {
                 var castRay = new float[6];
@@ -392,7 +392,7 @@ namespace FreeRaider
                 Vector3 place;
                 Helper.SetInterpolate3(out place, from, to, cbc.ClosestHitFraction);
                 place.CopyToArray(castRay, 0);
-                (place + 100.0f * cbc.HitNormalWorld).CopyToArray(castRay, 3);
+                (place + 100.0f * cbc.HitNormalWorld.ToOpenTK()).CopyToArray(castRay, 3);
 
                 var c0 = (EngineContainer) cbc.CollisionObject.UserObject;
                 if(c0 != null)

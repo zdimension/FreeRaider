@@ -32,7 +32,7 @@ namespace FreeRaider
         public float AdvanceY;
     }
 
-    public class FontTexture
+    public class FontTexture : IDisposable
     {
         public Library FTLibrary;
 
@@ -52,9 +52,9 @@ namespace FreeRaider
 
         public float[] GLFontColor = new float[4];
 
-        ~FontTexture()
+        public void Dispose()
         {
-            if(GLTexIndexes.Length > 0)
+            if (GLTexIndexes.Length > 0)
             {
                 GL.DeleteTextures(GLTexIndexes.Length, GLTexIndexes);
             }
@@ -110,6 +110,7 @@ namespace FreeRaider
                 }
                 catch
                 {
+                    glf.Dispose();
                     return null;
                 }
                 glf.FTFace = face;
@@ -518,7 +519,7 @@ namespace FreeRaider
                     if (elementsCount != 0)
                     {
                         GL.BindTexture(TextureTarget.Texture2D, glf.GLTexIndexes[0]);
-                        GL.DrawArrays(PrimitiveType.TriangleStrip, 0, (int) elementsCount * 3);
+                        GL.DrawArrays(PrimitiveType.Triangles, 0, (int) elementsCount * 3);
                     }
                 }
                 else

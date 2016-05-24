@@ -267,7 +267,7 @@ namespace FreeRaider
     public class BtEngineClosestRayResultCallback : ClosestRayResultCallback
     {
         public BtEngineClosestRayResultCallback(EngineContainer cont, bool skipGhost = false)
-            : base(ref Helper.ZeroW, ref Helper.ZeroW)
+            : base(ref Helper.ZeroB, ref Helper.ZeroB)
         {
             Container = cont;
             SkipGhost = skipGhost;
@@ -309,7 +309,7 @@ namespace FreeRaider
     public class BtEngineClosestConvexResultCallback : ClosestConvexResultCallback
     {
         public BtEngineClosestConvexResultCallback(EngineContainer cont, bool skipGhost = false)
-            : base(ref Helper.ZeroW, ref Helper.ZeroW)
+            : base(ref Helper.ZeroB, ref Helper.ZeroB)
         {
             Container = cont;
             SkipGhost = skipGhost;
@@ -864,7 +864,7 @@ namespace FreeRaider
             BtEngineDynamicsWorld = new DiscreteDynamicsWorld(BtEngineDispatcher,
                 BtEngineOverlappingPairCache, BtEngineSolver, BtEngineCollisionConfiguration);
             BtEngineDynamicsWorld.SetInternalTickCallback(InternalTickCallback);
-            BtEngineDynamicsWorld.Gravity = new Vector3(0, 0, -4500.0f);
+            BtEngineDynamicsWorld.Gravity = new BulletSharp.Math.Vector3(0, 0, -4500.0f);
 
             DebugDrawer = new RenderDebugDrawer();
             DebugDrawer.DebugMode = DebugDrawModes.DrawWireframe | DebugDrawModes.DrawConstraints;
@@ -1332,7 +1332,7 @@ namespace FreeRaider
                 var body = RigidBody.Upcast(obj);
                 if(body != null && !body.IsStaticObject && body.MotionState != null)
                 {
-                    var trans = (Transform)body.MotionState.WorldTransform;
+                    var trans = (Transform)body.MotionState.WorldTransform.ToOpenTK();
                     var cont = (EngineContainer) body.UserObject;
                     if(cont != null && cont.ObjectType == OBJECT_TYPE.BulletMisc)
                     {

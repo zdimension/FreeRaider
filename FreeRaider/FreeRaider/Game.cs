@@ -584,7 +584,7 @@ namespace FreeRaider
             };
             cb.ClosestHitFraction = 1.0f;
             cb.HitCollisionObject = null;
-            BtEngineDynamicsWorld.ConvexSweepTest(cameraSphere, (Matrix4)cameraFrom, (Matrix4)cameraTo, cb);
+            BtEngineDynamicsWorld.ConvexSweepTest(cameraSphere, ((Matrix4)cameraFrom).ToBullet(), ((Matrix4)cameraTo).ToBullet(), cb);
             return cb.HasHit;
         }
 
@@ -709,7 +709,7 @@ namespace FreeRaider
             if(Cam_HasHit(cb, cameraFrom, cameraTo))
             {
                 Helper.SetInterpolate3(out camPos, cameraFrom.Origin, cameraTo.Origin, cb.ClosestHitFraction);
-                camPos += cb.HitNormalWorld * 2.0f;
+                camPos += (cb.HitNormalWorld * 2.0f).ToOpenTK();
             }
 
             if(dx != 0.0f)
@@ -720,7 +720,7 @@ namespace FreeRaider
                 if (Cam_HasHit(cb, cameraFrom, cameraTo))
                 {
                     Helper.SetInterpolate3(out camPos, cameraFrom.Origin, cameraTo.Origin, cb.ClosestHitFraction);
-                    camPos += cb.HitNormalWorld * 2.0f;
+                    camPos += (cb.HitNormalWorld * 2.0f).ToOpenTK();
                 }
 
                 cameraFrom.Origin = camPos;
@@ -737,7 +737,7 @@ namespace FreeRaider
                 if (Cam_HasHit(cb, cameraFrom, cameraTo))
                 {
                     Helper.SetInterpolate3(out camPos, cameraFrom.Origin, cameraTo.Origin, cb.ClosestHitFraction);
-                    camPos += cb.HitNormalWorld * 2.0f;
+                    camPos += (cb.HitNormalWorld * 2.0f).ToOpenTK();
                 }
             }
 

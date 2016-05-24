@@ -3,16 +3,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreeRaider.Loader", "FreeRaider.Loader\FreeRaider.Loader.csproj", "{9D86F28A-4375-4C47-85E5-AF7F6E123EB4}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreeRaider.TestApp", "FreeRaider.TestApp\FreeRaider.TestApp.csproj", "{C0D4AEEC-D8D6-46CA-BE3D-BF2A9606D63D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreeRaider", "FreeRaider\FreeRaider.csproj", "{CB771C19-AD67-47C4-B65A-2706F41DD5B8}"
 	ProjectSection(ProjectDependencies) = postProject
 		{AB815E2D-29A0-4ECF-977A-F988E4C83345} = {AB815E2D-29A0-4ECF-977A-F988E4C83345}
 		{85480198-8711-4355-830E-72FD794AD3F6} = {85480198-8711-4355-830E-72FD794AD3F6}
 		{C0D015CE-3201-4106-9254-12CC9863F7D3} = {C0D015CE-3201-4106-9254-12CC9863F7D3}
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreeRaider.Loader", "FreeRaider.Loader\FreeRaider.Loader.csproj", "{9D86F28A-4375-4C47-85E5-AF7F6E123EB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreeRaider.TestApp", "FreeRaider.TestApp\FreeRaider.TestApp.csproj", "{C0D4AEEC-D8D6-46CA-BE3D-BF2A9606D63D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDL2-CS", "..\SDL2-CS\SDL2-CS.csproj", "{85480198-8711-4355-830E-72FD794AD3F6}"
 EndProject

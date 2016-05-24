@@ -627,9 +627,9 @@ namespace FreeRaider
 
         public static Matrix4 GetWorldTransform(this RigidBody body)
         {
-            var ret = new Matrix4();
+            var ret = new BulletSharp.Math.Matrix();
             body.GetWorldTransform(out ret);
-            return ret;
+            return ret.ToOpenTK();
         }
 
         public static float[] ToArray(this Vector3 v)
@@ -897,6 +897,38 @@ namespace FreeRaider
         public static string NullCheck(this string str)
         {
             return (str ?? "") == "" ? "\0" : str;
+        }
+    }
+
+    static class MathHelper
+    {
+        public static global::OpenTK.Matrix4 ToOpenTK(this BulletSharp.Math.Matrix m)
+        {
+            return new global::OpenTK.Matrix4(
+                m.M11, m.M12, m.M13, m.M14,
+                m.M21, m.M22, m.M23, m.M24,
+                m.M31, m.M32, m.M33, m.M34,
+                m.M41, m.M42, m.M43, m.M44);
+        }
+
+        public static BulletSharp.Math.Matrix ToBullet(this global::OpenTK.Matrix4 m)
+        {
+            BulletSharp.Math.Matrix r = new BulletSharp.Math.Matrix();
+            r.M11 = m.M11; r.M12 = m.M12; r.M13 = m.M13; r.M14 = m.M14;
+            r.M21 = m.M21; r.M22 = m.M22; r.M23 = m.M23; r.M24 = m.M24;
+            r.M31 = m.M31; r.M32 = m.M32; r.M33 = m.M33; r.M34 = m.M34;
+            r.M41 = m.M41; r.M42 = m.M42; r.M43 = m.M43; r.M44 = m.M44;
+            return r;
+        }
+
+        public static global::OpenTK.Vector3 ToOpenTK(this BulletSharp.Math.Vector3 v)
+        {
+            return new global::OpenTK.Vector3(v.X, v.Y, v.Z);
+        }
+
+        public static BulletSharp.Math.Vector3 ToBullet(this global::OpenTK.Vector3 v)
+        {
+            return new BulletSharp.Math.Vector3(v.X, v.Y, v.Z);
         }
     }
 

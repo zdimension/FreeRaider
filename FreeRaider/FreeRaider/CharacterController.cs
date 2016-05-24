@@ -384,7 +384,7 @@ namespace FreeRaider
         IdleToHide
     }
 
-    public class Character : Entity
+    public class Character : Entity, IDisposable
     {
         /// <summary>
         /// Character control commands
@@ -472,17 +472,17 @@ namespace FreeRaider
             ClimbSensor.Margin = COLLISION_MARGIN_DEFAULT;
 
             RayCb = new BtEngineClosestRayResultCallback(Self, true);
-            RayCb.CollisionFilterMask = (CollisionFilterGroups.StaticFilter | CollisionFilterGroups.KinematicFilter);
+            RayCb.CollisionFilterMask = (short) (CollisionFilterGroups.StaticFilter | CollisionFilterGroups.KinematicFilter);
             HeightInfo.Cb = RayCb;
 
             ConvexCb = new BtEngineClosestConvexResultCallback(Self, true);
-            ConvexCb.CollisionFilterMask = (CollisionFilterGroups.StaticFilter | CollisionFilterGroups.KinematicFilter);
+            ConvexCb.CollisionFilterMask = (short) (CollisionFilterGroups.StaticFilter | CollisionFilterGroups.KinematicFilter);
             HeightInfo.Ccb = ConvexCb;
 
             DirFlag = ENT_MOVE.Stay;
         }
 
-        ~Character()
+        public void Dispose()
         {
             if (Self.Room != null && this != EngineWorld.Character)
             {
@@ -1163,9 +1163,9 @@ namespace FreeRaider
                 Assert(Bf.BoneTags.Count == Bt.GhostObjects.Count);
                 for (var i = 0; i < Bf.BoneTags.Count; i++)
                 {
-                    var tr = (Transform) Bt.BtBody[i].WorldTransform;
+                    var tr = (Transform) Bt.BtBody[i].WorldTransform.ToOpenTK();
                     tr.Origin = tr * Bf.BoneTags[i].MeshBase.Center;
-                    Bt.GhostObjects[i].WorldTransform = (Matrix4) tr;
+                    Bt.GhostObjects[i].WorldTransform = ((Matrix4) tr).ToBullet();
                 }
             }
         }
@@ -1333,11 +1333,11 @@ namespace FreeRaider
             to.Z -= 4096.0f;
             cb.ClosestHitFraction = 1.0f;
             cb.CollisionObject = null;
-            BtEngineDynamicsWorld.RayTest(from, to, cb);
+            BtEngineDynamicsWorld.RayTest(from.ToBullet(), to.ToBullet(), cb);
             fc.FloorHit = cb.HasHit;
             if (fc.FloorHit)
             {
-                fc.FloorNormale = cb.HitNormalWorld;
+                fc.FloorNormale = cb.HitNormalWorld.ToOpenTK();
                 Helper.SetInterpolate3(out fc.FloorPoint, from, to, cb.ClosestHitFraction);
                 fc.FloorObject = cb.CollisionObject;
             }
@@ -1346,11 +1346,11 @@ namespace FreeRaider
             to.Z += 4096.0f;
             cb.ClosestHitFraction = 1.0f;
             cb.CollisionObject = null;
-            BtEngineDynamicsWorld.RayTest(from, to, cb);
+            BtEngineDynamicsWorld.RayTest(from.ToBullet(), to.ToBullet(), cb);
             fc.CeilingHit = cb.HasHit;
             if (fc.CeilingHit)
             {
-                fc.CeilingNormale = cb.HitNormalWorld;
+                fc.CeilingNormale = cb.HitNormalWorld.ToOpenTK();
                 Helper.SetInterpolate3(out fc.CeilingPoint, from, to, cb.ClosestHitFraction);
                 fc.CeilingObject = cb.CollisionObject;
             }
@@ -1443,7 +1443,7 @@ namespace FreeRaider
             to.Y = from.Y;
             HeightInfo.Cb.ClosestHitFraction = 1.0f;
             HeightInfo.Cb.CollisionObject = null;
-            BtEngineDynamicsWorld.RayTest(from, to, HeightInfo.Cb);
+            BtEngineDynamicsWorld.RayTest(from.ToBullet(), to.ToBullet(), HeightInfo.Cb);
             if (HeightInfo.Cb.HasHit)
             {
                 ret = StepType.UpImpossible;
@@ -1521,19 +1521,19 @@ namespace FreeRaider
                 t2.Origin = to;
                 nfc.Ccb.ClosestHitFraction = 1.0f;
                 nfc.Ccb.HitCollisionObject = null;
-                BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) t1, (Matrix4) t2, nfc.Ccb);
+                BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, ((Matrix4) t1).ToBullet(), ((Matrix4) t2).ToBullet(), nfc.Ccb);
                 if (nfc.Ccb.HasHit)
                 {
                     if (nfc.Ccb.HitNormalWorld.Z >= 0.1f)
                     {
                         upFounded = 1;
-                        n0 = nfc.Ccb.HitNormalWorld;
-                        n0d = -n0.Dot(nfc.Ccb.HitPointWorld);
+                        n0 = nfc.Ccb.HitNormalWorld.ToOpenTK();
+                        n0d = -n0.Dot(nfc.Ccb.HitPointWorld.ToOpenTK());
                     }
                     if (upFounded != 0 && nfc.Ccb.HitNormalWorld.Z < 0.001f)
                     {
-                        n1 = nfc.Ccb.HitNormalWorld;
-                        n1d = -n1.Dot(nfc.Ccb.HitPointWorld);
+                        n1 = nfc.Ccb.HitNormalWorld.ToOpenTK();
+                        n1d = -n1.Dot(nfc.Ccb.HitPointWorld.ToOpenTK());
                         Climb.EdgeObject = nfc.Ccb.HitCollisionObject;
                         upFounded = 2;
                         break;
@@ -1550,12 +1550,12 @@ namespace FreeRaider
                     t2.Origin = to;
                     nfc.Ccb.ClosestHitFraction = 1.0f;
                     nfc.Ccb.HitCollisionObject = null;
-                    BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) t1, (Matrix4) t2, nfc.Ccb);
+                    BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, ((Matrix4) t1).ToBullet(), ((Matrix4) t2).ToBullet(), nfc.Ccb);
                     if (nfc.Ccb.HasHit)
                     {
                         upFounded = 1;
-                        n0 = nfc.Ccb.HitNormalWorld;
-                        n0d = -n0.Dot(nfc.Ccb.HitPointWorld);
+                        n0 = nfc.Ccb.HitNormalWorld.ToOpenTK();
+                        n0d = -n0.Dot(nfc.Ccb.HitPointWorld.ToOpenTK());
                     }
                     else
                     {
@@ -1701,14 +1701,14 @@ namespace FreeRaider
             tr2.SetIdentity();
             tr2.Origin = to;
 
-            BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) tr1, (Matrix4) tr2, ccb);
+            BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, ((Matrix4) tr1).ToBullet(), ((Matrix4) tr2).ToBullet(), ccb);
             if (!ccb.HasHit)
             {
                 return ret;
             }
 
-            ret.Point = ccb.HitPointWorld;
-            ret.N = ccb.HitNormalWorld;
+            ret.Point = ccb.HitPointWorld.ToOpenTK();
+            ret.N = ccb.HitNormalWorld.ToOpenTK();
             var wn2 = new[] {ret.N.X, ret.N.Y};
             t = (float) Math.Sqrt(wn2[0] * wn2[0] + wn2[1] * wn2[1]);
             wn2[0] /= t;
@@ -1741,7 +1741,7 @@ namespace FreeRaider
                 tr1.Origin = from;
                 tr2.SetIdentity();
                 tr2.Origin = to;
-                BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, (Matrix4) tr1, (Matrix4) tr2, ccb);
+                BtEngineDynamicsWorld.ConvexSweepTest(ClimbSensor, ((Matrix4) tr1).ToBullet(), ((Matrix4) tr2).ToBullet(), ccb);
                 if (ccb.HasHit)
                 {
                     ret.WallHit = ClimbType.FullBody;
@@ -2689,7 +2689,7 @@ namespace FreeRaider
             var cb = new BtEngineClosestRayResultCallback(obj.Self);
             var v0 = new Vector3(obj_s.Position.X, obj_s.Position.Y, floor + TR_METERING_SECTORSIZE * 0.5f);
             var v1 = new Vector3(obj_s.Position.X, obj_s.Position.Y, floor + TR_METERING_SECTORSIZE * 2.5f);
-            BtEngineDynamicsWorld.RayTest(v0, v1, cb);
+            BtEngineDynamicsWorld.RayTest(v0.ToBullet(), v1.ToBullet(), cb);
             if(cb.HasHit)
             {
                 var cont = (EngineContainer) cb.CollisionObject.UserObject;
@@ -2746,7 +2746,7 @@ namespace FreeRaider
                 var sp = new SphereShape(COLLISION_TRAVERSE_TEST_RADIUS * TR_METERING_SECTORSIZE);
                 sp.Margin = COLLISION_MARGIN_DEFAULT;
                 var ccb = new BtEngineClosestConvexResultCallback(obj.Self);
-                BtEngineDynamicsWorld.ConvexSweepTest(sp, (Matrix4)from, (Matrix4)to, ccb);
+                BtEngineDynamicsWorld.ConvexSweepTest(sp, ((Matrix4)from).ToBullet(), ((Matrix4)to).ToBullet(), ccb);
 
                 if(!ccb.HasHit)
                 {
@@ -2798,7 +2798,7 @@ namespace FreeRaider
                 var sp = new SphereShape(COLLISION_TRAVERSE_TEST_RADIUS * TR_METERING_SECTORSIZE);
                 sp.Margin = COLLISION_MARGIN_DEFAULT;
                 var ccb = new BtEngineClosestConvexResultCallback(Self);
-                BtEngineDynamicsWorld.ConvexSweepTest(sp, (Matrix4)from, (Matrix4)to, ccb);
+                BtEngineDynamicsWorld.ConvexSweepTest(sp, ((Matrix4)from).ToBullet(), ((Matrix4)to).ToBullet(), ccb);
 
                 if (!ccb.HasHit)
                 {
@@ -3060,11 +3060,11 @@ namespace FreeRaider
             var cb = new BtEngineClosestRayResultCallback(container);
             var from = new Vector3(rs.Position.X, rs.Position.Y, floor + TR_METERING_SECTORSIZE * 0.5f);
             var to = new Vector3(rs.Position.X, rs.Position.Y, floor - TR_METERING_SECTORSIZE * 0.5f);
-            BtEngineDynamicsWorld.RayTest(@from, to, cb);
+            BtEngineDynamicsWorld.RayTest(from.ToBullet(), to.ToBullet(), cb);
             if (cb.HasHit)
             {
                 Vector3 v;
-                Helper.SetInterpolate3(out v, @from, to, cb.ClosestHitFraction);
+                Helper.SetInterpolate3(out v, from, to, cb.ClosestHitFraction);
                 if (Math.Abs(v.Z - floor) < 1.1f)
                 {
                     var cont = (EngineContainer) cb.CollisionObject.UserObject;

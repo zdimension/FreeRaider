@@ -4,6 +4,7 @@ using System.Linq;
 using BulletSharp;
 using FreeRaider.Loader;
 using OpenTK;
+using OpenTK.Graphics.OpenGL;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;
 using static FreeRaider.StaticFuncs;
@@ -177,7 +178,7 @@ namespace FreeRaider
         public static EngineContainer LastContainer;
     }
 
-    public class BaseItem
+    public class BaseItem : IDisposable
     {
         public uint ID;
 
@@ -190,6 +191,11 @@ namespace FreeRaider
         public string Name;
 
         public SSBoneFrame BoneFrame;
+
+        public void Dispose()
+        {
+            BoneFrame.BoneTags.Clear();
+        }
     }
 
     public class RoomBox
@@ -1276,7 +1282,78 @@ namespace FreeRaider
         public void Empty()
         {
             LastContainer = null;
+            EngineLua.ClearTasks();
 
+            Audio.DeInit(); // De-initialize and destroy all audio objects.
+
+            if(MainInventoryManager != null)
+            {
+                MainInventoryManager.SetInventory(null);
+                MainInventoryManager.SetItemsType(MenuItemType.Supply); // see base items
+            }
+
+            if(Character != null)
+            {
+                Character.Self.Room = null;
+                Character.CurrentSector = null;
+            }
+
+            EntityTree.Clear(); // Clearing up entities must happen before destroying rooms.
+
+            // Destroy Bullet's MISC objects (debug spheres etc.)
+            // FIXME: Hide it somewhere, it is nasty being here.
+
+            if(BtEngineDynamicsWorld != null)
+            {
+                for(var i = BtEngineDynamicsWorld.NumCollisionObjects - 1; i >= 0; i--)
+                {
+                    var obj = BtEngineDynamicsWorld.CollisionObjectArray[i];
+                    RigidBody body;
+                    if((body = obj as RigidBody) != null)
+                    {
+                        var cont = (EngineContainer) body.UserObject;
+                        body.UserObject = null;
+
+                        if(cont != null && cont.ObjectType == OBJECT_TYPE.BulletMisc)
+                        {
+                            if(body.MotionState != null)
+                            {
+                                body.MotionState.Dispose();
+                                body.MotionState = null;
+                            }
+
+                            body.CollisionShape = null;
+
+                            BtEngineDynamicsWorld.RemoveRigidBody(body);
+                            cont.Room = null;
+                            cont = null;
+                            body.Dispose();
+                            body = null;
+                        }
+                    }
+                }
+            }
+
+            foreach(var room in Rooms)
+            {
+                room.Empty();
+            }
+            Rooms.Clear();
+
+            FlipData.Clear();
+            RoomBoxes.Clear();
+            CamerasSinks.Clear();
+            Sprites.Clear();
+            ItemsTree.Clear();
+            Character = null;
+            SkeletalModels.Clear();
+            Meshes.Clear();
+
+            GL.DeleteTextures(Textures.Count, Textures.ToArray());
+            Textures.Clear();
+
+            TextureAtlas = null;
+            AnimSequences.Clear();
         }
 
         public uint SpawnEntity(uint modelID, uint roomID, Vector3 pos, Vector3 angle, int id)

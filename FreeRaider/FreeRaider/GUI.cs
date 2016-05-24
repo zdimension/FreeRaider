@@ -204,7 +204,7 @@ namespace FreeRaider
         public bool Hidden;
     }
 
-    public class FontManager
+    public class FontManager : IDisposable
     {
         public FontManager()
         {
@@ -214,7 +214,7 @@ namespace FreeRaider
             fadeDirection = true;
         }
 
-        ~FontManager()
+        public void Dispose()
         {
             // must be freed before releasing the library
             styles.Clear();
@@ -1946,14 +1946,24 @@ namespace FreeRaider
             TempLinesUsed = MaxTempLines;
 
             /*
-            Global.MainInventoryMenu = null;
+            if (MainInventoryMenu != null)
+            {
+                MainInventoryMenu?.Dispose();
+                MainInventoryMenu = null;
+            }
             */
 
-            MainInventoryManager = null;
-            
+            if (MainInventoryManager != null)
+            {
+                MainInventoryManager?.Dispose();
+                MainInventoryManager = null;
+            }
 
-            Global.FontManager = null;
-            
+            if(Global.FontManager != null)
+            {
+                Global.FontManager.Dispose();
+                Global.FontManager = null;
+            }
         }
 
         public static void InitBars()

@@ -22,103 +22,103 @@ namespace FreeRaider
         public const bool STENCIL_FRUSTUM = true;
     }
 
-    public class RenderDebugDrawer : IDebugDraw
+    public class RenderDebugDrawer : IDebugDraw, IDisposable
     {
 
 
-        public void Draw3dText(ref Vector3 location, string textString)
+        public void Draw3dText(ref BulletSharp.Math.Vector3 location, string textString)
         {
             //glRasterPos3f(location.x(),  location.y(),  location.z());
             //BMF_DrawString(BMF_GetFont(BMF_kHelvetica10),textString);
         }
 
-        public virtual void DrawAabb(ref Vector3 @from, ref Vector3 to, Color4 color)
+        public virtual void DrawAabb(ref BulletSharp.Math.Vector3 @from, ref BulletSharp.Math.Vector3 to, ref BulletSharp.Math.Vector3 color)
         {
         }
 
 
-        public virtual void DrawArc(ref Vector3 center, ref Vector3 normal, ref Vector3 axis, float radiusA, float radiusB, float minAngle,
-            float maxAngle, Color4 color, bool drawSect)
+        public virtual void DrawArc(ref BulletSharp.Math.Vector3 center, ref BulletSharp.Math.Vector3 normal, ref BulletSharp.Math.Vector3 axis, float radiusA, float radiusB, float minAngle,
+            float maxAngle, ref BulletSharp.Math.Vector3 color, bool drawSect)
         {
         }
 
-        public virtual void DrawArc(ref Vector3 center, ref Vector3 normal, ref Vector3 axis, float radiusA, float radiusB, float minAngle,
-            float maxAngle, Color4 color, bool drawSect, float stepDegrees)
+        public virtual void DrawArc(ref BulletSharp.Math.Vector3 center, ref BulletSharp.Math.Vector3 normal, ref BulletSharp.Math.Vector3 axis, float radiusA, float radiusB, float minAngle,
+            float maxAngle, ref BulletSharp.Math.Vector3 color, bool drawSect, float stepDegrees)
         {
         }
 
-        public virtual void DrawBox(ref Vector3 bbMin, ref Vector3 bbMax, ref Matrix4 trans, Color4 color)
+        public virtual void DrawBox(ref BulletSharp.Math.Vector3 bbMin, ref BulletSharp.Math.Vector3 bbMax, ref BulletSharp.Math.Matrix trans, ref BulletSharp.Math.Vector3 color)
         {
         }
 
-        public virtual void DrawBox(ref Vector3 bbMin, ref Vector3 bbMax, Color4 color)
+        public virtual void DrawBox(ref BulletSharp.Math.Vector3 bbMin, ref BulletSharp.Math.Vector3 bbMax, ref BulletSharp.Math.Vector3 color)
         {
         }
 
-        public virtual void DrawCapsule(float radius, float halfHeight, int upAxis, ref Matrix4 transform, Color4 color)
+        public virtual void DrawCapsule(float radius, float halfHeight, int upAxis, ref BulletSharp.Math.Matrix transform, ref BulletSharp.Math.Vector3 color)
         {
         }
 
-        public virtual void DrawCone(float radius, float height, int upAxis, ref Matrix4 transform, Color4 color)
+        public virtual void DrawCone(float radius, float height, int upAxis, ref BulletSharp.Math.Matrix transform, ref BulletSharp.Math.Vector3 color)
         {
         }
 
-        public virtual void DrawContactPoint(ref Vector3 pointOnB, ref Vector3 normalOnB, float distance, int lifeTime, Color4 color)
+        public virtual void DrawContactPoint(ref BulletSharp.Math.Vector3 pointOnB, ref BulletSharp.Math.Vector3 normalOnB, float distance, int lifeTime, ref BulletSharp.Math.Vector3 color)
         {
             var to = pointOnB + normalOnB * distance;
-            DrawLine(ref pointOnB, ref to, color);
+            DrawLine(ref pointOnB, ref to, ref color);
         }
 
-        public virtual void DrawCylinder(float radius, float halfHeight, int upAxis, ref Matrix4 transform, Color4 color)
+        public virtual void DrawCylinder(float radius, float halfHeight, int upAxis, ref BulletSharp.Math.Matrix transform, ref BulletSharp.Math.Vector3 color)
         {
         }
 
-        public void DrawLine(ref Vector3 @from, ref Vector3 to, Color4 color)
+        public void DrawLine(ref BulletSharp.Math.Vector3 @from, ref BulletSharp.Math.Vector3 to, ref BulletSharp.Math.Vector3 color)
         {
-            addLine(from.ToArray(), color.ToArray3(), to.ToArray(), color.ToArray3());
+            addLine(from.ToArray(), color.ToArray(), to.ToArray(), color.ToArray());
         }
 
-        public virtual void DrawLine(ref Vector3 @from, ref Vector3 to, Color4 fromColor, Color4 toColor)
-        {
-        }
-
-        public virtual void DrawPlane(ref Vector3 planeNormal, float planeConst, ref Matrix4 transform, Color4 color)
+        public virtual void DrawLine(ref BulletSharp.Math.Vector3 @from, ref BulletSharp.Math.Vector3 to, ref BulletSharp.Math.Vector3 fromColor, ref BulletSharp.Math.Vector3 toColor)
         {
         }
 
-        public virtual void DrawSphere(float radius, ref Matrix4 transform, Color4 color)
+        public virtual void DrawPlane(ref BulletSharp.Math.Vector3 planeNormal, float planeConst, ref BulletSharp.Math.Matrix transform, ref BulletSharp.Math.Vector3 color)
         {
         }
 
-        public virtual void DrawSphere(ref Vector3 p, float radius, Color4 color)
+        public virtual void DrawSphere(float radius, ref BulletSharp.Math.Matrix transform, ref BulletSharp.Math.Vector3 color)
         {
         }
 
-        public virtual void DrawSpherePatch(ref Vector3 center, ref Vector3 up, ref Vector3 axis, float radius, float minTh, float maxTh,
-            float minPs, float maxPs, Color4 color)
+        public virtual void DrawSphere(ref BulletSharp.Math.Vector3 p, float radius, ref BulletSharp.Math.Vector3 color)
         {
         }
 
-        public virtual void DrawSpherePatch(ref Vector3 center, ref Vector3 up, ref Vector3 axis, float radius, float minTh, float maxTh,
-            float minPs, float maxPs, Color4 color, float stepDegrees)
+        public virtual void DrawSpherePatch(ref BulletSharp.Math.Vector3 center, ref BulletSharp.Math.Vector3 up, ref BulletSharp.Math.Vector3 axis, float radius, float minTh, float maxTh,
+            float minPs, float maxPs, ref BulletSharp.Math.Vector3 color)
         {
         }
 
-        public virtual void DrawSpherePatch(ref Vector3 center, ref Vector3 up, ref Vector3 axis, float radius, float minTh, float maxTh,
-            float minPs, float maxPs, Color4 color, float stepDegrees, bool drawCenter)
+        public virtual void DrawSpherePatch(ref BulletSharp.Math.Vector3 center, ref BulletSharp.Math.Vector3 up, ref BulletSharp.Math.Vector3 axis, float radius, float minTh, float maxTh,
+            float minPs, float maxPs, ref BulletSharp.Math.Vector3 color, float stepDegrees)
         {
         }
 
-        public virtual void DrawTransform(ref Matrix4 transform, float orthoLen)
+        public virtual void DrawSpherePatch(ref BulletSharp.Math.Vector3 center, ref BulletSharp.Math.Vector3 up, ref BulletSharp.Math.Vector3 axis, float radius, float minTh, float maxTh,
+            float minPs, float maxPs, ref BulletSharp.Math.Vector3 color, float stepDegrees, bool drawCenter)
         {
         }
 
-        public virtual void DrawTriangle(ref Vector3 v0, ref Vector3 v1, ref Vector3 v2, Color4 color, float alpha)
+        public virtual void DrawTransform(ref BulletSharp.Math.Matrix transform, float orthoLen)
         {
         }
 
-        public virtual void DrawTriangle(ref Vector3 v0, ref Vector3 v1, ref Vector3 v2, ref Vector3 __unnamed3, ref Vector3 __unnamed4,
-            ref Vector3 __unnamed5, Color4 color, float alpha)
+        public virtual void DrawTriangle(ref BulletSharp.Math.Vector3 v0, ref BulletSharp.Math.Vector3 v1, ref BulletSharp.Math.Vector3 v2, ref BulletSharp.Math.Vector3 color, float alpha)
+        {
+        }
+
+        public virtual void DrawTriangle(ref BulletSharp.Math.Vector3 v0, ref BulletSharp.Math.Vector3 v1, ref BulletSharp.Math.Vector3 v2, ref BulletSharp.Math.Vector3 __unnamed3, ref BulletSharp.Math.Vector3 __unnamed4,
+            ref BulletSharp.Math.Vector3 __unnamed5, ref BulletSharp.Math.Vector3 color, float alpha)
         {
         }
 
@@ -137,7 +137,7 @@ namespace FreeRaider
         {
         }
 
-        ~RenderDebugDrawer()
+        public void Dispose()
         {
         }
 
@@ -166,7 +166,7 @@ namespace FreeRaider
                 }
 
                 GL.BindBuffer(BufferTarget.ArrayBuffer, glBuffer);
-                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)Marshal.SizeOf(buffer), IntPtr.Zero, BufferUsageHint.StreamDraw);
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(buffer.Count * Marshal.SizeOf(buffer[0])), IntPtr.Zero, BufferUsageHint.StreamDraw);
 
                 unsafe
                 {
@@ -1364,7 +1364,7 @@ namespace FreeRaider
             }
         }
 
-        public void RenderRoom(Room room, Matrix4 modelViewMatrix, Matrix4 modelViewProjectionMatrix, Matrix4 projection)
+        public unsafe void RenderRoom(Room room, Matrix4 modelViewMatrix, Matrix4 modelViewProjectionMatrix, Matrix4 projection)
         {
             var needStencil = false;
             if (STENCIL_FRUSTUM)
@@ -1398,7 +1398,7 @@ namespace FreeRaider
                         foreach (var f in room.Frustum)
                         {
                             GL.BindBuffer(BufferTarget.ArrayBuffer, stencilVBO);
-                            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)Marshal.SizeOf(f.Vertices.ToArray()), IntPtr.Zero, BufferUsageHint.StreamDraw);
+                            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(f.Vertices.Count * sizeof(Vector3)), IntPtr.Zero, BufferUsageHint.StreamDraw);
 
                             unsafe
                             {

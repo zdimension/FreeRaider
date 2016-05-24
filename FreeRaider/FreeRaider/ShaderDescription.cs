@@ -11,7 +11,7 @@ namespace FreeRaider
     /// deletes it when the last program (shader description) using
     /// it is deleted.
     /// </summary>
-    public class ShaderStage
+    public class ShaderStage : IDisposable
     {
         public int Shader;
 
@@ -22,9 +22,9 @@ namespace FreeRaider
                 Environment.FailFast("Error while loading shader '" + filename + "'");
         }
 
-        ~ShaderStage()
+        public void Dispose()
         {
-            //GL.DeleteShader(Shader);
+            GL.DeleteShader(Shader);
         }
     }
 
@@ -35,7 +35,7 @@ namespace FreeRaider
     /// of shader_description. We assume (for now) that every shader
     /// has a texture.
     /// </summary>
-    public class ShaderDescription
+    public class ShaderDescription : IDisposable
     {
         public int Program;
 
@@ -57,7 +57,7 @@ namespace FreeRaider
             Sampler = GL.GetUniformLocation(Program, "color_map");
         }
 
-        ~ShaderDescription()
+        public void Dispose()
         {
             GL.DeleteProgram(Program);
         }

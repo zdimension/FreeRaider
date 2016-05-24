@@ -214,7 +214,7 @@ namespace FreeRaider
         public static void lua_SetGravity(float x, float y = 0, float z = 0)
         {
             var g = new Vector3(x, y, z);
-            BtEngineDynamicsWorld.Gravity = g;
+            BtEngineDynamicsWorld.Gravity = g.ToBullet();
             ConsoleInfo.Instance.Printf("gravity = {0}", g.ToStringEx(round: 3));
         }
 
@@ -234,7 +234,7 @@ namespace FreeRaider
             from.Z = ent.Transform.Origin.Z;
             var to = from + move;
             //to.Z -= ent.Bf.BBMax.Z - ent.Bf.BBMin.Z;
-            BtEngineDynamicsWorld.RayTest(from, to, cb);
+            BtEngineDynamicsWorld.RayTest(from.ToBullet(), to.ToBullet(), cb);
 
             if (cb.HasHit)
             {
@@ -1019,7 +1019,7 @@ namespace FreeRaider
                         if (ent.Bt.BtBody[i] != null)
                         {
                             BtEngineDynamicsWorld.RemoveRigidBody(ent.Bt.BtBody[i]);
-                            ent.Bt.BtBody[i].CollisionShape.LocalScaling = ent.Scaling;
+                            ent.Bt.BtBody[i].CollisionShape.LocalScaling = ent.Scaling.ToBullet();
                             BtEngineDynamicsWorld.AddRigidBody(ent.Bt.BtBody[i]);
 
                             ent.Bt.BtBody[i].Activate();
@@ -2068,8 +2068,8 @@ namespace FreeRaider
                 if (resetFlag)
                     ent.Bt.BtBody[bodyNumber].ClearForces();
 
-                ent.Bt.BtBody[bodyNumber].LinearVelocity = angle;
-                ent.Bt.BtBody[bodyNumber].AngularVelocity = angle / 1024.0f;
+                ent.Bt.BtBody[bodyNumber].LinearVelocity = angle.ToBullet();
+                ent.Bt.BtBody[bodyNumber].AngularVelocity = (angle / 1024.0f).ToBullet();
             }
             else
             {
@@ -2103,7 +2103,7 @@ namespace FreeRaider
                     {
                         BtEngineDynamicsWorld.RemoveRigidBody(ent.Bt.BtBody[i]);
 
-                        Vector3 inertia;
+                        BulletSharp.Math.Vector3 inertia;
                         ent.Bt.BtBody[i].CollisionShape.CalculateLocalInertia(mass, out inertia);
 
                         ent.Bt.BtBody[i].SetMassProps(mass, inertia);
@@ -2111,9 +2111,9 @@ namespace FreeRaider
                         ent.Bt.BtBody[i].UpdateInertiaTensor();
                         ent.Bt.BtBody[i].ClearForces();
 
-                        ent.Bt.BtBody[i].CollisionShape.LocalScaling = ent.Scaling;
+                        ent.Bt.BtBody[i].CollisionShape.LocalScaling = ent.Scaling.ToBullet();
 
-                        var factor = mass > 0.0f ? Vector3.One : Vector3.Zero;
+                        var factor = mass > 0.0f ? BulletSharp.Math.Vector3.One : BulletSharp.Math.Vector3.Zero;
                         ent.Bt.BtBody[i].LinearFactor = factor;
                         ent.Bt.BtBody[i].AngularFactor = factor;
 
@@ -2169,7 +2169,7 @@ namespace FreeRaider
                 var ang2 = (float) Math.Cos(t);
                 var ang3 = Math.Min(1.0f, Math.Abs(vFactor));
 
-                ent.Bt.BtBody[bodyNumber].LinearFactor = new Vector3(Math.Abs(ang1), Math.Abs(ang2), ang3);
+                ent.Bt.BtBody[bodyNumber].LinearFactor = new BulletSharp.Math.Vector3(Math.Abs(ang1), Math.Abs(ang2), ang3);
             }
             else
             {
