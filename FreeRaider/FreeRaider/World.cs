@@ -782,7 +782,7 @@ namespace FreeRaider
                 if(BtBody.CollisionShape != null)
                 {
                     BtBody.CollisionShape.Dispose();
-                    BtBody.CollisionShape = null;
+                    //BtBody.CollisionShape = null;
                 }
 
                 BtEngineDynamicsWorld.RemoveRigidBody(BtBody);
@@ -1267,6 +1267,7 @@ namespace FreeRaider
             AudioBuffers = new uint[0];
             AudioEffects = new List<AudioEffect>();
             AudioEmitters = new List<AudioEmitter>();
+            AudioMap = new List<short>();
             AnimSequences = new List<AnimSeq>();
             StreamTracks = new List<StreamTrack>();
             StreamTrackMap = new List<byte>();
@@ -1321,7 +1322,7 @@ namespace FreeRaider
                                 body.MotionState = null;
                             }
 
-                            body.CollisionShape = null;
+                            //body.CollisionShape = null;
 
                             BtEngineDynamicsWorld.RemoveRigidBody(body);
                             cont.Room = null;

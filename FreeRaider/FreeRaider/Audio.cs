@@ -1575,7 +1575,8 @@ namespace FreeRaider
 
             // CRITICAL: You must delete all sources before deleting buffers!
 
-            AL.DeleteBuffers(EngineWorld.AudioBuffers);
+            if (EngineWorld.AudioBuffers.Length > 0)
+                AL.DeleteBuffers(EngineWorld.AudioBuffers);
             EngineWorld.AudioBuffers.Clear();
 
             EngineWorld.AudioEffects.Clear();

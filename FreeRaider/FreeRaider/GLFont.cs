@@ -269,10 +269,10 @@ namespace FreeRaider
                 {
                     glf.Glyphs[ii].TexX0 /= glf.GLTexWidth;
                     glf.Glyphs[ii].TexX1 /= glf.GLTexWidth;
-                    glf.Glyphs[ii].TexY0 /= glf.GLTexWidth;
-                    glf.Glyphs[ii].TexY1 /= glf.GLTexWidth;
+                    glf.Glyphs[ii].TexY0 /= charsInColumn;
+                    glf.Glyphs[ii].TexY1 /= charsInColumn;
                 }
-                buffer = new byte[bufferSize];
+                buffer = new byte[0];
                 glf.GLRealTexIndexesCount++;
             }
         }

@@ -139,7 +139,7 @@ namespace FreeRaider
             // font.FontSize has absolute size (after scaling)
             LineHeight = (short)((1 + spacing) * font.FontSize);
             cursorX = 8 + 1;
-            CursorY = Math.Min((short)(Global.ScreenInfo.H - LineHeight * visibleLines), (short)8);
+            CursorY = Math.Max((short)(Global.ScreenInfo.H - LineHeight * visibleLines), (short)8);
             inited = true;
         }
 
@@ -157,6 +157,7 @@ namespace FreeRaider
             GL.UseProgram(shader.Program);
             GL.Uniform1(shader.Sampler, 0);
             var screenSize = new float[] {Global.ScreenInfo.W, Global.ScreenInfo.H};
+            //var screenSize = new[] {1280f, 720f};
             GL.Uniform2(shader.ScreenSize, 1, screenSize);
 
             var x = 8;

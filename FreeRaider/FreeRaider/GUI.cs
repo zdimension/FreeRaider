@@ -2234,12 +2234,6 @@ namespace FreeRaider
             }
         }
 
-        public static void MoveLine(TextLine line)
-        {
-            line.AbsXoffset = line.X * Global.ScreenInfo.ScaleFactor;
-            line.AbsYoffset = line.Y * Global.ScreenInfo.ScaleFactor;
-        }
-
         public static void RenderStringLine(TextLine line)
         {
             float realX = 0, realY = 0;
@@ -2350,7 +2344,10 @@ namespace FreeRaider
                 l.Y = y;
                 l.Xanchor = HorizontalAnchor.Left;
                 l.Yanchor = VerticalAnchor.Bottom;
-                MoveLine(l);
+
+                l.AbsXoffset = l.X * Global.ScreenInfo.ScaleFactor;
+                l.AbsYoffset = l.Y * Global.ScreenInfo.ScaleFactor;
+
                 l.Show = true;
                 return l;
             }
@@ -2737,14 +2734,16 @@ namespace FreeRaider
 
             while(l != null)
             {
-                MoveLine(l);
+                l.AbsXoffset = l.X * Global.ScreenInfo.ScaleFactor;
+                l.AbsYoffset = l.Y * Global.ScreenInfo.ScaleFactor;
 
                 l = l.Next;
             }
 
             for (var i = 0; i < TempLinesUsed; i++)
             {
-                MoveLine(GuiTempLines[i]);
+                GuiTempLines[i].AbsXoffset = GuiTempLines[i].X * Global.ScreenInfo.ScaleFactor;
+                GuiTempLines[i].AbsYoffset = GuiTempLines[i].Y * Global.ScreenInfo.ScaleFactor;
             }
 
             foreach (var i in Bar)

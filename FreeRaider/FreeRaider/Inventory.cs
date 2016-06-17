@@ -237,7 +237,7 @@ namespace FreeRaider
 
         public void SetInventory(List<InventoryNode> i)
         {
-            inventory = i.ToList();
+            inventory = i;
             CurrentState = InventoryState.Disabled;
             NextState = InventoryState.Disabled;
         }
