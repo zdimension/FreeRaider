@@ -364,6 +364,9 @@ namespace FreeRaider
             // Init generic SDL interfaces.
             InitSDLControls();
             InitSDLVideo();
+            InitSDLImage();
+
+
 
             // Additional OpenGL initialization.
             InitGL();
@@ -429,12 +432,13 @@ namespace FreeRaider
         {
             EngineLua.ClearTasks();
             Renderer.Empty();
-            EngineWorld.Empty();
+            EngineWorld?.Empty();
             Destroy();
 
             // no more renderings
             GLContext.Dispose(); // TODO: Needed?
             SDL_GL_DeleteContext(sdl_gl_context);
+            SDL_DestroyRenderer(sdl_renderer);
             SDL_DestroyWindow(sdl_window);
 
             if(sdl_joystick != null)
@@ -520,7 +524,7 @@ namespace FreeRaider
         {
             GL.GetError();
 
-            GL.ClearColor(Color.Red);
+            //GL.ClearColor(Color.Red);
 
             /*GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
@@ -719,6 +723,7 @@ namespace FreeRaider
 
             sdl_window = SDL_CreateWindow("FreeRaider", Global.ScreenInfo.X, Global.ScreenInfo.Y, Global.ScreenInfo.W,
                 Global.ScreenInfo.H, video_flags);
+            sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
             sdl_gl_context = SDL_GL_CreateContext(sdl_window);
             SDL_GL_MakeCurrent(sdl_window, sdl_gl_context);
             TKWindow = Utilities.CreateSdl2WindowInfo(sdl_window);
@@ -1217,7 +1222,7 @@ namespace FreeRaider
         {
             var levelName = GetLevelName(GameflowManager.CurrentLevelPath).ToUpper();
 
-            var name = "scripts/autoexec";
+            var name = "scripts/autoexec/";
 
             if(gameVersion < TRGame.TR2)
             {
@@ -1270,7 +1275,7 @@ namespace FreeRaider
                         }
                     }
                 }
-                ConsoleInfo.Instance.AddLine(cmd, FontStyle.ConsoleEvent);
+                //ConsoleInfo.Instance.AddLine(cmd, FontStyle.ConsoleEvent);
                 try
                 {
                     EngineLua.DoString(cmd);

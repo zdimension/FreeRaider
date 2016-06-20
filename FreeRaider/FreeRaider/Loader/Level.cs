@@ -22,7 +22,19 @@ namespace FreeRaider.Loader
 
         public bool IsDemoOrUb { get; set; }
 
-        public abstract void Load();
+        protected abstract void internalLoad();
+
+        public void Load()
+        {
+            internalLoad();
+
+            if (reader.BaseStream.Position < reader.BaseStream.Length)
+            {
+                Cerr.Write("Error: " + (reader.BaseStream.Length - reader.BaseStream.Position) + " bytes of data after end of level");
+            }
+
+            reader.Close();
+        }
 
         /// <summary>
         /// Color palette

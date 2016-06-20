@@ -1,16 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace NLibsndfile.Native.Types
 {
-    public unsafe delegate long sf_vio_get_filelen(void* userData);
-    public unsafe delegate long sf_vio_seek(long offset, SEEK whence, void* userData);
-    public unsafe delegate long sf_vio_read(void* ptr, long count, void* userData);
-    public unsafe delegate long sf_vio_write(void* ptr, long count, void* userData);
-    public unsafe delegate long sf_vio_tell(void* userData);
-
     public struct SF_VIRTUAL_IO
     {
         public sf_vio_get_filelen get_filelen;
@@ -18,6 +13,17 @@ namespace NLibsndfile.Native.Types
         public sf_vio_read read;
         public sf_vio_write write;
         public sf_vio_tell tell;
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public unsafe delegate long sf_vio_get_filelen(void* userData);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public unsafe delegate long sf_vio_seek(long offset, SEEK whence, void* userData);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public unsafe delegate long sf_vio_read(void* ptr, long count, void* userData);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public unsafe delegate long sf_vio_write(void* ptr, long count, void* userData);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public unsafe delegate long sf_vio_tell(void* userData);
     }
 
     public unsafe struct MemBufferFileIo

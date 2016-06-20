@@ -92,7 +92,9 @@
     <Compile Include="Types\LibsndfileStringType.cs" />
     <Compile Include="Types\SF_VIRTUAL_IO.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="NLibsndfile.Native.dll.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy /y $(ProjectDir)$(OutDir)$(TargetFileName) $(SolutionDir)bin\</PostBuildEvent>

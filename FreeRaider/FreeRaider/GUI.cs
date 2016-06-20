@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using FreeRaider.Loader;
@@ -475,7 +476,7 @@ namespace FreeRaider
     /// <summary>
     /// Main fader class
     /// </summary>
-    public class Fader
+    public unsafe class Fader
     {
         /// <summary>
         /// Fader constructor
@@ -540,7 +541,7 @@ namespace FreeRaider
             {
                 if(currentTime <= maxTime)
                 {
-                    if(currentAlpha == maxAlpha)
+                    if(Math.Abs(currentAlpha - maxAlpha) < FLT_EPSILON)
                     {
                         currentTime += EngineFrameTime;
                     }
@@ -867,6 +868,7 @@ namespace FreeRaider
 
             var surface_ = SDL_image.IMG_Load(texturePath);
             PixelFormat textureFormat;
+           // SDL_Texture* texture;
             int colorDepth;
 
             if(surface_ != IntPtr.Zero)
@@ -900,9 +902,15 @@ namespace FreeRaider
                     SDL_FreeSurface(surface_);
                     return false;
                 }
+                
+                
 
                 // Drop previously assigned texture, if it exists.
                 dropTexture();
+
+                //texture = (SDL_Texture*)SDL_CreateTextureFromSurface(sdl_renderer, surface_);
+                /*SDL_RenderCopy(sdl_renderer, (IntPtr)texture, IntPtr.Zero, IntPtr.Zero);
+                SDL_RenderPresent(sdl_renderer);*/
 
                 // Have OpenGL generate a texture object handle for us
                 GL.GenTextures(1, out texture);
@@ -915,7 +923,7 @@ namespace FreeRaider
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
 
                 // Edit the texture object's image data using the information SDL_Surface gives us
-                GL.TexImage2D(TextureTarget.Texture2D, 0, (PixelInternalFormat) colorDepth, surface->w, surface->h, 0,
+                GL.TexImage2D(TextureTarget.Texture2D, 0, (PixelInternalFormat)colorDepth, surface->w, surface->h, 0,
                     textureFormat, PixelType.UnsignedByte, (IntPtr)surface->pixels);
             }
             else
@@ -981,6 +989,7 @@ namespace FreeRaider
                     GL.DeleteTexture(texture);
                 }
                 texture = 0;
+
                 return true;
             }
             else
@@ -1278,13 +1287,26 @@ namespace FreeRaider
 
             // If invert decrease direction style flag is set, we position bar in a way
             // that it seems like it's decreasing to another side, and also swap main / fade colours.
-            var arr = Invert ? rectSecondColor : rectFirstColor;
-            Array.Copy(Alternate ? altMainColor : baseMainColor, arr, 4);
-            // Main-fade gradient is recalculated according to current / maximum value ratio.
-            for (var i = 0; i < 4; i++)
-                arr[i] = Alternate
-                    ? baseRatio * altFadeColor[i] + (1 - baseRatio) * altMainColor[i]
-                    : baseRatio * baseFadeColor[i] + (1 - baseRatio) * baseMainColor[i];
+            if (Invert)
+            {
+                Array.Copy(Alternate ? altMainColor : baseMainColor, rectFirstColor, 4);
+
+                // Main-fade gradient is recalculated according to current / maximum value ratio.
+                for (var i = 0; i < 4; i++)
+                    rectSecondColor[i] = Alternate
+                        ? (baseRatio * altFadeColor[i] + (1 - baseRatio) * altMainColor[i])
+                        : (baseRatio * baseFadeColor[i] + (1 - baseRatio) * baseMainColor[i]);
+            }
+            else
+            {
+                Array.Copy(Alternate ? altMainColor : baseMainColor, rectSecondColor, 4);
+
+                // Main-fade gradient is recalculated according to current / maximum value ratio.
+                for (var i = 0; i < 4; i++)
+                    rectFirstColor[i] = Alternate
+                        ? (baseRatio * altFadeColor[i] + (1 - baseRatio) * altMainColor[i])
+                        : (baseRatio * baseFadeColor[i] + (1 - baseRatio) * baseMainColor[i]);
+            }
 
             // We need to reset Alternate flag each frame, cause behaviour is immediate.
             Alternate = false;
@@ -1341,7 +1363,7 @@ namespace FreeRaider
                     BlendingMode.Opaque);
 
                 // Draw background rect.
-                Gui.DrawRect(Invert ? x + borderWidth : rectAnchor + baseSize,
+                Gui.DrawRect(Invert ? x + borderWidth : (rectAnchor + baseSize),
                     y + borderHeight,
                     width - baseSize, height,
                     backMainColor, backMainColor,
@@ -2458,20 +2480,20 @@ namespace FreeRaider
 
             if (RectanglePositionBuffer == 0)
             {
-                RectanglePositionBuffer = Helper.GenBufferU();
+                GL.GenBuffers(1, out RectanglePositionBuffer);
                 GL.BindBuffer(BufferTarget.ArrayBuffer, RectanglePositionBuffer);
                 var rectCoords = new[] {0, 0, 1, 0, 1, 1, 0, 1};
-                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) sizeof(int), rectCoords,
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr) (sizeof(int) * rectCoords.Length), rectCoords,
                     BufferUsageHint.StaticDraw);
 
-                RectangleColorBuffer = Helper.GenBufferU();
+                GL.GenBuffers(1, out RectangleColorBuffer);
                 var attribs = new[]
                 {
                     new VertexArrayAttribute((int) GuiShaderDescription.VertexAttribs.Position, 2,
                         VertexAttribPointerType.Float, false, RectanglePositionBuffer,
                         2 * sizeof(float), 0),
                     new VertexArrayAttribute((int) GuiShaderDescription.VertexAttribs.Color, 4,
-                        VertexAttribPointerType.Float, false, RectangleColorBuffer,4 * sizeof(float),
+                        VertexAttribPointerType.Float, false, RectangleColorBuffer, 4 * sizeof(float),
                         0)
                 };
                 RectangleArray = new VertexArray(0, 2, attribs);
@@ -2483,14 +2505,14 @@ namespace FreeRaider
             unsafe
             {
                 var rectColors = (float*) GL.MapBuffer(BufferTarget.ArrayBuffer, BufferAccess.WriteOnly);
-                colorLowerLeft = Helper.GetArrayFromPointer(rectColors + 0, 4);
-                colorLowerRight = Helper.GetArrayFromPointer(rectColors + 4, 4);
-                colorUpperLeft = Helper.GetArrayFromPointer(rectColors + 8, 4);
-                colorUpperRight = Helper.GetArrayFromPointer(rectColors + 12, 4);
+                Helper.PointerCopy(colorLowerLeft, rectColors + 0, 4);
+                Helper.PointerCopy(colorLowerRight, rectColors + 4, 4);
+                Helper.PointerCopy(colorUpperRight, rectColors + 8, 4);
+                Helper.PointerCopy(colorUpperLeft, rectColors + 12, 4);
                 GL.UnmapBuffer(BufferTarget.ArrayBuffer);
             }
 
-            var offset = new[] {x / (Global.ScreenInfo.W * 0.5f) - 1.0f, y / (Global.ScreenInfo.Y * 0.5f) - 1.0f};
+            var offset = new[] {x / (Global.ScreenInfo.W * 0.5f) - 1.0f, y / (Global.ScreenInfo.H * 0.5f) - 1.0f};
             var factor = new[] {width / Global.ScreenInfo.W * 2.0f, height / Global.ScreenInfo.H * 2.0f};
 
             var shader = Global.Renderer.ShaderManager.GetGuiShader(texture != 0);

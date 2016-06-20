@@ -477,27 +477,27 @@ namespace FreeRaider
         /// </summary>
         public void GetSetup(uint hairEntryIndex)
         {
-            var res2 = (EngineLua["getHairSetup"] as LuaFunction).Call(hairEntryIndex)[0];
+            var res2 = ((LuaFunction) EngineLua["getHairSetup"]).Call(hairEntryIndex)[0];
             if (!(res2 is LuaTable))
                 return;
             dynamic res = (LuaTable)res2;
 
-            Model = res["model"];
-            LinkBody = res["link_body"];
-            RootWeight = res["props"]["root_weight"];
-            TailWeight = res["props"]["tail_weight"];
-            HairInertia = res["props"]["hair_inertia"];
-            HairFriction = res["props"]["hair_friction"];
-            HairRestitution = res["props"]["hair_bouncing"];
-            JointOverlap = res["props"]["joint_overlap"];
-            JointCfm = res["props"]["joint_cfm"];
-            JointErp = res["props"]["joint_erp"];
-            HairDamping[0] = res["props"]["hair_damping"][1];
-            HairDamping[1] = res["props"]["hair_damping"][2];
+            Model = (uint)res["model"];
+            LinkBody = (uint)res["link_body"];
+            RootWeight = (float)res["props"]["root_weight"];
+            TailWeight = (float)res["props"]["tail_weight"];
+            HairInertia = (float)res["props"]["hair_inertia"];
+            HairFriction = (float)res["props"]["hair_friction"];
+            HairRestitution = (float)res["props"]["hair_bouncing"];
+            JointOverlap = (float)res["props"]["joint_overlap"];
+            JointCfm = (float)res["props"]["joint_cfm"];
+            JointErp = (float)res["props"]["joint_erp"];
+            HairDamping[0] = (float)res["props"]["hair_damping"][1];
+            HairDamping[1] = (float)res["props"]["hair_damping"][2];
             dynamic off = res["offset"];
-            HeadOffset = new Vector3(off[1], off[2], off[3]);
+            HeadOffset = new Vector3((float)off[1], (float)off[2], (float)off[3]);
             dynamic ra = res["root_angle"];
-            RootAngle = new Vector3(ra[1], ra[2], ra[3]);
+            RootAngle = new Vector3((float)ra[1], (float)ra[2], (float)ra[3]);
         }
     }
 }

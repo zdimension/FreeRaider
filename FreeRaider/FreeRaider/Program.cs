@@ -2,6 +2,13 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Threading;
+using OpenTK;
+using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
+using OpenTK.Platform;
+using SDL2;
+using static SDL2.SDL;
+using static SDL2.SDL_image;
 
 namespace FreeRaider
 {
@@ -18,10 +25,64 @@ namespace FreeRaider
     {
         public static uint texture = 0;
         [STAThread]
-        public static void Main(string[] args)
+        public static unsafe void Main(string[] args)
         {
             Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 
+            /*var video_flags = SDL_WindowFlags.SDL_WINDOW_OPENGL | SDL_WindowFlags.SDL_WINDOW_MOUSE_FOCUS |
+                             SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS;
+            var sdl_window = SDL_CreateWindow("FreeRaider",100, 100, 720,
+                400, video_flags);
+            var sdl_gl_context = SDL_GL_CreateContext(sdl_window);
+            SDL_GL_MakeCurrent(sdl_window, sdl_gl_context);
+            var TKWindow = Utilities.CreateSdl2WindowInfo(sdl_window);
+            var GLContext = new GraphicsContext(new ContextHandle(sdl_gl_context),
+                SDL_GL_GetProcAddress, // implement GetAddress via SDL
+                () => new ContextHandle(SDL_GL_GetCurrentContext()));
+            GLContext.MakeCurrent(TKWindow);
+
+            var flags = SDL_image.IMG_InitFlags.IMG_INIT_JPG | SDL_image.IMG_InitFlags.IMG_INIT_PNG;
+            var init = IMG_Init(flags);
+
+            var texture_ = IMG_Load("resource/graphics/legal.png");
+            var texture = (SDL_Surface*)texture_;
+            var fmt = (*(texture->format));
+            /*var rend = SDL.SDL_CreateRenderer(sdl_window, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
+            var texture__ = SDL.SDL_CreateTextureFromSurface(rend, texture_);
+            var texture___ = (SDL_Texture*)SDL.SDL_CreateTextureFromSurface(rend, texture_);
+            SDL.SDL_FreeSurface(texture_);*/
+
+            /*SDL.SDL_RenderCopy(rend, texture__, IntPtr.Zero, IntPtr.Zero);
+            SDL.SDL_RenderPresent(rend);*/
+
+            /*var textgl = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, textgl);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, texture->w, texture->h, 0, PixelFormat.Rgb, PixelType.UnsignedByte, (IntPtr)texture->pixels);
+            //SDL.SDL_FreeSurface(texture_);
+
+            GL.BindTexture(TextureTarget.Texture2D, textgl);
+            GL.Begin(PrimitiveType.Quads);
+
+            GL.TexCoord2(0, 0);
+            GL.Vertex3(0, 0, 0);
+
+            GL.TexCoord2(1, 0);
+            GL.Vertex3(256, 0, 0);
+
+            GL.TexCoord2(1, 1);
+            GL.Vertex3(256, 256, 0);
+
+            GL.TexCoord2(0, 1);
+            GL.Vertex3(0, 256, 0);
+
+            GL.End();
+
+            SDL.SDL_GL_SwapWindow(sdl_window);
+
+            Console.ReadLine();
+            return;*/
             // SDL
             Engine.Start();
 

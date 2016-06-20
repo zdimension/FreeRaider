@@ -2560,12 +2560,13 @@ namespace SDL2
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
-		public struct SDL_PixelFormat
+		public unsafe struct SDL_PixelFormat
 		{
 			public uint format;
-			public IntPtr palette; // SDL_Palette*
+			public SDL_Palette* palette; // SDL_Palette*
 			public byte BitsPerPixel;
 			public byte BytesPerPixel;
+		    //public fixed byte padding [2];
 			public uint Rmask;
 			public uint Gmask;
 			public uint Bmask;
@@ -2579,7 +2580,7 @@ namespace SDL2
 			public byte Bshift;
 			public byte Ashift;
 			public int refcount;
-			public IntPtr next; // SDL_PixelFormat*
+			public SDL_PixelFormat* next; // SDL_PixelFormat*
 		}
 
 		/* IntPtr refers to an SDL_PixelFormat* */
@@ -2780,8 +2781,33 @@ namespace SDL2
 			public int refcount;
 		}
 
-		/* surface refers to an SDL_Surface* */
-		public static bool SDL_MUSTLOCK(IntPtr surface)
+        [StructLayout(LayoutKind.Sequential)]
+        public unsafe struct SDL_Texture
+        {
+            public void* magic;
+            public uint format;
+            public int access;
+            public int w;
+            public int h;
+            public int modMode;
+            public SDL_BlendMode blendMode;
+            public byte r;
+            public byte g;
+            public byte b;
+            public byte a;
+            public IntPtr renderer;
+            public SDL_Texture* native;
+            public IntPtr yuv;
+            public void* pixels;
+            public int pitch;
+            public SDL_Rect locked_rect;
+            public void* driverdata;
+            public SDL_Texture* prev;
+            public SDL_Texture* next;
+        }
+
+        /* surface refers to an SDL_Surface* */
+        public static bool SDL_MUSTLOCK(IntPtr surface)
 		{
 			SDL_Surface sur;
 			sur = (SDL_Surface) Marshal.PtrToStructure(

@@ -32,6 +32,8 @@ namespace FreeRaider
         public static IntPtr sdl_window = IntPtr.Zero;
 
         public static IntPtr sdl_gl_context = IntPtr.Zero;
+
+        public static IntPtr sdl_renderer = IntPtr.Zero;
     }
 
     public enum ACTIONS

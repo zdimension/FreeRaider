@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using BulletSharp;
 using FreeRaider.Loader;
 using OpenTK;
-using OpenTK.Graphics.ES30;
+using OpenTK.Graphics.OpenGL;
 using VertexAttribPointerType = OpenTK.Graphics.OpenGL.VertexAttribPointerType;
 using static FreeRaider.Constants;
 using static FreeRaider.Global;

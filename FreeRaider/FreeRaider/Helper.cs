@@ -300,6 +300,14 @@ namespace FreeRaider
             }
         }
 
+        public static unsafe void PointerCopy(float[] src, float* dst, int length)
+        {
+            for (var i = 0; i < length; i++)
+            {
+                dst[i] = src[i];
+            }
+        }
+
         public static unsafe void PointerCopy(float* src, int sourceIndex, float* dst, int destinationIndex, int length)
         {
             for (var i = 0; i < length; i++)

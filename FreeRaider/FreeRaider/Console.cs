@@ -62,7 +62,7 @@ namespace FreeRaider
         /// <summary>
         /// Current cursor position, in symbols
         /// </summary>
-        private short cursorPos;
+        private short cursorPos = 2;
 
         /// <summary>
         /// Current cursor in pixels
@@ -84,7 +84,7 @@ namespace FreeRaider
         /// </summary>
         private bool inited;
 
-        private string editingLine = "";
+        private string editingLine = "> ";
 
         
 
@@ -139,7 +139,8 @@ namespace FreeRaider
             // font.FontSize has absolute size (after scaling)
             LineHeight = (short)((1 + spacing) * font.FontSize);
             cursorX = 8 + 1;
-            CursorY = Math.Max((short)(Global.ScreenInfo.H - LineHeight * visibleLines), (short)8);
+            //CursorY = Math.Max((short)(Global.ScreenInfo.H - LineHeight * visibleLines), (short)8);
+            CursorY = 8;
             inited = true;
         }
 
@@ -225,10 +226,10 @@ namespace FreeRaider
             if (sk == SDLK_RETURN)
             {
                 AddLog(editingLine);
-                AddLine("> " + editingLine, FontStyle.ConsoleInfo);
-                Engine.ExecCmd(editingLine);
-                editingLine = "";
-                cursorPos = 0;
+                AddLine(editingLine, FontStyle.ConsoleInfo);
+                Engine.ExecCmd(editingLine.Substring(2));
+                editingLine = "> ";
+                cursorPos = 2;
                 cursorX = 8 + 1;
                 return;
             }
@@ -251,7 +252,7 @@ namespace FreeRaider
                     cursorPos = (short) Helper.UTF8StrLen(editingLine);
                     break;
                 case SDLK_LEFT:
-                    if (cursorPos > 0)
+                    if (cursorPos > 2)
                         cursorPos--;
                     break;
                 case SDLK_RIGHT:
@@ -259,13 +260,13 @@ namespace FreeRaider
                         cursorPos++;
                     break;
                 case SDLK_HOME:
-                    cursorPos = 0;
+                    cursorPos = 2;
                     break;
                 case SDLK_END:
                     cursorPos = (short) oldLength;
                     break;
                 case SDLK_BACKSPACE:
-                    if (cursorPos > 0)
+                    if (cursorPos > 2)
                     {
                         editingLine = editingLine.Remove(cursorPos - 1, 1);
                         cursorPos--;
@@ -291,7 +292,7 @@ namespace FreeRaider
                         var completion = found[0];
                         editingLine = editingLine.Remove(0, completion.Length);
                         editingLine = editingLine.Insert(0, completion);
-                        cursorPos = (short) completion.Length;
+                        cursorPos = (short) (completion.Length + 2);
                     }
                     else
                     {

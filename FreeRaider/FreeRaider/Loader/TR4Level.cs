@@ -16,7 +16,7 @@ namespace FreeRaider.Loader
         {
         }
 
-        public override void Load()
+        protected override void internalLoad()
         {
             var version = reader.ReadUInt32();
 
@@ -213,12 +213,6 @@ namespace FreeRaider.Loader
             }
 
             var unused2 = reader.ReadUInt16(); // I don't know what it is used for, but there's always 2 bytes of data at the end of TR4 levels
-
-            if (reader.BaseStream.Position < reader.BaseStream.Length)
-            {
-                Cerr.Write("Error: " + (reader.BaseStream.Length - reader.BaseStream.Position) +
-                                    " bytes of data after end of level");
-            }
         }
     }
 }

@@ -1126,7 +1126,7 @@ namespace FreeRaider
             Res_GenRBTrees(world);
             Gui.DrawLoadScreen(200);
 
-            TR_GenTextures(world, tr);
+            TR_GenTextures(world, tr); // a bit slow (1-2sec)
             Gui.DrawLoadScreen(300);
 
             TR_GenAnimCommands(world, tr);
@@ -1135,7 +1135,7 @@ namespace FreeRaider
             TR_GenAnimTextures(world, tr);
             Gui.DrawLoadScreen(320);
 
-            TR_GenMeshes(world, tr);
+            TR_GenMeshes(world, tr); // a bit slow (1sec)
             Gui.DrawLoadScreen(400);
 
             TR_GenSprites(world, tr);
@@ -1153,10 +1153,10 @@ namespace FreeRaider
             Res_GenRoomFlipMap(world);
             Gui.DrawLoadScreen(520);
 
-            TR_GenSkeletalModels(world, tr);
+            TR_GenSkeletalModels(world, tr); // very slow (10sec)
             Gui.DrawLoadScreen(600);
 
-            TR_GenEntities(world, tr);
+            TR_GenEntities(world, tr); // very slow (5sec)
             Gui.DrawLoadScreen(650);
 
             Res_GenBaseItems(world);
@@ -1177,7 +1177,7 @@ namespace FreeRaider
             world.SkyBox = Res_GetSkybox(world, world.EngineVersion);
             Gui.DrawLoadScreen(860);
 
-            Res_GenEntityFunctions(world.EntityTree);
+            Res_GenEntityFunctions(world.EntityTree); // a bit very slow (2-3sec)
             Gui.DrawLoadScreen(910);
 
             Res_GenVBOs(world);
@@ -2065,12 +2065,9 @@ namespace FreeRaider
 
                     var uvrotateScript = 0;
                     var tmp1 = EngineLua["UVRotate"];
-                    try
+                    if(tmp1 != null)
                     {
                         uvrotateScript = (int) tmp1;
-                    }
-                    catch
-                    {
                     }
 
                     if(i < numUvrotates)
@@ -2082,7 +2079,7 @@ namespace FreeRaider
                         // This way, we get a reference value which is used to identify
                         // if scrolling is completed or not.
                         seq.Frames.Resize(8, () => new TexFrame());
-                        seq.UVRotateMax = world.TextureAtlas.GetTextureHeight(seq.FrameList[0]) / 2;
+                        seq.UVRotateMax = world.TextureAtlas.GetTextureHeight(seq.FrameList[0]) / 2f;
                         seq.UVRotateSpeed = seq.UVRotateMax / seq.Frames.Count;
                         seq.FrameList.Resize(8);
 

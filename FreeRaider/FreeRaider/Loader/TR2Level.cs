@@ -16,7 +16,7 @@ namespace FreeRaider.Loader
         {
         }
 
-        public override void Load()
+        protected override void internalLoad()
         {
             var version = reader.ReadUInt32();
 
@@ -152,11 +152,6 @@ namespace FreeRaider.Loader
             for(uint i = 0; i < numTextiles; i++)
             {
                 Textures[i] = ConvertTexture(texture16[i]);
-            }
-
-            if (reader.BaseStream.Position < reader.BaseStream.Length)
-            {
-                Cerr.Write("Error: " + (reader.BaseStream.Length - reader.BaseStream.Position) + " bytes of data after end of level");
             }
         }
     }

@@ -8,6 +8,6 @@
         /// <summary>
         /// Path to Libsndfile.dll
         /// </summary>
-        internal const string Libsndfile = "libsndfile.dll";
+        internal const string Libsndfile = "libsndfile-1.dll";
     }
 }

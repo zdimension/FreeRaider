@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using FreeRaider.Loader;
 using NLibsndfile.Native;
 using NLibsndfile.Native.Types;
@@ -1350,9 +1351,9 @@ namespace FreeRaider
             uint offset = 0;
             uint length = 0;
 
-            using (var br = new BinaryReader(wadFile))
+            using (var br = Helper.CreateInstance<BinaryReader>(wadFile, Encoding.UTF8, true))
             {
-                br.BaseStream.Position = index * TR_AUDIO_STREAM_WAD_NAMELENGTH;
+                br.BaseStream.Position = index * TR_AUDIO_STREAM_WAD_STRIDE;
                 trackName = br.ParseString(TR_AUDIO_STREAM_WAD_NAMELENGTH);
                 length = br.ReadUInt32();
                 offset = br.ReadUInt32();
