@@ -1310,6 +1310,7 @@ namespace FreeRaider
             if((sndFile = sndFileApi.Open(path, LibsndfileMode.Read, ref sfInfo)) == IntPtr.Zero)
             {
                 Sys.DebugLog(LOG_FILENAME, "Load_Track: Couldn't open file: {0}.", path);
+                Sys.DebugLog(LOG_FILENAME, $"Libsndfile error: {sndFileApi.Error(IntPtr.Zero):G} ({sndFileApi.ErrorString(IntPtr.Zero)})");
                 method = TR_AUDIO_STREAM_METHOD.Unknown; // T4Larson <t4larson@gmail.com>: stream is uninitialised, avoid clear.
                 return false;
             }
@@ -1325,6 +1326,12 @@ namespace FreeRaider
 
             return true; // Success!
         }
+
+        [DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi, SetLastError = true)]
+        public static extern int _open(String filename, int oflag);
+
+        [DllImport("libsndfile-1.dll", CallingConvention = CallingConvention.Cdecl)]
+        internal static unsafe extern IntPtr sf_open_fd(int handle, int mode, LibsndfileInfo* info, int closeHandle);
 
         /// <summary>
         /// Wad loading
@@ -1360,12 +1367,20 @@ namespace FreeRaider
                 br.BaseStream.Position = offset;
             }
 
+            //var abcd = new LibsndfileInfo();
+           /* var abfs = File.OpenRead(@"D:\Musique\test_tr3_msadpcm.wav");*/
+            /*var abfs = _open(@"D:\Musique\test_tr3_msadpcm.wav", 1);
+            var abd = sf_open_fd(
+                abfs, 0x10,
+                &abcd, 0);*/
+
             if (
                 (sndFile =
                     sndFileApi.OpenFileDescriptor((int) wadFile.SafeFileHandle.DangerousGetHandle(), LibsndfileMode.Read,
                         ref sfInfo, 0)) == IntPtr.Zero)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WAD_SEEK_FAILED, offset);
+                ConsoleInfo.Instance.AddLine($"Libsndfile error: {sndFileApi.Error(IntPtr.Zero):G} ({sndFileApi.ErrorString(IntPtr.Zero)})", FontStyle.ConsoleWarning);
                 method = TR_AUDIO_STREAM_METHOD.Unknown;
                 return false;
             }
@@ -1957,6 +1972,7 @@ namespace FreeRaider
             if(sample == IntPtr.Zero)
             {
                 Sys.DebugLog(LOG_FILENAME, "Error: can't load sample #{0:D3} from sample block!", bufNumber);
+                Sys.DebugLog(LOG_FILENAME, $"Libsndfile error: {sndFileApi.Error(IntPtr.Zero):G} ({sndFileApi.ErrorString(IntPtr.Zero)})");
                 return -1;
             }
 
@@ -2001,6 +2017,7 @@ namespace FreeRaider
             if(file == IntPtr.Zero)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_CANT_OPEN_FILE);
+                Sys.DebugLog(LOG_FILENAME, $"Libsndfile error: {sndFileApi.Error(IntPtr.Zero):G} ({sndFileApi.ErrorString(IntPtr.Zero)})");
                 return -1;
             }
 

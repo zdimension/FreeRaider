@@ -277,8 +277,8 @@ namespace NLibsndfile.Native
         /// <returns><see cref="LibsndfileError"/>error code.</returns>
         public LibsndfileError Error(IntPtr sndfile)
         {
-            if (sndfile == IntPtr.Zero)
-                throw new ArgumentException("File handle is invalid/closed.");
+            /*if (sndfile == IntPtr.Zero)
+                throw new ArgumentException("File handle is invalid/closed.");*/
 
             return m_Api.Error(sndfile);
         }
@@ -290,8 +290,8 @@ namespace NLibsndfile.Native
         /// <returns>String containing the description of the current error.</returns>
         public string ErrorString(IntPtr sndfile)
         {
-            if (sndfile == IntPtr.Zero)
-                throw new ArgumentException("File handle is invalid/closed.");
+            /*if (sndfile == IntPtr.Zero)
+                throw new ArgumentException("File handle is invalid/closed.");*/
 
             var retval = m_Api.ErrorString(sndfile);
             if (string.IsNullOrEmpty(retval))
