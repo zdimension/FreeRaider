@@ -5,10 +5,11 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
-namespace FreeRaider
+namespace TRLevelUtility
 {
-    internal static class Extensions
+    public static class Extensions
     {
         public static string ParseString(this BinaryReader br, long strLength, bool stopAtZero = false)
         {
@@ -43,7 +44,7 @@ namespace FreeRaider
 
         public static void WriteUInt16Array(this BinaryWriter bw, ushort[] arr)
         {
-            for (var i = 0; i < arr.Length; i++)
+            for(var i = 0; i < arr.Length; i++)
                 bw.Write(arr[i]);
         }
 
@@ -83,7 +84,7 @@ namespace FreeRaider
             var tmp = new char[stringDataSize];
             for (ushort i = 0; i < stringDataSize; i++)
             {
-                tmp[i] = (char) (br.ReadByte() ^ xorKey);
+                tmp[i] = (char)(br.ReadByte() ^ xorKey);
             }
             for (var i = 0; i < arrLength; i++)
             {
@@ -103,7 +104,7 @@ namespace FreeRaider
         public static T[] ReadArray<T>(this BinaryReader br, long arrLength, Func<T> rd = null)
         {
             var arr = new List<T>();
-            var tc = Type.GetTypeCode(typeof (T));
+            var tc = Type.GetTypeCode(typeof(T));
             Func<dynamic> reader = null;
 
             if (rd != null) reader = () => rd();
@@ -147,11 +148,11 @@ namespace FreeRaider
                         break;
                     default:
                         var m =
-                            typeof (T).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                            typeof(T).GetMethods(BindingFlags.Public | BindingFlags.Static)
                                 .FirstOrDefault(x => x.Name == "Parse");
                         if (m != null)
                         {
-                            reader = () => m.Invoke(null, new[] {br});
+                            reader = () => m.Invoke(null, new[] { br });
                         }
                         break;
                 }
@@ -174,7 +175,7 @@ namespace FreeRaider
 
         public static void WriteArray<T>(this BinaryWriter bw, IEnumerable<T> arr, Action<T> wr = null)
         {
-            var tc = Type.GetTypeCode(typeof (T));
+            var tc = Type.GetTypeCode(typeof(T));
             Action<dynamic> writer = null;
 
             if (wr != null) writer = x => wr(x);
@@ -187,42 +188,42 @@ namespace FreeRaider
                         writer = x => bw.Write((byte) x);
                         break;
                     case TypeCode.SByte:
-                        writer = x => bw.Write((sbyte) x);
+                        writer = x => bw.Write((sbyte)x);
                         break;
                     case TypeCode.UInt16:
-                        writer = x => bw.Write((ushort) x);
+                        writer = x => bw.Write((ushort)x);
                         break;
                     case TypeCode.UInt32:
-                        writer = x => bw.Write((uint) x);
+                        writer = x => bw.Write((uint)x);
                         break;
                     case TypeCode.UInt64:
-                        writer = x => bw.Write((ulong) x);
+                        writer = x => bw.Write((ulong)x);
                         break;
                     case TypeCode.Int16:
-                        writer = x => bw.Write((short) x);
+                        writer = x => bw.Write((short)x);
                         break;
                     case TypeCode.Int32:
-                        writer = x => bw.Write((int) x);
+                        writer = x => bw.Write((int)x);
                         break;
                     case TypeCode.Int64:
-                        writer = x => bw.Write((long) x);
+                        writer = x => bw.Write((long)x);
                         break;
                     case TypeCode.Decimal:
-                        writer = x => bw.Write((decimal) x);
+                        writer = x => bw.Write((decimal)x);
                         break;
                     case TypeCode.Double:
-                        writer = x => bw.Write((double) x);
+                        writer = x => bw.Write((double)x);
                         break;
                     case TypeCode.Single:
-                        writer = x => bw.Write((float) x);
+                        writer = x => bw.Write((float)x);
                         break;
                     default:
                         var m =
-                            typeof (T).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                            typeof(T).GetMethods(BindingFlags.Public | BindingFlags.Static)
                                 .FirstOrDefault(x => x.Name == "Write");
                         if (m != null)
                         {
-                            writer = x => m.Invoke(x, new[] {bw});
+                            writer = x => m.Invoke(x, new[] { bw });
                         }
                         break;
                 }
@@ -257,7 +258,7 @@ namespace FreeRaider
         {
             var sb = new StringBuilder();
             foreach (var t in s)
-                sb.Append((char) (t ^ key));
+                sb.Append((char)(t ^ key));
             return sb.ToString();
         }
 
@@ -276,33 +277,6 @@ namespace FreeRaider
         public static bool IsAnyOf(this object val, params object[] vals)
         {
             return vals.Any(x => val == x || x == val || val.Equals(x) || x.Equals(val));
-        }
-
-        /// <summary>
-        /// A FX 3.5 way to mimic the FX4 "HasFlag" method.
-        /// </summary>
-        /// <param name="variable">The tested enum.</param>
-        /// <param name="value">The value to test.</param>
-        /// <returns>True if the flag is set. Otherwise false.</returns>
-        public static bool HasFlag(this Enum variable, Enum value)
-        {
-            // check if from the same type.
-            if (variable.GetType() != value.GetType())
-            {
-                throw new ArgumentException("The checked flag is not from the same type as the checked variable.");
-            }
-
-            ulong num = Convert.ToUInt64(value);
-            ulong num2 = Convert.ToUInt64(variable);
-
-            return (num2 & num) == num;
-        }
-
-        public static T[] Resize<T>(this T[] arr, int size)
-        {
-            var res = new T[size];
-            Buffer.BlockCopy(arr, 0, res, 0, arr.Length);
-            return res;
         }
     }
 }

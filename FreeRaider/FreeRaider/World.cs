@@ -6,6 +6,7 @@ using FreeRaider.Loader;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using static FreeRaider.Constants;
+using static FreeRaider.Loader.Constants;
 using static FreeRaider.Global;
 using static FreeRaider.StaticFuncs;
 

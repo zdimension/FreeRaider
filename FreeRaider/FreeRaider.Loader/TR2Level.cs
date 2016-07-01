@@ -1,40 +1,34 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
-namespace FreeRaider
+namespace FreeRaider.Loader
 {
     public partial class Constants
     {
         public const int TR_AUDIO_MAP_SIZE_TR2 = 370;
     }
-}
-namespace FreeRaider.Loader
-{
-    public class TR2Level : Level
-    {
-        public TR2Level(BinaryReader br, TRGame ver) : base(br, ver)
-        {
-        }
 
-        protected override void internalLoad()
+    public partial class Level
+    {
+        private void Load_TR2()
         {
             var version = reader.ReadUInt32();
 
             if(version != 0x0000002d)
-                throw new ArgumentException("TR2Level.Load: Wrong level version");
+                throw new ArgumentException("Load_TR2: Wrong level version");
 
             Palette = Palette.Read(reader, Engine.TR1);
 
-            /* Palette16 = TODO: */
-            Palette.Read(reader, Engine.TR2);
+            Palette16 = Palette.Read(reader, Engine.TR2);
 
             var numTextiles = reader.ReadUInt32();
-            var texture8 = reader.ReadArray(numTextiles, () => ByteTexture.Read(reader));
-            var texture16 = reader.ReadArray(numTextiles, () => WordTexture.Read(reader));
+            Texture8 = reader.ReadArray(numTextiles, () => ByteTexture.Read(reader));
+            Texture16 = reader.ReadArray(numTextiles, () => WordTexture.Read(reader));
 
             var unused = reader.ReadUInt32();
             if(unused != 0)
-                Cerr.Write("TR2Level.Load: unused: Expected 0, Found " + unused.ToString("X8"));
+                Cerr.Write("Load_TR2: unused: Expected 0, Found " + unused.ToString("X8"));
 
             var numRooms = reader.ReadUInt16();
             Rooms = reader.ReadArray(numRooms, () => Room.Read(reader, Engine.TR2));
@@ -100,7 +94,7 @@ namespace FreeRaider.Loader
                 LightMap = LightMap.Read(reader);
 
             var numCinematicFrames = reader.ReadUInt16();
-            reader.ReadArray(numCinematicFrames, () => CinematicFrame.Read(reader));
+            CinematicFrames = reader.ReadArray(numCinematicFrames, () => CinematicFrame.Read(reader));
 
             var numDemoData = reader.ReadUInt16();
             DemoData = reader.ReadBytes(numDemoData);
@@ -120,7 +114,7 @@ namespace FreeRaider.Loader
             }
 
             if(!File.Exists(SfxPath))
-                Cerr.Write("TR2Level.Load: '" + SfxPath + "' not found, no samples loaded");
+                Cerr.Write("Load_TR2: '" + SfxPath + "' not found, no samples loaded");
             else
             {
                 using (var fs = new FileStream(SfxPath, FileMode.Open))
@@ -151,8 +145,115 @@ namespace FreeRaider.Loader
             Textures = new DWordTexture[numTextiles];
             for(uint i = 0; i < numTextiles; i++)
             {
-                Textures[i] = ConvertTexture(texture16[i]);
+                Textures[i] = ConvertTexture(Texture16[i]);
             }
+        }
+
+        private void Write_TR2()
+        {
+            GenTexAndPalettesIfEmpty();
+
+            Array.Resize(ref SoundMap, Constants.TR_AUDIO_MAP_SIZE_TR2); // todo check stuff
+
+            writer.Write((uint)0x0000002d);
+
+            Palette.Write(writer, Engine.TR1);
+
+            Palette16.Write(writer, Engine.TR2);
+
+            writer.Write((uint)Textures.Length);
+            writer.WriteArray(Texture8, x => x.Write(writer));
+            writer.WriteArray(Texture16, x => x.Write(writer));
+
+            writer.Write((uint)0); // unused
+
+            writer.Write((ushort)Rooms.Length);
+            writer.WriteArray(Rooms, x => x.Write(writer, Engine.TR2));
+
+            writer.Write((uint)FloorData.Length);
+            writer.WriteUInt16Array(FloorData);
+
+            WriteMeshData();
+
+            writer.Write((uint)Animations.Length);
+            writer.WriteArray(Animations, x => x.Write(writer, Engine.TR2));
+
+            writer.Write((uint)StateChanges.Length);
+            writer.WriteArray(StateChanges, x => x.Write(writer));
+
+            writer.Write((uint)AnimDispatches.Length);
+            writer.WriteArray(AnimDispatches, x => x.Write(writer));
+
+            writer.Write((uint)AnimCommands.Length);
+            writer.WriteInt16Array(AnimCommands);
+
+            writer.Write((uint)MeshTreeData.Length);
+            writer.WriteUInt32Array(MeshTreeData);
+
+            WriteFrameMoveableData();
+
+            writer.Write((uint)StaticMeshes.Length);
+            writer.WriteArray(StaticMeshes, x => x.Write(writer));
+
+            writer.Write((uint)ObjectTextures.Length);
+            writer.WriteArray(ObjectTextures, x => x.Write(writer, Engine.TR2));
+
+            writer.Write((uint)SpriteTextures.Length);
+            writer.WriteArray(SpriteTextures, x => x.Write(writer, Engine.TR2));
+
+            writer.Write((uint)SpriteSequences.Length);
+            writer.WriteArray(SpriteSequences, x => x.Write(writer));
+
+            if (WriteIsDemoOrUb)
+                LightMap.Write(writer);
+
+            writer.Write((uint)Cameras.Length);
+            writer.WriteArray(Cameras, x => x.Write(writer));
+
+            writer.Write((uint)SoundSources.Length);
+            writer.WriteArray(SoundSources, x => x.Write(writer));
+
+            writer.Write((uint)Boxes.Length);
+            writer.WriteArray(Boxes, x => x.Write(writer, Engine.TR2));
+
+
+            writer.Write((uint)Overlaps.Length);
+            writer.WriteUInt16Array(Overlaps);
+
+            writer.WriteArray(Zones, x => x.Write(writer, Engine.TR2));
+
+            writer.Write((uint)AnimatedTextures.Length);
+            writer.WriteUInt16Array(AnimatedTextures);
+
+            writer.Write((uint)Items.Length);
+            writer.WriteArray(Items, x => x.Write(writer, Engine.TR2));
+
+            if (!WriteIsDemoOrUb)
+                LightMap.Write(writer);
+
+            writer.Write((ushort)CinematicFrames.Length);
+            writer.WriteArray(CinematicFrames, x => x.Write(writer));
+
+            writer.Write((ushort)DemoData.Length);
+            writer.Write(DemoData);
+
+            writer.WriteInt16Array(SoundMap);
+
+            writer.Write((uint)SoundDetails.Length);
+
+            var origSndDetails = SoundDetails.ToArray();
+
+            for (uint i = 0; i < origSndDetails.Length; i++)
+            {
+                var id = Array.IndexOf(SampleIndices, origSndDetails[i].Sample);
+                if (id != -1)
+                    origSndDetails[i].Sample = (ushort)id;
+            }
+
+            writer.WriteArray(origSndDetails, x => x.Write(writer, Engine.TR2));
+
+            writer.Write((uint)SampleIndices.Length);
+            writer.WriteUInt32Array(SampleIndices);
         }
     }
 }

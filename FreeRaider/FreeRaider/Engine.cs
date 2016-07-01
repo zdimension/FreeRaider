@@ -1119,11 +1119,9 @@ namespace FreeRaider
 
         public static bool LoadPCLevel(string name)
         {
-            var loader = Level.CreateLoader(name);
+            var loader = Level.FromFile(name);
             if (loader == null)
                 return false;
-
-            loader.Load();
 
             TR_GenWorld(EngineWorld, loader);
 

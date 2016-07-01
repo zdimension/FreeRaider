@@ -4,6 +4,7 @@ using System.Linq;
 using FreeRaider.Loader;
 using OpenTK.Graphics.OpenGL;
 using static FreeRaider.Constants;
+using static FreeRaider.Loader.Constants;
 
 namespace FreeRaider
 {

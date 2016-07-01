@@ -1,42 +1,38 @@
 ﻿using System;
 using System.IO;
 
-namespace FreeRaider
+namespace FreeRaider.Loader
 {
     public partial class Constants
     {
-        public const int TR_AUDIO_MAP_SIZE_TR5 = 450;
+        public const int TR_AUDIO_MAP_SIZE_TR4 = 370;
     }
-}
-namespace FreeRaider.Loader
-{
-    public class TR5Level : Level
-    {
-        public TR5Level(BinaryReader br, TRGame ver) : base(br, ver)
-        {
-        }
 
-        protected override void internalLoad()
+    public partial class Level
+    {
+        private void Load_TR4()
         {
             var version = reader.ReadUInt32();
 
-            if (version != 0x00345254)
-                throw new ArgumentException("TR5Level.Load: Wrong level version");
+            if (!version.IsAnyOf(0x00345254, 0x63345254, 0xFFFFFFF0))
+                throw new ArgumentException("Load_TR4: Wrong level version");
+
+            Texture16 = new WordTexture[0];
 
             var numRoomTextiles = reader.ReadUInt16();
             var numObjTextiles = reader.ReadUInt16();
             var numBumpTextiles = reader.ReadUInt16();
-            var numMiscTextiles = 3;
+            var numMiscTextiles = 2;
             var numTextiles = numRoomTextiles + numObjTextiles + numBumpTextiles + numMiscTextiles;
 
             var uncompSize = reader.ReadUInt32();
             if (uncompSize == 0)
-                throw new ArgumentException("TR5Level.Load: Textiles32 uncompSize == 0", nameof(uncompSize));
+                throw new ArgumentException("Load_TR4: Textiles32 uncompSize == 0", nameof(uncompSize));
 
             var compSize = reader.ReadUInt32();
             if (compSize > 0)
             {
-                var compBuffer = reader.ReadBytes((int)compSize);
+                var compBuffer = reader.ReadBytes((int) compSize);
 
                 var newsrc = Helper.Decompress(compBuffer);
                 Textures = newsrc.ReadArray(numTextiles - numMiscTextiles, () => DWordTexture.Read(newsrc));
@@ -44,18 +40,17 @@ namespace FreeRaider.Loader
 
             uncompSize = reader.ReadUInt32();
             if (uncompSize == 0)
-                throw new ArgumentException("TR5Level.Load: Textiles16 uncompSize == 0", nameof(uncompSize));
+                throw new ArgumentException("Load_TR4: Textiles16 uncompSize == 0", nameof(uncompSize));
 
             compSize = reader.ReadUInt32();
-            var texture16 = new WordTexture[0];
             if (compSize > 0)
             {
                 if (Textures.Length == 0)
                 {
-                    var compBuffer = reader.ReadBytes((int)compSize);
+                    var compBuffer = reader.ReadBytes((int) compSize);
 
                     var newsrc = Helper.Decompress(compBuffer);
-                    texture16 = newsrc.ReadArray(numTextiles - numMiscTextiles, () => WordTexture.Read(newsrc));
+                    Texture16 = newsrc.ReadArray(numTextiles - numMiscTextiles, () => WordTexture.Read(newsrc));
                 }
                 else
                 {
@@ -65,43 +60,48 @@ namespace FreeRaider.Loader
 
             uncompSize = reader.ReadUInt32();
             if (uncompSize == 0)
-                throw new ArgumentException("TR5Level.Load: Textiles32d uncompSize == 0", nameof(uncompSize));
+                throw new ArgumentException("Load_TR4: Textiles32d uncompSize == 0", nameof(uncompSize));
 
             compSize = reader.ReadUInt32();
             if (compSize > 0)
             {
-                // 262144 = Width * Height * Depth
-                //        =  256  *  256   *  4
-                if (uncompSize / 262144 > 3)
-                    Cerr.Write("TR5Level.Load: NumMiscTextiles > 3");
+                if (Textures.Length == 0)
+                {
+                    // 262144 = 256*256*4
+                    if (uncompSize / 262144 > 2)
+                        Cerr.Write("Load_TR4: NumMiscTextiles > 2");
 
-                var compBuffer = reader.ReadBytes((int) compSize);
+                    Array.Resize(ref Textures, numTextiles);
 
-                var newsrc = Helper.Decompress(compBuffer);
-                var t = newsrc.ReadArray(numMiscTextiles, () => DWordTexture.Read(newsrc));
+                    var compBuffer = reader.ReadBytes((int) compSize);
 
-                Textures = Textures.AddArray(t);
+                    var newsrc = Helper.Decompress(compBuffer);
+                    Textures = newsrc.ReadArray(numMiscTextiles, () => DWordTexture.Read(newsrc));
+                }
+                else
+                {
+                    reader.BaseStream.Position += compSize;
+                }
             }
 
-            LaraType = (LaraType) reader.ReadUInt16();
-            WeatherType = (WeatherType) reader.ReadUInt16();
+            uncompSize = reader.ReadUInt32();
+            if (uncompSize == 0)
+                throw new ArgumentException("Load_TR4: Packed geometry uncompSize == 0", nameof(uncompSize));
 
-            var flags = reader.ReadUInt32Array(7);
-            for (var i = 0; i < flags.Length; i++)
-            {
-                if (flags[i] != 0)
-                    Cerr.Write("TR5Level.Load: flags[" + (i + 1) + "]: Expected 0, Found 0x" + flags[i].ToString("X8"));
-            }
+            compSize = reader.ReadUInt32();
+            if (compSize == 0)
+                throw new ArgumentException("Load_TR4: Packed geometry", nameof(compSize));
 
-            var levelDataSize1 = reader.ReadUInt32();
-            var levelDataSize2 = reader.ReadUInt32();
+            var compBuffer_ = reader.ReadBytes((int) compSize);
+
+            reader = Helper.Decompress(compBuffer_);
 
             var unused = reader.ReadUInt32();
-            if(unused != 0)
-                Cerr.Write("TR5Level.Load: unused: Expected 0, Found " + unused.ToString("X8"));
+            if (unused != 0)
+                Cerr.Write("Load_TR4: unused: Expected 0, Found " + unused.ToString("X8"));
 
-            var numRooms = reader.ReadUInt32();
-            Rooms = reader.ReadArray(numRooms, () => Room.Read(reader, Engine.TR5));
+            var numRooms = reader.ReadUInt16();
+            Rooms = reader.ReadArray(numRooms, () => Room.Read(reader, Engine.TR4));
 
             var numFloorData = reader.ReadUInt32();
             FloorData = reader.ReadUInt16Array(numFloorData);
@@ -128,13 +128,12 @@ namespace FreeRaider.Loader
             var numStaticMeshes = reader.ReadUInt32();
             StaticMeshes = reader.ReadArray(numStaticMeshes, () => StaticMesh.Read(reader));
 
-            var spr1 = (char) reader.ReadSByte();
-            var spr2 = (char) reader.ReadSByte();
-            var spr3 = (char) reader.ReadSByte();
-            var spr4 = (char) reader.ReadSByte();
-            var spr = "" + spr1 + spr2 + spr3 + spr4;
-            if (spr != "SPR\0")
-                throw new ArgumentException("TR5Level.Load: Expected 'SPR', Found '" + spr + "'", nameof(spr));
+            var spr1 = (char)reader.ReadSByte();
+            var spr2 = (char)reader.ReadSByte();
+            var spr3 = (char)reader.ReadSByte();
+            var spr = "" + spr1 + spr2 + spr3;
+            if(spr != "SPR")
+                throw new ArgumentException("Load_TR4: Expected 'SPR', Found '" + spr + "'", nameof(spr));
 
             var numSpriteTextures = reader.ReadUInt32();
             SpriteTextures = reader.ReadArray(numSpriteTextures, () => SpriteTexture.Read(reader, Engine.TR4));
@@ -167,13 +166,12 @@ namespace FreeRaider.Loader
             var tex1 = (char)reader.ReadSByte();
             var tex2 = (char)reader.ReadSByte();
             var tex3 = (char)reader.ReadSByte();
-            var tex4 = (char) reader.ReadSByte();
-            var tex = "" + tex1 + tex2 + tex3 + tex4;
-            if (tex != "TEX\0")
-                throw new ArgumentException("TR5Level.Load: Expected 'TEX', Found '" + tex + "'", nameof(tex));
+            var tex = "" + tex1 + tex2 + tex3;
+            if (tex != "TEX")
+                throw new ArgumentException("Load_TR4: Expected 'TEX', Found '" + tex + "'", nameof(tex));
 
             var numObjectTextures = reader.ReadUInt32();
-            ObjectTextures = reader.ReadArray(numObjectTextures, () => ObjectTexture.Read(reader, Engine.TR5));
+            ObjectTextures = reader.ReadArray(numObjectTextures, () => ObjectTexture.Read(reader, Engine.TR4));
 
             var numItems = reader.ReadUInt32();
             Items = reader.ReadArray(numItems, () => Item.Read(reader, Engine.TR4));
@@ -184,7 +182,7 @@ namespace FreeRaider.Loader
             var numDemoData = reader.ReadUInt16();
             DemoData = reader.ReadBytes(numDemoData);
 
-            SoundMap = reader.ReadInt16Array(Constants.TR_AUDIO_MAP_SIZE_TR5);
+            SoundMap = reader.ReadInt16Array(Constants.TR_AUDIO_MAP_SIZE_TR4);
 
             var numSoundDetails = reader.ReadUInt32();
             SoundDetails = reader.ReadArray(numSoundDetails, () => Loader.SoundDetails.Read(reader, Engine.TR3));
@@ -192,23 +190,33 @@ namespace FreeRaider.Loader
             var numSampleIndices = reader.ReadUInt32();
             SampleIndices = reader.ReadUInt32Array(numSampleIndices);
 
-            reader.BaseStream.Position += 6;
-
             var numSamples = reader.ReadUInt32();
-            if (numSamples > 0)
+            if(numSamples > 0)
             {
-                SamplesCount = (int)numSamples;
+                SamplesCount = (int) numSamples;
                 SamplesData = reader.ReadBytes((int)(reader.BaseStream.Length - reader.BaseStream.Position));
             }
 
             if (Textures.Length == 0)
             {
-                Textures = new DWordTexture[texture16.Length];
-                for (uint i = 0; i < texture16.Length; i++)
+                Textures = new DWordTexture[Texture16.Length];
+                for (uint i = 0; i < Texture16.Length; i++)
                 {
-                    Textures[i] = ConvertTexture(texture16[i]);
+                    Textures[i] = ConvertTexture(Texture16[i]);
                 }
             }
+
+            var unused2 = reader.ReadUInt16(); // I don't know what it is used for, but there's always 2 bytes of data at the end of TR4 levels
+        }
+
+        private void Write_TR4()
+        {
+            Array.Resize(ref SoundMap, Constants.TR_AUDIO_MAP_SIZE_TR4); // todo check stuff
+
+            writer.Write((uint)(WriteIsDemoOrUb ? 0x63345254 : 0x00345254));
+
+            // todo: wait for the trf guys to help me guessing num***Textiles values
+            throw new NotImplementedException();
         }
     }
 }

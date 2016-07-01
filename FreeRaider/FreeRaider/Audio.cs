@@ -922,7 +922,7 @@ namespace FreeRaider
             rate = 0;
             IsDampable = false;
 
-            wadFile = null;
+            //wadFile = null;
             sndFile = IntPtr.Zero;
 
             if(AL.IsSource(source))
@@ -979,7 +979,7 @@ namespace FreeRaider
                 : loadWad((byte) index, path);
         }
 
-        public bool Unload()
+        public unsafe bool Unload()
         {
             var res = false;
 
@@ -1000,12 +1000,14 @@ namespace FreeRaider
                 sndFile = IntPtr.Zero;
                 res = true;
             }
-
-            if(wadFile != null)
+            if ((IntPtr) wadMemIo != IntPtr.Zero)
             {
-                wadFile.Dispose();
-                wadFile = null;
-                res = true;
+                Marshal.FreeHGlobal((IntPtr)wadMemIo);
+            }
+
+            if ((IntPtr)wadBuf != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal((IntPtr)wadBuf);
             }
 
             return res;
@@ -1336,14 +1338,14 @@ namespace FreeRaider
         /// <summary>
         /// Wad loading
         /// </summary>
-        private bool loadWad(byte index, string filename)
+        private unsafe bool loadWad(byte index, string filename)
         {
             if (index >= TR_AUDIO_STREAM_WAD_COUNT)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WAD_OUT_OF_BOUNDS, TR_AUDIO_STREAM_WAD_COUNT);
                 return false;
             }
-
+            FileStream wadFile;
             try
             {
                 wadFile = File.OpenRead(filename);
@@ -1361,26 +1363,36 @@ namespace FreeRaider
             using (var br = Helper.CreateInstance<BinaryReader>(wadFile, Encoding.UTF8, true))
             {
                 br.BaseStream.Position = index * TR_AUDIO_STREAM_WAD_STRIDE;
-                trackName = br.ParseString(TR_AUDIO_STREAM_WAD_NAMELENGTH);
+                trackName = br.ParseString(TR_AUDIO_STREAM_WAD_NAMELENGTH, true);
                 length = br.ReadUInt32();
                 offset = br.ReadUInt32();
                 br.BaseStream.Position = offset;
             }
 
-            //var abcd = new LibsndfileInfo();
-           /* var abfs = File.OpenRead(@"D:\Musique\test_tr3_msadpcm.wav");*/
-            /*var abfs = _open(@"D:\Musique\test_tr3_msadpcm.wav", 1);
-            var abd = sf_open_fd(
-                abfs, 0x10,
-                &abcd, 0);*/
+            if ((IntPtr) wadBuf != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal((IntPtr) wadBuf);
+            }
 
-            if (
-                (sndFile =
-                    sndFileApi.OpenFileDescriptor((int) wadFile.SafeFileHandle.DangerousGetHandle(), LibsndfileMode.Read,
-                        ref sfInfo, 0)) == IntPtr.Zero)
+            if ((IntPtr)wadMemIo != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal((IntPtr)wadMemIo);
+            }
+            
+            wadBuf = (byte*)Marshal.AllocHGlobal((int) length);
+            var buf = new byte[(int)length];
+            wadFile.Read(buf, 0, (int) length);
+            Marshal.Copy(buf, 0, (IntPtr)wadBuf, (int)length);
+            wadMemIo = (MemBufferFileIo*) Marshal.AllocHGlobal(sizeof (MemBufferFileIo));
+            var s = new MemBufferFileIo(wadBuf, (int) length);
+            Marshal.StructureToPtr(s, (IntPtr)wadMemIo, false);
+            var vio = wadMemIo->ToSfVirtualIo();
+            if ((sndFile = sndFileApi.OpenVirtual(ref vio, LibsndfileMode.Read, ref sfInfo, wadMemIo)) == IntPtr.Zero)
             {
                 ConsoleInfo.Instance.Warning(Strings.SYSWARN_WAD_SEEK_FAILED, offset);
-                ConsoleInfo.Instance.AddLine($"Libsndfile error: {sndFileApi.Error(IntPtr.Zero):G} ({sndFileApi.ErrorString(IntPtr.Zero)})", FontStyle.ConsoleWarning);
+                ConsoleInfo.Instance.AddLine(
+                    $"Libsndfile error: {sndFileApi.Error(IntPtr.Zero):G} ({sndFileApi.ErrorString(IntPtr.Zero)})",
+                    FontStyle.ConsoleWarning);
                 method = TR_AUDIO_STREAM_METHOD.Unknown;
                 return false;
             }
@@ -1459,7 +1471,12 @@ namespace FreeRaider
         /// <summary>
         /// General handle for opened wad file
         /// </summary>
-        private FileStream wadFile;
+        private unsafe byte* wadBuf;
+
+        private unsafe MemBufferFileIo* wadMemIo;
+        /*private FileStream wadFile;
+
+        private unsafe StreamFileIo* wadFileIo;*/
 
         /// <summary>
         /// Sndfile file reader needs its own handle

@@ -68,7 +68,7 @@ namespace FreeRaider
 
         public static explicit operator Matrix4(Transform t)
         {
-            return Helper.CreateInstance<Matrix4>(t.GetOpenGLMatrix().Cast<object>().ToArray());
+            return Helper.CreateMat4(t.GetOpenGLMatrix());
         }
 
         public static explicit operator Transform(Matrix4 t)

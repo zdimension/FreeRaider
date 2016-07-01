@@ -11,6 +11,7 @@ using OpenTK.Audio.OpenAL;
 using OpenTK.Graphics.OpenGL;
 using static FreeRaider.Global;
 using static FreeRaider.Constants;
+using static FreeRaider.Loader.Constants;
 
 namespace FreeRaider
 {
@@ -1117,7 +1118,7 @@ namespace FreeRaider
 
         public static void TR_GenWorld(World world, Level tr)
         {
-            world.EngineVersion = Helper.GameToEngine(tr.GameVersion);
+            world.EngineVersion = Loader.Helper.GameToEngine(tr.GameVersion);
 
             Res_AutoexecOpen(tr.GameVersion); // Open and do preload autoexec.
             EngineLua.Call("autoexec_PreLoad");
@@ -1765,11 +1766,11 @@ namespace FreeRaider
 
                 if(entity.Bf.Animations.Model == null)
                 {
-                    var id = EngineLua.Call("getOverridedID", Helper.GameToEngine(tr.GameVersion), trItem.ObjectID)[0];
+                    var id = EngineLua.Call("getOverridedID", Loader.Helper.GameToEngine(tr.GameVersion), trItem.ObjectID)[0];
                     entity.Bf.Animations.Model = world.GetModelByID((uint) id);
                 }
 
-                var replaceAnimId = (int)EngineLua.Call("getOverridedAnim", Helper.GameToEngine(tr.GameVersion), trItem.ObjectID)[0];
+                var replaceAnimId = (int)EngineLua.Call("getOverridedAnim", Loader.Helper.GameToEngine(tr.GameVersion), trItem.ObjectID)[0];
                 if(replaceAnimId > 0)
                 {
                     var replaceAnimModel = world.GetModelByID((uint)replaceAnimId);
@@ -1816,7 +1817,7 @@ namespace FreeRaider
 
                     EngineLua.Set("player", lara.ID);
 
-                    switch (Helper.GameToEngine(tr.GameVersion))
+                    switch (Loader.Helper.GameToEngine(tr.GameVersion))
                     {
                         case Loader.Engine.TR1:
                             if (GameflowManager.LevelID == 0)
@@ -2819,7 +2820,7 @@ namespace FreeRaider
                 world.AudioEffects[i].RandomizePitch = tr.SoundDetails[i].UseRandomPitch;
                 world.AudioEffects[i].RandomizeGain = tr.SoundDetails[i].UseRandomVolume;
 
-                world.AudioEffects[i].Loop = tr.SoundDetails[i].GetLoopType(Helper.GameToEngine(tr.GameVersion));
+                world.AudioEffects[i].Loop = tr.SoundDetails[i].GetLoopType(Loader.Helper.GameToEngine(tr.GameVersion));
 
                 world.AudioEffects[i].SampleIndex = tr.SoundDetails[i].Sample;
                 world.AudioEffects[i].SampleCount = tr.SoundDetails[i].SampleCount;

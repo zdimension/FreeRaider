@@ -19,6 +19,11 @@ namespace FreeRaider
 {
     public static partial class Extensions
     {
+        public static Vector3 ToVector3(this Loader.Vertex v)
+        {
+            return new Vector3(v.X, v.Y, v.Z);
+        }
+
         public static MethodInfo GetMethodIP(this Type type, string methName)
         {
             return type.GetMethod(methName, BindingFlags.Instance | BindingFlags.NonPublic);
@@ -40,12 +45,14 @@ namespace FreeRaider
         }
 
 
-        public static string ParseString(this BinaryReader br, long strLength)
+        public static string ParseString(this BinaryReader br, long strLength, bool stopAtZero = false)
         {
             var str = new byte[strLength];
             for (long i = 0; i < strLength; i++)
                 str[i] = br.ReadByte();
-            return Encoding.ASCII.GetString(str);
+            var ret = Encoding.ASCII.GetString(str);
+            if (stopAtZero) return ret.Substring(0, ret.IndexOf('\0'));
+            return ret;
         }
 
         public static ushort[] ReadUInt16Array(this BinaryReader br, long arrLength)
@@ -236,11 +243,21 @@ namespace FreeRaider
             return Convert.ChangeType(obj, t);
         }
 
-        public static bool IsBetween<T, Tc1, Tc2>(this T f, Tc1 a, Tc2 b, IB inclusive = IB.aIbI, bool reorder = true)
+        public static int FastCompare(this object a, object b)
+        {
+            dynamic x = a;
+            dynamic y = b;
+            if (x > y) return 1;
+            if (x < y) return -1;
+            return 0;
+        }
+
+        /*public static bool IsBetween<T, Tc1, Tc2>(this T f, Tc1 a, Tc2 b, IB inclusive = IB.aIbI, bool reorder = true)
             where T : IComparable
             where Tc1 : IConvertible, IComparable
             where Tc2 : IConvertible, IComparable
         {
+
             var c = (T) a.ToType(typeof (T));
             var d = (T) b.ToType(typeof (T));
             if (reorder)
@@ -248,8 +265,27 @@ namespace FreeRaider
                 c = GenericMin((T) a.ToType(typeof (T)), (T) b.ToType(typeof (T)));
                 d = GenericMax((T) a.ToType(typeof (T)), (T) b.ToType(typeof (T)));
             }
-            var fc = f.CompareTo(c);
-            var fd = f.CompareTo(d);
+            var fc = f.FastCompare(c);
+            var fd = f.FastCompare(d);
+
+            var oa = ((int)inclusive & 1) == 1 ? fc >= 0 : fc > 0;
+            var ob = ((int)inclusive & 2) == 2 ? fd <= 0 : fd < 0;
+
+            return oa && ob;
+        }*/
+
+        public static bool IsBetween(this object of, dynamic a, dynamic b, IB inclusive = IB.aIbI, bool reorder = true)
+        {
+            dynamic f = of;
+            var c = a;
+            var d = b;
+            if (reorder)
+            {
+                c = DynamicMin(a, b);
+                d = DynamicMax(a, b);
+            }
+            var fc = FastCompare(f, c);
+            var fd = FastCompare(f, d);
 
             var oa = ((int)inclusive & 1) == 1 ? fc >= 0 : fc > 0;
             var ob = ((int)inclusive & 2) == 2 ? fd <= 0 : fd < 0;
@@ -257,7 +293,21 @@ namespace FreeRaider
             return oa && ob;
         }
 
-        public static T GenericMin<T>(T a, T b)
+
+        public static dynamic DynamicMin(object a, dynamic b)
+        {
+            var c = FastCompare(a, b);
+            return c > 0 ? b : a;
+        }
+
+        public static dynamic DynamicMax(object a, dynamic b)
+        {
+            var c = FastCompare(a, b);
+            return c < 0 ? b : a;
+        }
+
+
+        /*public static T GenericMin<T>(T a, T b)
             where T : IComparable
         {
             var c = a.CompareTo(b);
@@ -269,7 +319,7 @@ namespace FreeRaider
         {
             var c = a.CompareTo(b);
             return c < 0 ? b : a;
-        }
+        }*/
 
         /*   public static bool IsBetween(this float f, float a, float b, bool inclusive = true, bool reorder = true)
         {
@@ -719,18 +769,25 @@ namespace FreeRaider
             target[index + 2] = v[2];
         }
 
-        public static unsafe float[] ToArray(this Matrix3 mat)
+        public static float[] ToArray(this Matrix3 mat)
         {
-            var p = Marshal.AllocHGlobal(Marshal.SizeOf(mat));
-            Marshal.StructureToPtr(mat, p, false);
-            return Helper.GetArrayFromPointer((float*) p, 9);
+            return new[]
+            {
+                mat.Row0.X, mat.Row0.Y, mat.Row0.Z,
+                mat.Row1.X, mat.Row1.Y, mat.Row1.Z,
+                mat.Row2.X, mat.Row2.Y, mat.Row2.Z
+            };
         }
 
-        public static unsafe float[] ToArray(this Matrix4 mat)
+        public static float[] ToArray(this Matrix4 mat)
         {
-            var p = Marshal.AllocHGlobal(Marshal.SizeOf(mat));
-            Marshal.StructureToPtr(mat, p, false);
-            return Helper.GetArrayFromPointer((float*)p, 16);
+            return new[]
+            {
+                mat.Row0.X, mat.Row0.Y, mat.Row0.Z, mat.Row0.W,
+                mat.Row1.X, mat.Row1.Y, mat.Row1.Z, mat.Row1.W,
+                mat.Row2.X, mat.Row2.Y, mat.Row2.Z, mat.Row2.W,
+                mat.Row3.X, mat.Row3.Y, mat.Row3.Z, mat.Row3.W
+            };
         }
 
         public static string ToStringEx(this Vector3 vec, string format = "({0}, {1}, {2})", int round = -1)

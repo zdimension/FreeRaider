@@ -156,7 +156,7 @@ namespace FreeRaider.Loader
                 lvl.DemoTime = br.ReadInt32();
                 lvl.OnDemoInterrupt = br.ReadInt32();
                 lvl.OnDemoEnd = br.ReadInt32();
-                br.ReadByteArray(36);
+                br.ReadBytes(36);
                 lvl.NumLevels = br.ReadInt16();
                 lvl.NumChapterScreens = br.ReadInt16();
                 lvl.NumTitles = br.ReadInt16();
@@ -165,13 +165,13 @@ namespace FreeRaider.Loader
                 lvl.NumDemoLevels = br.ReadInt16();
                 lvl.TitleSoundID = br.ReadInt16();
                 lvl.SingleLevel = br.ReadInt16();
-                br.ReadByteArray(32); // filler
+                br.ReadBytes(32); // filler
                 lvl.Flags = (TOMBPCFlags) br.ReadUInt16();
-                br.ReadByteArray(6); // filler
+                br.ReadBytes(6); // filler
                 lvl.XORbyte = br.ReadByte();
                 lvl.Language = (TOMBPCLanguage) br.ReadByte();
                 lvl.SecretSoundID = br.ReadInt16();
-                br.ReadByteArray(4);
+                br.ReadBytes(4);
 
                 #endregion
 

@@ -121,14 +121,6 @@
     <Compile Include="Hair.cs" />
     <Compile Include="Helper.cs" />
     <Compile Include="Inventory.cs" />
-    <Compile Include="Loader\DataTypes.cs" />
-    <Compile Include="Loader\TRGame.cs" />
-    <Compile Include="Loader\Level.cs" />
-    <Compile Include="Loader\TR1Level.cs" />
-    <Compile Include="Loader\TR2Level.cs" />
-    <Compile Include="Loader\TR3Level.cs" />
-    <Compile Include="Loader\TR4Level.cs" />
-    <Compile Include="Loader\TR5Level.cs" />
     <Compile Include="Cerr.cs" />
     <Compile Include="Mesh.cs" />
     <Compile Include="OBB.cs" />
@@ -171,6 +163,10 @@
     <ProjectReference Include="..\..\SDL2-CS\SDL2-CS.csproj">
       <Project>{85480198-8711-4355-830e-72fd794ad3f6}</Project>
       <Name>SDL2-CS</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\FreeRaider.Loader\FreeRaider.Loader.csproj">
+      <Project>{9d86f28a-4375-4c47-85e5-af7f6e123eb4}</Project>
+      <Name>FreeRaider.Loader</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
