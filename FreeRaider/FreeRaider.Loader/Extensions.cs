@@ -28,7 +28,7 @@ namespace FreeRaider
             return r;
         }
 
-        public static void WriteString(this BinaryWriter bw, string s)
+        public static void WriteStringASCII(this BinaryWriter bw, string s)
         {
             bw.Write(Encoding.ASCII.GetBytes(s));
         }
@@ -95,9 +95,28 @@ namespace FreeRaider
             return arr;
         }
 
-        public static string[] XORArray(this IList<string> arr, int key)
+        public static string[] ReadStringArray(this BinaryReader br, ushort[] offsetTable, byte xorKey = 0)
         {
-            return arr.Select(x => x.XOR(key)).ToArray();
+            var arr = new string[offsetTable.Length];
+            var start = br.BaseStream.Position;
+
+            for (var i = 0; i < offsetTable.Length; i++)
+            {
+                br.BaseStream.Position = start + offsetTable[i];
+                arr[i] = br.ReadASCIIStringUntilNull().XOR(xorKey);
+            }
+
+            return arr;
+        }
+
+        public static string ReadASCIIStringUntilNull(this BinaryReader br)
+        {
+            var ret = new StringBuilder();
+
+            while (br.PeekChar() != 0)
+                ret.Append((char) br.ReadByte());
+
+            return ret.ToString();
         }
 
         public static T[] ReadArray<T>(this BinaryReader br, long arrLength, Func<T> rd = null)
@@ -253,11 +272,11 @@ namespace FreeRaider
             return t;
         }
 
-        public static string XOR(this string s, int key)
+        public static string XOR(this string s, byte key)
         {
             var sb = new StringBuilder();
             foreach (var t in s)
-                sb.Append((char) (t ^ key));
+                sb.Append((char) (byte)((byte)t ^ key));
             return sb.ToString();
         }
 

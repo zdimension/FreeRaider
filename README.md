@@ -134,7 +134,7 @@ FreeRaider uses the following libraries:
 * OpenTK 1.1 (https://github.com/opentk/opentk)
 * BulletSharp 2.87.3.0 (https://github.com/AndresTraks/BulletSharp)
 * NLua with KeraLua 1.3.2.0 (https://github.com/NLua/NLua)
-* SharpFont 3.0.1.200 (https://github.com/Robmaister/SharpFont)
+* SharpFont 3.1.0 (https://github.com/Robmaister/SharpFont)
 * Zlib.Portable 1.11.0.0 (https://github.com/advancedrei/Zlib.Portable)
 * NLibsndfile 1.0.0.0 (modified) (https://github.com/ahawker/NLibsndfile)
 * SDL2-CS (modified) (https://github.com/flibitijibibo/SDL2-CS)

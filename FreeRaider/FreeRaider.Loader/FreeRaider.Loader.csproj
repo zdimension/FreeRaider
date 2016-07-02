@@ -58,6 +58,7 @@
     <Compile Include="TR2Level.cs" />
     <Compile Include="TR3Level.cs" />
     <Compile Include="TR4Level.cs" />
+    <Compile Include="TR4ScriptFile.cs" />
     <Compile Include="TR5Level.cs" />
     <Compile Include="TRGame.cs" />
   </ItemGroup>

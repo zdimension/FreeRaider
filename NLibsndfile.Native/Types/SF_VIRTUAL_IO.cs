@@ -44,16 +44,15 @@ namespace NLibsndfile.Native.Types
             m_data = data;
             m_dataSize = dataSize;
             m_where = 0;
-            readHandle = new GCHandle();
         }
 
-        public long get_filelen(void* userData)
+        public static long get_filelen(void* userData)
         {
             var self = (MemBufferFileIo*)userData;
             return self->m_dataSize;
         }
 
-        public long seek(long offset, SEEK whence, void* userData)
+        public static long seek(long offset, SEEK whence, void* userData)
         {
             var self = (MemBufferFileIo*)userData;
             switch (whence)
@@ -71,7 +70,7 @@ namespace NLibsndfile.Native.Types
             return self->m_where;
         }
 
-        public long read(void* ptr, long count, void* userData)
+        public static long read(void* ptr, long count, void* userData)
         {
             var self = (MemBufferFileIo*)userData;
             if (self->m_where + count > self->m_dataSize)
@@ -84,32 +83,37 @@ namespace NLibsndfile.Native.Types
             return count;
         }
 
-        public long write(void* ptr, long count, void* userData)
+        public static long write(void* ptr, long count, void* userData)
         {
             return 0; // Read-only
         }
 
-        public long tell(void* userData)
+        public static long tell(void* userData)
         {
             var self = (MemBufferFileIo*)userData;
             return self->m_where;
         }
 
+        // I put delegates here as static fields so GC doesn't collect them
+        // Took me 3 weeks to figure that out
+        private static readonly sf_vio_get_filelen keepAlive_get_filelen = get_filelen;
+        private static readonly sf_vio_seek keepAlive_seek = seek;
+        private static readonly sf_vio_read keepAlive_read = read;
+        private static readonly sf_vio_write keepAlive_write = write;
+        private static readonly sf_vio_tell keepAlive_tell = tell;
+
         public SF_VIRTUAL_IO ToSfVirtualIo()
         {
-            sf_vio_read tmp = read;
-            readHandle = GCHandle.Alloc(tmp);
             return new SF_VIRTUAL_IO
             {
-                get_filelen = get_filelen,
-                seek = seek,
-                read = read,
-                write = write,
-                tell = tell
+                get_filelen = keepAlive_get_filelen,
+                seek = keepAlive_seek,
+                read = keepAlive_read,
+                write = keepAlive_write,
+                tell = keepAlive_tell
             };
         }
 
-        private GCHandle readHandle;
         public byte* m_data;
         public long m_dataSize;
         public long m_where;
@@ -133,7 +137,6 @@ namespace NLibsndfile.Native.Types
             this.offset = offset;
             NextID++;
             isFixed = true;
-            readHandle = new GCHandle();
         }
 
         public static Stream GetStream(void* userData)
@@ -213,9 +216,14 @@ namespace NLibsndfile.Native.Types
             return GetStream(userData).Position;
         }
 
+        private static readonly sf_vio_get_filelen keepAlive_get_filelen = getFileLength;
+        private static readonly sf_vio_seek keepAlive_seek = doSeek;
+        private static readonly sf_vio_read keepAlive_read = doRead;
+        private static readonly sf_vio_write keepAlive_write = doWrite;
+        private static readonly sf_vio_tell keepAlive_tell = doTell;
+
         public SF_VIRTUAL_IO ToSfVirtualIo()
         {
-            readHandle = GCHandle.Alloc((sf_vio_read)doRead, GCHandleType.Pinned);
             return new SF_VIRTUAL_IO
             {
                 get_filelen = getFileLength,
@@ -226,8 +234,6 @@ namespace NLibsndfile.Native.Types
             };
         }
 
-        private GCHandle readHandle;
-
         private int id;
         private long length;
         private long offset;
@@ -235,10 +241,6 @@ namespace NLibsndfile.Native.Types
 
         public void Close()
         {
-            if (readHandle.IsAllocated)
-            {
-                readHandle.Free();
-            }
             if (id == -1)
             {
                 throw new ObjectDisposedException("StreamFileIo is closed");

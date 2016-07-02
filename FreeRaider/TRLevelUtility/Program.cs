@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using FreeRaider.Loader;
 
 namespace TRLevelUtility
@@ -17,21 +13,24 @@ namespace TRLevelUtility
         // Exit codes from sysexits.h
 
         /// <summary>
-        /// The command was used incorrectly, e.g., with the wrong number of arguments, a bad flag,
-        /// a bad syntax in a parameter, or whatever.
+        ///     The command was used incorrectly, e.g., with the wrong number of arguments, a bad flag,
+        ///     a bad syntax in a parameter, or whatever.
         /// </summary>
         public const int EX_USAGE = 64;
+
         /// <summary>
-        /// The input data was incorrect in some way. This should only be used for user's data and
-        /// not system files.
+        ///     The input data was incorrect in some way. This should only be used for user's data and
+        ///     not system files.
         /// </summary>
         public const int EX_DATAERR = 65;
+
         /// <summary>
-        /// An input file (not a system file) did not exist or was not readable.
+        ///     An input file (not a system file) did not exist or was not readable.
         /// </summary>
         public const int EX_NOINPUT = 66;
+
         /// <summary>
-        /// A (user specified) output file cannot be created.
+        ///     A (user specified) output file cannot be created.
         /// </summary>
         public const int EX_CANTCREAT = 73;
 
@@ -39,7 +38,8 @@ namespace TRLevelUtility
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("TRLevelUtility " + Assembly.GetExecutingAssembly().GetName().Version.ToString(2) + " - (c) zdimension 2016");
+                Console.WriteLine("TRLevelUtility " + Assembly.GetExecutingAssembly().GetName().Version.ToString(2) +
+                                  " - (c) zdimension 2016");
                 Console.WriteLine("Many thanks to the TombRaiderForums guys, and to the the TRosettaStone authors.");
                 Console.WriteLine("Usage: tlc <file name> <command>");
                 Console.WriteLine("Commands:");
@@ -50,27 +50,9 @@ namespace TRLevelUtility
                 Console.WriteLine("     Add 'd' at the end of the format if for the demo version");
                 Console.WriteLine("     or for writing files containing only palette and textiles like TR3's 'VICT.TR2'");
                 Console.WriteLine("dumptex                           Dumps all the textures of a level to PNG files.");
-                Console.WriteLine("     A folder called '<file name> - Textures' containing three folders ('8-bit', '16-bit' and '32-bit') will be created.");
+                Console.WriteLine(
+                    "     A folder called '<file name> - Textures' containing three folders ('8-bit', '16-bit' and '32-bit') will be created.");
                 Environment.Exit(EX_USAGE);
-            }
-
-            var inf = args[0].Trim();
-
-            if (!File.Exists(inf))
-            {
-                Console.WriteLine("The input file '" + inf + "' doesn't exist.");
-                Environment.Exit(EX_NOINPUT);
-            }
-
-            Level lvl = null;
-            try
-            {
-                lvl = Level.FromFile(inf);
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine("Error while loading level '{0}': {1}", inf, e.Message);
-                Environment.Exit(EX_DATAERR);
             }
 
             if (args.Length > 1)
@@ -78,52 +60,148 @@ namespace TRLevelUtility
                 var line = args.Skip(1).ToArray();
                 line[0] = line[0].ToLower();
 
+
+                var inf = args[0].Trim();
+
+                if (line[0] == "info" && Path.GetExtension(inf).ToUpper() == ".DAT")
+                {
+                    var infn = Path.GetFileName(inf).ToUpper();
+
+                    if (infn == "TOMBPC.DAT" || infn == "TOMBPSX.DAT")
+                    {
+                        var sc = TOMBPCFile.ParseFile(inf);
+                    }
+                    else if (infn == "SCRIPT.DAT")
+                    {
+                        
+                    }
+                    else if (infn.IsAnyOf("ENGLISH.DAT", "FRENCH.DAT", "GERMAN.DAT", "ITALIAN.DAT", "SPANISH.DAT",
+                        "US.DAT"))
+                    {
+                        Console.WriteLine("Nothing to do for: " + inf);
+                        Environment.Exit(EX_USAGE);
+                    }
+                }
+
+                if (!File.Exists(inf))
+                {
+                    Console.WriteLine("The input file '" + inf + "' doesn't exist.");
+                    Environment.Exit(EX_NOINPUT);
+                }
+
+                Level lvl = null;
+                try
+                {
+                    lvl = Level.FromFile(inf);
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine("Error while loading level or script '{0}': {1}", inf, e.Message);
+                    Environment.Exit(EX_DATAERR);
+                }
+
+
                 switch (line[0])
                 {
                     case "info":
-                        Console.WriteLine($@"
+                        Console.WriteLine(
+                            $@"
 Game version: {lvl.GameVersion}
 Engine version: {lvl.EngineVersion}
-8-bit palette (TR1-2-3): {(Equals(lvl.Palette, default(Palette)) ? "Not present" : "Present")}
-16-bit palette (TR2-3): {(Equals(lvl.Palette16, default(Palette)) ? "Not present" : "Present")}
-8-bit (palettized) textures (TR1-2-3): {lvl.Texture8?.Length.ToString() ?? "Not present"}
-16-bit (ARGB) textures (TR2-3-4-5): {lvl.Texture16?.Length.ToString() ?? "Not present"}
-32-bit textures: {lvl.Textures?.Length.ToString() ?? "Not present"}
+8-bit palette (TR1-2-3): {(Equals
+                                (lvl.Palette, default(Palette))
+                                ? "Not present"
+                                : "Present")}
+16-bit palette (TR2-3): {(Equals(lvl.Palette16, default(Palette))
+                                    ? "Not present"
+                                    : "Present")}
+8-bit (palettized) textures (TR1-2-3): {lvl.Texture8?.Length.ToString
+                                        () ?? "Not present"}
+16-bit (ARGB) textures (TR2-3-4-5): {lvl.Texture16?.Length
+                                            .ToString() ?? "Not present"}
+32-bit textures: {lvl.Textures?.Length
+                                                .ToString() ?? "Not present"}
 Rooms: {lvl.Rooms.Length}
-Floor data: {lvl.FloorData.Length}
+Floor data: {lvl
+                                                    .FloorData.Length}
 Meshes: {lvl.Meshes.Length}
-Animations: {lvl.Animations.Length}
+Animations: {lvl
+                                                        .Animations.Length}
 State changes: {lvl.StateChanges.Length}
-Animation dispatches: {lvl.AnimDispatches.Length}
-Animation commands: {lvl.AnimCommands.Length}
-Mesh trees: {lvl.MeshTreeData.Length}
+Animation dispatches: {lvl
+                                                            .AnimDispatches.Length}
+Animation commands: {lvl
+                                                                .AnimCommands.Length}
+Mesh trees: {lvl.MeshTreeData
+                                                                    .Length}
 Frames: {lvl.FrameData.Length}
-Moveables: {lvl.Moveables.Length}
-Static meshes: {lvl.StaticMeshes.Length}
-Sprite textures: {lvl.SpriteTextures.Length}
-Sprite sequences: {lvl.SpriteSequences.Length}
-Cameras: {lvl.Cameras.Length}
-Flyby cameras (TR4-5): {lvl.FlybyCameras?.Length.ToString() ?? "Not present"}
-Sound sources: {lvl.SoundSources.Length}
-Boxes: {lvl.Boxes.Length}
-Overlaps: {lvl.Overlaps.Length}
-Zones: {lvl.Zones.Length}
-Animated textures: {lvl.AnimatedTextures.Length}
-Object textures: {lvl.ObjectTextures.Length}
-Items: {lvl.Items.Length}
-AI objects (TR4-5): {lvl.AIObjects?.Length.ToString() ?? "Not present"}
-Cinematic frames (TR1-2-3): {lvl.CinematicFrames?.Length.ToString() ?? "Not present"}
-Demo data: {lvl.DemoData.Length}
-Sound details: {lvl.SoundDetails.Length}
-Sample indices: {lvl.SampleIndices.Length}
-Lara type (TR5 only): {lvl.LaraType:D} ({lvl.LaraType})
-Weather type (TR5 only): {lvl.WeatherType:D} ({lvl.WeatherType})
+Moveables: {lvl
+                                                                        .Moveables.Length}
+Static meshes: {lvl
+                                                                            .StaticMeshes.Length}
+Sprite textures: {lvl
+                                                                                .SpriteTextures.Length}
+Sprite sequences: {lvl
+                                                                                    .SpriteSequences.Length}
+Cameras: {lvl
+                                                                                        .Cameras.Length}
+Flyby cameras (TR4-5): {lvl
+                                                                                            .FlybyCameras?.Length
+                                                                                            .ToString() ?? "Not present"}
+Sound sources: {lvl
+                                                                                                .SoundSources.Length}
+Boxes: {lvl
+                                                                                                    .Boxes.Length}
+Overlaps: {lvl
+                                                                                                        .Overlaps.Length}
+Zones: {lvl
+                                                                                                            .Zones
+                                                                                                            .Length}
+Animated textures: {lvl
+                                                                                                                .AnimatedTextures
+                                                                                                                .Length}
+Object textures: {lvl
+                                                                                                                    .ObjectTextures
+                                                                                                                    .Length}
+Items: {lvl
+                                                                                                                        .Items
+                                                                                                                        .Length}
+AI objects (TR4-5): {lvl
+                                                                                                                            .AIObjects
+                                                                                                                            ?
+                                                                                                                            .Length
+                                                                                                                            .ToString
+                                                                                                                            () ??
+                                                                                                                                                       "Not present"}
+Cinematic frames (TR1-2-3): {lvl
+                                                                                                                                                           .CinematicFrames
+                                                                                                                                                           ?
+                                                                                                                                                           .Length
+                                                                                                                                                           .ToString
+                                                                                                                                                           () ??
+                                                                                                                                                                                                    "Not present"}
+Demo data: {lvl
+                                                                                                                                                                                                        .DemoData
+                                                                                                                                                                                                        .Length}
+Sound details: {lvl
+                                                                                                                                                                                                            .SoundDetails
+                                                                                                                                                                                                            .Length}
+Sample indices: {lvl
+                                                                                                                                                                                                                .SampleIndices
+                                                                                                                                                                                                                .Length}
+Lara type (TR5 only): {lvl
+                                                                                                                                                                                                                    .LaraType:D} ({lvl
+                                                                                                                                                                                                                        .LaraType})
+Weather type (TR5 only): {lvl
+                                                                                                                                                                                                                            .WeatherType:D} ({lvl
+                                                                                                                                                                                                                                .WeatherType})
 ");
                         break;
                     case "convert":
                         if (line.Length != 3)
                         {
-                            Console.Error.WriteLine("Invalid parameter count for command 'convert': " + line.Length + ", expected 3");
+                            Console.Error.WriteLine("Invalid parameter count for command 'convert': " + line.Length +
+                                                    ", expected 3");
                             Environment.Exit(EX_USAGE);
                             return;
                         }
@@ -136,14 +214,15 @@ Weather type (TR5 only): {lvl.WeatherType:D} ({lvl.WeatherType})
                             lvl.WriteIsDemoOrUb = true;
                         }
 
-                        var fmti = Array.IndexOf(new[] { "TR1", "TR1UB", "TR2", "TR3", "TR4", "TR5" }, fmts);
+                        var fmti = Array.IndexOf(new[] {"TR1", "TR1UB", "TR2", "TR3", "TR4", "TR5"}, fmts);
                         if (fmti == -1)
                         {
                             Console.Error.WriteLine("Unknown format: " + fmts);
                             Environment.Exit(EX_USAGE);
                         }
                         var fmt =
-                            new[] { TRGame.TR1, TRGame.TR1UnfinishedBusiness, TRGame.TR2, TRGame.TR3, TRGame.TR4, TRGame.TR5 }
+                            new[]
+                            {TRGame.TR1, TRGame.TR1UnfinishedBusiness, TRGame.TR2, TRGame.TR3, TRGame.TR4, TRGame.TR5}
                                 [fmti];
                         if (fmt == TRGame.TR1UnfinishedBusiness) lvl.WriteIsDemoOrUb = true;
 
@@ -186,7 +265,8 @@ Weather type (TR5 only): {lvl.WeatherType:D} ({lvl.WeatherType})
                             Path.GetFileName(inf) + " - Textures");
                         if (File.Exists(outd))
                         {
-                            Console.WriteLine("Warning: the output directory '{0}' already exists.", Path.GetFileName(outd));
+                            Console.WriteLine("Warning: the output directory '{0}' already exists.",
+                                Path.GetFileName(outd));
                             Console.Write("Do you want to delete it? (y/n) ");
                             if (Console.ReadLine().ToLower().Trim() == "y")
                             {
@@ -257,7 +337,6 @@ Weather type (TR5 only): {lvl.WeatherType:D} ({lvl.WeatherType})
                             }
                             else
                             {
-
                                 var strlen = lvl.Textures.Length.ToString().Length;
                                 for (var bi = 0; bi < lvl.Textures.Length; bi++)
                                 {
@@ -289,6 +368,11 @@ Weather type (TR5 only): {lvl.WeatherType:D} ({lvl.WeatherType})
                         Environment.Exit(EX_USAGE);
                         return;
                 }
+            }
+            else
+            {
+                Console.Error.WriteLine("Expected command");
+                Environment.Exit(EX_USAGE);
             }
         }
     }
