@@ -120,8 +120,17 @@ namespace FreeRaider.Loader
         public string[] LevelFileNames { get; set; }
         public string[] CutSceneFileNames { get; set; }
         public ushort[][] Script { get; set; }
+
+        /// <summary>
+        /// PSX only
+        /// </summary>
+        public PSXFMVInfo[] PSXFMVInfo { get; set; }
+
         public ushort[] DemoLevelList { get; set; }
         public string[] GameStrings1 { get; set; }
+        /// <summary>
+        /// Either PC or PSX strings
+        /// </summary>
         public string[] GameStrings2 { get; set; }
         public string[][] Puzzles { get; set; }
         public string[][] Pickups { get; set; }
@@ -134,7 +143,7 @@ namespace FreeRaider.Loader
             true, true, true, false, false
         };
 
-        public static TOMBPCFile Parse(BinaryReader br)
+        public static TOMBPCFile Parse(BinaryReader br, bool psx = false)
         {
             try
             {
@@ -234,7 +243,7 @@ namespace FreeRaider.Loader
                     uint end = (uint) (offset[i] / 2);
 
                     var readingOp = false;
-                    while (readingOp || (list[end] != (ushort) ScriptOpCode.OP_END))
+                    while (readingOp || (list[end] != (ushort) ScriptOpCode.OP_ENDSEQUENCE))
                     {
                         if (readingOp)
                         {
@@ -264,6 +273,16 @@ namespace FreeRaider.Loader
                 lvl.Script = v.Select(x => x.ToArray()).ToArray();
 
                 #endregion
+
+                if (psx)
+                {
+                    lvl.PSXFMVInfo = new PSXFMVInfo[lvl.NumRPLs];
+                    for (var i = 0; i < lvl.NumRPLs; i++)
+                    {
+                        lvl.PSXFMVInfo[i].Flags = br.ReadUInt32();
+                        lvl.PSXFMVInfo[i].Unknown = br.ReadUInt32();
+                    }
+                }
 
                 var numGameStrings = br.ReadUInt16();
                 lvl.GameStrings1 = br.ReadStringArray(numGameStrings, lvl.XORbyte);
@@ -297,13 +316,13 @@ namespace FreeRaider.Loader
             }
         }
 
-        public static TOMBPCFile ParseFile(string filePath)
+        public static TOMBPCFile ParseFile(string filePath, bool psx = false)
         {
             using (var fs = new FileStream(filePath, FileMode.Open))
             {
                 using (var br = new BinaryReader(fs))
                 {
-                    return Parse(br);
+                    return Parse(br, psx);
                 }
             }
         }
@@ -327,91 +346,91 @@ namespace FreeRaider.Loader
     public enum TOMBPCFlags : ushort
     {
         /// <summary>
-        ///     0 -> normal game<br /> 1 -> demo
+        /// Is this a demo version of the game
         /// </summary>
-        DemoVersion = 1,
+        DemoVersion = 1 << 0,
 
         /// <summary>
-        ///     0 -> normal title screen<br /> 1 -> no title screen
+        /// Disables Title Screen
         /// </summary>
-        TitleDisabled = 2,
+        TitleDisabled = 1 << 1,
 
         /// <summary>
-        ///     0 -> cheat mode enabled<br /> 1 -> no cheat mode
+        /// Related to in-game cheats?
         /// </summary>
-        CheatModeCheckDisabled = 4,
+        CheatModeCheckDisabled = 1 << 2,
 
         /// <summary>
-        ///     0 -> enter demo mode if no input timeout<br /> 1 -> wait forever if no input
+        /// Disables input timeout for demo mode
         /// </summary>
-        NoInputTimeout = 8,
+        NoInputTimeout = 1 << 3,
 
         /// <summary>
-        ///     0 -> load/save game enabled<br /> 1 -> load/save game disabled
+        /// Disables loading/saving
         /// </summary>
-        LoadSaveDisabled = 16,
+        LoadSaveDisabled = 1 << 4,
 
         /// <summary>
-        ///     0 -> screen re-sizing allowed<br /> 1 -> no screen re-sizing allowed
+        /// Disables screen resizing PC only?
         /// </summary>
-        ScreenSizingDisabled = 32,
+        ScreenSizingDisabled = 1 << 5,
 
         /// <summary>
-        ///     0 -> normal option ring<br /> 1 -> ???
+        /// Stops options ring from being selected
         /// </summary>
-        LockOutOptionRing = 64,
+        LockoutOptionRing = 1 << 6,
 
         /// <summary>
-        ///     ???
+        /// Enable DOZY (sometimes they removed the internal code)
         /// </summary>
-        DozyCheatEnabled = 128,
+        DozyCheatEnabled = 1 << 7,
 
         /// <summary>
-        ///     0 -> leave StringData as-is<br /> 1 -> XOR all StringData with XORbyte
+        /// If true all string chars (except null termination) must be xor-ed by XorKey.
         /// </summary>
-        UseEncryption = 256,
+        UseEncryption = 1 << 8,
 
         /// <summary>
-        /// Usually set, no known effect
+        /// Is Gym available on title screen.
         /// </summary>
-        Unknown = 512,
+        GymEnabled = 1 << 9,
 
         /// <summary>
-        ///     0 -> no level selection<br /> 1 -> allow player to select any level
+        /// Unlocks all levels
         /// </summary>
-        SelectAnyLevel = 1024,
+        SelectAnyLevel = 1 << 10,
 
         /// <summary>
-        /// No known effect
+        /// Related to in-game cheats?
         /// </summary>
-        EnableCheatCode = 2048
+        EnableCheatCode = 1 << 11
     }
 
     public enum ScriptOpCode : ushort
     {
-        OP_PICTURE = 0, // Unused in TR2. Or PSX? Used in TR3.
-        OP_PSX_TRACK = 1, // Does not compile. PSX?
-        OP_PSX_FMV = 2, // Does not compile. PSX?
-        OP_FMV = 3, // Display FMV
-        OP_GAME = 4, // Start a playable level
-        OP_CUT = 5, // Display a cutscene
-        OP_COMPLETE = 6, // Display level-completion stats
-        OP_DEMO = 7, // Display demo sequence
-        OP_PSX_DEMO = 8, // Does not compile. PSX?
-        OP_END = 9, // Closes script sequence
-        OP_TRACK = 10, // Play soundtrack (precedes level opcode)
-        OP_SUNSET = 11, // Unknown, nothing changes in TR2. Start in Motorboat?
-        OP_LOAD_PIC = 12, // Does not compile. PSX? Used in TR3.
-        OP_DEADLY_WATER = 13, // Unknown, nothing changes in TR2.
-        OP_REMOVE_WEAPONS = 14, // Start level without weapons
-        OP_GAMECOMPLETE = 15, // End of game. Show stats, start credits sequence, music ID 52 in TR2.
-        OP_CUTANGLE = 16, // Match N-S orientation of Room and animated characters.
-        OP_NOFLOOR = 17, // Lara dies when her feet reach given depth.
-        OP_STARTINV = 18, // Items given to Lara at level start (+1000), or at all secrets found (+0)
-        OP_STARTANIM = 19, // Special animation of Lara when level starts
-        OP_SECRETS = 20, // If zero, level does not account for secrets
-        OP_KILLTOCOMPLETE = 21, // Kill all enemies to finish the level
-        OP_REMOVE_AMMO = 22, // Lara starts level without ammo or medi packs
+        OP_PICTURE = 0,            // ?
+        OP_LISTSTART = 1,          // ?
+        OP_LISTEND = 2,            // ?
+        OP_STARTFMV = 3,           // Play FMV, operand is FMV ID
+        OP_STARTLEVEL = 4,         // Play (interactive) level, operand is level ID
+        OP_STARTCINE = 5,          // Play Cutscene, operand is cutscene ID
+        OP_LEVELCOMPLETE = 6,      // Do level-completion display (no operands)
+        OP_STARTDEMO = 7,          // Play demo level: operand is level ID
+        OP_JUMPTOSEQUENCE = 8,     // Jumps to specified sequence?
+        OP_ENDSEQUENCE = 9,        // End of sequence (no operands)
+        OP_SETTRACK = 10,          // Play soundtrack: operand is soundtrack ID (it precedes opcodes of associated levels)
+        OP_SUNSETENABLED = 11,     // Bartoli's Hideous
+        OP_LOADINGPIC = 12,        // Chapter screen: operand is chapter ID
+        OP_DEADLYWATER = 13,       // Temple of Xian? Kills Lara when she touches water?
+        OP_REMOVEWEAPONS = 14,     // Lose your weapons (no operands)
+        OP_GAMECOMPLETE = 15,      // End of game (no operands)
+        OP_CUTANGLE = 16,          // Match N-S orientation of Room and animated characters. (one operand?)
+        OP_NOFLOOR = 17,           // Lara dies when her feet reach given depth (for example Floating Islands or Thames Wharf) (one operand)
+        OP_ADDTOINVENTORY = 18,    // Give item; operand is item type (see below)
+        OP_LARASTARTANIMATION = 19,// Item-type 12 state to start level in: operand is state number
+        OP_NUMSECRETS = 20,        // Number of secrets (overrides engine's hardcoded count of them?): operand is that number
+        OP_KILLTOCOMPLETE = 21,    // Kill all enemies to finish the level (no operands)
+        OP_REMOVEAMMO = 22,         // Lara starts level without ammo or medi packs
         OP_UNKNOWN = 23
     }
 
@@ -445,5 +464,23 @@ namespace FreeRaider.Loader
         OP_ITEM_KEY3 = 25, // Add Key Item 3
         OP_ITEM_KEY4 = 26, // Add Key Item 4
         OP_ITEM_UNKNOWN = 27
+    }
+
+    public struct PSXFMVInfo
+    {
+        /// <summary>
+        /// ? First FMV usually has this set as 1
+        /// </summary>
+        public uint Flags;
+        /// <summary>
+        /// Possibly: size, lba or length can't remember which
+        /// </summary>
+        public uint Unknown;
+
+        public PSXFMVInfo(uint flags, uint unknown)
+        {
+            Flags = flags;
+            Unknown = unknown;
+        }
     }
 }

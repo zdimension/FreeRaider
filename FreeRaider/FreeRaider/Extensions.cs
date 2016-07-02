@@ -21,7 +21,7 @@ namespace FreeRaider
     {
         public static Vector3 ToVector3(this Loader.Vertex v)
         {
-            return new Vector3(v.X, v.Y, v.Z);
+            return new Vector3(v.X, -v.Z, v.Y);
         }
 
         public static MethodInfo GetMethodIP(this Type type, string methName)
