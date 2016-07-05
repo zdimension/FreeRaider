@@ -77,12 +77,12 @@ namespace FreeRaider.Loader
             SoundSources = reader.ReadArray(numSoundSources, () => SoundSource.Read(reader));
 
             var numBoxes = reader.ReadUInt32();
-            Boxes = reader.ReadArray(numBoxes, () => Box.Read(reader, Engine.TR3));
+            Boxes = reader.ReadArray(numBoxes, () => Box.Read(reader, Engine.TR2));
 
             var numOverlaps = reader.ReadUInt32();
             Overlaps = reader.ReadUInt16Array(numOverlaps);
 
-            Zones = reader.ReadArray(numBoxes, () => Zone.Read(reader, Engine.TR3));
+            Zones = reader.ReadArray(numBoxes, () => Zone.Read(reader, Engine.TR2));
 
             var numAnimatedTextures = reader.ReadUInt32();
             AnimatedTextures = reader.ReadUInt16Array(numAnimatedTextures);
@@ -153,10 +153,6 @@ namespace FreeRaider.Loader
 
         private void Write_TR3()
         {
-            GenTexAndPalettesIfEmpty();
-
-            Array.Resize(ref SoundMap, Constants.TR_AUDIO_MAP_SIZE_TR3); // todo check stuff
-
             writer.Write(WriteIsDemoOrUb ? 0xFF180034 : 0xFF180038);
 
             Palette.Write(writer, Engine.TR1);
@@ -215,12 +211,12 @@ namespace FreeRaider.Loader
             writer.WriteArray(SoundSources, x => x.Write(writer));
 
             writer.Write((uint)Boxes.Length);
-            writer.WriteArray(Boxes, x => x.Write(writer, Engine.TR3));
+            writer.WriteArray(Boxes, x => x.Write(writer, Engine.TR2));
 
             writer.Write((uint)Overlaps.Length);
             writer.WriteUInt16Array(Overlaps);
 
-            writer.WriteArray(Zones, x => x.Write(writer, Engine.TR3));
+            writer.WriteArray(Zones, x => x.Write(writer, Engine.TR2));
 
             writer.Write((uint)AnimatedTextures.Length);
             writer.WriteUInt16Array(AnimatedTextures);
@@ -239,7 +235,7 @@ namespace FreeRaider.Loader
             writer.Write((ushort)DemoData.Length);
             writer.Write(DemoData);
 
-            writer.WriteInt16Array(SoundMap);
+            writer.WriteInt16Array(SoundMap.Resize(Constants.TR_AUDIO_MAP_SIZE_TR3));
 
             writer.Write((uint)SoundDetails.Length);
 

@@ -1172,7 +1172,9 @@ namespace FreeRaider
             Res_GenRoomCollision(world);
             Gui.DrawLoadScreen(800);
 
+#if !NO_AUDIO
             TR_GenSamples(world, tr);
+#endif
             Gui.DrawLoadScreen(850);
 
             world.SkyBox = Res_GetSkybox(world, world.EngineVersion);
@@ -2196,7 +2198,7 @@ namespace FreeRaider
         {
             var trRoom = tr.Rooms[roomIndex];
 
-            #region Room properties
+#region Room properties
 
             room.ID = (uint) roomIndex;
             room.Active = true;
@@ -2227,9 +2229,9 @@ namespace FreeRaider
             // let's load static room meshes
             room.StaticMesh = new List<StaticMesh>();
 
-            #endregion
+#endregion
 
-            #region Static meshes
+#region Static meshes
 
             Loader.StaticMesh trStatic;
 
@@ -2347,9 +2349,9 @@ namespace FreeRaider
                 room.StaticMesh.Add(rStatic);
             }
 
-            #endregion
+#endregion
 
-            #region Sprites
+#region Sprites
 
             foreach (var trs in trRoom.Sprites)
             {
@@ -2362,9 +2364,9 @@ namespace FreeRaider
                 room.Sprites.Add(rs);
             }
 
-            #endregion
+#endregion
 
-            #region Sectors
+#region Sectors
 
             room.SectorsX = trRoom.Num_X_Sectors;
             room.SectorsY = trRoom.Num_Z_Sectors;
@@ -2499,9 +2501,9 @@ namespace FreeRaider
                 sector.FloorCorners[3][2] = sector.Floor;
             }
 
-            #endregion
+#endregion
 
-            #region Lights
+#region Lights
 
             room.Lights.Resize(trRoom.Lights.Length, () => new Light());
 
@@ -2537,9 +2539,9 @@ namespace FreeRaider
                 l.Falloff = 0.001f / l.Outer;
             }
 
-            #endregion
+#endregion
 
-            #region Portals
+#region Portals
 
             room.Portals.Resize(trRoom.Portals.Length, () => new Portal());
             for (var i = 0; i < room.Portals.Count; i++)
@@ -2574,9 +2576,9 @@ namespace FreeRaider
                 }
             }
 
-            #endregion
+#endregion
 
-            #region Room borders
+#region Room borders
 
             room.BBMin.Z = trRoom.Y_Bottom;
             room.BBMax.Z = trRoom.Y_Top;
@@ -2586,9 +2588,9 @@ namespace FreeRaider
             room.BBMax.X = room.Transform.Origin.X + TR_METERING_SECTORSIZE * room.SectorsX - TR_METERING_SECTORSIZE;
             room.BBMax.Y = room.Transform.Origin.Y + TR_METERING_SECTORSIZE * room.SectorsY - TR_METERING_SECTORSIZE;
 
-            #endregion
+#endregion
 
-            #region Alternate room
+#region Alternate room
 
             // alternate room pointer calculation if one exists.
             room.AlternateRoom = null;
@@ -2599,7 +2601,7 @@ namespace FreeRaider
                 room.AlternateRoom = world.Rooms[trRoom.AlternateRoom];
             }
 
-            #endregion
+#endregion
         }
 
         public static void TR_GenRoomProperties(World world, Level tr)
@@ -2666,6 +2668,7 @@ namespace FreeRaider
             }
         }
 
+#if !NO_AUDIO
         public static unsafe void TR_GenSamples(World world, Level tr)
         {
             world.AudioBuffers = new uint[tr.SamplesCount];
@@ -2867,6 +2870,7 @@ namespace FreeRaider
                 world.AudioEmitters[i].Flags = tr.SoundSources[i].Flags;
             }
         }
+#endif
 
         // Helper functions to convert legacy TR structs to native OpenTomb structs.
 
@@ -3005,7 +3009,7 @@ namespace FreeRaider
         {
             var ret = 0;
 
-            #region Depth 1
+#region Depth 1
 
             if (sector == null || !sector.TrigIndex.IsBetween(0, tr.FloorData.Length, IB.aEbE))
             {
@@ -3025,7 +3029,7 @@ namespace FreeRaider
 
                 do
                 {
-                    #region Depth 2
+#region Depth 2
 
                     // TR1 - TR2
                     //function = (*entry) & 0x00FF;                   // 0b00000000 11111111
@@ -3127,7 +3131,7 @@ namespace FreeRaider
 
                         case FD_FUNC.Trigger: // TRIGGERS
                         {
-                            #region Trigger
+#region Trigger
 
                             var header = ""; // Header condition
                             var once_condition = ""; // One-shot condition
@@ -3476,9 +3480,10 @@ namespace FreeRaider
                                         break;
 
                                     case FD_TRIGFUNC.PlayTrack:
-                                        // Override for looped BGM tracks in TR1: if there are any sectors
-                                        // triggering looped tracks, ignore it, as BGM is always set in script.
-                                        if (EngineWorld.EngineVersion < Loader.Engine.TR2)
+#if !NO_AUDIO
+                                            // Override for looped BGM tracks in TR1: if there are any sectors
+                                            // triggering looped tracks, ignore it, as BGM is always set in script.
+                                            if (EngineWorld.EngineVersion < Loader.Engine.TR2)
                                         {
                                             TR_AUDIO_STREAM_TYPE looped;
                                             string tmp1;
@@ -3486,7 +3491,7 @@ namespace FreeRaider
                                             EngineLua.GetSoundtrack(operands, out tmp1, out tmp2, out looped);
                                             if (looped == TR_AUDIO_STREAM_TYPE.Background) break;
                                         }
-
+#endif
                                         single_events += Helper.Format("   playStream({0}, 0x{1:X2}); \n", operands,
                                             (triggerMask << 1) + onlyOnce);
                                         break;
@@ -3615,7 +3620,7 @@ namespace FreeRaider
                                 EngineLua.DoString(script);
                             }
 
-                            #endregion
+#endregion
                         }
                             break;
 
@@ -3789,12 +3794,12 @@ namespace FreeRaider
                             break;
                     }
 
-                    #endregion
+#endregion
                     
                     ret++;
                 } while (endBit == 0 && entry < end_p);
             }
-            #endregion
+#endregion
 
             return ret;
         }

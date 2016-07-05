@@ -245,7 +245,8 @@ namespace FreeRaider
             }
 
             desiredFont.GLFont = GLF.CreateFont(fontLibrary, path, (ushort) size);
-
+            var s1 = GLF.GetStringLen(desiredFont.GLFont, "12¨_-.ß", 10);
+            var s2 = GLF.GetStringLen2(desiredFont.GLFont, "12¨_-.ß", 10);
             return true;
         }
 

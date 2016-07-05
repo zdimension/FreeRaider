@@ -1,4 +1,6 @@
-﻿#define AL_ALEXT_PROTOTYPES
+﻿#if !NO_AUDIO
+
+#define AL_ALEXT_PROTOTYPES
 
 using System;
 using System.Diagnostics;
@@ -2536,3 +2538,4 @@ void Audio_LoadALExtFunctions(ALCdevice* device)
     }
 }
 
+#endif

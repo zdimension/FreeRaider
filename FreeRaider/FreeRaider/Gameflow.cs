@@ -51,7 +51,11 @@ namespace FreeRaider
                 {
                     case GF_OP.LevelComplete:
                         // Switch level only when fade is complete AND all streams / sounds are unloaded!
-                        if(Gui.FadeCheck(FaderType.LoadScreen) == FaderStatus.Complete && !Audio.IsTrackPlaying())
+                        if(Gui.FadeCheck(FaderType.LoadScreen) == FaderStatus.Complete
+#if !NO_AUDIO
+                            && !Audio.IsTrackPlaying()
+#endif
+                            )
                         {
                             var t = EngineLua.Call("getNextLevel", GameID, LevelID, actions[i].Operand);
                             CurrentLevelPath = (string)t[0];

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
 namespace FreeRaider.Loader
 {
@@ -14,7 +15,7 @@ namespace FreeRaider.Loader
         {
             var version = reader.ReadUInt32();
 
-            if (!version.IsAnyOf(0x00345254, 0x63345254, 0xFFFFFFF0))
+            if (!version.IsAnyOf((uint)0x00345254, (uint)0x63345254, 0xFFFFFFF0))
                 throw new ArgumentException("Load_TR4: Wrong level version");
 
             Texture16 = new WordTexture[0];
@@ -34,8 +35,8 @@ namespace FreeRaider.Loader
             {
                 var compBuffer = reader.ReadBytes((int) compSize);
 
-                var newsrc = Helper.Decompress(compBuffer);
-                Textures = newsrc.ReadArray(numTextiles - numMiscTextiles, () => DWordTexture.Read(newsrc));
+                var newsrc_ = Helper.Decompress(compBuffer);
+                Textures = newsrc_.ReadArray(numTextiles - numMiscTextiles, () => DWordTexture.Read(newsrc_));
             }
 
             uncompSize = reader.ReadUInt32();
@@ -49,8 +50,8 @@ namespace FreeRaider.Loader
                 {
                     var compBuffer = reader.ReadBytes((int) compSize);
 
-                    var newsrc = Helper.Decompress(compBuffer);
-                    Texture16 = newsrc.ReadArray(numTextiles - numMiscTextiles, () => WordTexture.Read(newsrc));
+                    var newsrc_ = Helper.Decompress(compBuffer);
+                    Texture16 = newsrc_.ReadArray(numTextiles - numMiscTextiles, () => WordTexture.Read(newsrc_));
                 }
                 else
                 {
@@ -75,8 +76,8 @@ namespace FreeRaider.Loader
 
                     var compBuffer = reader.ReadBytes((int) compSize);
 
-                    var newsrc = Helper.Decompress(compBuffer);
-                    Textures = newsrc.ReadArray(numMiscTextiles, () => DWordTexture.Read(newsrc));
+                    var newsrc_ = Helper.Decompress(compBuffer);
+                    Textures = Textures.AddArray(newsrc_.ReadArray(numMiscTextiles, () => DWordTexture.Read(newsrc_)));
                 }
                 else
                 {
@@ -94,101 +95,107 @@ namespace FreeRaider.Loader
 
             var compBuffer_ = reader.ReadBytes((int) compSize);
 
-            reader = Helper.Decompress(compBuffer_);
+            var newsrc = Helper.Decompress(compBuffer_);
 
-            var unused = reader.ReadUInt32();
+            var unused = newsrc.ReadUInt32();
             if (unused != 0)
                 Cerr.Write("Load_TR4: unused: Expected 0, Found " + unused.ToString("X8"));
 
-            var numRooms = reader.ReadUInt16();
-            Rooms = reader.ReadArray(numRooms, () => Room.Read(reader, Engine.TR4));
+            var numRooms = newsrc.ReadUInt16();
+            Rooms = newsrc.ReadArray(numRooms, () => Room.Read(newsrc, Engine.TR4));
 
-            var numFloorData = reader.ReadUInt32();
-            FloorData = reader.ReadUInt16Array(numFloorData);
+            var numFloorData = newsrc.ReadUInt32();
+            FloorData = newsrc.ReadUInt16Array(numFloorData);
 
+            var tmpr = reader;
+            reader = newsrc;
             ReadMeshData();
+            reader = tmpr;
 
-            var numAnimations = reader.ReadUInt32();
-            Animations = reader.ReadArray(numAnimations, () => Animation.Read(reader, Engine.TR4));
+            var numAnimations = newsrc.ReadUInt32();
+            Animations = newsrc.ReadArray(numAnimations, () => Animation.Read(newsrc, Engine.TR4));
 
-            var numStateChanges = reader.ReadUInt32();
-            StateChanges = reader.ReadArray(numStateChanges, () => StateChange.Read(reader));
+            var numStateChanges = newsrc.ReadUInt32();
+            StateChanges = newsrc.ReadArray(numStateChanges, () => StateChange.Read(newsrc));
 
-            var numAnimDispatches = reader.ReadUInt32();
-            AnimDispatches = reader.ReadArray(numAnimDispatches, () => AnimDispatch.Read(reader));
+            var numAnimDispatches = newsrc.ReadUInt32();
+            AnimDispatches = newsrc.ReadArray(numAnimDispatches, () => AnimDispatch.Read(newsrc));
 
-            var numAnimCommands = reader.ReadUInt32();
-            AnimCommands = reader.ReadInt16Array(numAnimCommands);
+            var numAnimCommands = newsrc.ReadUInt32();
+            AnimCommands = newsrc.ReadInt16Array(numAnimCommands);
 
-            var numMeshTreeData = reader.ReadUInt32();
-            MeshTreeData = reader.ReadUInt32Array(numMeshTreeData);
+            var numMeshTreeData = newsrc.ReadUInt32();
+            MeshTreeData = newsrc.ReadUInt32Array(numMeshTreeData);
 
+            tmpr = reader;
+            reader = newsrc;
             ReadFrameMoveableData();
+            reader = tmpr;
 
-            var numStaticMeshes = reader.ReadUInt32();
-            StaticMeshes = reader.ReadArray(numStaticMeshes, () => StaticMesh.Read(reader));
+            var numStaticMeshes = newsrc.ReadUInt32();
+            StaticMeshes = newsrc.ReadArray(numStaticMeshes, () => StaticMesh.Read(newsrc));
 
-            var spr1 = (char)reader.ReadSByte();
-            var spr2 = (char)reader.ReadSByte();
-            var spr3 = (char)reader.ReadSByte();
+            var spr1 = (char)newsrc.ReadSByte();
+            var spr2 = (char)newsrc.ReadSByte();
+            var spr3 = (char)newsrc.ReadSByte();
             var spr = "" + spr1 + spr2 + spr3;
             if(spr != "SPR")
                 throw new ArgumentException("Load_TR4: Expected 'SPR', Found '" + spr + "'", nameof(spr));
 
-            var numSpriteTextures = reader.ReadUInt32();
-            SpriteTextures = reader.ReadArray(numSpriteTextures, () => SpriteTexture.Read(reader, Engine.TR4));
+            var numSpriteTextures = newsrc.ReadUInt32();
+            SpriteTextures = newsrc.ReadArray(numSpriteTextures, () => SpriteTexture.Read(newsrc, Engine.TR4));
 
-            var numSpriteSequences = reader.ReadUInt32();
-            SpriteSequences = reader.ReadArray(numSpriteSequences, () => SpriteSequence.Read(reader));
+            var numSpriteSequences = newsrc.ReadUInt32();
+            SpriteSequences = newsrc.ReadArray(numSpriteSequences, () => SpriteSequence.Read(newsrc));
 
-            var numCameras = reader.ReadUInt32();
-            Cameras = reader.ReadArray(numCameras, () => Camera.Read(reader));
+            var numCameras = newsrc.ReadUInt32();
+            Cameras = newsrc.ReadArray(numCameras, () => Camera.Read(newsrc));
 
-            var numFlybyCameras = reader.ReadUInt32();
-            FlybyCameras = reader.ReadArray(numFlybyCameras, () => FlybyCamera.Read(reader));
+            var numFlybyCameras = newsrc.ReadUInt32();
+            FlybyCameras = newsrc.ReadArray(numFlybyCameras, () => FlybyCamera.Read(newsrc));
 
-            var numSoundSources = reader.ReadUInt32();
-            SoundSources = reader.ReadArray(numSoundSources, () => SoundSource.Read(reader));
+            var numSoundSources = newsrc.ReadUInt32();
+            SoundSources = newsrc.ReadArray(numSoundSources, () => SoundSource.Read(newsrc));
 
-            var numBoxes = reader.ReadUInt32();
-            Boxes = reader.ReadArray(numBoxes, () => Box.Read(reader, Engine.TR2));
+            var numBoxes = newsrc.ReadUInt32();
+            Boxes = newsrc.ReadArray(numBoxes, () => Box.Read(newsrc, Engine.TR2));
 
-            var numOverlaps = reader.ReadUInt32();
-            Overlaps = reader.ReadUInt16Array(numOverlaps);
+            var numOverlaps = newsrc.ReadUInt32();
+            Overlaps = newsrc.ReadUInt16Array(numOverlaps);
 
-            Zones = reader.ReadArray(numBoxes, () => Zone.Read(reader, Engine.TR2));
+            Zones = newsrc.ReadArray(numBoxes, () => Zone.Read(newsrc, Engine.TR2));
 
-            var numAnimatedTextures = reader.ReadUInt32();
-            AnimatedTextures = reader.ReadUInt16Array(numAnimatedTextures);
+            var numAnimatedTextures = newsrc.ReadUInt32();
+            AnimatedTextures = newsrc.ReadUInt16Array(numAnimatedTextures);
 
-            AnimatedTexturesUVCount = reader.ReadByte();
+            AnimatedTexturesUVCount = newsrc.ReadByte();
 
-            var tex1 = (char)reader.ReadSByte();
-            var tex2 = (char)reader.ReadSByte();
-            var tex3 = (char)reader.ReadSByte();
+            var tex1 = (char)newsrc.ReadSByte();
+            var tex2 = (char)newsrc.ReadSByte();
+            var tex3 = (char)newsrc.ReadSByte();
             var tex = "" + tex1 + tex2 + tex3;
             if (tex != "TEX")
                 throw new ArgumentException("Load_TR4: Expected 'TEX', Found '" + tex + "'", nameof(tex));
 
-            var numObjectTextures = reader.ReadUInt32();
-            ObjectTextures = reader.ReadArray(numObjectTextures, () => ObjectTexture.Read(reader, Engine.TR4));
+            var numObjectTextures = newsrc.ReadUInt32();
+            ObjectTextures = newsrc.ReadArray(numObjectTextures, () => ObjectTexture.Read(newsrc, Engine.TR4));
 
-            var numItems = reader.ReadUInt32();
-            Items = reader.ReadArray(numItems, () => Item.Read(reader, Engine.TR4));
+            var numItems = newsrc.ReadUInt32();
+            Items = newsrc.ReadArray(numItems, () => Item.Read(newsrc, Engine.TR4));
 
-            var numAiObjects = reader.ReadUInt32();
-            AIObjects = reader.ReadArray(numAiObjects, () => AIObject.Read(reader));
+            var numAiObjects = newsrc.ReadUInt32();
+            AIObjects = newsrc.ReadArray(numAiObjects, () => AIObject.Read(newsrc));
 
-            var numDemoData = reader.ReadUInt16();
-            DemoData = reader.ReadBytes(numDemoData);
+            var numDemoData = newsrc.ReadUInt16();
+            DemoData = newsrc.ReadBytes(numDemoData);
 
-            SoundMap = reader.ReadInt16Array(Constants.TR_AUDIO_MAP_SIZE_TR4);
+            SoundMap = newsrc.ReadInt16Array(Constants.TR_AUDIO_MAP_SIZE_TR4);
 
-            var numSoundDetails = reader.ReadUInt32();
-            SoundDetails = reader.ReadArray(numSoundDetails, () => Loader.SoundDetails.Read(reader, Engine.TR3));
+            var numSoundDetails = newsrc.ReadUInt32();
+            SoundDetails = newsrc.ReadArray(numSoundDetails, () => Loader.SoundDetails.Read(newsrc, Engine.TR3));
 
-            var numSampleIndices = reader.ReadUInt32();
-            SampleIndices = reader.ReadUInt32Array(numSampleIndices);
+            var numSampleIndices = newsrc.ReadUInt32();
+            SampleIndices = newsrc.ReadUInt32Array(numSampleIndices);
 
             var numSamples = reader.ReadUInt32();
             if(numSamples > 0)
@@ -205,18 +212,159 @@ namespace FreeRaider.Loader
                     Textures[i] = ConvertTexture(Texture16[i]);
                 }
             }
-
-            var unused2 = reader.ReadUInt16(); // I don't know what it is used for, but there's always 2 bytes of data at the end of TR4 levels
         }
 
         private void Write_TR4()
         {
-            Array.Resize(ref SoundMap, Constants.TR_AUDIO_MAP_SIZE_TR4); // todo check stuff
-
             writer.Write((uint)(WriteIsDemoOrUb ? 0x63345254 : 0x00345254));
 
-            // todo: wait for the trf guys to help me guessing num***Textiles values
-            throw new NotImplementedException();
+            writer.Write((ushort)Textures.Length);
+            writer.Write((ushort)0);
+            writer.Write((ushort)0);
+
+            byte[] buf;
+            using (var ms = new MemoryStream())
+            {
+                using (var bw = new BinaryWriter(ms))
+                    bw.WriteArray(Textures, x => x.Write(bw));
+                buf = ms.ToArray();
+            }
+            writer.Write((uint)buf.Length); // uncompSize
+            var bufComp = Helper.Encompress(buf);
+            writer.Write((uint)bufComp.Length); // compSize
+            writer.Write(bufComp);
+
+            using (var ms = new MemoryStream())
+            {
+                using (var bw = new BinaryWriter(ms))
+                    bw.WriteArray(Texture16, x => x.Write(bw));
+                buf = ms.ToArray();
+            }
+            writer.Write((uint)buf.Length); // uncompSize
+            bufComp = Helper.Encompress(buf);
+            writer.Write((uint)bufComp.Length); // compSize
+            writer.Write(bufComp);
+
+            using (var ms = new MemoryStream())
+            {
+                using (var bw = new BinaryWriter(ms))
+                    bw.WriteArray(Textures.Skip(Textures.Length - 2).Take(2), x => x.Write(bw));
+                buf = ms.ToArray();
+            }
+            writer.Write((uint)buf.Length); // uncompSize
+            bufComp = Helper.Encompress(buf);
+            writer.Write((uint)bufComp.Length); // compSize
+            writer.Write(bufComp);
+
+            // Here be dragons
+
+            using (var ms = new MemoryStream())
+            {
+                using (var bw = new BinaryWriter(ms))
+                {
+                    bw.Write((uint)0); // unused
+
+                    bw.Write((ushort)Rooms.Length);
+                    bw.WriteArray(Rooms, x => x.Write(bw, Engine.TR4));
+
+                    bw.Write((uint)FloorData.Length);
+                    bw.WriteUInt16Array(FloorData);
+
+                    var tmpw = writer;
+                    writer = bw;
+                    WriteMeshData();
+                    writer = tmpw;
+
+                    bw.Write((uint)Animations.Length);
+                    bw.WriteArray(Animations, x => x.Write(bw, Engine.TR4));
+
+                    bw.Write((uint)StateChanges.Length);
+                    bw.WriteArray(StateChanges, x => x.Write(bw));
+
+                    bw.Write((uint)AnimDispatches.Length);
+                    bw.WriteArray(AnimDispatches, x => x.Write(bw));
+
+                    bw.Write((uint)AnimCommands.Length);
+                    bw.WriteInt16Array(AnimCommands);
+
+                    bw.Write((uint)MeshTreeData.Length);
+                    bw.WriteUInt32Array(MeshTreeData);
+
+                    tmpw = writer;
+                    writer = bw;
+                    WriteFrameMoveableData();
+                    writer = tmpw;
+
+                    bw.Write((uint)StaticMeshes.Length);
+                    bw.WriteArray(StaticMeshes, x => x.Write(bw));
+
+                    bw.Write((sbyte)'S');
+                    bw.Write((sbyte)'P');
+                    bw.Write((sbyte)'R');
+
+                    bw.Write((uint)SpriteTextures.Length);
+                    bw.WriteArray(SpriteTextures, x => x.Write(bw, Engine.TR4));
+
+                    bw.Write((uint)SpriteSequences.Length);
+                    bw.WriteArray(SpriteSequences, x => x.Write(bw));
+
+                    bw.Write((uint)Cameras.Length);
+                    bw.WriteArray(Cameras, x => x.Write(bw));
+
+                    bw.Write((uint)FlybyCameras.Length);
+                    bw.WriteArray(FlybyCameras, x => x.Write(bw));
+
+                    bw.Write((uint)SoundSources.Length);
+                    bw.WriteArray(SoundSources, x => x.Write(bw));
+
+                    bw.Write((uint)Boxes.Length);
+                    bw.WriteArray(Boxes, x => x.Write(bw, Engine.TR2));
+
+                    bw.Write((uint)Overlaps.Length);
+                    bw.WriteUInt16Array(Overlaps);
+
+                    bw.WriteArray(Zones, x => x.Write(bw, Engine.TR2));
+
+                    bw.Write((uint)AnimatedTextures.Length);
+                    bw.WriteUInt16Array(AnimatedTextures);
+
+                    bw.Write((byte)AnimatedTexturesUVCount);
+
+                    bw.Write((sbyte)'T');
+                    bw.Write((sbyte)'E');
+                    bw.Write((sbyte)'X');
+
+
+                    bw.Write((uint)ObjectTextures.Length);
+                    bw.WriteArray(ObjectTextures, x => x.Write(bw, Engine.TR4));
+
+                    bw.Write((uint)Items.Length);
+                    bw.WriteArray(Items, x => x.Write(bw, Engine.TR4));
+
+                    bw.Write((uint)AIObjects.Length);
+                    bw.WriteArray(AIObjects, x => x.Write(bw));
+
+                    bw.Write((ushort)DemoData.Length);
+                    bw.Write(DemoData);
+
+                    bw.WriteInt16Array(SoundMap.Resize(Constants.TR_AUDIO_MAP_SIZE_TR4));
+
+                    bw.Write((uint)SoundDetails.Length);
+                    bw.WriteArray(SoundDetails, x => x.Write(bw, Engine.TR3));
+
+                    bw.Write((uint)SampleIndices.Length);
+                    bw.WriteUInt32Array(SampleIndices);
+                }
+                buf = ms.ToArray();
+            }
+
+            writer.Write((uint)buf.Length); // uncompSize
+            bufComp = Helper.Encompress(buf);
+            writer.Write((uint)bufComp.Length); // compSize
+            writer.Write(bufComp);
+
+            writer.Write((uint)SamplesCount);
+            writer.Write(SamplesData);
         }
     }
 }

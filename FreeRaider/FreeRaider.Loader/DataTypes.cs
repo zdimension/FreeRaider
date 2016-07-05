@@ -120,6 +120,15 @@ namespace FreeRaider.Loader
                     : (byte) 0xFF);
         }
 
+        public static ByteColor ReadARGB(BinaryReader br)
+        {
+            var a = br.ReadByte();
+            var r = br.ReadByte();
+            var g = br.ReadByte();
+            var b = br.ReadByte();
+            return new ByteColor(r, g, b, a);
+        }
+
         public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
         {
             bw.Write(R);
@@ -161,6 +170,11 @@ namespace FreeRaider.Loader
         public static explicit operator ByteColor(Color c)
         {
             return new ByteColor(c.R, c.G, c.B, c.A);
+        }
+
+        public static explicit operator ByteColor(FloatColor c)
+        {
+            return new ByteColor((byte)(c.R * 255), (byte)(c.G * 255), (byte)(c.B * 255), (byte)(c.A * 255));
         }
 
         public static implicit operator Color(ByteColor c)
@@ -1039,7 +1053,7 @@ namespace FreeRaider.Loader
                     Color.Write(bw, Engine.TR1);
                     bw.Write(lightType);
                     bw.Write(Unknown);
-                    bw.Write(Intensity1);
+                    bw.Write((byte)Intensity1);
                     bw.Write(R_Inner);
                     bw.Write(R_Outer);
                     bw.Write(Length);
@@ -1369,7 +1383,7 @@ namespace FreeRaider.Loader
                 {
                     bw.Write((ushort)Attributes);
                     if (ver >= Engine.TR3)
-                        bw.Write(Lighting2);
+                        bw.Write(((ByteColor)Color).ToUInt16());
                     else
                         bw.Write((short)(8191 - (Lighting2 >> 2))); // todo possible loss
                 }
@@ -1556,6 +1570,8 @@ namespace FreeRaider.Loader
         /// List of sectors [<see cref="Num_Z_Sectors"/> * <see cref="Num_X_Sectors"/>]
         /// </summary>
         public Sector[] Sectors;
+
+        public ByteColor RoomColor;
 
         /// <summary>
         /// This and the next one only affect externally-lit objects
@@ -1744,7 +1760,7 @@ namespace FreeRaider.Loader
 
                 var separator12 = br.ReadUInt32();
                 if (separator12 != 0 && separator12 != 0xCDCDCDCD)
-                    Cerr.Write("Room.Read[TR5]: separator12: Expected 0xCDCDCDCD, Found 0x" + separator12.ToString("X8"));
+                    Cerr.Write("Room.Read[TR5]: separator12: Expected 0 or 0xCDCDCDCD, Found 0x" + separator12.ToString("X8"));
 
                 var separator13 = br.ReadUInt32();
                 if (separator13 != 0xCDCDCDCD)
@@ -1898,6 +1914,11 @@ namespace FreeRaider.Loader
                 r.Num_X_Sectors = br.ReadUInt16();
 
                 r.Sectors = br.ReadArray(r.Num_Z_Sectors * r.Num_X_Sectors, () => Sector.Read(br));
+
+                if (ver == Engine.TR4)
+                {
+                    //r.RoomColor = ByteColor.ReadARGB(br); todo
+                }
 
                 if (ver < Engine.TR3)
                 {
@@ -2163,6 +2184,8 @@ namespace FreeRaider.Loader
                 bw.Write((short)Triangles.Length);
                 bw.WriteArray(Triangles, x => x.Write(bw, Engine.TR1));
 
+                if (Sprites == null) Sprites = new Sprite[0];
+
                 bw.Write((short)Sprites.Length);
                 bw.WriteArray(Sprites, x => x.Write(bw));
 
@@ -2178,6 +2201,11 @@ namespace FreeRaider.Loader
                 bw.Write(Num_X_Sectors);
 
                 bw.WriteArray(Sectors, x => x.Write(bw));
+
+                if (ver == Engine.TR4)
+                {
+                    //bw.Write(RoomColor.ToUInt32()); todo
+                }
 
                 if (ver < Engine.TR3)
                 {
@@ -2203,15 +2231,14 @@ namespace FreeRaider.Loader
 
                 bw.Write(AlternateRoom);
 
-                if (ver == Engine.TR3)
+                var tmpFlags = Flags;
+                if (tmpFlags.HasFlagUns(0x0002))
                 {
-                    if (Flags.HasFlagUns(0x0002))
-                    {
-                        Flags = (ushort) ((Flags | 0x0080) ^ 0x0002); // Restore quicksand flag if it has been moved by Read()
-                    }
+                    tmpFlags = (ushort) ((tmpFlags | 0x0080) ^ 0x0002);
+                        // Restore quicksand flag if it has been moved by Read()
                 }
 
-                bw.Write(Flags);
+                bw.Write(tmpFlags);
 
                 if (ver == Engine.TR3)
                 {
@@ -2335,6 +2362,9 @@ namespace FreeRaider.Loader
 
             if (ver < Engine.TR4)
             {
+                if(ColouredRectangles == null) ColouredRectangles = new QuadFace[0];
+                if(ColouredTriangles == null) ColouredTriangles = new Triangle[0];
+
                 bw.Write((short)ColouredRectangles.Length);
                 bw.WriteArray(ColouredRectangles, x => x.Write(bw, ver));
 
@@ -3301,7 +3331,7 @@ namespace FreeRaider.Loader
                 ret.Chance = br.ReadUInt16();
                 ret.Characteristics = br.ReadUInt16();
                 ret.SoundRange = DefaultRange;
-                ret.Pitch = DefaultPitch;
+                ret.Pitch = DefaultPitch; // todo opentomb reads two more bytes
             }
             else
             {
@@ -3850,7 +3880,7 @@ namespace FreeRaider.Loader
 
         public void Write(BinaryWriter bw)
         {
-            bw.Write(Map);
+            bw.Write(Map ?? new byte[8192]);
         }
     }
 

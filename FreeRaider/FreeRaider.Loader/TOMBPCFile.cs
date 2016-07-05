@@ -70,12 +70,12 @@ namespace FreeRaider.Loader
         /// <summary>
         ///     number of FMV cutscenes (*.RPL)
         /// </summary>
-        public short NumRPLs { get; set; }
+        public short NumFMVs { get; set; }
 
         /// <summary>
         ///     number of in-game (engine-rendered) cutscenes (CUT*.TR2)
         /// </summary>
-        public short NumCutScenes { get; set; }
+        public short NumCutscenes { get; set; }
 
         /// <summary>
         ///     Number of demo levels
@@ -116,7 +116,7 @@ namespace FreeRaider.Loader
         public string[] LevelDisplayNames { get; set; }
         public string[] ChapterScreens { get; set; }
         public string[] TitleFileNames { get; set; }
-        public string[] RPLFileNames { get; set; }
+        public string[] FMVFileNames { get; set; }
         public string[] LevelFileNames { get; set; }
         public string[] CutSceneFileNames { get; set; }
         public ushort[][] Script { get; set; }
@@ -126,7 +126,7 @@ namespace FreeRaider.Loader
         /// </summary>
         public PSXFMVInfo[] PSXFMVInfo { get; set; }
 
-        public ushort[] DemoLevelList { get; set; }
+        public ushort[] DemoLevelIDs { get; set; }
         public string[] GameStrings1 { get; set; }
         /// <summary>
         /// Either PC or PSX strings
@@ -143,11 +143,14 @@ namespace FreeRaider.Loader
             true, true, true, false, false
         };
 
+        public bool IsPSX { get; set; }
+
         public static TOMBPCFile Parse(BinaryReader br, bool psx = false)
         {
             try
             {
                 var lvl = new TOMBPCFile();
+                lvl.IsPSX = psx;
                 lvl.GameVersion = (TOMBPCGameVersion) br.ReadUInt32();
                 lvl.CopyrightInfo = br.ParseString(256);
                 var gameflowSize = br.ReadUInt16();
@@ -165,33 +168,34 @@ namespace FreeRaider.Loader
                 lvl.DemoTime = br.ReadInt32();
                 lvl.OnDemoInterrupt = br.ReadInt32();
                 lvl.OnDemoEnd = br.ReadInt32();
-                br.ReadBytes(36);
+                br.ReadBytes(36); // Unknown2
                 lvl.NumLevels = br.ReadInt16();
                 lvl.NumChapterScreens = br.ReadInt16();
                 lvl.NumTitles = br.ReadInt16();
-                lvl.NumRPLs = br.ReadInt16();
-                lvl.NumCutScenes = br.ReadInt16();
+                lvl.NumFMVs = br.ReadInt16();
+                lvl.NumCutscenes = br.ReadInt16();
                 lvl.NumDemoLevels = br.ReadInt16();
                 lvl.TitleSoundID = br.ReadInt16();
                 lvl.SingleLevel = br.ReadInt16();
-                br.ReadBytes(32); // filler
+                br.ReadBytes(32); // Unknown3
                 lvl.Flags = (TOMBPCFlags) br.ReadUInt16();
-                br.ReadBytes(6); // filler
+                br.ReadBytes(6); // Unknown4
                 lvl.XORbyte = br.ReadByte();
                 lvl.Language = (TOMBPCLanguage) br.ReadByte();
                 lvl.SecretSoundID = br.ReadInt16();
-                br.ReadBytes(4);
+                br.ReadBytes(4); // Unknown5
 
                 #endregion
 
                 #region Strings
 
-                lvl.LevelDisplayNames = br.ReadStringArray(lvl.NumLevels, lvl.XORbyte);
-                lvl.ChapterScreens = br.ReadStringArray(lvl.NumChapterScreens, lvl.XORbyte);
-                lvl.TitleFileNames = br.ReadStringArray(lvl.NumTitles, lvl.XORbyte);
-                lvl.RPLFileNames = br.ReadStringArray(lvl.NumRPLs, lvl.XORbyte);
-                lvl.LevelFileNames = br.ReadStringArray(lvl.NumLevels, lvl.XORbyte);
-                lvl.CutSceneFileNames = br.ReadStringArray(lvl.NumCutScenes, lvl.XORbyte);
+                var xor = lvl.Flags.HasFlag(TOMBPCFlags.UseEncryption) ? lvl.XORbyte : (byte)0;
+                lvl.LevelDisplayNames = br.ReadStringArray(lvl.NumLevels, xor);
+                lvl.ChapterScreens = br.ReadStringArray(lvl.NumChapterScreens, xor);
+                lvl.TitleFileNames = br.ReadStringArray(lvl.NumTitles, xor);
+                lvl.FMVFileNames = br.ReadStringArray(lvl.NumFMVs, xor);
+                lvl.LevelFileNames = br.ReadStringArray(lvl.NumLevels, xor);
+                lvl.CutSceneFileNames = br.ReadStringArray(lvl.NumCutscenes, xor);
 
                 #endregion
 
@@ -207,6 +211,8 @@ namespace FreeRaider.Loader
                 {
                     list[i] = br.ReadUInt16();
                 }
+                lvl.DemoLevelIDs = br.ReadUInt16Array(lvl.NumDemoLevels);
+                br.BaseStream.Position -= lvl.NumDemoLevels * 2;
                 var hack = br.ReadUInt16Array(3);
                 if (hack[0] == 19 && hack[1] == 20 && hack[2] == 21
                     || hack[0] == 21 && hack[1] == 22 && hack[2] == 23)
@@ -276,12 +282,7 @@ namespace FreeRaider.Loader
 
                 if (psx)
                 {
-                    lvl.PSXFMVInfo = new PSXFMVInfo[lvl.NumRPLs];
-                    for (var i = 0; i < lvl.NumRPLs; i++)
-                    {
-                        lvl.PSXFMVInfo[i].Flags = br.ReadUInt32();
-                        lvl.PSXFMVInfo[i].Unknown = br.ReadUInt32();
-                    }
+                    lvl.PSXFMVInfo = br.ReadArray(lvl.NumFMVs, () => Loader.PSXFMVInfo.Read(br));
                 }
 
                 var numGameStrings = br.ReadUInt16();
@@ -325,6 +326,94 @@ namespace FreeRaider.Loader
                     return Parse(br, psx);
                 }
             }
+        }
+
+        public void Write(string filename, bool psx = false)
+        {
+            if (File.Exists(filename))
+            {
+                File.Delete(filename);
+            }
+            using (var fs = File.OpenWrite(filename))
+            {
+                using (var bw = new BinaryWriter(fs))
+                {
+                    Write(bw, psx);
+                }
+            }
+        }
+
+        public void Write(BinaryWriter bw, bool psx = false)
+        {
+            bw.Write((uint) GameVersion);
+            bw.WriteStringASCII(CopyrightInfo, 256);
+            bw.Write((ushort) 128); // gameflowSize
+
+            bw.Write(FirstOption);
+            bw.Write(TitleReplace);
+            bw.Write(OnDeathDemoMode);
+            bw.Write(OnDeathInGame);
+            bw.Write(DemoTime);
+            bw.Write(OnDemoInterrupt);
+            bw.Write(OnDemoEnd);
+            bw.Write(new byte[36]); // Unknown2
+            bw.Write(NumLevels);
+            bw.Write(NumChapterScreens);
+            bw.Write(NumTitles);
+            bw.Write(NumFMVs);
+            bw.Write(NumCutscenes);
+            bw.Write(NumDemoLevels);
+            bw.Write(TitleSoundID);
+            bw.Write(SingleLevel);
+            bw.Write(new byte[32]); // Unknown3
+            bw.Write((ushort) Flags);
+            bw.Write(new byte[6]); // Unknown4
+            bw.Write(XORbyte);
+            bw.Write((byte) Language);
+            bw.Write(SecretSoundID);
+            bw.Write(new byte[4]); // Unknown5
+
+            var xor = Flags.HasFlag(TOMBPCFlags.UseEncryption) ? XORbyte : (byte)0;
+            bw.WriteStringArray(LevelDisplayNames, xor);
+            bw.WriteStringArray(ChapterScreens, xor);
+            bw.WriteStringArray(TitleFileNames, xor);
+            bw.WriteStringArray(FMVFileNames, xor);
+            bw.WriteStringArray(LevelFileNames, xor);
+            bw.WriteStringArray(CutSceneFileNames, xor);
+
+            var scrOffsets = new ushort[NumLevels + 1];
+            ushort totalOffset = 0;
+            for (var i = 0; i <= NumLevels; i++)
+            {
+                scrOffsets[i] = totalOffset;
+                totalOffset += (ushort)(Script[i].Length * 2);
+            }
+            bw.WriteUInt16Array(scrOffsets);
+
+            bw.Write((ushort)0);
+            var nbPos = bw.BaseStream.Position;
+            foreach (var a in Script.Resize(NumLevels + 1))
+                bw.WriteUInt16Array(a);
+            var tp = bw.BaseStream.Position;
+            bw.BaseStream.Position = nbPos - 2;
+            bw.Write((ushort)(tp - nbPos));
+            bw.BaseStream.Position = tp;
+            bw.WriteUInt16Array(DemoLevelIDs);
+
+            if (psx)
+            {
+                bw.WriteArray(PSXFMVInfo.Resize(NumFMVs), x => x.Write(bw));
+            }
+
+            bw.Write((ushort) GameStrings1.Length);
+            bw.WriteStringArray(GameStrings1, xor);
+            bw.WriteStringArray(GameStrings2, xor);
+            foreach (var puz in Puzzles.Resize(4))
+                bw.WriteStringArray(puz.Resize(NumLevels), xor);
+            foreach (var puz in Pickups.Resize(2))
+                bw.WriteStringArray(puz.Resize(NumLevels), xor);
+            foreach (var puz in Keys.Resize(4))
+                bw.WriteStringArray(puz.Resize(NumLevels), xor);
         }
     }
 
@@ -481,6 +570,17 @@ namespace FreeRaider.Loader
         {
             Flags = flags;
             Unknown = unknown;
+        }
+
+        public static PSXFMVInfo Read(BinaryReader br)
+        {
+            return new PSXFMVInfo(br.ReadUInt32(), br.ReadUInt32());
+        }
+
+        public void Write(BinaryWriter bw)
+        {
+            bw.Write(Flags);
+            bw.Write(Unknown);
         }
     }
 }

@@ -1251,6 +1251,7 @@ namespace FreeRaider
                                         break;
 
                                     case TR_ANIMCOMMAND.PlaySound:
+#if !NO_AUDIO
                                         if (ssAnim.CurrentFrame == pointer[0])
                                         {
                                             var soundIndex = pointer[1] & 0x3FFF;
@@ -1275,7 +1276,8 @@ namespace FreeRaider
                                             {
                                                 Audio.Send((uint)soundIndex, TR_AUDIO_EMITTER.Entity, (int)ID);
                                             }
-                                        }
+                                        }                              
+#endif
                                         pointer += 2;
                                         break;
 
@@ -1496,7 +1498,7 @@ namespace FreeRaider
                     result = false;
                     break;
                 }
-#if NOPE        
+#if NOPE
                 localA.setFromOpenGLMatrix(btB->transform);
                 localB.setIdentity();
 #else

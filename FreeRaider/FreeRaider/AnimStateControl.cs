@@ -1016,15 +1016,17 @@ namespace FreeRaider
 
             if (resp.Killed) // Stop any music, if Lara is dead.
             {
+#if !NO_AUDIO
                 Audio.EndStreams(TR_AUDIO_STREAM_TYPE.OneShot);
                 Audio.EndStreams(TR_AUDIO_STREAM_TYPE.Chat);
+#endif
             }
 
             var nextStep = StepType.Horizontal;
 
             switch (ssAnim.LastState)
             {
-                    #region Normal land animations
+#region Normal land animations
 
                 case TR_STATE.LaraStop:
                     // Reset directional flag only on intermediate animation!
@@ -1067,7 +1069,9 @@ namespace FreeRaider
                     }
                     else if (resp.Slide == SlideType.Front)
                     {
+#if !NO_AUDIO
                         Audio.Send((uint) TR_AUDIO_SOUND.Landing, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
+#endif
 
                         if (cmd.Jump)
                         {
@@ -1085,7 +1089,9 @@ namespace FreeRaider
                         {
                             ent.DirFlag = ENT_MOVE.MoveBackward;
                             ent.SetAnimation(TR_ANIMATION.LaraJumpBackBegin, 0);
+#if !NO_AUDIO
                             Audio.Send((uint) TR_AUDIO_SOUND.Landing, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
+#endif
                         }
                         else
                         {
@@ -1546,9 +1552,9 @@ namespace FreeRaider
                     }
                     break;
 
-                    #endregion
+#endregion
 
-                    #region Run and walk animations
+#region Run and walk animations
 
                 case TR_STATE.LaraRunForward:
                     globalOffset = ent.Transform.Basis.Column1 * RUN_FORWARD_OFFSET;
@@ -1982,9 +1988,9 @@ namespace FreeRaider
                     }
                     break;
 
-                    #endregion
+#endregion
 
-                    #region Slide animations
+#region Slide animations
 
                 case TR_STATE.LaraSlideBack:
                     cmd.Rotation.X = 0;
@@ -2014,7 +2020,9 @@ namespace FreeRaider
                         break;
                     }
 
+#if !NO_AUDIO
                     Audio.Kill((int) TR_AUDIO_SOUND.Sliding, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
+#endif
                     break;
                 case TR_STATE.LaraSlideForward:
                     cmd.Rotation.X = 0;
@@ -2045,12 +2053,14 @@ namespace FreeRaider
                         break;
                     }
 
+#if !NO_AUDIO
                     Audio.Kill((int) TR_AUDIO_SOUND.Sliding, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
+#endif
                     break;
 
-                    #endregion
+#endregion
 
-                    #region Miscellaneous animations
+#region Miscellaneous animations
 
                 case TR_STATE.LaraPushableGrab:
                     ent.MoveType = MoveType.OnFloor;
@@ -2142,6 +2152,7 @@ namespace FreeRaider
                             }
                         }
 
+#if !NO_AUDIO
                         if (Global.EngineWorld.EngineVersion > Loader.Engine.TR3)
                         {
                             if (wasTraversed)
@@ -2170,15 +2181,18 @@ namespace FreeRaider
                                 }
                             }
                         }
+#endif
 
                         ent.TraversedObject.UpdateRigidBody(true);
                     }
                     else
                     {
+#if !NO_AUDIO
                         if (Global.EngineWorld.EngineVersion > Loader.Engine.TR3)
                         {
                             Audio.Kill((int) TR_AUDIO_SOUND.Pushable, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
                         }
+#endif
                     }
                     break;
                 case TR_STATE.LaraPushablePull:
@@ -2236,6 +2250,7 @@ namespace FreeRaider
                             }
                         }
 
+#if !NO_AUDIO
                         if (Global.EngineWorld.EngineVersion > Loader.Engine.TR3)
                         {
                             if (wasTraversed)
@@ -2264,15 +2279,18 @@ namespace FreeRaider
                                 }
                             }
                         }
+#endif
 
                         ent.TraversedObject.UpdateRigidBody(true);
                     }
                     else
                     {
+#if !NO_AUDIO
                         if (Global.EngineWorld.EngineVersion > Loader.Engine.TR3)
                         {
                             Audio.Kill((int) TR_AUDIO_SOUND.Pushable, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
                         }
+#endif
                     }
                     break;
                 case TR_STATE.LaraRollForward:
@@ -2298,9 +2316,9 @@ namespace FreeRaider
                     }
                     break;
 
-                    #endregion
+#endregion
 
-                    #region Climbing animations
+#region Climbing animations
 
                 case TR_STATE.LaraJumpUp:
                     cmd.Rotation.X = 0.0f;
@@ -2926,9 +2944,9 @@ namespace FreeRaider
                     }
                     break;
 
-                    #endregion
+#endregion
 
-                    #region Freefall and underwater cases
+#region Freefall and underwater cases
 
                 case TR_STATE.LaraUnderwaterDiving:
                     ent.Angles.Y = -45.0f;
@@ -2944,7 +2962,9 @@ namespace FreeRaider
                         -FREE_FALL_SPEED_CRITICAL))
                     {
                         ent.Speed.Z = -FREE_FALL_SPEED_CRITICAL - 101;
+#if !NO_AUDIO
                         Audio.Send((uint) TR_AUDIO_SOUND.LaraScream, TR_AUDIO_EMITTER.Entity, (int) ent.ID); // Scream
+#endif
                     }
                     else if (ent.Speed.Z <= -FREE_FALL_SPEED_MAXSAFE)
                     {
@@ -2959,6 +2979,8 @@ namespace FreeRaider
                         cmd.Rotation.Y = 0.0f;
                         ent.UpdateTransform();
                         ent.SetAnimation(TR_ANIMATION.LaraFreeFallToUnderwater, 0);
+
+#if !NO_AUDIO
                         Audio.Kill((int) TR_AUDIO_SOUND.LaraScream, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
                         // Stop scream
 
@@ -2967,13 +2989,16 @@ namespace FreeRaider
                         {
                             Audio.Send((uint) TR_AUDIO_SOUND.Splash, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
                         }
+#endif
                     }
                     else if (resp.VerticalCollide.HasFlagSig(0x01) || ent.MoveType == MoveType.OnFloor)
                     {
                         if (ent.Self.Room.Flags.HasFlagUns(RoomFlag.Quicksand))
                         {
                             ent.SetAnimation(TR_ANIMATION.LaraStayIdle, 0);
+#if !NO_AUDIO
                             Audio.Kill((int) TR_AUDIO_SOUND.LaraScream, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
+#endif
                         }
                         else if (ent.Speed.Z <= -FREE_FALL_SPEED_MAXSAFE)
                         {
@@ -3001,7 +3026,9 @@ namespace FreeRaider
                         if (resp.Killed)
                         {
                             ssAnim.NextState = TR_STATE.LaraDeath;
+#if !NO_AUDIO
                             Audio.Kill((int) TR_AUDIO_SOUND.LaraScream, TR_AUDIO_EMITTER.Entity, (int) ent.ID);
+#endif
                         }
                     }
                     else if (cmd.Action)
@@ -3057,9 +3084,9 @@ namespace FreeRaider
                     }
                     break;
 
-                    #endregion
+#endregion
 
-                    #region Water animations
+#region Water animations
 
                 case TR_STATE.LaraUnderwaterStop:
                     if (ent.MoveType.NotEqual(MoveType.Underwater, MoveType.OnWater))
@@ -3341,9 +3368,9 @@ namespace FreeRaider
                     }
                     break;
 
-                    #endregion
+#endregion
 
-                    #region Crouch
+#region Crouch
 
                 case TR_STATE.LaraCrouchIdle:
                     ent.DirFlag = ENT_MOVE.MoveForward;
@@ -3573,9 +3600,9 @@ namespace FreeRaider
                     }
                     break;
 
-                    #endregion
+#endregion
 
-                    #region Monkeyswing
+#region Monkeyswing
 
                 case TR_STATE.LaraMonkeyswingIdle:
                     cmd.Rotation.X = 0.0f;
@@ -3687,9 +3714,9 @@ namespace FreeRaider
                     }
                     break;
 
-                    #endregion
+#endregion
 
-                    #region Tightrope
+#region Tightrope
 
                 case TR_STATE.LaraTightropeEnter:
                     cmd.Rotation.X = 0.0f;
@@ -3801,7 +3828,7 @@ namespace FreeRaider
                     }
                     break;
 
-                #endregion
+#endregion
 
                 default:
                     cmd.Rotation.X = 0.0f;

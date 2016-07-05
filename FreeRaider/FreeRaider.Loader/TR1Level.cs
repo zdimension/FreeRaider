@@ -152,10 +152,6 @@ namespace FreeRaider.Loader
 
         private void Write_TR1()
         {
-            GenTexAndPalettesIfEmpty();
-
-            Array.Resize(ref SoundMap, Constants.TR_AUDIO_MAP_SIZE_TR1); // todo check stuff
-
             writer.Write((uint) 0x00000020);
 
             writer.Write((uint) Textures.Length);
@@ -236,7 +232,7 @@ namespace FreeRaider.Loader
             writer.Write((ushort)DemoData.Length);
             writer.Write(DemoData);
 
-            writer.WriteInt16Array(SoundMap);
+            writer.WriteInt16Array(SoundMap.Resize(Constants.TR_AUDIO_MAP_SIZE_TR1));
 
             writer.Write((uint)SoundDetails.Length);
             writer.WriteArray(SoundDetails, x => x.Write(writer, Engine.TR1));

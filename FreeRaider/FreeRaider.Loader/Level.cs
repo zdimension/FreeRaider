@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -16,10 +18,11 @@ namespace FreeRaider.Loader
         private BinaryReader reader;
 
 
-        public Level(BinaryReader br, TRGame ver)
+        public Level(BinaryReader br, TRGame ver, string sfxpath = "MAIN.SFX")
         {
             setGameVer(ver);
             reader = br;
+            SfxPath = sfxpath;
             Load();
         }
 
@@ -86,7 +89,7 @@ namespace FreeRaider.Loader
 
         public Camera[] Cameras;
 
-        public FlybyCamera[] FlybyCameras;
+        public FlybyCamera[] FlybyCameras = new FlybyCamera[0];
 
         public SoundSource[] SoundSources;
 
@@ -100,9 +103,9 @@ namespace FreeRaider.Loader
 
         public LightMap LightMap;
 
-        public AIObject[] AIObjects;
+        public AIObject[] AIObjects = new AIObject[0];
 
-        public CinematicFrame[] CinematicFrames;
+        public CinematicFrame[] CinematicFrames = new CinematicFrame[0];
 
         public byte[] DemoData;
 
@@ -112,7 +115,7 @@ namespace FreeRaider.Loader
 
         public int SamplesCount;
 
-        public byte[] SamplesData;
+        public byte[] SamplesData = new byte[0];
 
         public uint[] SampleIndices;
 
@@ -266,8 +269,9 @@ namespace FreeRaider.Loader
         public static TRGame ParseVersion(BinaryReader br, string fext)
         {
             fext = fext.ToUpper();
-            var check = br.ReadBytes(4);
-            var ver = check[0] | (uint)(check[1] << 8) | (uint)(check[2] << 16) | (uint)(check[3] << 24);
+            /*var check = br.ReadBytes(4);
+            var ver = check[0] | (uint)(check[1] << 8) | (uint)(check[2] << 16) | (uint)(check[3] << 24);*/
+            var ver = br.ReadUInt32();
             switch (fext)
             {
                 case ".PHD":
@@ -285,7 +289,7 @@ namespace FreeRaider.Loader
                         return TRGame.TR3;
                     break;
                 case ".TR4":
-                    if (ver.IsAnyOf(0x00345254, 0x63345254, 0xFFFFFFF0))
+                    if (ver.IsAnyOf((uint)0x00345254, (uint)0x63345254, 0xFFFFFFF0))
                         return TRGame.TR4;
                     break;
                 case ".TRC":
@@ -300,8 +304,12 @@ namespace FreeRaider.Loader
         {
             var br = new BinaryReader(new FileStream(fileName, FileMode.Open));
             var ver = ParseVersion(br, Path.GetExtension(fileName));
-            if (ver == TRGame.Unknown) return null;
-            return new Level(br, ver);
+            if (ver == TRGame.Unknown)
+            {
+                throw new ArgumentException("Couldn't detect level version", nameof(ver));
+            }
+            var ret = new Level(br, ver, Path.Combine(Path.GetDirectoryName(Path.GetFullPath(fileName)), "MAIN.SFX"));
+            return ret;
         }
 
         private void Load()
@@ -372,6 +380,8 @@ namespace FreeRaider.Loader
             try
             {
                 if (writer == null || !writer.BaseStream.CanWrite) throw new NullReferenceException("'writer' is null");
+
+                GenTexAndPalettesIfEmpty();
 
                 switch (WriteGameVersion)
                 {
@@ -446,31 +456,80 @@ namespace FreeRaider.Loader
                 }
             }
 
-            if (Equals(Palette, default(Palette)))
-            {
-                Gen8bitPaletteFrom32bitTex(Textures);
-            }
+            
 
-            if ((Texture8 ?? new ByteTexture[0]).Length == 0)
+            if (WriteGameVersion < TRGame.TR4 && (Equals(Palette, default(Palette)) || (Texture8 ?? new ByteTexture[0]).Length == 0))
             {
-                // Generate 8-bit textures
-                Texture8 = new ByteTexture[Textures.Length];
-                for (var i = 0; i < Textures.Length; i++)
+                unsafe
                 {
-                    var tex = Textures[i];
-                    Texture8[i] = new ByteTexture(new byte[256][]);
-                    for (var y = 0; y < 256; y++)
-                    {
-                        Texture8[i].Pixels[y] = new byte[256];
+                    Texture8 = new ByteTexture[Textures.Length];
 
-                        for (var x = 0; x < 256; x++)
+                    var bigBmp = new Bitmap(Textures.Length * 256, 256, PixelFormat.Format32bppArgb);
+                    for (var bi = 0; bi < Textures.Length; bi++)
+                    {
+                        var bt = Textures[bi];
+                        var bmp = new Bitmap(256, 256, PixelFormat.Format32bppArgb);
+                        var bmpData = bmp.LockBits(new Rectangle(0, 0, 256, 256), ImageLockMode.WriteOnly,
+                            PixelFormat.Format32bppArgb);
+                        var scan0 = (uint*)bmpData.Scan0;
+                        for (var y = 0; y < 256; y++)
                         {
-                            Texture8[i].Pixels[y][x] = (byte) Helper.closestColor1(Palette.Colour, new ByteColor(tex.Pixels[y][x]));
+                            var scanline = bt.Pixels[y];
+                            fixed (uint* ptr = scanline)
+                            {
+                                for (var i = 0; i < 256; i++)
+                                    scan0[y * 256 + i] = (ptr[i] & 0xff00ff00) |
+                                                         ((ptr[i] & 0x00ff0000) >> 16) |
+                                                         ((ptr[i] & 0x000000ff) << 16);
+                            }
+                        }
+                        bmp.UnlockBits(bmpData);
+                        using (var gr = Graphics.FromImage(bigBmp))
+                            gr.DrawImage(bmp, new Rectangle(bi * 256, 0, 256, 256), 0, 0, 256, 256, GraphicsUnit.Pixel);
+                    }
+                    var bmp8 = bigBmp.Clone(new Rectangle(0, 0, bigBmp.Width, 256), PixelFormat.Format8bppIndexed);
+                    Palette = new Palette() { Colour = bmp8.Palette.Entries.Select(x => (ByteColor)x).ToArray().Resize(256) };
+
+                    for (var i = 0; i < Textures.Length; i++)
+                    {
+                        Texture8[i] = new ByteTexture(new byte[256][]);
+
+                        for (var y = 0; y < 256; y++)
+                        {
+                            Texture8[i].Pixels[y] = new byte[256];
+
+                            for (var x = 0; x < 256; x++)
+                            {
+                                Texture8[i].Pixels[y][x] = (byte)Array.IndexOf(bmp8.Palette.Entries, bmp8.GetPixel(i * 256 + x, y));
+                            }
                         }
                     }
+
+
+
+
+                    //Gen8bitPaletteFrom32bitTex(Textures);
+
+                    // Generate 8-bit textures
+
+                    /*for (var i = 0; i < Textures.Length; i++)
+                    {
+                        var tex = Textures[i];
+                        Texture8[i] = new ByteTexture(new byte[256][]);
+                        for (var y = 0; y < 256; y++)
+                        {
+                            Texture8[i].Pixels[y] = new byte[256];
+
+                            for (var x = 0; x < 256; x++)
+                            {
+                                Texture8[i].Pixels[y][x] =
+                                    (byte) Helper.closestColor1(Palette.Colour, new ByteColor(tex.Pixels[y][x]));
+                            }
+                        }
+                    }*/
                 }
             }
-            if (Equals(Palette16, default(Palette)))
+            if (WriteEngineVersion < Engine.TR4 && Equals(Palette16, default(Palette)))
             {
                 Palette16 = new Palette {Colour = Palette.Colour.Select(x => new ByteColor(x.R, x.G, x.B, 0xFF)).ToArray()};
             }
@@ -485,7 +544,8 @@ namespace FreeRaider.Loader
                 {
                     for (var x = 0; x < 256; x++)
                     {
-                        res[tex.Pixels[y][x]]++;
+                        if (!res.ContainsKey(tex.Pixels[y][x])) res[tex.Pixels[y][x]] = 1;
+                        else res[tex.Pixels[y][x]]++;
                     }
                 }
             }
@@ -509,10 +569,30 @@ namespace FreeRaider.Loader
             return res;
         }*/
 
-        private void Gen8bitPaletteFrom32bitTex(DWordTexture[] texs)
+        private unsafe void Gen8bitPaletteFrom32bitTex(DWordTexture[] texs)
         {
-            var top = GetTopColors(texs).Select(x => new ByteColor(x)).ToArray();
-            Palette = new Palette() { Colour = top };
+            foreach (var bt in texs)
+            {
+                var bmp = new Bitmap(256, 256, PixelFormat.Format32bppArgb);
+                var bmpData = bmp.LockBits(new Rectangle(0, 0, 256, 256), ImageLockMode.WriteOnly,
+                    PixelFormat.Format32bppArgb);
+                var scan0 = (uint*) bmpData.Scan0;
+                for (var y = 0; y < 256; y++)
+                {
+                    var scanline = bt.Pixels[y];
+                    fixed (uint* ptr = scanline)
+                    {
+                        for (var i = 0; i < 256; i++)
+                            scan0[y * 256 + i] = (ptr[i] & 0xff00ff00) |
+                                                 ((ptr[i] & 0x00ff0000) >> 16) |
+                                                 ((ptr[i] & 0x000000ff) << 16);
+                    }
+                }
+                var bmp8 = bmp.Clone(new Rectangle(0, 0, 256, 256), PixelFormat.Format8bppIndexed);
+                Palette = new Palette() {Colour = bmp8.Palette.Entries.Select(x => (ByteColor) x).ToArray()};
+            }
+            /*var top = GetTopColors(texs).Select(x => new ByteColor(x)).ToArray();
+            Palette = new Palette() { Colour = top };*/
         }
 
         private static DWordTexture ConvertTexture(Palette p, ByteTexture t)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
 namespace FreeRaider.Loader
 {
@@ -80,15 +81,15 @@ namespace FreeRaider.Loader
             LaraType = (LaraType) reader.ReadUInt16();
             WeatherType = (WeatherType) reader.ReadUInt16();
 
-            var flags = reader.ReadUInt32Array(7);
+            var flags = reader.ReadUInt32Array(7); // 28 bytes zero padding
             for (var i = 0; i < flags.Length; i++)
             {
                 if (flags[i] != 0)
                     Cerr.Write("Load_TR5: flags[" + (i + 1) + "]: Expected 0, Found 0x" + flags[i].ToString("X8"));
             }
 
-            var levelDataSize1 = reader.ReadUInt32();
-            var levelDataSize2 = reader.ReadUInt32();
+            var levelUncompSize = reader.ReadUInt32();
+            var levelCompSize = reader.ReadUInt32();
 
             var unused = reader.ReadUInt32();
             if(unused != 0)
@@ -207,12 +208,167 @@ namespace FreeRaider.Loader
 
         private void Write_TR5()
         {
-            Array.Resize(ref SoundMap, Constants.TR_AUDIO_MAP_SIZE_TR5); // todo check stuff
+            if (EngineVersion != Engine.TR5)
+            {
+                ConvertRoomsToTR5();
+            }
 
-            writer.Write((uint)0x00345254);
+            writer.Write((uint) 0x00345254);
 
-            // todo: wait for the trf guys to help me guessing num***Textiles values
-            throw new NotImplementedException();
+            writer.Write((ushort) Textures.Length);
+            writer.Write((ushort) 0);
+            writer.Write((ushort) 0);
+
+            byte[] buf;
+            using (var ms = new MemoryStream())
+            {
+                using (var bw = new BinaryWriter(ms))
+                    bw.WriteArray(Textures, x => x.Write(bw));
+                buf = ms.ToArray();
+            }
+            writer.Write((uint) buf.Length); // uncompSize
+            var bufComp = Helper.Encompress(buf);
+            writer.Write((uint) bufComp.Length); // compSize
+            writer.Write(bufComp);
+
+            using (var ms = new MemoryStream())
+            {
+                using (var bw = new BinaryWriter(ms))
+                    bw.WriteArray(Texture16, x => x.Write(bw));
+                buf = ms.ToArray();
+            }
+            writer.Write((uint) buf.Length); // uncompSize
+            bufComp = Helper.Encompress(buf);
+            writer.Write((uint) bufComp.Length); // compSize
+            writer.Write(bufComp);
+
+            using (var ms = new MemoryStream())
+            {
+                using (var bw = new BinaryWriter(ms))
+                    bw.WriteArray(Textures.Skip(Textures.Length - 3).Take(3), x => x.Write(bw));
+                buf = ms.ToArray();
+            }
+            writer.Write((uint) buf.Length); // uncompSize
+            bufComp = Helper.Encompress(buf);
+            writer.Write((uint) bufComp.Length); // compSize
+            writer.Write(bufComp);
+
+
+            writer.Write((ushort) LaraType);
+            writer.Write((ushort) WeatherType);
+
+            writer.Write(new byte[28]);
+
+            var levelStartPos = writer.BaseStream.Position;
+
+            writer.Write((uint)0); // uncompSize
+            writer.Write((uint)0); // compSize
+
+            writer.Write((uint) 0); // unused
+
+            writer.Write((ushort) Rooms.Length);
+            writer.WriteArray(Rooms, x => x.Write(writer, Engine.TR5));
+
+            writer.Write((uint) FloorData.Length);
+            writer.WriteUInt16Array(FloorData);
+
+            WriteMeshData();
+
+            writer.Write((uint) Animations.Length);
+            writer.WriteArray(Animations, x => x.Write(writer, Engine.TR4));
+
+            writer.Write((uint) StateChanges.Length);
+            writer.WriteArray(StateChanges, x => x.Write(writer));
+
+            writer.Write((uint) AnimDispatches.Length);
+            writer.WriteArray(AnimDispatches, x => x.Write(writer));
+
+            writer.Write((uint) AnimCommands.Length);
+            writer.WriteInt16Array(AnimCommands);
+
+            writer.Write((uint) MeshTreeData.Length);
+            writer.WriteUInt32Array(MeshTreeData);
+
+            WriteFrameMoveableData();
+
+            writer.Write((uint) StaticMeshes.Length);
+            writer.WriteArray(StaticMeshes, x => x.Write(writer));
+
+            writer.Write((sbyte) 'S');
+            writer.Write((sbyte) 'P');
+            writer.Write((sbyte) 'R');
+            writer.Write((sbyte) '\0');
+
+            writer.Write((uint) SpriteTextures.Length);
+            writer.WriteArray(SpriteTextures, x => x.Write(writer, Engine.TR4));
+
+            writer.Write((uint) SpriteSequences.Length);
+            writer.WriteArray(SpriteSequences, x => x.Write(writer));
+
+            writer.Write((uint) Cameras.Length);
+            writer.WriteArray(Cameras, x => x.Write(writer));
+
+            writer.Write((uint) FlybyCameras.Length);
+            writer.WriteArray(FlybyCameras, x => x.Write(writer));
+
+            writer.Write((uint) SoundSources.Length);
+            writer.WriteArray(SoundSources, x => x.Write(writer));
+
+            writer.Write((uint) Boxes.Length);
+            writer.WriteArray(Boxes, x => x.Write(writer, Engine.TR2));
+
+            writer.Write((uint) Overlaps.Length);
+            writer.WriteUInt16Array(Overlaps);
+
+            writer.WriteArray(Zones, x => x.Write(writer, Engine.TR2));
+
+            writer.Write((uint) AnimatedTextures.Length);
+            writer.WriteUInt16Array(AnimatedTextures);
+
+            writer.Write((byte) AnimatedTexturesUVCount);
+
+            writer.Write((sbyte) 'T');
+            writer.Write((sbyte) 'E');
+            writer.Write((sbyte) 'X');
+            writer.Write((sbyte) '\0');
+
+            writer.Write((uint) ObjectTextures.Length);
+            writer.WriteArray(ObjectTextures, x => x.Write(writer, Engine.TR5));
+
+            writer.Write((uint) Items.Length);
+            writer.WriteArray(Items, x => x.Write(writer, Engine.TR4));
+
+            writer.Write((uint) AIObjects.Length);
+            writer.WriteArray(AIObjects, x => x.Write(writer));
+
+            writer.Write((ushort) DemoData.Length);
+            writer.Write(DemoData);
+
+            writer.WriteInt16Array(SoundMap.Resize(Constants.TR_AUDIO_MAP_SIZE_TR5));
+
+            writer.Write((uint) SoundDetails.Length);
+            writer.WriteArray(SoundDetails, x => x.Write(writer, Engine.TR3));
+
+            writer.Write((uint) SampleIndices.Length);
+            writer.WriteUInt32Array(SampleIndices);
+
+            var levelEndPos = writer.BaseStream.Position;
+            writer.BaseStream.Position = levelStartPos;
+            var theSize = levelEndPos - levelStartPos;
+            writer.Write((uint)theSize); // uncompSize
+            writer.Write((uint)theSize); // compSize
+
+            writer.BaseStream.Position = levelEndPos;
+
+            writer.Write(new byte[6]);
+
+            writer.Write((uint) SamplesCount);
+            writer.Write(SamplesData);
+        }
+
+        private void ConvertRoomsToTR5()
+        {
+            
         }
     }
 }

@@ -2273,6 +2273,7 @@ namespace FreeRaider
 
         public static void lua_PlayStream(int id, int mask = 0)
         {
+#if !NO_AUDIO
             if (id < 0)
             {
                 ConsoleInfo.Instance.Warning(SYSWARN_WRONG_STREAM_ID);
@@ -2280,15 +2281,19 @@ namespace FreeRaider
             }
 
             Audio.StreamPlay((uint)id, (byte)mask); // TODO: return value?
+#endif
         }
 
         public static void lua_StopStreams()
         {
+#if !NO_AUDIO
             Audio.StopStreams();
+#endif
         }
 
         public static void lua_PlaySound(int id, int? entID = null)
         {
+#if !NO_AUDIO
             if (id < 0) return;
 
             if (id > EngineWorld.AudioMap.Count)
@@ -2318,10 +2323,12 @@ namespace FreeRaider
                         break;
                 }
             }
+#endif
         }
 
         public static void lua_StopSound(int id, int? entID = null)
         {
+#if !NO_AUDIO
             if (id > EngineWorld.AudioMap.Count)
             {
                 ConsoleInfo.Instance.Warning(SYSWARN_WRONG_SOUND_ID, EngineWorld.AudioMap.Count);
@@ -2340,6 +2347,7 @@ namespace FreeRaider
 
             if (result < 0)
                 ConsoleInfo.Instance.Warning(SYSWARN_AK_NOTPLAYED, id);
+#endif
         }
 
         public static uint lua_GetLevel()
@@ -2391,9 +2399,9 @@ namespace FreeRaider
             }
         }
 
-        #endregion
+#endregion
 
-        #region Flipped (alternate) room functions
+#region Flipped (alternate) room functions
 
         public static void lua_SetFlipState(int group, bool state)
         {
@@ -2477,9 +2485,9 @@ namespace FreeRaider
             return EngineWorld.FlipData[group].State;
         }
 
-        #endregion
+#endregion
 
-        #region Generate UV rotate animations
+#region Generate UV rotate animations
 
         public static void lua_genUVRotateAnimation(int id)
         {
@@ -2538,9 +2546,9 @@ namespace FreeRaider
             }
         }
 
-        #endregion
+#endregion
 
-        #region Functions from ExecCmd
+#region Functions from ExecCmd
 
         public static void lua_help()
         {
@@ -2699,7 +2707,7 @@ namespace FreeRaider
             }
         }
 
-        #endregion
+#endregion
     }
 }
 
@@ -3029,6 +3037,7 @@ namespace FreeRaider.Script
                 rs.Zdepth = 24;
         }
 
+#if !NO_AUDIO
         public void ParseAudio(AudioSettings au)
         {
             var aud = statedyn["audio"];
@@ -3040,6 +3049,7 @@ namespace FreeRaider.Script
             if (au.StreamBufferSize <= 0)
                 au.StreamBufferSize = 131072; // 128 * 1024
         }
+#endif
 
         public void ParseConsole(ConsoleInfo cn)
         {
@@ -3297,6 +3307,7 @@ namespace FreeRaider.Script
             return (int)Call("getNumTracks", (int)EngineWorld.EngineVersion)[0];
         }
 
+#if !NO_AUDIO
         public bool GetSoundtrack(int trackIndex, out string trackPath, out TR_AUDIO_STREAM_METHOD loadMethod, out TR_AUDIO_STREAM_TYPE streamType)
         {
             var res = Call("getTrackInfo", (int) EngineWorld.EngineVersion, trackIndex);
@@ -3305,6 +3316,7 @@ namespace FreeRaider.Script
             loadMethod = (TR_AUDIO_STREAM_METHOD) (int) res[2];
             return streamType != TR_AUDIO_STREAM_TYPE.Unknown;
         }
+#endif
 
         public string GetLoadingScreen(uint levelIndex)
         {

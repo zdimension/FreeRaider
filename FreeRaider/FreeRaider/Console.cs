@@ -243,7 +243,9 @@ namespace FreeRaider
                 case SDLK_UP:
                 case SDLK_DOWN:
                     if (historyLines.Count == 0) break;
+#if !NO_AUDIO
                     Audio.Send((uint)EngineLua.GetGlobalSound((int)TR_AUDIO_SOUND_GLOBALID.MenuPage));
+#endif
                     if (sk == SDLK_UP && historyPos < historyLines.Count)
                         historyPos++;
                     else if (sk == SDLK_DOWN && historyPos > 0)

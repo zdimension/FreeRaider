@@ -14,8 +14,6 @@ namespace FreeRaider
 {
     public partial class Constants
     {
-        public const bool NO_AUDIO = false;
-
         public const bool REDIRECT_LOG = true;
 
         public const bool AUDIO_OPENAL_FLOAT = false;
@@ -25,7 +23,7 @@ namespace FreeRaider
     {
         public static uint texture = 0;
         [STAThread]
-        public static unsafe void Main(string[] args)
+        public static void Main(string[] args)
         {
             Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
 

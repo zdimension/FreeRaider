@@ -1048,6 +1048,7 @@ namespace FreeRaider
 
         public short[] AnimCommands;
 
+#if !NO_AUDIO
         /// <summary>
         /// Audio emitters
         /// </summary>
@@ -1082,6 +1083,7 @@ namespace FreeRaider
         /// Stream track flag map
         /// </summary>
         public List<byte> StreamTrackMap;
+#endif
 
         /// <summary>
         /// This function is used for updating global animated texture frame
@@ -1264,14 +1266,16 @@ namespace FreeRaider
             ItemsTree = new Dictionary<uint, BaseItem>();
             Character = null;
 
+#if !NO_AUDIO
             AudioSources = new List<AudioSource>();
             AudioBuffers = new uint[0];
             AudioEffects = new List<AudioEffect>();
             AudioEmitters = new List<AudioEmitter>();
             AudioMap = new List<short>();
-            AnimSequences = new List<AnimSeq>();
             StreamTracks = new List<StreamTrack>();
             StreamTrackMap = new List<byte>();
+#endif
+            AnimSequences = new List<AnimSeq>();
 
             RoomBoxes = new List<RoomBox>();
             CamerasSinks = new List<StatCameraSink>();
@@ -1285,7 +1289,9 @@ namespace FreeRaider
             LastContainer = null;
             EngineLua.ClearTasks();
 
+#if !NO_AUDIO
             Audio.DeInit(); // De-initialize and destroy all audio objects.
+#endif
 
             if(MainInventoryManager != null)
             {

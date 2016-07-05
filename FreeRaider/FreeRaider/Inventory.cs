@@ -369,7 +369,9 @@ namespace FreeRaider
                             break;
 
                         case InventoryState.Closed:
+#if !NO_AUDIO
                             Audio.Send((uint) EngineLua.GetGlobalSound((int) TR_AUDIO_SOUND_GLOBALID.MenuClose));
+#endif
                             LabelItemName.Show = false;
                             LabelTitle.Show = false;
                             CurrentState = NextState;
@@ -377,7 +379,9 @@ namespace FreeRaider
 
                         case InventoryState.RLeft:
                         case InventoryState.RRight:
+#if !NO_AUDIO
                             Audio.Send((uint) TR_AUDIO_SOUND.MenuRotate);
+#endif
                             LabelItemName.Show = false;
                             CurrentState = NextState;
                             itemTime = 0.0f;
@@ -420,7 +424,9 @@ namespace FreeRaider
                     {
                         if(SetItemsType(currentItemsType) != MenuItemType.Invalid)
                         {
+#if !NO_AUDIO
                             Audio.Send((uint) EngineLua.GetGlobalSound((int) TR_AUDIO_SOUND_GLOBALID.MenuOpen));
+#endif
                             CurrentState = InventoryState.Open;
                             ringAngle = 180.0f;
                             ringVerticalAngle = 180.0f;

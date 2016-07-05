@@ -198,7 +198,9 @@ namespace FreeRaider
 
         public static ControlSettings ControlMapper = new ControlSettings();
 
+#if !NO_AUDIO
         public static AudioSettings AudioSettings = new AudioSettings();
+#endif
 
         public static float EngineFrameTime = 0.0f;
 
@@ -349,7 +351,7 @@ namespace FreeRaider
 
     public class Engine
     {
-        #region Starter and destructor
+#region Starter and destructor
 
         public static void Start()
         {
@@ -467,9 +469,9 @@ namespace FreeRaider
             Environment.Exit(val);
         }
 
-        #endregion
+#endregion
 
-        #region Initializers
+#region Initializers
 
         /// <summary>
         /// Initial init
@@ -517,7 +519,9 @@ namespace FreeRaider
             Game.InitGlobals();
             Renderer = new Render();
             Renderer.InitGlobals();
+#if !NO_AUDIO
             Audio.InitGlobals();
+#endif
         }
 
         public static void InitGL()
@@ -754,58 +758,57 @@ namespace FreeRaider
 
         public static void InitAL()
         {
-            if(!NO_AUDIO)
+#if !NO_AUDIO
+            var paramList = new int[]
             {
-                var paramList = new int[]
-                {
-                    (int)AlcContextAttributes.StereoSources, TR_AUDIO_STREAM_NUMSOURCES,
-                    (int)AlcContextAttributes.MonoSources,
-                    TR_AUDIO_MAX_CHANNELS - TR_AUDIO_STREAM_NUMSOURCES,
-                    (int)AlcContextAttributes.Frequency, 44100, 0
-                };
+                (int) AlcContextAttributes.StereoSources, TR_AUDIO_STREAM_NUMSOURCES,
+                (int) AlcContextAttributes.MonoSources,
+                TR_AUDIO_MAX_CHANNELS - TR_AUDIO_STREAM_NUMSOURCES,
+                (int) AlcContextAttributes.Frequency, 44100, 0
+            };
 
-                Sys.DebugLog(LOG_FILENAME, "Probing OpenAL devices...");
+            Sys.DebugLog(LOG_FILENAME, "Probing OpenAL devices...");
 
-                IList<string> devlist = null;
+            IList<string> devlist = null;
 
-                var t = new Thread(() => 
+            var t = new Thread(() =>
+            {
+                var tmp = Alc.GetString(IntPtr.Zero, AlcGetStringList.DeviceSpecifier);
+                devlist = tmp;
+            });
+            t.Start();
+            if (!t.Join(10000))
+            {
+                t.Abort();
+                if (devlist == null || devlist.Count == 0)
                 {
-                    var tmp = Alc.GetString(IntPtr.Zero, AlcGetStringList.DeviceSpecifier);
-                    devlist = tmp;
-                });
-                t.Start();
-                if(!t.Join(10000))
+                    Sys.DebugLog(LOG_FILENAME, "InitAL: Error while probing OpenAL devices. Exiting.");
+                    Shutdown(1);
+                }
+            }
+
+            if (devlist.Count == 0)
+            {
+                Sys.DebugLog(LOG_FILENAME, "InitAL: No AL audio devices!");
+                return;
+            }
+
+            foreach (var s in devlist)
+            {
+                Sys.DebugLog(LOG_FILENAME, " Device: {0}", s);
+
+                try
                 {
-                    t.Abort();
-                    if (devlist == null || devlist.Count == 0)
-                    { 
-                        Sys.DebugLog(LOG_FILENAME, "InitAL: Error while probing OpenAL devices. Exiting.");
-                        Shutdown(1);
-                    }
+                    ALContext = new AudioContext(s, 44100, 0, false, true);
+                    ALDevice = (IntPtr) ALContext.GetInstanceField("device_handle");
+                    break;
+                }
+                catch (Exception e)
+                {
+                    Sys.DebugLog(LOG_FILENAME, "Failed to create OpenAL Context on device '{0}': {1}", s, e.Message);
                 }
 
-                if(devlist.Count == 0)
-                {
-                    Sys.DebugLog(LOG_FILENAME, "InitAL: No AL audio devices!");
-                    return;
-                }
-
-                foreach (var s in devlist)
-                {
-                    Sys.DebugLog(LOG_FILENAME, " Device: {0}", s);
-
-                    try
-                    {
-                        ALContext = new AudioContext(s, 44100, 0, false, true);
-                        ALDevice = (IntPtr) ALContext.GetInstanceField("device_handle");
-                        break;
-                    }
-                    catch(Exception e)
-                    {
-                        Sys.DebugLog(LOG_FILENAME, "Failed to create OpenAL Context on device '{0}': {1}", s, e.Message);
-                    }
-
-                    /*var dev = Alc.OpenDevice(s);
+                /*var dev = Alc.OpenDevice(s);
 
                     if(Global.AudioSettings.UseEffects)
                     {
@@ -828,9 +831,9 @@ namespace FreeRaider
                         ALContext = Alc.CreateContext(dev, paramList);
                         break;
                     }*/
-                }
+            }
 
-                /*if(ALContext == ContextHandle.Zero)
+            /*if(ALContext == ContextHandle.Zero)
                 {
                     Sys.DebugLog(LOG_FILENAME, " Failed to create OpenAL context.");
                     Alc.CloseDevice(ALDevice);
@@ -838,15 +841,15 @@ namespace FreeRaider
                     return;
                 }*/
 
-                var driver = "OpenAL library: " + Alc.GetString(ALDevice, AlcGetString.DeviceSpecifier);
-                ConsoleInfo.Instance.AddLine(driver, FontStyle.ConsoleInfo);
+            var driver = "OpenAL library: " + Alc.GetString(ALDevice, AlcGetString.DeviceSpecifier);
+            ConsoleInfo.Instance.AddLine(driver, FontStyle.ConsoleInfo);
 
-                AL.SpeedOfSound(330.0f * 512.0f);
-                AL.DopplerVelocity(330.0f * 510.0f);
-                AL.DistanceModel(ALDistanceModel.LinearDistanceClamped);
+            AL.SpeedOfSound(330.0f * 512.0f);
+            AL.DopplerVelocity(330.0f * 510.0f);
+            AL.DistanceModel(ALDistanceModel.LinearDistanceClamped);
 
-                Audio.EffectsExtension = new EffectsExtension();
-            }
+            Audio.EffectsExtension = new EffectsExtension();
+#endif
         }
 
         public static void InitBullet()
@@ -901,7 +904,9 @@ namespace FreeRaider
 
                 state.ParseScreen(Global.ScreenInfo);
                 state.ParseRender(Renderer.Settings);
+#if !NO_AUDIO
                 state.ParseAudio(Global.AudioSettings);
+#endif
                 state.ParseConsole(ConsoleInfo.Instance);
                 state.ParseControls(ControlMapper);
                 state.ParseSystem(Global.SystemSettings);
@@ -1170,7 +1175,9 @@ namespace FreeRaider
 
             EngineLua.Clean();
 
+#if !NO_AUDIO
             Audio.Init();
+#endif
 
             Gui.DrawLoadScreen(100);
 

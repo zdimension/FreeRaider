@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cerr.cs" />
+    <Compile Include="CUTSEQFile.cs" />
     <Compile Include="DataTypes.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Helper.cs" />

@@ -325,6 +325,62 @@ namespace FreeRaider
             return x;
         }
 
+        public static unsafe float GetStringLen2(FontTexture glf, string text, int n)
+        {
+            text = text.NullCheck();
+
+            var x = 0.0f;
+
+            if (glf?.FTFace != null)
+            {
+                var charr = Helper.GetStringBPUTF8(text);
+                /*fixed (byte* ptr = charr)
+                {
+                    var ch = ptr;
+                    uint curr_utf32, next_utf32;
+                    var nch = Helper.UTF8ToUTF32(ch, &curr_utf32);
+                    curr_utf32 = glf.FTFace.GetCharIndex(curr_utf32);
+
+                    for (var i = 0; (*ch != 0) && !(n >= 0 && i >= n); i++)
+                    {
+                        var nch2 = Helper.UTF8ToUTF32(nch, &next_utf32);
+                        next_utf32 = glf.FTFace.GetCharIndex(next_utf32);
+                        ch = nch;
+                        nch = nch2;
+
+                        var kern = glf.FTFace.GetKerning(curr_utf32, next_utf32, KerningMode.Unscaled);
+                        curr_utf32 = next_utf32;
+                        x += (kern.X.ToSingle() + glf.Glyphs[(int)curr_utf32].AdvanceX) / 64.0f;
+                    }
+                }*/
+
+                var utf32b = System.Text.Encoding.Convert(System.Text.Encoding.UTF8, System.Text.Encoding.UTF32, charr);
+                var utf32 = new uint[utf32b.Length / 4];
+                Buffer.BlockCopy(utf32b, 0, utf32, 0, utf32b.Length);
+
+                if (utf32.Length == 0) return 0;
+
+                uint ci = 0;
+                uint cilast = 0;
+                for (var i = 0; i < n && i < utf32.Length; i++)
+                {
+                    var cur = utf32[i];
+                    if (cur == 0) break;
+                    if(i > 0)
+                        cilast = ci;
+                    ci = glf.FTFace.GetCharIndex(cur);
+                    x += glf.Glyphs[(int) ci].AdvanceX / 64.0f;
+                    if (i > 0)
+                    {
+                        var kern = glf.FTFace.GetKerning(cilast, ci, KerningMode.Unscaled);
+                        x += kern.X.ToSingle() / 64.0f;
+                    }
+                }
+            }
+
+            return x;
+        }
+
         public static float GetAscender(FontTexture glf)
         {
             if(glf.FontSize == 0 || glf.FTFace == null)
@@ -742,7 +798,7 @@ namespace FreeRaider
             ymax = Math.Max(ymax, max);
         }
 
-        public static unsafe byte[] GetStringBPUTF8(string str)
+        public static byte[] GetStringBPUTF8(string str)
         {
             return System.Text.Encoding.UTF8.GetBytes(str.NullCheck());
         }

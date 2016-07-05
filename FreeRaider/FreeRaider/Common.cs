@@ -26,7 +26,7 @@ namespace FreeRaider
 
         }
 
-        public static unsafe void TakeScreenshot()
+        public static void TakeScreenshot()
         {
             var viewport = new int[4];
             GL.GetInteger(GetPName.Viewport, viewport);

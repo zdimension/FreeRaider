@@ -33,6 +33,11 @@ namespace FreeRaider
             bw.Write(Encoding.ASCII.GetBytes(s));
         }
 
+        public static void WriteStringASCII(this BinaryWriter bw, string s, int length)
+        {
+            bw.Write(Encoding.ASCII.GetBytes(s).Resize(length));
+        }
+
         public static ushort[] ReadUInt16Array(this BinaryReader br, long arrLength)
         {
             var arr = new ushort[arrLength];
@@ -90,9 +95,27 @@ namespace FreeRaider
                 var st = stringOffsets[i];
                 var s = new string(tmp, st, i == arrLength - 1 ? tmp.Length - st : stringOffsets[i + 1] - st);
                 if (s[s.Length - 1] == '\0') s = s.Remove(s.Length - 1);
-                arr[i] = s.ConvertTR2Accent();
+                arr[i] = s.ConvertFromTR2Accent();
             }
             return arr;
+        }
+
+        public static void WriteStringArray(this BinaryWriter bw, string[] arr, byte xorKey = 0)
+        {
+            var converted = arr.Select(x => (Encoding.ASCII.GetString(Encoding.ASCII.GetBytes((x ?? "").ConvertToTR2Accent())) + "\0").XOR(xorKey)).ToArray();
+            var strOffsets = new ushort[converted.Length];
+            ushort totalOffset = 0;
+            for (var i = 0; i < converted.Length; i++)
+            {
+                strOffsets[i] = totalOffset;         
+                totalOffset += (ushort)converted[i].Length;
+            }
+            bw.WriteUInt16Array(strOffsets);
+            bw.Write(totalOffset);
+            foreach (var s in converted)
+            {
+                bw.Write(s.Select(x => (byte)x).ToArray());
+            }
         }
 
         public static string[] ReadStringArray(this BinaryReader br, ushort[] offsetTable, byte xorKey = 0)
@@ -191,7 +214,7 @@ namespace FreeRaider
             return (Convert.ToUInt64(a) & Convert.ToUInt64(f)) == Convert.ToUInt64(f);
         }
 
-        public static void WriteArray<T>(this BinaryWriter bw, IEnumerable<T> arr, Action<T> wr = null)
+        public static void WriteArray<T>(this BinaryWriter bw, IEnumerable<T> arr, Action<T> wr = null, int len = -1)
         {
             var tc = Type.GetTypeCode(typeof (T));
             Action<dynamic> writer = null;
@@ -249,27 +272,54 @@ namespace FreeRaider
 
             if (writer != null)
             {
-                foreach (var i in arr)
-                    writer(i);
+                if (len != -1)
+                {
+                    var a = arr.ToArray();
+                    for (var i = 0; i < len; i++)
+                    {
+                        writer(a[i]);
+                    }
+                }
+                else
+                    foreach (var i in arr)
+                        writer(i);
             }
         }
 
-        public static string ConvertTR2Accent(this string s)
+        internal static Dictionary<string, string> AccentHack = new Dictionary<string, string>
         {
-            var repl = new Dictionary<string, string>
-            {
-                {"Red)marrer un niveau", "Redémarrer un niveau"}
-            };
+            {"Red)marrer un niveau", "Redémarrer un niveau"}
+        };
 
-            if (repl.ContainsKey(s)) return repl[s];
+        public static string ConvertFromTR2Accent(this string s)
+        {
+            s = s.Trim();
 
-            var t = s;
+            if (AccentHack.ContainsKey(s)) return AccentHack[s];
 
-            t = Regex.Replace(t, @"\)(\w)", "$1\u0301");
-            t = Regex.Replace(t, @"\((\w)", "$1\u0302");
-            t = Regex.Replace(t, @"\$(\w)", "$1\u0300");
-            t = t.Normalize(NormalizationForm.FormC);
-            return t;
+            s = Regex.Replace(s, @"\)(\w)", "$1\u0301");
+            s = Regex.Replace(s, @"\((\w)", "$1\u0302");
+            s = Regex.Replace(s, @"\$(\w)", "$1\u0300");
+            s = Regex.Replace(s, @"~(\w)", "$1\u0308");
+            s = s.Replace('=', 'ß');
+            s = s.Normalize(NormalizationForm.FormC);
+            return s;
+        }
+
+        public static string ConvertToTR2Accent(this string s)
+        {
+            s = s.Trim();
+
+            if (AccentHack.ContainsValue(s)) return AccentHack.First(x => x.Value == s).Key;
+
+            s = s.Normalize(NormalizationForm.FormD);
+            s = Regex.Replace(s, @"(\w)\u0301", ")$1");
+            s = Regex.Replace(s, @"(\w)\u0302", "($1");
+            s = Regex.Replace(s, @"(\w)\u0300", "$$$1");
+            s = Regex.Replace(s, @"(\w)\u0308", "~$1");
+            s = s.Replace('ß', '=');
+            
+            return s;
         }
 
         public static string XOR(this string s, byte key)
@@ -320,7 +370,7 @@ namespace FreeRaider
         public static T[] Resize<T>(this T[] arr, int size)
         {
             var res = new T[size];
-            Buffer.BlockCopy(arr, 0, res, 0, arr.Length);
+            Array.Copy(arr, 0, res, 0, Math.Min(size, arr.Length));
             return res;
         }
     }

@@ -215,7 +215,9 @@ namespace FreeRaider
             {
                 if(gameLogicTime >= GAME_LOGIC_REFRESH_INTERVAL)
                 {
+#if !NO_AUDIO
                     Audio.Update();
+#endif
                     Tick(ref gameLogicTime);
                 }
                 return;
@@ -229,7 +231,9 @@ namespace FreeRaider
                 var dt = Tick(ref gameLogicTime);
                 EngineLua.DoTasks(dt);
                 UpdateAI();
+#if !NO_AUDIO
                 Audio.Update();
+#endif
 
                 if(isCharacter)
                 {
@@ -320,7 +324,9 @@ namespace FreeRaider
             Gui.FadeAssignPic(FaderType.LoadScreen, filePath);
             Gui.FadeStart(FaderType.LoadScreen, FaderDir.Out);
 
+#if !NO_AUDIO
             Audio.EndStreams();
+#endif
         }
 
         public static void ApplyControls(Entity ent)
@@ -452,7 +458,9 @@ namespace FreeRaider
                     {
                         ch.SetParam(CharParameters.Poison, 0);
                         ch.RemoveItem((uint) ITEM.SmallMedipack, 1);
+#if !NO_AUDIO
                         Audio.Send((uint) TR_AUDIO_SOUND.Medipack);
+#endif
                     }
 
                     ControlStates.UseSmallMedipack = !ControlStates.UseSmallMedipack;
@@ -464,7 +472,9 @@ namespace FreeRaider
                     {
                         ch.SetParam(CharParameters.Poison, 0);
                         ch.RemoveItem((uint)ITEM.LargeMedipack, 1);
+#if !NO_AUDIO
                         Audio.Send((uint)TR_AUDIO_SOUND.Medipack);
+#endif
                     }
 
                     ControlStates.UseBigMedipack = !ControlStates.UseBigMedipack;
