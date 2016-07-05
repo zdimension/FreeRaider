@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDL2-CS", "..\SDL2-CS\SDL2-
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLibsndfile.Native", "..\NLibsndfile.Native\NLibsndfile.Native.csproj", "{C0D015CE-3201-4106-9254-12CC9863F7D3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TRLevelUtility", "TRLevelUtility\TRLevelUtility.csproj", "{CA564AAC-A013-480B-A235-EB8510C751A8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TRLevelUtilityCLI", "TRLevelUtilityCLI\TRLevelUtilityCLI.csproj", "{CA564AAC-A013-480B-A235-EB8510C751A8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

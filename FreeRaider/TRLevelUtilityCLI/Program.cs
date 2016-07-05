@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using FreeRaider.Loader;
 
-namespace TRLevelUtility
+namespace TRLevelUtilityCLI
 {
     class Program
     {
@@ -38,7 +38,7 @@ namespace TRLevelUtility
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("TRLevelUtility " + Assembly.GetExecutingAssembly().GetName().Version.ToString(2) +
+                Console.WriteLine("TRLevelUtilityCLI " + Assembly.GetExecutingAssembly().GetName().Version.ToString(2) +
                                   " - (c) zdimension 2016");
                 Console.WriteLine("Many thanks to the TombRaiderForums guys (in particular b122251 who helped me a lot), and to the the TRosettaStone authors.");
                 Console.WriteLine("Usage: tlc <file name> <command>");
