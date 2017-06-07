@@ -3,20 +3,63 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace FreeRaider
 {
-    internal static class Extensions
+    public  static class Extensions
     {
+        public static string StopAtNull(this string s)
+        {
+            var i = s.IndexOf('\0');
+            if (i == -1) return s;
+            return s.Substring(0, i);
+        }
+
+        public static byte[] GetBytes<T>(this T s)
+            where T : struct
+        {
+            var size = Marshal.SizeOf(s);
+            var ptr = Marshal.AllocHGlobal(size);
+            var buf = new byte[size];
+            Marshal.StructureToPtr(s, ptr, true);
+            Marshal.Copy(ptr, buf, 0, size);
+            Marshal.FreeHGlobal(ptr);
+            return buf;
+        }
+
+        public static unsafe void ReadToPtr(this BinaryReader br, void* ptr, int length)
+        {
+            var buf = new byte[length];
+            br.BaseStream.Read(buf, 0, length);
+            Marshal.Copy(buf, 0, (IntPtr)ptr, length);
+        }
+
+        public static void WriteStruct<T>(this BinaryWriter bw, T s)
+            where T : struct
+        {
+            bw.Write(s.GetBytes());
+        }
+
+        public static void WriteStructArray<T>(this BinaryWriter bw, T[] arr, long length = -1)
+            where T : struct
+        {
+            if (length == -1) length = arr.Length;
+            for (long i = 0; i < length; i++)
+            {
+                bw.Write(arr[i].GetBytes());
+            }
+        }
+
         public static string ParseString(this BinaryReader br, long strLength, bool stopAtZero = false)
         {
             var str = new byte[strLength];
             for (long i = 0; i < strLength; i++)
                 str[i] = br.ReadByte();
             var ret = Encoding.ASCII.GetString(str);
-            if (stopAtZero) return ret.Substring(0, ret.IndexOf('\0'));
+            if (stopAtZero) return ret.StopAtNull();
             return ret;
         }
 
@@ -28,9 +71,21 @@ namespace FreeRaider
             return r;
         }
 
-        public static void WriteStringASCII(this BinaryWriter bw, string s)
+        public static unsafe void WriteString(this BinaryWriter bw, string s, byte xorKey = 0, Encoding enc = null, int length = -1)
         {
-            bw.Write(Encoding.ASCII.GetBytes(s));
+            if (enc == null) enc = Encoding.ASCII;
+            var bs = enc.GetBytes(s);
+            var ltow = Math.Min(length, bs.Length);
+            if (xorKey != 0)
+                fixed(byte* ptr = bs)
+                for (var i = 0; i < ltow; i++) ptr[i] = (byte)(ptr[i] ^ xorKey);
+            if (length != bs.Length)
+            {
+                var buf = new byte[length];
+                Buffer.BlockCopy(bs, 0, buf, 0, ltow);
+                bw.Write(buf);
+            }
+            else bw.Write(bs);
         }
 
         public static void WriteStringASCII(this BinaryWriter bw, string s, int length)
@@ -38,57 +93,109 @@ namespace FreeRaider
             bw.Write(Encoding.ASCII.GetBytes(s).Resize(length));
         }
 
-        public static ushort[] ReadUInt16Array(this BinaryReader br, long arrLength)
+        public static unsafe T ReadStruct<T>(this BinaryReader br)
+            where T : struct
+        {
+            T ret;
+            var buf = br.ReadBytes(Marshal.SizeOf(typeof (T)));
+            fixed (byte* p = buf)
+                ret = (T)Marshal.PtrToStructure((IntPtr) p, typeof (T));
+            return ret;
+        }
+
+        public static unsafe T[] ReadStructArray<T>(this BinaryReader br, long arrLength)
+            where T : struct
+        {
+            var ret = new T[arrLength];
+            var sz = Marshal.SizeOf(typeof (T));
+
+            byte[] buf = new byte[sz];
+            
+            for (long i = 0; i < arrLength; i++)
+            {
+                buf = br.ReadBytes(sz);
+                fixed (byte* b = buf)
+                {
+                    ret[i] = (T) Marshal.PtrToStructure((IntPtr)b, typeof (T));
+                }
+            }
+            return ret;
+        }
+
+        public static unsafe sbyte[] ReadSByteArray(this BinaryReader br, long arrLength)
+        {
+            var arr = new sbyte[arrLength];
+            fixed(sbyte* ptr = arr)
+            for (long i = 0; i < arrLength; i++)
+                ptr[i] = br.ReadSByte();
+            return arr;
+        }
+
+        public static unsafe ushort[] ReadUInt16Array(this BinaryReader br, long arrLength)
         {
             var arr = new ushort[arrLength];
+            fixed(ushort* ptr = arr)
             for (long i = 0; i < arrLength; i++)
-                arr[i] = br.ReadUInt16();
+                ptr[i] = br.ReadUInt16();
             return arr;
         }
 
-        public static void WriteUInt16Array(this BinaryWriter bw, ushort[] arr)
+        public static unsafe void WriteUInt16Array(this BinaryWriter bw, ushort[] arr)
         {
+            fixed(ushort* ptr = arr)
             for (var i = 0; i < arr.Length; i++)
-                bw.Write(arr[i]);
+                bw.Write(ptr[i]);
         }
 
-        public static uint[] ReadUInt32Array(this BinaryReader br, long arrLength)
+        public static unsafe uint[] ReadUInt32Array(this BinaryReader br, long arrLength)
         {
             var arr = new uint[arrLength];
+            fixed(uint* ptr = arr)
             for (long i = 0; i < arrLength; i++)
-                arr[i] = br.ReadUInt32();
+                ptr[i] = br.ReadUInt32();
             return arr;
         }
 
-        public static void WriteUInt32Array(this BinaryWriter bw, uint[] arr)
+        public static unsafe void WriteUInt32Array(this BinaryWriter bw, uint[] arr)
         {
+            fixed(uint* ptr = arr)
             for (var i = 0; i < arr.Length; i++)
-                bw.Write(arr[i]);
+                bw.Write(ptr[i]);
         }
 
-        public static short[] ReadInt16Array(this BinaryReader br, long arrLength)
+        public static unsafe short[] ReadInt16Array(this BinaryReader br, long arrLength)
         {
             var arr = new short[arrLength];
+            fixed(short* ptr = arr)
             for (long i = 0; i < arrLength; i++)
-                arr[i] = br.ReadInt16();
+                ptr[i] = br.ReadInt16();
             return arr;
         }
 
-        public static void WriteInt16Array(this BinaryWriter bw, short[] arr)
+        public static unsafe void WriteInt16Array(this BinaryWriter bw, short[] arr)
         {
+            fixed(short* ptr = arr)
             for (var i = 0; i < arr.Length; i++)
-                bw.Write(arr[i]);
+                bw.Write(ptr[i]);
         }
 
-        public static string[] ReadStringArray(this BinaryReader br, long arrLength, byte xorKey = 0)
+        public static unsafe void WriteSByteArray(this BinaryWriter bw, sbyte[] arr)
+        {
+            fixed(sbyte* ptr = arr)
+            for (var i = 0; i < arr.Length; i++)
+                bw.Write(ptr[i]);
+        }
+
+        public static unsafe string[] ReadStringArray(this BinaryReader br, long arrLength, byte xorKey = 0)
         {
             var arr = new string[arrLength];
             var stringOffsets = br.ReadUInt16Array(arrLength).ToList();
             var stringDataSize = br.ReadUInt16();
             var tmp = new char[stringDataSize];
+            fixed(char* ptr = tmp)
             for (ushort i = 0; i < stringDataSize; i++)
             {
-                tmp[i] = (char) (br.ReadByte() ^ xorKey);
+                ptr[i] = (char)(br.ReadByte() ^ xorKey);
             }
             for (var i = 0; i < arrLength; i++)
             {
@@ -107,7 +214,7 @@ namespace FreeRaider
             ushort totalOffset = 0;
             for (var i = 0; i < converted.Length; i++)
             {
-                strOffsets[i] = totalOffset;         
+                strOffsets[i] = totalOffset;
                 totalOffset += (ushort)converted[i].Length;
             }
             bw.WriteUInt16Array(strOffsets);
@@ -118,7 +225,7 @@ namespace FreeRaider
             }
         }
 
-        public static string[] ReadStringArray(this BinaryReader br, ushort[] offsetTable, byte xorKey = 0)
+        public static string[] ReadStringArray(this BinaryReader br, ushort[] offsetTable, byte xorKey = 0, Encoding enc = null)
         {
             var arr = new string[offsetTable.Length];
             var start = br.BaseStream.Position;
@@ -126,18 +233,38 @@ namespace FreeRaider
             for (var i = 0; i < offsetTable.Length; i++)
             {
                 br.BaseStream.Position = start + offsetTable[i];
-                arr[i] = br.ReadASCIIStringUntilNull().XOR(xorKey);
+                arr[i] = br.ReadStringUntil(xorKey, enc);
             }
 
             return arr;
         }
 
-        public static string ReadASCIIStringUntilNull(this BinaryReader br)
+        public static string ReadString(this BinaryReader br, int length, Encoding enc = null)
         {
+            return (enc ?? Encoding.ASCII).GetString(br.ReadBytes(length));
+        }
+
+        public static string ReadStringUntil(this BinaryReader br, byte xor = 0, Encoding enc = null, int ch = 0, int length = 0)
+        {
+            if (enc == null) enc = Encoding.ASCII;
             var ret = new StringBuilder();
 
-            while (br.PeekChar() != 0)
-                ret.Append((char) br.ReadByte());
+            if (length != 0)
+            {
+                var bs = br.ReadBytes(length);
+                for (var i = 0; i < length; i++)
+                {
+                    if (bs[i] == ch) break;
+                    ret.Append(enc.GetChars(new[] {(byte) (bs[i] ^ xor)})[0]);
+                }
+
+            }
+            else
+            {
+                while (br.PeekChar() != ch)
+                    ret.Append(enc.GetChars(new[] {(byte) (br.ReadByte() ^ xor)})[0]);
+                br.ReadByte();
+            }
 
             return ret.ToString();
         }
@@ -145,7 +272,7 @@ namespace FreeRaider
         public static T[] ReadArray<T>(this BinaryReader br, long arrLength, Func<T> rd = null)
         {
             var arr = new List<T>();
-            var tc = Type.GetTypeCode(typeof (T));
+            var tc = Type.GetTypeCode(typeof(T));
             Func<dynamic> reader = null;
 
             if (rd != null) reader = () => rd();
@@ -189,11 +316,11 @@ namespace FreeRaider
                         break;
                     default:
                         var m =
-                            typeof (T).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                            typeof(T).GetMethods(BindingFlags.Public | BindingFlags.Static)
                                 .FirstOrDefault(x => x.Name == "Parse");
                         if (m != null)
                         {
-                            reader = () => m.Invoke(null, new[] {br});
+                            reader = () => m.Invoke(null, new[] { br });
                         }
                         break;
                 }
@@ -216,7 +343,7 @@ namespace FreeRaider
 
         public static void WriteArray<T>(this BinaryWriter bw, IEnumerable<T> arr, Action<T> wr = null, int len = -1)
         {
-            var tc = Type.GetTypeCode(typeof (T));
+            var tc = Type.GetTypeCode(typeof(T));
             Action<dynamic> writer = null;
 
             if (wr != null) writer = x => wr(x);
@@ -226,45 +353,45 @@ namespace FreeRaider
                 switch (tc)
                 {
                     case TypeCode.Byte:
-                        writer = x => bw.Write((byte) x);
+                        writer = x => bw.Write((byte)x);
                         break;
                     case TypeCode.SByte:
-                        writer = x => bw.Write((sbyte) x);
+                        writer = x => bw.Write((sbyte)x);
                         break;
                     case TypeCode.UInt16:
-                        writer = x => bw.Write((ushort) x);
+                        writer = x => bw.Write((ushort)x);
                         break;
                     case TypeCode.UInt32:
-                        writer = x => bw.Write((uint) x);
+                        writer = x => bw.Write((uint)x);
                         break;
                     case TypeCode.UInt64:
-                        writer = x => bw.Write((ulong) x);
+                        writer = x => bw.Write((ulong)x);
                         break;
                     case TypeCode.Int16:
-                        writer = x => bw.Write((short) x);
+                        writer = x => bw.Write((short)x);
                         break;
                     case TypeCode.Int32:
-                        writer = x => bw.Write((int) x);
+                        writer = x => bw.Write((int)x);
                         break;
                     case TypeCode.Int64:
-                        writer = x => bw.Write((long) x);
+                        writer = x => bw.Write((long)x);
                         break;
                     case TypeCode.Decimal:
-                        writer = x => bw.Write((decimal) x);
+                        writer = x => bw.Write((decimal)x);
                         break;
                     case TypeCode.Double:
-                        writer = x => bw.Write((double) x);
+                        writer = x => bw.Write((double)x);
                         break;
                     case TypeCode.Single:
-                        writer = x => bw.Write((float) x);
+                        writer = x => bw.Write((float)x);
                         break;
                     default:
                         var m =
-                            typeof (T).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                            typeof(T).GetMethods(BindingFlags.Public | BindingFlags.Static)
                                 .FirstOrDefault(x => x.Name == "Write");
                         if (m != null)
                         {
-                            writer = x => m.Invoke(x, new[] {bw});
+                            writer = x => m.Invoke(x, new[] { bw });
                         }
                         break;
                 }
@@ -318,7 +445,7 @@ namespace FreeRaider
             s = Regex.Replace(s, @"(\w)\u0300", "$$$1");
             s = Regex.Replace(s, @"(\w)\u0308", "~$1");
             s = s.Replace('ß', '=');
-            
+
             return s;
         }
 
@@ -326,7 +453,7 @@ namespace FreeRaider
         {
             var sb = new StringBuilder();
             foreach (var t in s)
-                sb.Append((char) (byte)((byte)t ^ key));
+                sb.Append((char)(byte)((byte)t ^ key));
             return sb.ToString();
         }
 
@@ -367,11 +494,66 @@ namespace FreeRaider
             return (num2 & num) == num;
         }
 
-        public static T[] Resize<T>(this T[] arr, int size)
+        public static T[] Resize<T>(this T[] arr, int size, T def = default(T))
         {
             var res = new T[size];
-            Array.Copy(arr, 0, res, 0, Math.Min(size, arr.Length));
+            for (var i = 0; i < size; i++) res[i] = def;
+            if (arr != null)
+                Array.Copy(arr, 0, res, 0, Math.Min(size, arr.Length));
             return res;
+        }
+
+        public static string RemoveComments(this string s)
+        {
+            s = s.Replace("\r\n", "\n");
+            if (s.Contains("\n"))
+            {
+                var res = "";
+                var comment = false;
+                for (var i = 0; i < s.Length; i++)
+                {
+                    if (s[i] == '\n')
+                    {
+                        comment = false;
+                    }
+                    if (comment) continue;
+                    if (i != s.Length - 1 && s[i] == '/' && s[i + 1] == '/')
+                    {
+                        comment = true;
+                        continue;
+                    }
+                    res += s[i];
+                }
+                return res;
+            }
+            var id = s.IndexOf("//");
+            if (id != -1)
+                return s.Substring(0, s.IndexOf("//"));
+            return s;
+        }
+
+        public static string[] SplitAtFirst(this string s, char sep)
+        {
+            var idx = s.IndexOf(sep);
+            if (idx == -1) return new[] { "", "" };
+            return new[] { s.Substring(0, idx), idx + 1 < s.Length ? s.Substring(idx + 1) : "" };
+        }
+
+        public static T[][] ReadMultiArray<T>(this BinaryReader br, Func<T[]> gen, int n)
+        {
+            var ret = new T[n][];
+            for (var i = 0; i < n; i++)
+                ret[i] = gen();
+            return ret;
+        }
+
+        public static string Dump(this object o)
+        {
+            var fields = o.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public)
+                .Select(x => new {Name = x.Name, Value = x.GetValue(o)})
+                .Concat(o.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                    .Select(x => new {Name = x.Name, Value = x.GetValue(o, null)}));
+            return string.Join("\n", fields.Select(x => x.Name + " = " + x.Value));
         }
     }
 }

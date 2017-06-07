@@ -67,7 +67,7 @@ namespace FreeRaider.Loader
             var numSpriteSequences = reader.ReadUInt32();
             SpriteSequences = reader.ReadArray(numSpriteSequences, () => SpriteSequence.Read(reader));
 
-            if(IsDemoOrUb)
+            if(Format.IsDemoOrVict)
                 LightMap = LightMap.Read(reader);
 
             var numCameras = reader.ReadUInt32();
@@ -88,9 +88,9 @@ namespace FreeRaider.Loader
             AnimatedTextures = reader.ReadUInt16Array(numAnimatedTextures);
 
             var numItems = reader.ReadUInt32();
-            Items = reader.ReadArray(numItems, () => Item.Read(reader, Engine.TR2));
+            Entities = reader.ReadArray(numItems, () => Entity.Read(reader, Engine.TR2));
 
-            if (!IsDemoOrUb)
+            if (!Format.IsDemoOrVict)
                 LightMap = LightMap.Read(reader);
 
             var numCinematicFrames = reader.ReadUInt16();
@@ -200,7 +200,7 @@ namespace FreeRaider.Loader
             writer.Write((uint)SpriteSequences.Length);
             writer.WriteArray(SpriteSequences, x => x.Write(writer));
 
-            if (WriteIsDemoOrUb)
+            if (WriteFormat.IsDemoOrVict)
                 LightMap.Write(writer);
 
             writer.Write((uint)Cameras.Length);
@@ -221,10 +221,12 @@ namespace FreeRaider.Loader
             writer.Write((uint)AnimatedTextures.Length);
             writer.WriteUInt16Array(AnimatedTextures);
 
-            writer.Write((uint)Items.Length);
-            writer.WriteArray(Items, x => x.Write(writer, Engine.TR2));
+            var newEnt = ConvertEntityArray(Format.Engine, Engine.TR2, Entities);
 
-            if (!WriteIsDemoOrUb)
+            writer.Write((uint)newEnt.Length);
+            writer.WriteArray(newEnt, x => x.Write(writer, Engine.TR2));
+
+            if (!WriteFormat.IsDemoOrVict)
                 LightMap.Write(writer);
 
             writer.Write((ushort)CinematicFrames.Length);

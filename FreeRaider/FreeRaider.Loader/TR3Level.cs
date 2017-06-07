@@ -28,7 +28,7 @@ namespace FreeRaider.Loader
 
             if (version == 0xFF180034)
             {
-                IsDemoOrUb = true;
+                Format.Game = TRGame.TR3_VICT;
                 return; // VICT.TR2, only palette and textiles
             }
 
@@ -91,7 +91,7 @@ namespace FreeRaider.Loader
             ObjectTextures = reader.ReadArray(numObjectTextures, () => ObjectTexture.Read(reader, Engine.TR3));
 
             var numItems = reader.ReadUInt32();
-            Items = reader.ReadArray(numItems, () => Item.Read(reader, Engine.TR3));
+            Entities = reader.ReadArray(numItems, () => Entity.Read(reader, Engine.TR3));
 
             LightMap = LightMap.Read(reader);
 
@@ -153,7 +153,7 @@ namespace FreeRaider.Loader
 
         private void Write_TR3()
         {
-            writer.Write(WriteIsDemoOrUb ? 0xFF180034 : 0xFF180038);
+            writer.Write(WriteFormat.IsDemoOrVict ? 0xFF180034 : 0xFF180038);
 
             Palette.Write(writer, Engine.TR1);
 
@@ -163,7 +163,7 @@ namespace FreeRaider.Loader
             writer.WriteArray(Texture8, x => x.Write(writer));
             writer.WriteArray(Texture16, x => x.Write(writer));
 
-            if (WriteIsDemoOrUb)
+            if (WriteFormat.IsDemoOrVict)
             {
                 return; // VICT.TR2, only palette and textiles
             }
@@ -224,8 +224,10 @@ namespace FreeRaider.Loader
             writer.Write((uint)ObjectTextures.Length);
             writer.WriteArray(ObjectTextures, x => x.Write(writer, Engine.TR3));
 
-            writer.Write((uint)Items.Length);
-            writer.WriteArray(Items, x => x.Write(writer, Engine.TR3));
+            var newEnt = ConvertEntityArray(Format.Engine, Engine.TR3, Entities);
+
+            writer.Write((uint)newEnt.Length);
+            writer.WriteArray(newEnt, x => x.Write(writer, Engine.TR3));
 
             LightMap.Write(writer);
 

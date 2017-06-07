@@ -5,7 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-
+using static FreeRaider.Loader.Constants;
 
 namespace FreeRaider.Loader
 {
@@ -16,6 +16,11 @@ namespace FreeRaider.Loader
         public const ushort TextureIndexMask = 0x0FFF;
 
         public const ushort TextureFlippedMask = 0x8000;
+
+        public const int TextureSize = 256 * 256;
+
+        public const int TextureSize16 = TextureSize * sizeof (ushort);
+        public const int TextureSize32 = TextureSize * sizeof (uint);
     }
 
     public class LevelParseException : Exception
@@ -109,7 +114,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="ByteColor"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>The <see cref="ByteColor"/></returns>
-        public static ByteColor Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static ByteColor Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             return new ByteColor(
                 br.ReadByte(),
@@ -129,7 +134,7 @@ namespace FreeRaider.Loader
             return new ByteColor(r, g, b, a);
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             bw.Write(R);
             bw.Write(G);
@@ -451,7 +456,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Triangle"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Triangle"/></returns>
-        public static Triangle Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static Triangle Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             var ret = new Triangle
             {
@@ -462,7 +467,7 @@ namespace FreeRaider.Loader
             return ret;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             bw.WriteUInt16Array(Vertices);
             bw.Write(Texture);
@@ -509,7 +514,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="QuadFace"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="QuadFace"/></returns>
-        public static QuadFace Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static QuadFace Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             var ret = new QuadFace
             {
@@ -520,7 +525,7 @@ namespace FreeRaider.Loader
             return ret;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             bw.WriteUInt16Array(Vertices);
             bw.Write(Texture);
@@ -534,15 +539,16 @@ namespace FreeRaider.Loader
         /// <summary>
         /// The pixels [Size 256x256]
         /// </summary>
-        public byte[][] Pixels;
+        public byte[] Pixels;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ByteTexture"/> class.
         /// </summary>
         /// <param name="pix">The image pixels</param>
-        public ByteTexture(byte[][] pix)
+        public ByteTexture(byte[] pix)
         {
-            Pixels = pix;
+            Pixels = new byte[TextureSize];
+            Buffer.BlockCopy(pix, 0, Pixels, 0, TextureSize);
         }
 
         /// <summary>
@@ -552,22 +558,18 @@ namespace FreeRaider.Loader
         /// <returns>A <see cref="ByteTexture"/></returns>
         public static ByteTexture Read(BinaryReader br)
         {
-            var ret = new ByteTexture
+            return new Loader.ByteTexture
             {
-                Pixels = new byte[256][]
+                Pixels = br.ReadBytes(TextureSize)
             };
-            for (var i = 0; i < 256; i++)
-            {
-                ret.Pixels[i] = br.ReadBytes(256);
-            }
-            return ret;
         }
 
-        public void Write(BinaryWriter bw)
+        public unsafe void Write(BinaryWriter bw)
         {
+            fixed(byte* ptr = Pixels)
             for (var i = 0; i < Pixels.Length; i++)
             {
-                bw.Write(Pixels[i]);
+                bw.Write(ptr[i]);
             }
         }
     }
@@ -577,15 +579,16 @@ namespace FreeRaider.Loader
         /// <summary>
         /// The pixels [Size 256x256]
         /// </summary>
-        public ushort[][] Pixels;
+        public ushort[] Pixels;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WordTexture"/> class.
         /// </summary>
         /// <param name="pix">The image pixels</param>
-        public WordTexture(ushort[][] pix)
+        public WordTexture(ushort[] pix)
         {
-            Pixels = pix;
+            Pixels = new ushort[TextureSize];
+            Buffer.BlockCopy(pix, 0, Pixels, 0, TextureSize16);
         }
 
         /// <summary>
@@ -595,40 +598,41 @@ namespace FreeRaider.Loader
         /// <returns>A <see cref="WordTexture"/></returns>
         public static WordTexture Read(BinaryReader br)
         {
-            var ret = new WordTexture
+            return new Loader.WordTexture
             {
-                Pixels = new ushort[256][]
+                Pixels = br.ReadUInt16Array(TextureSize)
             };
-            for (var i = 0; i < 256; i++)
-            {
-                ret.Pixels[i] = br.ReadUInt16Array(256);
-            }
-            return ret;
         }
 
-        public void Write(BinaryWriter bw)
+        public unsafe void Write(BinaryWriter bw)
         {
-            for (var i = 0; i < Pixels.Length; i++)
-            {
-                bw.WriteUInt16Array(Pixels[i]);
-            }
+            bw.WriteUInt16Array(Pixels);
         }
     }
 
-    public struct DWordTexture
+    public unsafe struct DWordTexture
     {
         /// <summary>
         /// The pixels [Size 256x256]
         /// </summary>
-        public uint[][] Pixels;
+        public uint[] Pixels;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DWordTexture"/> class.
         /// </summary>
         /// <param name="pix">The image pixels</param>
-        public DWordTexture(uint[][] pix)
+        public DWordTexture(uint* inpix)
         {
-            Pixels = pix;
+            Pixels = new uint[TextureSize];
+            fixed(uint* ptr = Pixels)
+                for (var i = 0; i < TextureSize; i++)
+                    ptr[i] = inpix[i];
+        }
+
+        public DWordTexture(uint[] inpix)
+        {
+            Pixels = new uint[TextureSize];
+            Buffer.BlockCopy(inpix, 0, Pixels, 0, TextureSize32);
         }
 
         /// <summary>
@@ -638,7 +642,7 @@ namespace FreeRaider.Loader
         /// <returns>A <see cref="DWordTexture"/></returns>
         public static DWordTexture Read(BinaryReader br)
         {
-            var ret = new DWordTexture
+            /*var ret = new DWordTexture
             {
                 Pixels = new uint[256][]
             };
@@ -650,18 +654,48 @@ namespace FreeRaider.Loader
                     var tmp = br.ReadUInt32();
                     ret.Pixels[i][j] = (tmp & 0xff00ff00) | ((tmp & 0x00ff0000) >> 16) | ((tmp & 0x000000ff) << 16);
                 }
+            }*/
+            var ret = new DWordTexture();
+            ret.Pixels = new uint[TextureSize];
+            /*for (var i = 0; i < 256; i++)
+            {
+                fixed (uint* ptr = ret.Pixels)
+                {
+                    var a = ptr + i * 256;
+                    for (var j = 0; j < 256; j++)
+                    {
+                        var tmp = br.ReadUInt32();
+                        a[j] = (tmp & 0xff00ff00) | ((tmp & 0x00ff0000) >> 16) | ((tmp & 0x000000ff) << 16);
+                    }
+                }
+            }*/
+            uint tmp;
+            for (var i = 0; i < TextureSize; i++)
+            {
+                tmp = br.ReadUInt32();
+                ret.Pixels[i] = (tmp & 0xff00ff00) | ((tmp & 0x00ff0000) >> 16) | ((tmp & 0x000000ff) << 16);
             }
             return ret;
         }
 
-        public void Write(BinaryWriter bw)
+        public unsafe void Write(BinaryWriter bw)
         {
-            for (var i = 0; i < Pixels.Length; i++)
+            /*for (var i = 0; i < Pixels.Length; i++)
             {
                 var a = Pixels[i];
                 for (var j = 0; j < a.Length; j++)
                 {
                     var tmp = a[j];
+                    bw.Write((tmp & 0xff00ff00) | ((tmp & 0x00ff0000) >> 16) | ((tmp & 0x000000ff) << 16));
+                }
+            }*/
+            fixed(uint* pix = Pixels)
+            for (var i = 0; i < 256; i++)
+            {
+                var a = pix + i * 256;
+                for (var j = 0; j < 256; j++)
+                {
+                    var tmp = a[i];
                     bw.Write((tmp & 0xff00ff00) | ((tmp & 0x00ff0000) >> 16) | ((tmp & 0x000000ff) << 16));
                 }
             }
@@ -937,7 +971,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Light"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Light"/></returns>
-        public static Light Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static Light Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             var ret = new Light();
             var t1 = ver < Engine.TR2;
@@ -1027,7 +1061,7 @@ namespace FreeRaider.Loader
             return ret;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             var t1 = ver < Engine.TR2;
             if(ver == Engine.TR5)
@@ -1317,7 +1351,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="RoomVertex"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="RoomVertex"/></returns>
-        public static RoomVertex Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static RoomVertex Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             var ret = new RoomVertex();
             if (ver == Engine.TR5)
@@ -1364,7 +1398,7 @@ namespace FreeRaider.Loader
             return ret;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             if (ver == Engine.TR5)
             {
@@ -1446,7 +1480,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="RoomStaticMesh"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="RoomStaticMesh"/></returns>
-        public static RoomStaticMesh Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static RoomStaticMesh Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             var rsm = new RoomStaticMesh();
             rsm.Position = Vertex.Read32(br);
@@ -1478,7 +1512,7 @@ namespace FreeRaider.Loader
             return rsm;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             Position.Write32(bw);
             bw.Write((ushort)(Rotation / -90 * 16384.0f));
@@ -1650,7 +1684,7 @@ namespace FreeRaider.Loader
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Room"/></returns>
         [SuppressMessage("ReSharper", "NotResolvedInText")]
-        public static Room Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static Room Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             var r = new Room();
 
@@ -1991,7 +2025,7 @@ namespace FreeRaider.Loader
             return r;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             if (ver == Engine.TR5)
             {
@@ -2204,7 +2238,7 @@ namespace FreeRaider.Loader
 
                 if (ver == Engine.TR4)
                 {
-                    //bw.Write(RoomColor.ToUInt32()); todo
+                    bw.Write(RoomColor.ToUInt32());
                 }
 
                 if (ver < Engine.TR3)
@@ -2238,7 +2272,7 @@ namespace FreeRaider.Loader
                         // Restore quicksand flag if it has been moved by Read()
                 }
 
-                bw.Write(tmpFlags);
+                bw.Write((ushort)(tmpFlags & ~64));
 
                 if (ver == Engine.TR3)
                 {
@@ -2310,7 +2344,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Mesh"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Mesh"/></returns>
-        public static Mesh Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static Mesh Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             var ret = new Mesh();
 
@@ -2340,7 +2374,7 @@ namespace FreeRaider.Loader
             return ret;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             Centre.Write16(bw);
             bw.Write(CollisionSize);
@@ -2499,7 +2533,7 @@ namespace FreeRaider.Loader
         }
     }
 
-    public struct Moveable
+    public struct Model
     {
         /// <summary>
         /// Item Identifier (matched in Items[])
@@ -2526,6 +2560,8 @@ namespace FreeRaider.Loader
         /// </summary>
         public uint FrameOffset;
 
+        public uint FrameOffsetOrig;
+
         public uint FrameIndex;
 
         /// <summary>
@@ -2534,14 +2570,14 @@ namespace FreeRaider.Loader
         public ushort AnimationIndex;
 
         /// <summary>
-        /// Reads a <see cref="Moveable"/>
+        /// Reads a <see cref="Model"/>
         /// </summary>
-        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Moveable"/></param>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Model"/></param>
         /// <param name="ver">The game version</param>
-        /// <returns>A <see cref="Moveable"/></returns>
-        public static Moveable Read(BinaryReader br, Engine ver = Engine.Unknown)
+        /// <returns>A <see cref="Model"/></returns>
+        public static Model Read(BinaryReader br, LFormat ver = default(LFormat))
         {
-            var ret = new Moveable
+            var ret = new Model
             {
                 ObjectID = br.ReadUInt32(),
                 NumMeshes = br.ReadUInt16(),
@@ -2550,6 +2586,8 @@ namespace FreeRaider.Loader
                 FrameOffset = br.ReadUInt32(),
                 AnimationIndex = br.ReadUInt16()
             };
+
+            ret.FrameOffsetOrig = ret.FrameOffset;
 
             if (ver == Engine.TR5)
             {
@@ -2561,7 +2599,7 @@ namespace FreeRaider.Loader
             return ret;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             bw.Write(ObjectID);
             bw.Write(NumMeshes);
@@ -2577,7 +2615,7 @@ namespace FreeRaider.Loader
         }
     }
 
-    public struct Item
+    public struct Entity
     {
         /// <summary>
         /// Object Identifier (matched in Moveables[] or SpriteSequences[] as appropriate)
@@ -2623,19 +2661,19 @@ namespace FreeRaider.Loader
         public ushort ActivationMash => (ushort) ((Flags & 0x3e00) >> 9);
 
         /// <summary>
-        /// Determines if the <see cref="Item"/> is initially invisible
+        /// Determines if the <see cref="Entity"/> is initially invisible
         /// </summary>
         public bool InitiallyInvisible => (Flags & 0x0100) != 0;
 
         /// <summary>
-        /// Reads a <see cref="Item"/>
+        /// Reads a <see cref="Entity"/>
         /// </summary>
-        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Item"/></param>
+        /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Entity"/></param>
         /// <param name="ver">The game version</param>
-        /// <returns>An <see cref="Item"/></returns>
-        public static Item Read(BinaryReader br, Engine ver = Engine.Unknown)
+        /// <returns>An <see cref="Entity"/></returns>
+        public static Entity Read(BinaryReader br, LFormat ver = default(LFormat))
         {
-            var ret = new Item();
+            var ret = new Entity();
 
             ret.ObjectID = br.ReadInt16();
             ret.Room = br.ReadInt16();
@@ -2672,7 +2710,7 @@ namespace FreeRaider.Loader
             return ret;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             bw.Write(ObjectID);
             bw.Write(Room);
@@ -2727,7 +2765,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="SpriteTexture"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>An <see cref="SpriteTexture"/></returns>
-        public static SpriteTexture Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static SpriteTexture Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             var ret = new SpriteTexture();
 
@@ -2776,7 +2814,7 @@ namespace FreeRaider.Loader
             return ret;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             bw.Write(Tile);
 
@@ -2911,7 +2949,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Animation"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>An <see cref="Animation"/></returns>
-        public static Animation Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static Animation Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             var ret = new Animation();
 
@@ -2942,7 +2980,7 @@ namespace FreeRaider.Loader
             return ret;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             bw.Write(FrameOffset);
             bw.Write(FrameRate);
@@ -3084,7 +3122,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Box"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Box"/></returns>
-        public static Box Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static Box Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             var ret = new Box();
 
@@ -3109,7 +3147,7 @@ namespace FreeRaider.Loader
             return ret;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             if (ver >= Engine.TR2)
             {
@@ -3147,7 +3185,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Zone"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Zone"/></returns>
-        public static Zone Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static Zone Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             var ret = new Zone();
 
@@ -3161,7 +3199,7 @@ namespace FreeRaider.Loader
             return ret;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             var arrSize = ver < Engine.TR2 ? 2 : 4;
 
@@ -3280,7 +3318,7 @@ namespace FreeRaider.Loader
 
         public ushort Characteristics;
 
-        public LoopType GetLoopType(Engine ver = Engine.Unknown)
+        public LoopType GetLoopType(LFormat ver = default(LFormat))
         {
             switch (Characteristics & 3)
             {
@@ -3319,7 +3357,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="SoundDetails"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="SoundDetails"/></returns>
-        public static SoundDetails Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static SoundDetails Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             var ret = new SoundDetails();
 
@@ -3345,7 +3383,7 @@ namespace FreeRaider.Loader
             return ret;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             bw.Write(Sample);
 
@@ -3388,7 +3426,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="ObjectTextureVertex"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="ObjectTextureVertex"/></returns>
-        public static ObjectTextureVertex Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static ObjectTextureVertex Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             var ret = new ObjectTextureVertex();
 
@@ -3409,7 +3447,7 @@ namespace FreeRaider.Loader
             return ret;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             bw.Write(Xcoordinate);
             bw.Write(Xpixel);
@@ -3513,7 +3551,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="ObjectTexture"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="ObjectTexture"/></returns>
-        public static ObjectTexture Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static ObjectTexture Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             var ret = new ObjectTexture();
 
@@ -3558,7 +3596,7 @@ namespace FreeRaider.Loader
             return ret;
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             bw.Write((ushort)TransparencyFlags);
             bw.Write(TileAndFlag);
@@ -3897,7 +3935,7 @@ namespace FreeRaider.Loader
         /// <param name="br">The <see cref="BinaryReader"/> used to read the <see cref="Palette"/></param>
         /// <param name="ver">The game version</param>
         /// <returns>A <see cref="Palette"/></returns>
-        public static Palette Read(BinaryReader br, Engine ver = Engine.Unknown)
+        public static Palette Read(BinaryReader br, LFormat ver = default(LFormat))
         {
             return new Palette
             {
@@ -3905,9 +3943,10 @@ namespace FreeRaider.Loader
             };
         }
 
-        public void Write(BinaryWriter bw, Engine ver = Engine.Unknown)
+        public void Write(BinaryWriter bw, LFormat ver = default(LFormat))
         {
             bw.WriteArray(Colour, x => x.Write(bw, ver));
         }
     }
 }
+

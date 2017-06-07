@@ -171,7 +171,7 @@ namespace FreeRaider.Loader
             ObjectTextures = reader.ReadArray(numObjectTextures, () => ObjectTexture.Read(reader, Engine.TR5));
 
             var numItems = reader.ReadUInt32();
-            Items = reader.ReadArray(numItems, () => Item.Read(reader, Engine.TR4));
+            Entities = reader.ReadArray(numItems, () => Entity.Read(reader, Engine.TR4));
 
             var numAiObjects = reader.ReadUInt32();
             AIObjects = reader.ReadArray(numAiObjects, () => AIObject.Read(reader));
@@ -208,7 +208,7 @@ namespace FreeRaider.Loader
 
         private void Write_TR5()
         {
-            if (EngineVersion != Engine.TR5)
+            if (Format.Engine != Engine.TR5)
             {
                 ConvertRoomsToTR5();
             }
@@ -335,8 +335,10 @@ namespace FreeRaider.Loader
             writer.Write((uint) ObjectTextures.Length);
             writer.WriteArray(ObjectTextures, x => x.Write(writer, Engine.TR5));
 
-            writer.Write((uint) Items.Length);
-            writer.WriteArray(Items, x => x.Write(writer, Engine.TR4));
+            var newEnt = ConvertEntityArray(Format.Engine, Engine.TR4, Entities);
+
+            writer.Write((uint)newEnt.Length);
+            writer.WriteArray(newEnt, x => x.Write(writer, Engine.TR4));
 
             writer.Write((uint) AIObjects.Length);
             writer.WriteArray(AIObjects, x => x.Write(writer));

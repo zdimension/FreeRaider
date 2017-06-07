@@ -1,0 +1,3 @@
+- Make a better WadMerger
+- Understand AnimEdit and make new tool based on it
+- Make a less buggy, faster and more modern-PC compatible Room Editor (like NGLE)

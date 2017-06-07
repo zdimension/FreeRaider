@@ -66,23 +66,19 @@ namespace FreeRaider.Loader
             compSize = reader.ReadUInt32();
             if (compSize > 0)
             {
+                // 262144 = 256*256*4
+                if (uncompSize / 262144 > 2)
+                    Cerr.Write("Load_TR4: NumMiscTextiles > 2");
+
                 if (Textures.Length == 0)
                 {
-                    // 262144 = 256*256*4
-                    if (uncompSize / 262144 > 2)
-                        Cerr.Write("Load_TR4: NumMiscTextiles > 2");
-
-                    Array.Resize(ref Textures, numTextiles);
-
-                    var compBuffer = reader.ReadBytes((int) compSize);
-
-                    var newsrc_ = Helper.Decompress(compBuffer);
-                    Textures = Textures.AddArray(newsrc_.ReadArray(numMiscTextiles, () => DWordTexture.Read(newsrc_)));
+                    Array.Resize(ref Textures, numTextiles - numMiscTextiles);
                 }
-                else
-                {
-                    reader.BaseStream.Position += compSize;
-                }
+
+                var compBuffer = reader.ReadBytes((int) compSize);
+
+                var newsrc_ = Helper.Decompress(compBuffer);
+                Textures = Textures.AddArray(newsrc_.ReadArray(numMiscTextiles, () => DWordTexture.Read(newsrc_)));
             }
 
             uncompSize = reader.ReadUInt32();
@@ -181,7 +177,7 @@ namespace FreeRaider.Loader
             ObjectTextures = newsrc.ReadArray(numObjectTextures, () => ObjectTexture.Read(newsrc, Engine.TR4));
 
             var numItems = newsrc.ReadUInt32();
-            Items = newsrc.ReadArray(numItems, () => Item.Read(newsrc, Engine.TR4));
+            Entities = newsrc.ReadArray(numItems, () => Entity.Read(newsrc, Engine.TR4));
 
             var numAiObjects = newsrc.ReadUInt32();
             AIObjects = newsrc.ReadArray(numAiObjects, () => AIObject.Read(newsrc));
@@ -216,7 +212,7 @@ namespace FreeRaider.Loader
 
         private void Write_TR4()
         {
-            writer.Write((uint)(WriteIsDemoOrUb ? 0x63345254 : 0x00345254));
+            writer.Write((uint)(WriteFormat.IsDemoOrVict ? 0x63345254 : 0x00345254));
 
             writer.Write((ushort)Textures.Length);
             writer.Write((ushort)0);
@@ -338,8 +334,10 @@ namespace FreeRaider.Loader
                     bw.Write((uint)ObjectTextures.Length);
                     bw.WriteArray(ObjectTextures, x => x.Write(bw, Engine.TR4));
 
-                    bw.Write((uint)Items.Length);
-                    bw.WriteArray(Items, x => x.Write(bw, Engine.TR4));
+                    var newEnt = ConvertEntityArray(Format.Engine, Engine.TR4, Entities);
+
+                    bw.Write((uint)newEnt.Length);
+                    bw.WriteArray(newEnt, x => x.Write(bw, Engine.TR4));
 
                     bw.Write((uint)AIObjects.Length);
                     bw.WriteArray(AIObjects, x => x.Write(bw));

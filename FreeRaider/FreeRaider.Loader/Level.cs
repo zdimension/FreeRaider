@@ -4,47 +4,30 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Net.Configuration;
+using System.Net.Mime;
 using System.Security.Cryptography;
 using Ionic.Zlib;
+using static FreeRaider.Loader.Constants;
 
 namespace FreeRaider.Loader
 {
     public partial class Level
     {
-        public TRGame GameVersion { get; private set; }
-
-        public Engine EngineVersion { get; private set; }
+        public LFormat Format;
 
         private BinaryReader reader;
 
 
-        public Level(BinaryReader br, TRGame ver, string sfxpath = "MAIN.SFX")
+        public Level(BinaryReader br, LFormat ver, string sfxpath = "MAIN.SFX", bool psx = false)
         {
-            setGameVer(ver);
+            Format = ver;
             reader = br;
             SfxPath = sfxpath;
             Load();
         }
 
-        private void setGameVer(TRGame ver)
-        {
-            GameVersion = ver;
-            EngineVersion = Helper.GameToEngine(ver, out IsDemoOrUb);
-        }
-
-        private void setGameVerWrite(TRGame ver)
-        {
-            WriteGameVersion = ver;
-            WriteEngineVersion = Helper.GameToEngine(ver, out WriteIsDemoOrUb);
-        }
-
-
-        public bool IsDemoOrUb;
-        public bool WriteIsDemoOrUb;
-
-        public TRGame WriteGameVersion { get; private set; }
-
-        public Engine WriteEngineVersion { get; private set; }
+        public LFormat WriteFormat;
 
         public ByteTexture[] Texture8;
         public WordTexture[] Texture16;
@@ -73,7 +56,7 @@ namespace FreeRaider.Loader
 
         public short[] AnimCommands;
 
-        public Moveable[] Moveables;
+        public Model[] Models;
 
         public StaticMesh[] StaticMeshes;
 
@@ -99,7 +82,7 @@ namespace FreeRaider.Loader
 
         public Zone[] Zones;
 
-        public Item[] Items;
+        public Entity[] Entities;
 
         public LightMap LightMap;
 
@@ -151,7 +134,7 @@ namespace FreeRaider.Loader
 
                 reader.BaseStream.Position = pos + dataPos;
 
-                Meshes[i] = Mesh.Read(reader, EngineVersion);
+                Meshes[i] = Mesh.Read(reader, Format);
 
                 for (var j = 0; j < numMeshIndices; j++)
                 {
@@ -182,7 +165,7 @@ namespace FreeRaider.Loader
                 if (MeshIndices[i] != 0 || i == 0) 
                 {
                     tmpMeshIndices[i] = (uint) (writer.BaseStream.Position - pos);
-                    Meshes[MeshIndices[i]].Write(writer, WriteEngineVersion);
+                    Meshes[MeshIndices[i]].Write(writer, WriteFormat);
 
                     while ((writer.BaseStream.Position - pos) % 4 != 0)
                         writer.BaseStream.Position++; // TR engine wants the data to be 4-byte aligned
@@ -207,15 +190,15 @@ namespace FreeRaider.Loader
             FrameData = reader.ReadUInt16Array(numFrameData);
 
             var numMoveables = reader.ReadUInt32();
-            Moveables = new Moveable[numMoveables];
+            Models = new Model[numMoveables];
             for (uint i = 0; i < numMoveables; i++)
             {
-                Moveables[i] = Moveable.Read(reader, EngineVersion);
+                Models[i] = Loader.Model.Read(reader, Format);
 
                 // Disable unused skybox polygons
-                if (EngineVersion == Engine.TR3 && Moveables[i].ObjectID == 355)
+                if (Format == Engine.TR3 && Models[i].ObjectID == 355)
                 {
-                    Array.Resize(ref Meshes[MeshIndices[Moveables[i].StartingMesh]].ColouredRectangles, 16);
+                    Array.Resize(ref Meshes[MeshIndices[Models[i].StartingMesh]].ColouredRectangles, 16);
                 }
             }
 
@@ -227,10 +210,10 @@ namespace FreeRaider.Loader
             {
                 for (uint j = 0; j < numMoveables; j++)
                 {
-                    if(Moveables[j].FrameOffset == pos)
+                    if(Models[j].FrameOffset == pos)
                     {
-                        Moveables[j].FrameIndex = i;
-                        Moveables[j].FrameOffset = 0;
+                        Models[j].FrameIndex = i;
+                        // Moveables[j].FrameOffset = 0;
                     }
                 }
 
@@ -240,9 +223,9 @@ namespace FreeRaider.Loader
 
                 for (uint j = 0; j < numMoveables; j++)
                 {
-                    if (Moveables[j].FrameOffset > pos)
+                    if (Models[j].FrameOffset > pos)
                     {
-                        pos = Moveables[j].FrameOffset;
+                        pos = Models[j].FrameOffset;
                         break;
                     }
                 }
@@ -251,94 +234,183 @@ namespace FreeRaider.Loader
             reader.BaseStream.Position = end;
         }
 
+        public static int ConvertID(Engine from, Engine to, uint id)
+        {
+            var mod = Catalogue.Models.FirstOrDefault(x => x[(int) from] == id);
+            if (mod == null) return -1;
+
+            return mod[(int) to];
+        }
+
+        public static Model[] ConvertModelArray(Engine from, Engine to, Model[] arr)
+        {
+            if (from == to) return arr.ToArray();
+
+            var ret = new List<Model>();
+
+            foreach (var m in arr)
+            {
+                var newID = ConvertID(from, to, m.ObjectID);
+
+                if (newID != -1)
+                {
+                    var clone = m;
+                    clone.ObjectID = (uint)newID;
+                    ret.Add(clone);
+                }
+            }
+
+            return ret.ToArray();
+        }
+
+        public static Entity[] ConvertEntityArray(Engine from, Engine to, Entity[] arr)
+        {
+            if (from == to) return arr.ToArray();
+
+            var ret = new List<Entity>();
+
+            foreach (var m in arr)
+            {
+                var newID = ConvertID(from, to, (uint)m.ObjectID);
+
+                if (newID != -1)
+                {
+                    var clone = m;
+                    clone.ObjectID = (short)newID;
+                    ret.Add(clone);
+                }
+            }
+
+            return ret.ToArray();
+        }
+
         private void WriteFrameMoveableData()
         {
             writer.Write((uint)FrameData.Length);
 
             writer.WriteUInt16Array(FrameData);
 
-            writer.Write((uint)Moveables.Length);
+            var newMod = ConvertModelArray(Format.Engine, WriteFormat.Engine, Models);
+
+            writer.Write((uint)newMod.Length);
 
             // todo maybe loss of data since unused skybox polys are disabled
 
             // todo also some stuff may or may not work since some things are modified
 
-            writer.WriteArray(Moveables, x => x.Write(writer, WriteEngineVersion));
+            writer.WriteArray(newMod, x => x.Write(writer, WriteFormat));
         }
 
-        public static TRGame ParseVersion(BinaryReader br, string fext)
+        public static LFormat ParseVersion(string name)
         {
-            fext = fext.ToUpper();
-            /*var check = br.ReadBytes(4);
-            var ver = check[0] | (uint)(check[1] << 8) | (uint)(check[2] << 16) | (uint)(check[3] << 24);*/
-            var ver = br.ReadUInt32();
-            switch (fext)
+            var ret = LFormat.Unknown;
+
+            try
             {
-                case ".PHD":
-                    if (ver == 0x00000020)
-                        return TRGame.TR1;
-                    break;
-                case ".TUB":
-                    if (ver == 0x00000020)
-                        return TRGame.TR1UnfinishedBusiness;
-                    break;
-                case ".TR2":
-                    if (ver == 0x0000002D)
-                        return TRGame.TR2;
-                    else if (ver.IsAnyOf(0xFF080038, 0xFF180038, 0xFF180034))
-                        return TRGame.TR3;
-                    break;
-                case ".TR4":
-                    if (ver.IsAnyOf((uint)0x00345254, (uint)0x63345254, 0xFFFFFFF0))
-                        return TRGame.TR4;
-                    break;
-                case ".TRC":
-                    if (ver == 0x00345254)
-                        return TRGame.TR5;
-                    break;
+                using (var fs = File.OpenRead(name))
+                using (var br = new BinaryReader(fs))
+                {
+                    ret = ParseVersion(br, Path.GetExtension(name));
+                }
             }
-            return TRGame.Unknown;
+            catch
+            {
+                
+            }
+
+            return ret;
+        }
+
+        public static LFormat ParseVersion(BinaryReader br, string fext)
+        {
+            if (fext.Length >= 4)
+            {
+                fext = fext.ToUpper();
+                /*var check = br.ReadBytes(4);
+            var ver = check[0] | (uint)(check[1] << 8) | (uint)(check[2] << 16) | (uint)(check[3] << 24);*/
+                var ver = br.ReadUInt32();
+                switch (fext)
+                {
+                    case ".PHD":
+                        if (ver == 0x00000020)
+                            return TRGame.TR1;
+                        break;
+                    case ".TUB":
+                        if (ver == 0x00000020)
+                            return TRGame.TR1Demo;
+                        break;
+                    case ".TR2":
+                        if (ver == 0x0000002D)
+                            return TRGame.TR2;
+                        else if (ver.IsAnyOf(0xFF080038, 0xFF180038, 0xFF180034))
+                            return TRGame.TR3;
+                        break;
+                    case ".TR4":
+                        if (ver.IsAnyOf((uint) 0x00345254, 0xFFFFFFF0))
+                            return TRGame.TR4;
+                        if (ver == 0x63345254)
+                            return TRGame.TR4Demo;
+                        break;
+                    case ".TRC":
+                        if (ver == 0x00345254)
+                            return TRGame.TR5;
+                        break;
+
+                    case ".PSX":
+                        br.ReadUInt32();
+                        ver = br.ReadUInt32();
+                        if(ver == 0x56414270)
+                            return new LFormat(TRGame.TR1, LevelPlatform.PSX);
+                        break;
+                }
+            }
+            return LFormat.Unknown;
+        }
+
+        public static LevelPlatform GetLevelFormat(string name)
+        {
+            // PLACEHOLDER: Currently, only PC levels are supported.
+            return LevelPlatform.PC;
         }
 
         public static Level FromFile(string fileName)
         {
-            var br = new BinaryReader(new FileStream(fileName, FileMode.Open));
+            var br = new BinaryReader(File.OpenRead(fileName));
             var ver = ParseVersion(br, Path.GetExtension(fileName));
-            if (ver == TRGame.Unknown)
+            if (ver == Engine.Unknown)
             {
                 throw new ArgumentException("Couldn't detect level version", nameof(ver));
             }
-            var ret = new Level(br, ver, Path.Combine(Path.GetDirectoryName(Path.GetFullPath(fileName)), "MAIN.SFX"));
-            return ret;
+            return new Level(br, ver, Path.Combine(Path.GetDirectoryName(Path.GetFullPath(fileName)), "MAIN.SFX"));
+        }
+
+        public static Level FromFile(string fileName, TRGame ver)
+        {
+            return new Level(new BinaryReader(File.OpenRead(fileName)), ver, Path.Combine(Path.GetDirectoryName(Path.GetFullPath(fileName)), "MAIN.SFX"));
         }
 
         private void Load()
         {
             reader.BaseStream.Position = 0;
-            switch (GameVersion)
+            switch (Format.Engine)
             {
-                case TRGame.TR1:
-                case TRGame.TR1Demo:
-                case TRGame.TR1UnfinishedBusiness:
+                case Engine.TR1:
                     Load_TR1();
                     break;
-                case TRGame.TR2:
-                case TRGame.TR2Gold:
-                case TRGame.TR2Demo:
+                case Engine.TR2:
                     Load_TR2();
                     break;
-                case TRGame.TR3:
-                case TRGame.TR3Gold:
+                case Engine.TR3:
+                //case TRGame.TR3Gold:
                     Load_TR3();
                     break;
-                case TRGame.TR4:
-                case TRGame.TR4Demo:
+                case Engine.TR4:
                     Load_TR4();
                     break;
-                case TRGame.TR5:
+                case Engine.TR5:
                     Load_TR5();
                     break;
-                case TRGame.Unknown:
+                case Engine.Unknown:
                     throw new ArgumentException("Unable to detect level format.");
             }
             if (reader.BaseStream.Position < reader.BaseStream.Length)
@@ -348,7 +420,7 @@ namespace FreeRaider.Loader
             }
         }
 
-        public void Write(string fileName, TRGame version)
+        public void Write(string fileName, LFormat fmt)
         {
             if (File.Exists(fileName))
             {
@@ -356,21 +428,21 @@ namespace FreeRaider.Loader
             }
             using (var fs = File.OpenWrite(fileName))
             {
-                Write(fs, version);
+                Write(fs, fmt);
             }
         }
 
-        public void Write(Stream s, TRGame version)
+        public void Write(Stream s, LFormat fmt)
         {
             using (var bw = new BinaryWriter(s))
             {
-                Write(bw, version);
+                Write(bw, fmt);
             }
         }
 
-        public void Write(BinaryWriter bw, TRGame version)
+        public void Write(BinaryWriter bw, LFormat fmt)
         {
-            setGameVerWrite(version);
+            WriteFormat = fmt;
             writer = bw;
             internalWriteBefore();
         }
@@ -381,33 +453,27 @@ namespace FreeRaider.Loader
             {
                 if (writer == null || !writer.BaseStream.CanWrite) throw new NullReferenceException("'writer' is null");
 
-                GenTexAndPalettesIfEmpty();
+                GenTexAndPalettesIfEmpty(true, true, true);
 
-                switch (WriteGameVersion)
+                switch (WriteFormat.Engine)
                 {
-                    case TRGame.TR1:
-                    case TRGame.TR1Demo:
-                    case TRGame.TR1UnfinishedBusiness:
+                    case Engine.TR1:
                         Write_TR1();
                         break;
-                    case TRGame.TR2:
-                    case TRGame.TR2Gold:
-                    case TRGame.TR2Demo:
+                    case Engine.TR2:
                         Write_TR2();
                         break;
-                    case TRGame.TR3:
-                    case TRGame.TR3Gold:
+                    case Engine.TR3:
                         Write_TR3();
                         break;
-                    case TRGame.TR4:
-                    case TRGame.TR4Demo:
+                    case Engine.TR4:
                         Write_TR4();
                         break;
-                    case TRGame.TR5:
+                    case Engine.TR5:
                         Write_TR5();
                         break;
-                    case TRGame.Unknown:
-                        throw new ArgumentException("Unknown level format: " + (int)WriteGameVersion);
+                    case Engine.Unknown:
+                        throw new ArgumentException("Unknown level format: " + (int)WriteFormat.Game);
                 }
             }
             finally
@@ -423,42 +489,42 @@ namespace FreeRaider.Loader
             return StaticMeshes.FirstOrDefault(x => x.ObjectID == objectID && MeshIndices[x.Mesh] != 0);
         }
 
-        public Item FindItemById(short objectID)
+        public Entity FindItemById(short objectID)
         {
-            return Items.FirstOrDefault(x => x.ObjectID == objectID);
+            return Entities.FirstOrDefault(x => x.ObjectID == objectID);
         }
 
-        public Moveable FindMoveableById(uint objectID)
+        public Model FindMoveableById(uint objectID)
         {
-            return Moveables.FirstOrDefault(x => x.ObjectID == objectID);
+            return Models.FirstOrDefault(x => x.ObjectID == objectID);
         }
 
-        public void GenTexAndPalettesIfEmpty()
+        private unsafe void Gen16BitTexPalette()
         {
-            if (EngineVersion == Engine.TR2) return; // TR2 already has 8-bit, 16-bit and 32-bit tex and palette
-
             if ((Texture16 ?? new WordTexture[0]).Length == 0)
             {
                 // Generate 16-bit textures
                 Texture16 = new WordTexture[Textures.Length];
                 for (var i = 0; i < Texture16.Length; i++)
                 {
-                    Texture16[i] = new WordTexture(new ushort[256][]);
-                    for (var y = 0; y < 256; y++)
-                    {
-                        Texture16[i].Pixels[y] = new ushort[256];
-
-                        for (var x = 0; x < 256; x++)
+                    Texture16[i] = new WordTexture(new ushort[TextureSize]);
+                    fixed (uint* pix32 = Textures[i].Pixels)
+                    fixed (ushort* pix16 = Texture16[i].Pixels)
+                        for (var j = 0; j < TextureSize; j++)
                         {
-                            Texture16[i].Pixels[y][x] = new ByteColor(Textures[i].Pixels[y][x]).ToUInt16();
+                            pix16[j] = new ByteColor(pix32[j]).ToUInt16();
                         }
-                    }
                 }
             }
+            if (/*WriteEngineVersion < Engine.TR4 &&*/ Equals(Palette16, default(Palette)))
+            {
+                Palette16 = new Palette { Colour = Palette.Colour.Select(x => new ByteColor(x.R, x.G, x.B, 0xFF)).ToArray() };
+            }
+        }
 
-            
-
-            if (WriteGameVersion < TRGame.TR4 && (Equals(Palette, default(Palette)) || (Texture8 ?? new ByteTexture[0]).Length == 0))
+        private void Gen8BitTexPalette()
+        {
+            if ((Equals(Palette, default(Palette)) || (Texture8 ?? new ByteTexture[0]).Length == 0))
             {
                 unsafe
                 {
@@ -472,15 +538,17 @@ namespace FreeRaider.Loader
                         var bmpData = bmp.LockBits(new Rectangle(0, 0, 256, 256), ImageLockMode.WriteOnly,
                             PixelFormat.Format32bppArgb);
                         var scan0 = (uint*)bmpData.Scan0;
-                        for (var y = 0; y < 256; y++)
+                        fixed (uint* ptr = bt.Pixels)
                         {
-                            var scanline = bt.Pixels[y];
-                            fixed (uint* ptr = scanline)
+                            uint* pp = ptr;
+                            for (var i = 0; i < 65536; i++, pp++)
                             {
-                                for (var i = 0; i < 256; i++)
-                                    scan0[y * 256 + i] = (ptr[i] & 0xff00ff00) |
-                                                         ((ptr[i] & 0x00ff0000) >> 16) |
-                                                         ((ptr[i] & 0x000000ff) << 16);
+                                if (*pp == 0)
+                                    scan0[i] = 0xffff00ff;
+                                else
+                                    scan0[i] = (*pp & 0xff00ff00) |
+                                               ((*pp & 0x00ff0000) >> 16) |
+                                               ((*pp & 0x000000ff) << 16);
                             }
                         }
                         bmp.UnlockBits(bmpData);
@@ -488,23 +556,29 @@ namespace FreeRaider.Loader
                             gr.DrawImage(bmp, new Rectangle(bi * 256, 0, 256, 256), 0, 0, 256, 256, GraphicsUnit.Pixel);
                     }
                     var bmp8 = bigBmp.Clone(new Rectangle(0, 0, bigBmp.Width, 256), PixelFormat.Format8bppIndexed);
+                    var bmpData8 = bmp8.LockBits(new Rectangle(0, 0, bigBmp.Width, 256), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+                    var scan08 = (uint*)bmpData8.Scan0;
                     Palette = new Palette() { Colour = bmp8.Palette.Entries.Select(x => (ByteColor)x).ToArray().Resize(256) };
-
+                    for (var i = 0; i < 256; i++)
+                    {
+                        Palette.Colour[i].R >>= 2;
+                        Palette.Colour[i].G >>= 2;
+                        Palette.Colour[i].B >>= 2;
+                    }
                     for (var i = 0; i < Textures.Length; i++)
                     {
-                        Texture8[i] = new ByteTexture(new byte[256][]);
+                        Texture8[i] = new ByteTexture(new byte[TextureSize]);
 
-                        for (var y = 0; y < 256; y++)
+                        fixed (byte* ptr = Texture8[i].Pixels)
                         {
-                            Texture8[i].Pixels[y] = new byte[256];
-
-                            for (var x = 0; x < 256; x++)
-                            {
-                                Texture8[i].Pixels[y][x] = (byte)Array.IndexOf(bmp8.Palette.Entries, bmp8.GetPixel(i * 256 + x, y));
-                            }
+                            for (var y = 0; y < 256; y++)
+                                for (var x = 0; x < 256; x++)
+                                {
+                                    ptr[(y << 8) | x] = (byte)Array.IndexOf(bmp8.Palette.Entries, Color.FromArgb((int)scan08[(y * bigBmp.Width) + ((i << 8) + x)]));
+                                }
                         }
                     }
-
+                    bmp8.UnlockBits(bmpData8);
 
 
 
@@ -529,24 +603,58 @@ namespace FreeRaider.Loader
                     }*/
                 }
             }
-            if (WriteEngineVersion < Engine.TR4 && Equals(Palette16, default(Palette)))
+        }
+
+        private void Gen32BitTexPalette()
+        {
+            var has8 = (Texture8 ?? new ByteTexture[0]).Length != 0;
+            var has16 = (Texture16 ?? new WordTexture[0]).Length != 0;
+            if (!has8 && !has16)
             {
-                Palette16 = new Palette {Colour = Palette.Colour.Select(x => new ByteColor(x.R, x.G, x.B, 0xFF)).ToArray()};
+                Gen16BitTexPalette();
+            }
+            if ((Texture16 ?? new WordTexture[0]).Length != 0)
+            {
+                Textures = new DWordTexture[Texture16.Length];
+                for (uint i = 0; i < Texture16.Length; i++)
+                {
+                    Textures[i] = ConvertTexture(Texture16[i]);
+                }
+            }
+            else
+            {
+                if (!has8) throw new OhShitException("Neither 8-bit nor 16-bit textures are present, so it's quite hard to generate 32-bit ones", true, double.MaxValue);
+
+                Textures = new DWordTexture[Texture8.Length];
+                for (uint i = 0; i < Texture8.Length; i++)
+                {
+                    Textures[i] = ConvertTexture(Palette, Texture8[i]);
+                }
             }
         }
 
-        private static uint[] GetTopColors(DWordTexture[] texs, int n = 256)
+        public unsafe void GenTexAndPalettesIfEmpty(bool _8 = true, bool _16 = true, bool _32 = true)
+        {
+            //if (EngineVersion == Engine.TR2 || EngineVersion == Engine.TR3) return; // TR2 and TR3 already have 8-bit, 16-bit and 32-bit tex and palette
+
+            if (_8) Gen8BitTexPalette();
+            
+            if(_16) Gen16BitTexPalette();
+            
+        }
+
+        private static unsafe uint[] GetTopColors(DWordTexture[] texs, int n = 256)
         {
             var res = new Dictionary<uint, int>();
-            foreach (var tex in texs)
+            for (int index = 0; index < texs.Length; index++)
             {
-                for (var y = 0; y < 256; y++)
+                var tex = texs[index];
+                fixed(uint* ptr = tex.Pixels)
+                for (var i = 0; i < TextureSize; i++)
                 {
-                    for (var x = 0; x < 256; x++)
-                    {
-                        if (!res.ContainsKey(tex.Pixels[y][x])) res[tex.Pixels[y][x]] = 1;
-                        else res[tex.Pixels[y][x]]++;
-                    }
+                        if (!res.ContainsKey(ptr[i])) res[ptr[i]] = 1;
+                        else res[ptr[i]]++;
+                    
                 }
             }
             return res.OrderByDescending(x => x.Value).Distinct().Select(x => x.Key).Take(n).ToArray();
@@ -571,23 +679,29 @@ namespace FreeRaider.Loader
 
         private unsafe void Gen8bitPaletteFrom32bitTex(DWordTexture[] texs)
         {
-            foreach (var bt in texs)
+            for (int index = 0; index < texs.Length; index++)
             {
+                var bt = texs[index];
                 var bmp = new Bitmap(256, 256, PixelFormat.Format32bppArgb);
                 var bmpData = bmp.LockBits(new Rectangle(0, 0, 256, 256), ImageLockMode.WriteOnly,
                     PixelFormat.Format32bppArgb);
                 var scan0 = (uint*) bmpData.Scan0;
-                for (var y = 0; y < 256; y++)
+                fixed(uint* ptr = bt.Pixels)
+                for (var i = 0; i < 65536; i++)
                 {
-                    var scanline = bt.Pixels[y];
-                    fixed (uint* ptr = scanline)
-                    {
-                        for (var i = 0; i < 256; i++)
-                            scan0[y * 256 + i] = (ptr[i] & 0xff00ff00) |
-                                                 ((ptr[i] & 0x00ff0000) >> 16) |
-                                                 ((ptr[i] & 0x000000ff) << 16);
-                    }
+                    scan0[i] = (ptr[i] & 0xff00ff00) |
+                                             ((ptr[i] & 0x00ff0000) >> 16) |
+                                             ((ptr[i] & 0x000000ff) << 16);
                 }
+                bmp.UnlockBits(bmpData);
+                /*for (var y = 0; y < 256; y++)
+                {
+                    var ptr = bt.Pixels + y * 256;
+                    for (var i = 0; i < 256; i++)
+                        scan0[y * 256 + i] = (ptr[i] & 0xff00ff00) |
+                                             ((ptr[i] & 0x00ff0000) >> 16) |
+                                             ((ptr[i] & 0x000000ff) << 16);
+                }*/
                 var bmp8 = bmp.Clone(new Rectangle(0, 0, 256, 256), PixelFormat.Format8bppIndexed);
                 Palette = new Palette() {Colour = bmp8.Palette.Entries.Select(x => (ByteColor) x).ToArray()};
             }
@@ -595,50 +709,47 @@ namespace FreeRaider.Loader
             Palette = new Palette() { Colour = top };*/
         }
 
-        private static DWordTexture ConvertTexture(Palette p, ByteTexture t)
+        private static unsafe DWordTexture ConvertTexture(Palette p, ByteTexture t)
         {
-            var ret = new DWordTexture(new uint[256][]);
-            for (var y = 0; y < 256; y++)
+            var ret = new DWordTexture();
+            ret.Pixels = new uint[TextureSize];
+            fixed(byte* ptr = t.Pixels)
+            fixed(uint* ptr32 = ret.Pixels)
+            for (var i = 0; i < TextureSize; i++)
             {
-                ret.Pixels[y] = new uint[256];
-
-                for (var x = 0; x < 256; x++)
+                var color = ptr[i];
+                uint val = 0;
+                if (color > 0)
                 {
-                    var color = t.Pixels[y][x];
-                    uint val = 0;
-                    if(color > 0)
-                    {
-                        var palc = p.Colour[color];
-                        val = (uint)(palc.R | (palc.G << 8) | (palc.B << 16) | (0xff << 24));
-                    }
-                    ret.Pixels[y][x] = val;
+                    var palc = p.Colour[color];
+                    val = (uint)(palc.R | (palc.G << 8) | (palc.B << 16) | (0xff << 24));
                 }
+                ptr32[i] = val;
             }
             return ret;
         }
 
-        private static DWordTexture ConvertTexture(WordTexture t)
+        private static unsafe DWordTexture ConvertTexture(WordTexture t)
         {
-            var ret = new DWordTexture(new uint[256][]);
-            for (var y = 0; y < 256; y++)
-            {
-                ret.Pixels[y] = new uint[256];
-
-                for (var x = 0; x < 256; x++)
+            var ret = new DWordTexture();
+            ret.Pixels = new uint[TextureSize];
+            fixed (ushort* ptr = t.Pixels)
+            fixed (uint* ptr32 = ret.Pixels)
+                for (var i = 0; i < TextureSize; i++)
                 {
-                    var color = t.Pixels[y][x];
+                    var color = ptr[i];
                     uint val = 0;
                     if ((color & 0x8000) != 0)
                     {
-                        val = (uint)(
-                            ((color & 0x00007c00) >> 7) 
-                            | (((color & 0x000003e0) >> 2) << 8) 
-                            | ((color & 0x0000001f) << 3 << 16) 
+                        val = (uint) (
+                            ((color & 0x00007c00) >> 7)
+                            | (((color & 0x000003e0) >> 2) << 8)
+                            | ((color & 0x0000001f) << 3 << 16)
                             | 0xff000000);
                     }
-                    ret.Pixels[y][x] = val;
+                    ptr32[i] = val;
                 }
-            }
+
             return ret;
         }
     }
@@ -682,4 +793,12 @@ namespace FreeRaider.Loader
             reader.Dispose();
         }
     }*/
+
+    public class OhShitException : Exception
+    {
+        public OhShitException(string message, bool shitBrix = false, double shitLevel = 0)
+        {
+
+        }
+    }
 }

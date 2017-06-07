@@ -69,7 +69,7 @@ namespace FreeRaider.Loader
             var numSpriteSequences = reader.ReadUInt32();
             SpriteSequences = reader.ReadArray(numSpriteSequences, () => SpriteSequence.Read(reader));
 
-            if (IsDemoOrUb)
+            if (Format.IsDemoOrVict)
                 Palette = Palette.Read(reader, Engine.TR1);
 
             var numCameras = reader.ReadUInt32();
@@ -90,11 +90,11 @@ namespace FreeRaider.Loader
             AnimatedTextures = reader.ReadUInt16Array(numAnimatedTextures);
 
             var numItems = reader.ReadUInt32();
-            Items = reader.ReadArray(numItems, () => Item.Read(reader, Engine.TR1));
+            Entities = reader.ReadArray(numItems, () => Entity.Read(reader, Engine.TR1));
 
             LightMap = LightMap.Read(reader);
 
-            if (!IsDemoOrUb)
+            if (!Format.IsDemoOrVict)
                 Palette = Palette.Read(reader, Engine.TR1);
 
             var numCinematicFrames = reader.ReadUInt16();
@@ -198,7 +198,7 @@ namespace FreeRaider.Loader
             writer.Write((uint) SpriteSequences.Length);
             writer.WriteArray(SpriteSequences, x => x.Write(writer));
 
-            if(WriteIsDemoOrUb)
+            if(WriteFormat.IsDemoOrVict)
                 Palette.Write(writer, Engine.TR1);
 
             writer.Write((uint)Cameras.Length);
@@ -218,12 +218,14 @@ namespace FreeRaider.Loader
             writer.Write((uint)AnimatedTextures.Length);
             writer.WriteUInt16Array(AnimatedTextures);
 
-            writer.Write((uint)Items.Length);
-            writer.WriteArray(Items, x => x.Write(writer, Engine.TR1));
+            var newEnt = ConvertEntityArray(Format.Engine, Engine.TR1, Entities);
+
+            writer.Write((uint)newEnt.Length);
+            writer.WriteArray(newEnt, x => x.Write(writer, Engine.TR1));
 
             LightMap.Write(writer);
 
-            if(!WriteIsDemoOrUb)
+            if(!WriteFormat.IsDemoOrVict)
                 Palette.Write(writer, Engine.TR1);
 
             writer.Write((ushort)CinematicFrames.Length);

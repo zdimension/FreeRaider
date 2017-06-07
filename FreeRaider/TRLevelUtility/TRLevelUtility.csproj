@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{B73291F3-013B-4189-84D8-8ACBE9E0340A}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>TRLevelUtility</RootNamespace>
+    <ApplicationIcon>TRLU.ico</ApplicationIcon>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <AssemblyName>TRLevelUtility</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(OS)' != 'Unix'">
+    <CscToolPath>$(MSBuildProgramFiles32)\MSBuild\14.0\Bin</CscToolPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <LangVersion>6</LangVersion>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <LangVersion>6</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="gdk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="atk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="glade-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="glib-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="Mono.Posix">
+      <HintPath>C:\Program Files %28x86%29\GtkSharp\2.12\lib\Mono.Posix\Mono.Posix.dll</HintPath>
+    </Reference>
+    <Reference Include="pango-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="gtk-gui\gui.stetic">
+      <LogicalName>gui.stetic</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TRLU_16.png" />
+    <EmbeddedResource Include="TRLU_24.png" />
+    <EmbeddedResource Include="TRLU_32.png" />
+    <EmbeddedResource Include="TRLU_64.png" />
+    <EmbeddedResource Include="TRLU_48.png" />
+    <EmbeddedResource Include="TRLU.ico" />
+    <EmbeddedResource Include="gtkrc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="gtk-gui\generated.cs" />
+    <Compile Include="MainWindow.cs">
+    </Compile>
+    <Compile Include="gtk-gui\MainWindow.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="TwoBaseEntry.cs" />
+    <Compile Include="gtk-gui\TRLevelUtility.TwoBaseEntry.cs" />
+    <Compile Include="ScriptActionWgt.cs" />
+    <Compile Include="gtk-gui\TRLevelUtility.ScriptActionWgt.cs" />
+    <Compile Include="ListAddRem.cs" />
+    <Compile Include="gtk-gui\TRLevelUtility.ListAddRem.cs" />
+    <Compile Include="DialogTest.cs" />
+    <Compile Include="gtk-gui\TRLevelUtility.DialogTest.cs" />
+    <Compile Include="TPCImportDlg.cs" />
+    <Compile Include="gtk-gui\TRLevelUtility.TPCImportDlg.cs" />
+    <Compile Include="TR4ImportDlg.cs" />
+    <Compile Include="gtk-gui\TRLevelUtility.TR4ImportDlg.cs" />
+    <Compile Include="Pages\PgTPCScript.cs" />
+    <Compile Include="gtk-gui\TRLevelUtility.PgTPCScript.cs" />
+    <Compile Include="ITRLUPage.cs" />
+    <Compile Include="Helper.cs" />
+    <Compile Include="Pages\PgTR4Script.cs" />
+    <Compile Include="gtk-gui\TRLevelUtility.PgTR4Script.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FreeRaider.Loader\FreeRaider.Loader.csproj">
+      <Project>{9D86F28A-4375-4C47-85E5-AF7F6E123EB4}</Project>
+      <Name>FreeRaider.Loader</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Pages\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|Unix' ">
+    <LangVersion>6</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Unix' ">
+    <LangVersion>6</LangVersion>
+  </PropertyGroup>
+</Project>

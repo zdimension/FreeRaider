@@ -1,0 +1,59 @@
+uint8_t SaveName[33];
+
+uint8_t Unknown[42];
+
+int32_t SaveNumber;
+
+uint8_t Unknown[49];
+
+uint16_t AutoPistols_Ammo; // 65535 means unlimited
+uint16_t Uzis_Ammo;
+uint16_t Shotgun_Ammo; // Ammo = 6 * Shells, therefore 10922 means unlimited
+uint16_t M16_Ammo;
+uint16_t Grenade_Ammo;
+uint16_t Harpoon_Ammo;
+
+uint8_t SmallMedipacks; // 255 means unlimited
+uint8_t LargeMedipacks;
+uint8_t Unknown;
+uint8_t Flares;
+
+uint8_t Unknown[2];
+
+uint8_t Weapons;
+/*
+Pistols 				00000010	2
+Automatic pistols 			00000100	4
+Uzis					00001000	8
+Shotgun					00010000	16
+M16					00100000	32
+Grenade					01000000	64
+Harpoon gun       			10000000	128
+
+Bit 1 is always set.
+*/
+
+uint8_t Unknown[995];
+
+uint32_t AmmoUsed;
+uint32_t Hits;
+
+uint8_t Unknown[17];
+
+/*uint8_t Unknown[1016];
+
+uint8_t Unknown;
+uint8_t Unknown;
+uint8_t Unknown;
+uint8_t Unknown;*/
+
+uint8_t GuardhouseKey;
+uint8_t RustyKey;
+
+uint8_t Unknown[746];
+
+uint16_t Health; // Health * 10 (0.1 becomes 1), 1 decimal precision, 32767 means unlimited
+
+uint8_t Unknown[1952];
+
+uint16_t Air; // Air * 10 (0.1 becomes 1), 1 decimal precision, 32767 means unlimited

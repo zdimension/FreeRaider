@@ -1,0 +1,48 @@
+uint8_t SaveName[40];
+
+uint8_t Unknown[35];
+
+int32_t SaveNumber;
+
+uint8_t Unknown[76];
+
+uint8_t Unknown; // 04=Normal, 0C=Burning Lara, anything else=save doesn't appear
+
+uint8_t Unknown[205];
+
+uint8_t Pistols; // 09 = ok
+uint8_t Uzis; // 01 = ok
+uint8_t Shotgun; // 09 = ok
+uint8_t Crossbow; // 09 = ok, 0D = lasersight
+uint8_t GrenadeLauncher; // 09 = ok
+uint8_t Revolver; // 01 = ok, 05 = lasersight
+uint8_t LaserSight; // 01 = separated
+
+uint8_t Unknown[6];
+
+uint8_t GameText; // 1 = enabled
+uint8_t SerpentText; // 1 = enabled
+uint8_t GoldenSkulls;
+
+uint8_t Unknown[23];
+
+uint16_t SmallMedipacks; // 65535 means unlimited
+uint16_t LargeMedipacks; 
+uint16_t Flares;
+
+uint16_t UziAmmo;
+uint16_t RevolverAmmo;
+uint16_t ShotgunAmmo[2]; // 1 shell = 6 ammo, so here 10922 is unlimited
+uint16_t GrenadeAmmo[3];
+uint16_t CrossbowAmmo[3];
+
+uint8_t Unknown[79];
+
+uint8_t SecretsFound;
+
+
+
+uint8_t EastWest;
+uint8_t NorthSouth;
+uint8_t Unknown[5];
+uint16_t Orientation; // Angle * 65536 / 360
