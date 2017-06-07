@@ -692,7 +692,7 @@ None</property>
       </widget>
     </child>
   </widget>
-  <widget class="Gtk.Dialog" id="TRLevelUtility.TPCImportDlg" design-size="255 205">
+  <widget class="Gtk.Dialog" id="TRLevelUtility.TPCImportDlg" design-size="255 263">
     <property name="MemberName" />
     <property name="Title" translatable="yes">Open DAT file</property>
     <property name="TypeHint">Dialog</property>
@@ -709,7 +709,7 @@ None</property>
         <child>
           <widget class="Gtk.Table" id="table1">
             <property name="MemberName" />
-            <property name="NRows">2</property>
+            <property name="NRows">3</property>
             <property name="NColumns">2</property>
             <property name="RowSpacing">6</property>
             <property name="ColumnSpacing">18</property>
@@ -750,6 +750,34 @@ None</property>
               </packing>
             </child>
             <child>
+              <widget class="Gtk.RadioButton" id="radiobutton2">
+                <property name="MemberName" />
+                <property name="Visible">False</property>
+                <property name="CanFocus">True</property>
+                <property name="Label" translatable="yes">-</property>
+                <property name="Active">True</property>
+                <property name="DrawIndicator">True</property>
+                <property name="HasLabel">True</property>
+                <property name="UseUnderline">True</property>
+                <property name="Group">grpPlatform</property>
+              </widget>
+              <packing>
+                <property name="TopAttach">2</property>
+                <property name="BottomAttach">3</property>
+                <property name="LeftAttach">1</property>
+                <property name="RightAttach">2</property>
+                <property name="AutoSize">True</property>
+                <property name="XOptions">Fill</property>
+                <property name="YOptions">Fill</property>
+                <property name="XExpand">False</property>
+                <property name="XFill">True</property>
+                <property name="XShrink">False</property>
+                <property name="YExpand">False</property>
+                <property name="YFill">True</property>
+                <property name="YShrink">False</property>
+              </packing>
+            </child>
+            <child>
               <widget class="Gtk.VBox" id="vbox2">
                 <property name="MemberName" />
                 <property name="Homogeneous">True</property>
@@ -764,6 +792,7 @@ None</property>
                     <property name="HasLabel">True</property>
                     <property name="UseUnderline">True</property>
                     <property name="Group">grpVersion</property>
+                    <signal name="Toggled" handler="OnRbTR2Toggled" />
                   </widget>
                   <packing>
                     <property name="Position">0</property>
@@ -799,6 +828,7 @@ None</property>
                     <property name="HasLabel">True</property>
                     <property name="UseUnderline">True</property>
                     <property name="Group">grpVersion</property>
+                    <signal name="Toggled" handler="OnRbTR2Toggled" />
                   </widget>
                   <packing>
                     <property name="Position">2</property>
@@ -811,13 +841,12 @@ None</property>
               <packing>
                 <property name="TopAttach">1</property>
                 <property name="BottomAttach">2</property>
-                <property name="AutoSize">True</property>
+                <property name="AutoSize">False</property>
                 <property name="XOptions">Fill</property>
-                <property name="YOptions">Fill</property>
                 <property name="XExpand">False</property>
                 <property name="XFill">True</property>
                 <property name="XShrink">False</property>
-                <property name="YExpand">False</property>
+                <property name="YExpand">True</property>
                 <property name="YFill">True</property>
                 <property name="YShrink">False</property>
               </packing>
@@ -832,7 +861,6 @@ None</property>
                     <property name="MemberName" />
                     <property name="CanFocus">True</property>
                     <property name="Label" translatable="yes">PC</property>
-                    <property name="Active">True</property>
                     <property name="DrawIndicator">True</property>
                     <property name="HasLabel">True</property>
                     <property name="UseUnderline">True</property>
@@ -880,80 +908,8 @@ None</property>
                 <property name="YShrink">False</property>
               </packing>
             </child>
-          </widget>
-          <packing>
-            <property name="Position">0</property>
-            <property name="AutoSize">True</property>
-            <property name="Expand">False</property>
-            <property name="Fill">False</property>
-          </packing>
-        </child>
-      </widget>
-    </child>
-    <child internal-child="ActionArea">
-      <widget class="Gtk.HButtonBox" id="dialog1_ActionArea">
-        <property name="MemberName" />
-        <property name="Spacing">10</property>
-        <property name="BorderWidth">5</property>
-        <property name="Size">1</property>
-        <property name="LayoutStyle">End</property>
-        <child>
-          <widget class="Gtk.Button" id="button10">
-            <property name="MemberName" />
-            <property name="CanFocus">True</property>
-            <property name="UseStock">True</property>
-            <property name="Type">StockItem</property>
-            <property name="StockId">gtk-ok</property>
-            <property name="ResponseId">-5</property>
-            <property name="label">gtk-ok</property>
-          </widget>
-          <packing>
-            <property name="Expand">False</property>
-            <property name="Fill">False</property>
-          </packing>
-        </child>
-      </widget>
-    </child>
-  </widget>
-  <widget class="Gtk.Dialog" id="TRLevelUtility.TR4ImportDlg" design-size="136 170">
-    <property name="MemberName" />
-    <property name="Title" translatable="yes">Open DAT file</property>
-    <property name="TypeHint">Dialog</property>
-    <property name="WindowPosition">CenterOnParent</property>
-    <property name="Modal">True</property>
-    <property name="Resizable">False</property>
-    <property name="AllowGrow">False</property>
-    <property name="Buttons">1</property>
-    <property name="HelpButton">False</property>
-    <child internal-child="VBox">
-      <widget class="Gtk.VBox" id="dialog1_VBox">
-        <property name="MemberName" />
-        <property name="BorderWidth">2</property>
-        <child>
-          <widget class="Gtk.Table" id="table1">
-            <property name="MemberName" />
-            <property name="NRows">2</property>
-            <property name="RowSpacing">6</property>
-            <property name="ColumnSpacing">18</property>
             <child>
-              <widget class="Gtk.Label" id="label1">
-                <property name="MemberName" />
-                <property name="LabelProp" translatable="yes">Game version</property>
-              </widget>
-              <packing>
-                <property name="AutoSize">True</property>
-                <property name="XOptions">Fill</property>
-                <property name="YOptions">Fill</property>
-                <property name="XExpand">False</property>
-                <property name="XFill">True</property>
-                <property name="XShrink">False</property>
-                <property name="YExpand">False</property>
-                <property name="YFill">True</property>
-                <property name="YShrink">False</property>
-              </packing>
-            </child>
-            <child>
-              <widget class="Gtk.VBox" id="vbox2">
+              <widget class="Gtk.VBox" id="vbox4">
                 <property name="MemberName" />
                 <property name="Homogeneous">True</property>
                 <property name="Spacing">6</property>
@@ -966,6 +922,7 @@ None</property>
                     <property name="HasLabel">True</property>
                     <property name="UseUnderline">True</property>
                     <property name="Group">grpVersion</property>
+                    <signal name="Toggled" handler="OnRbTR4Toggled" />
                   </widget>
                   <packing>
                     <property name="Position">0</property>
@@ -983,6 +940,7 @@ None</property>
                     <property name="HasLabel">True</property>
                     <property name="UseUnderline">True</property>
                     <property name="Group">grpVersion</property>
+                    <signal name="Toggled" handler="OnRbTR4Toggled" />
                   </widget>
                   <packing>
                     <property name="Position">1</property>
@@ -993,15 +951,14 @@ None</property>
                 </child>
               </widget>
               <packing>
-                <property name="TopAttach">1</property>
-                <property name="BottomAttach">2</property>
-                <property name="AutoSize">True</property>
+                <property name="TopAttach">2</property>
+                <property name="BottomAttach">3</property>
+                <property name="AutoSize">False</property>
                 <property name="XOptions">Fill</property>
-                <property name="YOptions">Fill</property>
                 <property name="XExpand">False</property>
                 <property name="XFill">True</property>
                 <property name="XShrink">False</property>
-                <property name="YExpand">False</property>
+                <property name="YExpand">True</property>
                 <property name="YFill">True</property>
                 <property name="YShrink">False</property>
               </packing>
@@ -1009,9 +966,7 @@ None</property>
           </widget>
           <packing>
             <property name="Position">0</property>
-            <property name="AutoSize">True</property>
-            <property name="Expand">False</property>
-            <property name="Fill">False</property>
+            <property name="AutoSize">False</property>
           </packing>
         </child>
       </widget>
@@ -1024,9 +979,8 @@ None</property>
         <property name="Size">1</property>
         <property name="LayoutStyle">End</property>
         <child>
-          <widget class="Gtk.Button" id="buttonOk">
+          <widget class="Gtk.Button" id="button10">
             <property name="MemberName" />
-            <property name="CanDefault">True</property>
             <property name="CanFocus">True</property>
             <property name="UseStock">True</property>
             <property name="Type">StockItem</property>
@@ -1745,6 +1699,7 @@ Spanish (TR3 only)</property>
                             <child>
                               <widget class="Gtk.Label" id="label13">
                                 <property name="MemberName" />
+                                <property name="Tooltip" translatable="yes">What to do when the game starts</property>
                                 <property name="LabelProp" translatable="yes">First option</property>
                               </widget>
                               <packing>
@@ -1762,6 +1717,7 @@ Spanish (TR3 only)</property>
                             <child>
                               <widget class="Gtk.Label" id="label14">
                                 <property name="MemberName" />
+                                <property name="Tooltip" translatable="yes">What to do when ExitToTitle is requested and "TitleDisabled" flag is set</property>
                                 <property name="LabelProp" translatable="yes">Title replace</property>
                               </widget>
                               <packing>
@@ -1781,6 +1737,7 @@ Spanish (TR3 only)</property>
                             <child>
                               <widget class="Gtk.Label" id="label15">
                                 <property name="MemberName" />
+                                <property name="Tooltip" translatable="yes">What to do when Lara dies during the demo mode</property>
                                 <property name="LabelProp" translatable="yes">On death in demo mode</property>
                               </widget>
                               <packing>
@@ -1800,6 +1757,7 @@ Spanish (TR3 only)</property>
                             <child>
                               <widget class="Gtk.Label" id="label16">
                                 <property name="MemberName" />
+                                <property name="Tooltip" translatable="yes">What to do when Lara dies during the game</property>
                                 <property name="LabelProp" translatable="yes">On death in game</property>
                               </widget>
                               <packing>
@@ -1819,6 +1777,7 @@ Spanish (TR3 only)</property>
                             <child>
                               <widget class="Gtk.Label" id="label17">
                                 <property name="MemberName" />
+                                <property name="Tooltip" translatable="yes">Time to wait before starting a demo</property>
                                 <property name="LabelProp" translatable="yes">No input time (seconds)</property>
                               </widget>
                               <packing>
@@ -1838,6 +1797,7 @@ Spanish (TR3 only)</property>
                             <child>
                               <widget class="Gtk.Label" id="label18">
                                 <property name="MemberName" />
+                                <property name="Tooltip" translatable="yes">What to do when the demo mode is interrupted</property>
                                 <property name="LabelProp" translatable="yes">On demo interrupt</property>
                               </widget>
                               <packing>
@@ -1857,6 +1817,7 @@ Spanish (TR3 only)</property>
                             <child>
                               <widget class="Gtk.Label" id="label19">
                                 <property name="MemberName" />
+                                <property name="Tooltip" translatable="yes">What to do when the demo mode ends</property>
                                 <property name="LabelProp" translatable="yes">On demo end</property>
                               </widget>
                               <packing>
@@ -1876,6 +1837,7 @@ Spanish (TR3 only)</property>
                             <child>
                               <widget class="Gtk.Label" id="label2">
                                 <property name="MemberName" />
+                                <property name="Tooltip" translatable="yes">If doing only a single level, the level ID (starting at 1). -1 means disabled.</property>
                                 <property name="LabelProp" translatable="yes">Single level</property>
                               </widget>
                               <packing>
@@ -2274,7 +2236,7 @@ Spanish (TR3 only)</property>
                                   <widget class="Gtk.CheckButton" id="cbxTPCFlag3">
                                     <property name="MemberName" />
                                     <property name="CanFocus">True</property>
-                                    <property name="Label" translatable="yes">Cheat sequence disabled</property>
+                                    <property name="Label" translatable="yes">Cheat sequence disabled (all weapons &amp; invincibility)</property>
                                     <property name="DrawIndicator">True</property>
                                     <property name="HasLabel">True</property>
                                     <property name="UseUnderline">True</property>
@@ -2291,7 +2253,7 @@ Spanish (TR3 only)</property>
                                   <widget class="Gtk.CheckButton" id="cbxTPCFlag4">
                                     <property name="MemberName" />
                                     <property name="CanFocus">True</property>
-                                    <property name="Label" translatable="yes">No input timeout</property>
+                                    <property name="Label" translatable="yes">No input timeout (the game doesn't enter demo mode after a specified delay)</property>
                                     <property name="DrawIndicator">True</property>
                                     <property name="HasLabel">True</property>
                                     <property name="UseUnderline">True</property>
@@ -2325,7 +2287,7 @@ Spanish (TR3 only)</property>
                                   <widget class="Gtk.CheckButton" id="cbxTPCFlag6">
                                     <property name="MemberName" />
                                     <property name="CanFocus">True</property>
-                                    <property name="Label" translatable="yes">Screen sizing keys disabled</property>
+                                    <property name="Label" translatable="yes">Screen sizing keys disabled (F1-F4)</property>
                                     <property name="DrawIndicator">True</property>
                                     <property name="HasLabel">True</property>
                                     <property name="UseUnderline">True</property>

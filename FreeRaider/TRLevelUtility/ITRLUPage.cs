@@ -7,7 +7,7 @@ namespace TRLevelUtility
     {
         void CreateNew();
 
-        void Open(string filename);
+        void Open(string filename, params dynamic[] args);
 
         event SSCHdlr SaveStateChanged;
 

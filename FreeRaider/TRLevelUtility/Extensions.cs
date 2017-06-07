@@ -2,16 +2,17 @@
 using System.Runtime.InteropServices;
 using Gtk;
 using System.Reflection;
+using System.Collections.Generic;
 
 namespace TRLevelUtility
 {
-    public static class Extensions
-    {
-        public static T GetField<T>(this object a, string name)
-            where T : class
-        {
-            return a.GetType().GetField(name, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(a) as T;
-        }
+	public static class Extensions
+	{
+		public static T GetField<T>(this object a, string name)
+			where T : class
+		{
+			return a.GetType().GetField(name, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(a) as T;
+		}
 
 		/*//[DllImport(typeof(Gtk.Global).GetField("GtkNativeDll").GetValue(null).ToString(), CallingConvention = CallingConvention.Cdecl)]
         public delegate IntPtr gtk_text_iter_copy_D(IntPtr raw);
@@ -32,14 +33,40 @@ namespace TRLevelUtility
             return textIter;
         }*/
 
-        public static string[] AddArr(this string s, string[] arr)
-        {
-            var ret = new string[arr.Length + 1];
-            ret[0] = s;
-            arr.CopyTo(ret, 1);
-            return ret;
-        }
+		public static string[] AddArr(this string s, string[] arr)
+		{
+			var ret = new string[arr.Length + 1];
+			ret[0] = s;
+			arr.CopyTo(ret, 1);
+			return ret;
+		}
 
+		public static int IndexOf<TSource>(this IEnumerable<TSource> source, TSource predicate)
+		{
+			var index = 0;
+			foreach (var item in source)
+			{
+				if ((object)item == (object)predicate)
+				{
+					return index;
+				}
+				index++;
+			}
+			return -1;
+		}
 
-    }
+		public static int IndexOf<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate)
+		{
+			var index = 0;
+			foreach (var item in source)
+			{
+				if (predicate.Invoke(item))
+				{
+					return index;
+				}
+				index++;
+			}
+			return -1;
+		}
+	}
 }

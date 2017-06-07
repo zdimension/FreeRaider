@@ -253,42 +253,24 @@ Library.";
 
     protected void OnBtnOpenScriptClicked(object sender, EventArgs e)
     {
-        var fn = Helper.getFile2(this, "Open a script file", false, pgtpcscript.FileFilter, "TR4-5 script file (SCRIPT.DAT, SCRIPT.txt)|*.DAT;*.TXT");
+		var fn = Helper.getFile2(this, "Open a script file", false, pgtpcscript.FileFilter, "Script file (*.DAT, *.TXT)|*.DAT;*.TXT");
 		if (fn.Item1 == null) return;
-        var ext = System.IO.Path.GetExtension(fn.Item1).ToUpper();
-        if (fn.Item2 == 0)
+		var dlg = new TPCImportDlg();
+		dlg.IconList = this.IconList;
+        if (System.IO.Path.GetFileNameWithoutExtension(fn.Item1).ToUpper() == "TOMBPSX")
+            dlg.Platform = 1;
+        dlg.ParentWindow = this.GdkWindow;
+		dlg.Run();
+		dlg.Destroy();
+        if (dlg.Game <= 3)
         {
-            pgtpcscript.Open(fn.Item1);
+            pgtpcscript.Open(fn.Item1, dlg.Game, dlg.Platform);
             setCurPage(1);
-            /*var dlg = new TPCImportDlg();
-            dlg.IconList = IconList;
-            if (System.IO.Path.GetFileNameWithoutExtension(fn.Item1).ToUpper() == "TOMBPSX")
-                dlg.Platform = 1;
-            dlg.ParentWindow = this.GdkWindow;
-            dlg.Run();
-            cbxTPCTR3.Active = dlg.Game == 3;
-            cbxTPCtr2beta.Active = dlg.Game == 2;
-            cbxTPCPSX.Active = dlg.Platform == 1;
-            dlg.Destroy();
-            tpcFilename = fn.Item1;
-            if (ext == ".DAT")
-            {
-                tpcIsTxt = false;
-
-                load_tpc(TOMBPCFile.ParseDAT(fn.Item1, dlg.Platform == 1, dlg.Game == 2));
-            }
-            else if (ext == ".TXT")
-            {
-                tpcIsTxt = true;
-                var f = TOMBPCFile.ParseTXT(
-                    fn.Item1, dlg.Game == 3 ? TOMBPCGameVersion.TR3 : TOMBPCGameVersion.TR2, dlg.Platform == 1,
-                    () => Helper.getFile(this, "Strings file", false, "Strings file (*.txt)|*.TXT"), false);
-                tpcStringsFilename = f.stringsFilename;
-                load_tpc(f);
-            }*/
         }
         else
         {
+			pgtpcscript.Open(fn.Item1, dlg.Game);
+            setCurPage(1);
             /*var dlg = new TR4ImportDlg();
             dlg.IconList = IconList;
             dlg.ParentWindow = this.GdkWindow;

@@ -108,10 +108,12 @@ namespace TRLevelUtility
 
         private string tpcGetLvName(int id, int type)
         {
-			if (id == 0) return "do nothing";
             var theArr = type == 0 ? larTPCLevels : larTPCdemolvls;
-            if (id < theArr.Store.IterNChildren())
-                return theArr[id, 0];
+			if (id < theArr.Store.IterNChildren())
+				if (id == 0) 
+					return theArr[0, 0] + " if not demo";
+				else
+					return theArr[id, 0];
             return "invalid";
         }
 
@@ -169,32 +171,25 @@ namespace TRLevelUtility
         private string tpcFilename = "";
         private string tpcStringsFilename = "";
 
-        public void Open(string filename)
+        public void Open(string filename, params dynamic[] args)
         {
             var ext = System.IO.Path.GetExtension(filename).ToUpper();
-            var dlg = new TPCImportDlg();
-            dlg.IconList = ParentWnd.IconList;
-            if (System.IO.Path.GetFileNameWithoutExtension(filename).ToUpper() == "TOMBPSX")
-                dlg.Platform = 1;
-            dlg.ParentWindow = this.GdkWindow;
-            dlg.Run();
-            cbxTPCTR3.Active = dlg.Game == 3;
-            cbxTPCtr2beta.Active = dlg.Game == 2;
-            cbxTPCPSX.Active = dlg.Platform == 1;
-            dlg.Destroy();
+            cbxTPCTR3.Active = args[0] == 3;
+            cbxTPCtr2beta.Active = args[0] == 2;
+            cbxTPCPSX.Active = args[1] == 1;
             tpcFilename = filename;
             if (ext == ".DAT")
             {
                 tpcIsTxt = false;
 
-                load_tpc(TOMBPCFile.ParseDAT(filename, dlg.Platform == 1, dlg.Game == 2));
+                load_tpc(TOMBPCFile.ParseDAT(filename, args[1] == 1, args[0] == 2));
             }
             else if (ext == ".TXT")
             {
                 tpcIsTxt = true;
                 var f = TOMBPCFile.ParseTXT(
-                    filename, dlg.Game == 3 ? TOMBPCGameVersion.TR3 : TOMBPCGameVersion.TR2, dlg.Platform == 1,
-                    () => Helper.getFile(ParentWnd, "Strings file", false, "Strings file (*.txt)|*.TXT"), false);
+                    filename, args[0] == 3 ? TOMBPCGameVersion.TR3 : TOMBPCGameVersion.TR2, args[1] == 1,
+					new Func<string>(() => Helper.getFile(ParentWnd, "Strings file", false, "Strings file (*.txt)|*.TXT")), false);
                 tpcStringsFilename = f.stringsFilename;
                 load_tpc(f);
             }
@@ -850,6 +845,8 @@ namespace TRLevelUtility
             var fn = Helper.getFile2(ParentWnd, "Save a script file", true, "TR2-3 script file (TOMBPC.DAT, TOMBPSX.DAT)|*.DAT", "Uncompiled TR2-3 script file (PCfinal.txt, PSXfinal.txt)|*.TXT");
 			if (fn.Item1 == null) return;
 			var dlg = new TPCImportDlg();
+			dlg.ShowTR4 = false;
+            dlg.Save = true;
             dlg.IconList = ParentWnd.IconList;
             dlg.ParentWindow = this.GdkWindow;
             dlg.Game = cbxTPCTR3.Active ? 3 : (cbxTPCtr2beta.Active ? 2 : 1);

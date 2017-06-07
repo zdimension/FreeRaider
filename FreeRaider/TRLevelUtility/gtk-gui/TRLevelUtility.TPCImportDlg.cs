@@ -10,6 +10,8 @@ namespace TRLevelUtility
 
 		private global::Gtk.Label label2;
 
+		private global::Gtk.RadioButton radiobutton2;
+
 		private global::Gtk.VBox vbox2;
 
 		private global::Gtk.RadioButton rbTR2;
@@ -23,6 +25,12 @@ namespace TRLevelUtility
 		private global::Gtk.RadioButton rbPC;
 
 		private global::Gtk.RadioButton rbPSX;
+
+		private global::Gtk.VBox vbox4;
+
+		private global::Gtk.RadioButton rbTR4;
+
+		private global::Gtk.RadioButton rbTR5;
 
 		private global::Gtk.Button button10;
 
@@ -42,7 +50,7 @@ namespace TRLevelUtility
 			w1.Name = "dialog1_VBox";
 			w1.BorderWidth = ((uint)(2));
 			// Container child dialog1_VBox.Gtk.Box+BoxChild
-			this.table1 = new global::Gtk.Table(((uint)(2)), ((uint)(2)), false);
+			this.table1 = new global::Gtk.Table(((uint)(3)), ((uint)(2)), false);
 			this.table1.Name = "table1";
 			this.table1.RowSpacing = ((uint)(6));
 			this.table1.ColumnSpacing = ((uint)(18));
@@ -65,6 +73,21 @@ namespace TRLevelUtility
 			w3.XOptions = ((global::Gtk.AttachOptions)(4));
 			w3.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table1.Gtk.Table+TableChild
+			this.radiobutton2 = new global::Gtk.RadioButton(global::Mono.Unix.Catalog.GetString("-"));
+			this.radiobutton2.CanFocus = true;
+			this.radiobutton2.Name = "radiobutton2";
+			this.radiobutton2.DrawIndicator = true;
+			this.radiobutton2.UseUnderline = true;
+			this.radiobutton2.Group = new global::GLib.SList(global::System.IntPtr.Zero);
+			this.table1.Add(this.radiobutton2);
+			global::Gtk.Table.TableChild w4 = ((global::Gtk.Table.TableChild)(this.table1[this.radiobutton2]));
+			w4.TopAttach = ((uint)(2));
+			w4.BottomAttach = ((uint)(3));
+			w4.LeftAttach = ((uint)(1));
+			w4.RightAttach = ((uint)(2));
+			w4.XOptions = ((global::Gtk.AttachOptions)(4));
+			w4.YOptions = ((global::Gtk.AttachOptions)(4));
+			// Container child table1.Gtk.Table+TableChild
 			this.vbox2 = new global::Gtk.VBox();
 			this.vbox2.Name = "vbox2";
 			this.vbox2.Homogeneous = true;
@@ -73,15 +96,14 @@ namespace TRLevelUtility
 			this.rbTR2 = new global::Gtk.RadioButton(global::Mono.Unix.Catalog.GetString("Tomb Raider 2"));
 			this.rbTR2.CanFocus = true;
 			this.rbTR2.Name = "rbTR2";
-			this.rbTR2.Active = true;
 			this.rbTR2.DrawIndicator = true;
 			this.rbTR2.UseUnderline = true;
 			this.rbTR2.Group = new global::GLib.SList(global::System.IntPtr.Zero);
 			this.vbox2.Add(this.rbTR2);
-			global::Gtk.Box.BoxChild w4 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.rbTR2]));
-			w4.Position = 0;
-			w4.Expand = false;
-			w4.Fill = false;
+			global::Gtk.Box.BoxChild w5 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.rbTR2]));
+			w5.Position = 0;
+			w5.Expand = false;
+			w5.Fill = false;
 			// Container child vbox2.Gtk.Box+BoxChild
 			this.rbTR2b = new global::Gtk.RadioButton(global::Mono.Unix.Catalog.GetString("Tomb Raider 2 Beta"));
 			this.rbTR2b.CanFocus = true;
@@ -90,10 +112,10 @@ namespace TRLevelUtility
 			this.rbTR2b.UseUnderline = true;
 			this.rbTR2b.Group = this.rbTR2.Group;
 			this.vbox2.Add(this.rbTR2b);
-			global::Gtk.Box.BoxChild w5 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.rbTR2b]));
-			w5.Position = 1;
-			w5.Expand = false;
-			w5.Fill = false;
+			global::Gtk.Box.BoxChild w6 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.rbTR2b]));
+			w6.Position = 1;
+			w6.Expand = false;
+			w6.Fill = false;
 			// Container child vbox2.Gtk.Box+BoxChild
 			this.rbTR3 = new global::Gtk.RadioButton(global::Mono.Unix.Catalog.GetString("Tomb Raider 3"));
 			this.rbTR3.CanFocus = true;
@@ -102,16 +124,15 @@ namespace TRLevelUtility
 			this.rbTR3.UseUnderline = true;
 			this.rbTR3.Group = this.rbTR2.Group;
 			this.vbox2.Add(this.rbTR3);
-			global::Gtk.Box.BoxChild w6 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.rbTR3]));
-			w6.Position = 2;
-			w6.Expand = false;
-			w6.Fill = false;
+			global::Gtk.Box.BoxChild w7 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.rbTR3]));
+			w7.Position = 2;
+			w7.Expand = false;
+			w7.Fill = false;
 			this.table1.Add(this.vbox2);
-			global::Gtk.Table.TableChild w7 = ((global::Gtk.Table.TableChild)(this.table1[this.vbox2]));
-			w7.TopAttach = ((uint)(1));
-			w7.BottomAttach = ((uint)(2));
-			w7.XOptions = ((global::Gtk.AttachOptions)(4));
-			w7.YOptions = ((global::Gtk.AttachOptions)(4));
+			global::Gtk.Table.TableChild w8 = ((global::Gtk.Table.TableChild)(this.table1[this.vbox2]));
+			w8.TopAttach = ((uint)(1));
+			w8.BottomAttach = ((uint)(2));
+			w8.XOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table1.Gtk.Table+TableChild
 			this.vbox3 = new global::Gtk.VBox();
 			this.vbox3.Name = "vbox3";
@@ -121,46 +142,77 @@ namespace TRLevelUtility
 			this.rbPC = new global::Gtk.RadioButton(global::Mono.Unix.Catalog.GetString("PC"));
 			this.rbPC.CanFocus = true;
 			this.rbPC.Name = "rbPC";
-			this.rbPC.Active = true;
 			this.rbPC.DrawIndicator = true;
 			this.rbPC.UseUnderline = true;
-			this.rbPC.Group = new global::GLib.SList(global::System.IntPtr.Zero);
+			this.rbPC.Group = this.radiobutton2.Group;
 			this.vbox3.Add(this.rbPC);
-			global::Gtk.Box.BoxChild w8 = ((global::Gtk.Box.BoxChild)(this.vbox3[this.rbPC]));
-			w8.Position = 0;
-			w8.Expand = false;
-			w8.Fill = false;
+			global::Gtk.Box.BoxChild w9 = ((global::Gtk.Box.BoxChild)(this.vbox3[this.rbPC]));
+			w9.Position = 0;
+			w9.Expand = false;
+			w9.Fill = false;
 			// Container child vbox3.Gtk.Box+BoxChild
 			this.rbPSX = new global::Gtk.RadioButton(global::Mono.Unix.Catalog.GetString("PSX"));
 			this.rbPSX.CanFocus = true;
 			this.rbPSX.Name = "rbPSX";
 			this.rbPSX.DrawIndicator = true;
 			this.rbPSX.UseUnderline = true;
-			this.rbPSX.Group = this.rbPC.Group;
+			this.rbPSX.Group = this.radiobutton2.Group;
 			this.vbox3.Add(this.rbPSX);
-			global::Gtk.Box.BoxChild w9 = ((global::Gtk.Box.BoxChild)(this.vbox3[this.rbPSX]));
-			w9.Position = 1;
-			w9.Expand = false;
-			w9.Fill = false;
+			global::Gtk.Box.BoxChild w10 = ((global::Gtk.Box.BoxChild)(this.vbox3[this.rbPSX]));
+			w10.Position = 1;
+			w10.Expand = false;
+			w10.Fill = false;
 			this.table1.Add(this.vbox3);
-			global::Gtk.Table.TableChild w10 = ((global::Gtk.Table.TableChild)(this.table1[this.vbox3]));
-			w10.TopAttach = ((uint)(1));
-			w10.BottomAttach = ((uint)(2));
-			w10.LeftAttach = ((uint)(1));
-			w10.RightAttach = ((uint)(2));
-			w10.XOptions = ((global::Gtk.AttachOptions)(4));
-			w10.YOptions = ((global::Gtk.AttachOptions)(4));
+			global::Gtk.Table.TableChild w11 = ((global::Gtk.Table.TableChild)(this.table1[this.vbox3]));
+			w11.TopAttach = ((uint)(1));
+			w11.BottomAttach = ((uint)(2));
+			w11.LeftAttach = ((uint)(1));
+			w11.RightAttach = ((uint)(2));
+			w11.XOptions = ((global::Gtk.AttachOptions)(4));
+			w11.YOptions = ((global::Gtk.AttachOptions)(4));
+			// Container child table1.Gtk.Table+TableChild
+			this.vbox4 = new global::Gtk.VBox();
+			this.vbox4.Name = "vbox4";
+			this.vbox4.Homogeneous = true;
+			this.vbox4.Spacing = 6;
+			// Container child vbox4.Gtk.Box+BoxChild
+			this.rbTR4 = new global::Gtk.RadioButton(global::Mono.Unix.Catalog.GetString("Tomb Raider 4"));
+			this.rbTR4.CanFocus = true;
+			this.rbTR4.Name = "rbTR4";
+			this.rbTR4.DrawIndicator = true;
+			this.rbTR4.UseUnderline = true;
+			this.rbTR4.Group = this.rbTR2.Group;
+			this.vbox4.Add(this.rbTR4);
+			global::Gtk.Box.BoxChild w12 = ((global::Gtk.Box.BoxChild)(this.vbox4[this.rbTR4]));
+			w12.Position = 0;
+			w12.Expand = false;
+			w12.Fill = false;
+			// Container child vbox4.Gtk.Box+BoxChild
+			this.rbTR5 = new global::Gtk.RadioButton(global::Mono.Unix.Catalog.GetString("Tomb Raider 5"));
+			this.rbTR5.CanFocus = true;
+			this.rbTR5.Name = "rbTR5";
+			this.rbTR5.DrawIndicator = true;
+			this.rbTR5.UseUnderline = true;
+			this.rbTR5.Group = this.rbTR2.Group;
+			this.vbox4.Add(this.rbTR5);
+			global::Gtk.Box.BoxChild w13 = ((global::Gtk.Box.BoxChild)(this.vbox4[this.rbTR5]));
+			w13.Position = 1;
+			w13.Expand = false;
+			w13.Fill = false;
+			this.table1.Add(this.vbox4);
+			global::Gtk.Table.TableChild w14 = ((global::Gtk.Table.TableChild)(this.table1[this.vbox4]));
+			w14.TopAttach = ((uint)(2));
+			w14.BottomAttach = ((uint)(3));
+			w14.XOptions = ((global::Gtk.AttachOptions)(4));
 			w1.Add(this.table1);
-			global::Gtk.Box.BoxChild w11 = ((global::Gtk.Box.BoxChild)(w1[this.table1]));
-			w11.Position = 0;
-			w11.Expand = false;
-			w11.Fill = false;
+			global::Gtk.Box.BoxChild w15 = ((global::Gtk.Box.BoxChild)(w1[this.table1]));
+			w15.Position = 0;
 			// Internal child TRLevelUtility.TPCImportDlg.ActionArea
-			global::Gtk.HButtonBox w12 = this.ActionArea;
-			w12.Name = "dialog1_ActionArea";
-			w12.Spacing = 10;
-			w12.BorderWidth = ((uint)(5));
-			w12.LayoutStyle = ((global::Gtk.ButtonBoxStyle)(4));
+			global::Gtk.HButtonBox w16 = this.ActionArea;
+			w16.Name = "dialog1_ActionArea";
+			w16.Spacing = 10;
+			w16.BorderWidth = ((uint)(5));
+			w16.LayoutStyle = ((global::Gtk.ButtonBoxStyle)(4));
 			// Container child dialog1_ActionArea.Gtk.ButtonBox+ButtonBoxChild
 			this.button10 = new global::Gtk.Button();
 			this.button10.CanFocus = true;
@@ -169,18 +221,23 @@ namespace TRLevelUtility
 			this.button10.UseUnderline = true;
 			this.button10.Label = "gtk-ok";
 			this.AddActionWidget(this.button10, -5);
-			global::Gtk.ButtonBox.ButtonBoxChild w13 = ((global::Gtk.ButtonBox.ButtonBoxChild)(w12[this.button10]));
-			w13.Expand = false;
-			w13.Fill = false;
+			global::Gtk.ButtonBox.ButtonBoxChild w17 = ((global::Gtk.ButtonBox.ButtonBoxChild)(w16[this.button10]));
+			w17.Expand = false;
+			w17.Fill = false;
 			if ((this.Child != null))
 			{
 				this.Child.ShowAll();
 			}
 			this.DefaultWidth = 255;
-			this.DefaultHeight = 205;
+			this.DefaultHeight = 263;
+			this.radiobutton2.Hide();
 			this.Show();
+			this.rbTR4.Toggled += new global::System.EventHandler(this.OnRbTR4Toggled);
+			this.rbTR5.Toggled += new global::System.EventHandler(this.OnRbTR4Toggled);
 			this.rbPC.Toggled += new global::System.EventHandler(this.OnRbPCToggled);
+			this.rbTR2.Toggled += new global::System.EventHandler(this.OnRbTR2Toggled);
 			this.rbTR2b.Toggled += new global::System.EventHandler(this.OnRbTR2bToggled);
+			this.rbTR3.Toggled += new global::System.EventHandler(this.OnRbTR2Toggled);
 		}
 	}
 }

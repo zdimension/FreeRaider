@@ -723,6 +723,7 @@ namespace TRLevelUtility
 			this.table1.ColumnSpacing = ((uint)(6));
 			// Container child table1.Gtk.Table+TableChild
 			this.label13 = new global::Gtk.Label();
+			this.label13.TooltipMarkup = "What to do when the game starts";
 			this.label13.Name = "label13";
 			this.label13.LabelProp = global::Mono.Unix.Catalog.GetString("First option");
 			this.table1.Add(this.label13);
@@ -731,6 +732,7 @@ namespace TRLevelUtility
 			w45.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table1.Gtk.Table+TableChild
 			this.label14 = new global::Gtk.Label();
+			this.label14.TooltipMarkup = "What to do when ExitToTitle is requested and \"TitleDisabled\" flag is set";
 			this.label14.Name = "label14";
 			this.label14.LabelProp = global::Mono.Unix.Catalog.GetString("Title replace");
 			this.table1.Add(this.label14);
@@ -741,6 +743,7 @@ namespace TRLevelUtility
 			w46.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table1.Gtk.Table+TableChild
 			this.label15 = new global::Gtk.Label();
+			this.label15.TooltipMarkup = "What to do when Lara dies during the demo mode";
 			this.label15.Name = "label15";
 			this.label15.LabelProp = global::Mono.Unix.Catalog.GetString("On death in demo mode");
 			this.table1.Add(this.label15);
@@ -751,6 +754,7 @@ namespace TRLevelUtility
 			w47.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table1.Gtk.Table+TableChild
 			this.label16 = new global::Gtk.Label();
+			this.label16.TooltipMarkup = "What to do when Lara dies during the game";
 			this.label16.Name = "label16";
 			this.label16.LabelProp = global::Mono.Unix.Catalog.GetString("On death in game");
 			this.table1.Add(this.label16);
@@ -761,6 +765,7 @@ namespace TRLevelUtility
 			w48.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table1.Gtk.Table+TableChild
 			this.label17 = new global::Gtk.Label();
+			this.label17.TooltipMarkup = "Time to wait before starting a demo";
 			this.label17.Name = "label17";
 			this.label17.LabelProp = global::Mono.Unix.Catalog.GetString("No input time (seconds)");
 			this.table1.Add(this.label17);
@@ -771,6 +776,7 @@ namespace TRLevelUtility
 			w49.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table1.Gtk.Table+TableChild
 			this.label18 = new global::Gtk.Label();
+			this.label18.TooltipMarkup = "What to do when the demo mode is interrupted";
 			this.label18.Name = "label18";
 			this.label18.LabelProp = global::Mono.Unix.Catalog.GetString("On demo interrupt");
 			this.table1.Add(this.label18);
@@ -781,6 +787,7 @@ namespace TRLevelUtility
 			w50.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table1.Gtk.Table+TableChild
 			this.label19 = new global::Gtk.Label();
+			this.label19.TooltipMarkup = "What to do when the demo mode ends";
 			this.label19.Name = "label19";
 			this.label19.LabelProp = global::Mono.Unix.Catalog.GetString("On demo end");
 			this.table1.Add(this.label19);
@@ -791,6 +798,7 @@ namespace TRLevelUtility
 			w51.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table1.Gtk.Table+TableChild
 			this.label2 = new global::Gtk.Label();
+			this.label2.TooltipMarkup = "If doing only a single level, the level ID (starting at 1). -1 means disabled.";
 			this.label2.Name = "label2";
 			this.label2.LabelProp = global::Mono.Unix.Catalog.GetString("Single level");
 			this.table1.Add(this.label2);
@@ -1036,7 +1044,7 @@ namespace TRLevelUtility
 			this.cbxTPCFlag3 = new global::Gtk.CheckButton();
 			this.cbxTPCFlag3.CanFocus = true;
 			this.cbxTPCFlag3.Name = "cbxTPCFlag3";
-			this.cbxTPCFlag3.Label = global::Mono.Unix.Catalog.GetString("Cheat sequence disabled");
+			this.cbxTPCFlag3.Label = global::Mono.Unix.Catalog.GetString("Cheat sequence disabled (all weapons & invincibility)");
 			this.cbxTPCFlag3.DrawIndicator = true;
 			this.cbxTPCFlag3.UseUnderline = true;
 			this.vboxTPCFlags.Add(this.cbxTPCFlag3);
@@ -1048,7 +1056,7 @@ namespace TRLevelUtility
 			this.cbxTPCFlag4 = new global::Gtk.CheckButton();
 			this.cbxTPCFlag4.CanFocus = true;
 			this.cbxTPCFlag4.Name = "cbxTPCFlag4";
-			this.cbxTPCFlag4.Label = global::Mono.Unix.Catalog.GetString("No input timeout");
+			this.cbxTPCFlag4.Label = global::Mono.Unix.Catalog.GetString("No input timeout (the game doesn\'t enter demo mode after a specified delay)");
 			this.cbxTPCFlag4.DrawIndicator = true;
 			this.cbxTPCFlag4.UseUnderline = true;
 			this.vboxTPCFlags.Add(this.cbxTPCFlag4);
@@ -1072,7 +1080,7 @@ namespace TRLevelUtility
 			this.cbxTPCFlag6 = new global::Gtk.CheckButton();
 			this.cbxTPCFlag6.CanFocus = true;
 			this.cbxTPCFlag6.Name = "cbxTPCFlag6";
-			this.cbxTPCFlag6.Label = global::Mono.Unix.Catalog.GetString("Screen sizing keys disabled");
+			this.cbxTPCFlag6.Label = global::Mono.Unix.Catalog.GetString("Screen sizing keys disabled (F1-F4)");
 			this.cbxTPCFlag6.DrawIndicator = true;
 			this.cbxTPCFlag6.UseUnderline = true;
 			this.vboxTPCFlags.Add(this.cbxTPCFlag6);

@@ -18,7 +18,7 @@ namespace TRLevelUtility
             string ret = null;
             var dlg = new FileChooserDialog(title, parent, save ? FileChooserAction.Save : FileChooserAction.Open);
             dlg.AddButton(Stock.Cancel, ResponseType.Cancel);
-            dlg.AddButton(Stock.Open, ResponseType.Ok);
+            dlg.AddButton(save ? Stock.Save : Stock.Open, ResponseType.Ok);
             filters.All(x =>
             {
                 var fil = new FileFilter();

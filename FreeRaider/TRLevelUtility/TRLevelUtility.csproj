@@ -1,5 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.Net.Compilers.2.3.0-beta1\build\Microsoft.Net.Compilers.props" Condition="Exists('..\packages\Microsoft.Net.Compilers.2.3.0-beta1\build\Microsoft.Net.Compilers.props')" />
   <PropertyGroup>
     <ProjectGuid>{B73291F3-013B-4189-84D8-8ACBE9E0340A}</ProjectGuid>
     <OutputType>WinExe</OutputType>
@@ -8,7 +9,10 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <AssemblyName>TRLevelUtility</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition="'$(OS)' != 'Unix'">
     <CscToolPath>$(MSBuildProgramFiles32)\MSBuild\14.0\Bin</CscToolPath>
@@ -18,14 +22,14 @@
     <OutputPath>bin\Debug</OutputPath>
     <DefineConstants>DEBUG;</DefineConstants>
     <WarningLevel>4</WarningLevel>
-    <LangVersion>6</LangVersion>
+    <LangVersion>Default</LangVersion>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
     <OutputPath>bin\Release</OutputPath>
     <WarningLevel>4</WarningLevel>
-    <LangVersion>6</LangVersion>
+    <LangVersion>Default</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -39,6 +43,10 @@
       <HintPath>C:\Program Files %28x86%29\GtkSharp\2.12\lib\Mono.Posix\Mono.Posix.dll</HintPath>
     </Reference>
     <Reference Include="pango-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="System.ValueTuple, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.4.0-preview1-25305-02\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="gtk-gui\gui.stetic">
@@ -70,8 +78,6 @@
     <Compile Include="gtk-gui\TRLevelUtility.DialogTest.cs" />
     <Compile Include="TPCImportDlg.cs" />
     <Compile Include="gtk-gui\TRLevelUtility.TPCImportDlg.cs" />
-    <Compile Include="TR4ImportDlg.cs" />
-    <Compile Include="gtk-gui\TRLevelUtility.TR4ImportDlg.cs" />
     <Compile Include="Pages\PgTPCScript.cs" />
     <Compile Include="gtk-gui\TRLevelUtility.PgTPCScript.cs" />
     <Compile Include="ITRLUPage.cs" />
@@ -85,14 +91,22 @@
       <Name>FreeRaider.Loader</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
-    <Folder Include="Pages\" />
+    <None Include="app.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|Unix' ">
-    <LangVersion>6</LangVersion>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|Unix' ">
+    <LangVersion>Default</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Unix' ">
-    <LangVersion>6</LangVersion>
+    <LangVersion>Default</LangVersion>
   </PropertyGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>Ce projet fait référence à des packages NuGet qui sont manquants sur cet ordinateur. Utilisez l'option de restauration des packages NuGet pour les télécharger. Pour plus d'informations, consultez http://go.microsoft.com/fwlink/?LinkID=322105. Le fichier manquant est : {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Net.Compilers.2.3.0-beta1\build\Microsoft.Net.Compilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Net.Compilers.2.3.0-beta1\build\Microsoft.Net.Compilers.props'))" />
+  </Target>
 </Project>

@@ -29,7 +29,7 @@ namespace TRLevelUtility
             throw new NotImplementedException();
         }
 
-        public void Open(string filename)
+        public void Open(string filename, params dynamic[] args)
         {
             throw new NotImplementedException();
         }
