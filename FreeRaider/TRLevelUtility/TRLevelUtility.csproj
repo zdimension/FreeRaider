@@ -24,12 +24,14 @@
     <WarningLevel>4</WarningLevel>
     <LangVersion>Default</LangVersion>
     <DebugSymbols>true</DebugSymbols>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
     <OutputPath>bin\Release</OutputPath>
     <WarningLevel>4</WarningLevel>
     <LangVersion>Default</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -46,7 +48,7 @@
     <Reference Include="System.ValueTuple, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.4.0-preview1-25305-02\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="gtk-gui\gui.stetic">
@@ -84,6 +86,12 @@
     <Compile Include="Helper.cs" />
     <Compile Include="Pages\PgTR4Script.cs" />
     <Compile Include="gtk-gui\TRLevelUtility.PgTR4Script.cs" />
+    <Compile Include="HexViewWgt.cs" />
+    <Compile Include="gtk-gui\TRLevelUtility.HexViewWgt.cs" />
+    <Compile Include="Pages\PgRAW.cs" />
+    <Compile Include="gtk-gui\TRLevelUtility.PgRAW.cs" />
+    <Compile Include="Pages\PgCDAudio.cs" />
+    <Compile Include="gtk-gui\TRLevelUtility.PgCDAudio.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FreeRaider.Loader\FreeRaider.Loader.csproj">
@@ -99,9 +107,11 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|Unix' ">
     <LangVersion>Default</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Unix' ">
     <LangVersion>Default</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

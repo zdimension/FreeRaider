@@ -107,13 +107,10 @@ namespace TRLevelUtility
         private List<int> tpcDemoLevels = new List<int>();
 
         private string tpcGetLvName(int id, int type)
-        {
-            var theArr = type == 0 ? larTPCLevels : larTPCdemolvls;
+		{
+			var theArr = new[] { larTPCLevels, null, larTPCcut, larTPCrpl }[type];
 			if (id < theArr.Store.IterNChildren())
-				if (id == 0) 
-					return theArr[0, 0] + " if not demo";
-				else
-					return theArr[id, 0];
+				return theArr[id, 0];
             return "invalid";
         }
 
@@ -171,24 +168,24 @@ namespace TRLevelUtility
         private string tpcFilename = "";
         private string tpcStringsFilename = "";
 
-        public void Open(string filename, params dynamic[] args)
+        public void Open(string filename, params object[] args)
         {
             var ext = System.IO.Path.GetExtension(filename).ToUpper();
-            cbxTPCTR3.Active = args[0] == 3;
-            cbxTPCtr2beta.Active = args[0] == 2;
-            cbxTPCPSX.Active = args[1] == 1;
+			cbxTPCTR3.Active = args[0].Equals(3);
+			cbxTPCtr2beta.Active = args[0].Equals(2);
+			cbxTPCPSX.Active = args[1].Equals(1);
             tpcFilename = filename;
             if (ext == ".DAT")
             {
                 tpcIsTxt = false;
 
-                load_tpc(TOMBPCFile.ParseDAT(filename, args[1] == 1, args[0] == 2));
+				load_tpc(TOMBPCFile.ParseDAT(filename, args[1].Equals(1), args[0].Equals(2)));
             }
             else if (ext == ".TXT")
             {
                 tpcIsTxt = true;
                 var f = TOMBPCFile.ParseTXT(
-                    filename, args[0] == 3 ? TOMBPCGameVersion.TR3 : TOMBPCGameVersion.TR2, args[1] == 1,
+					filename, args[0].Equals(3) ? TOMBPCGameVersion.TR3 : TOMBPCGameVersion.TR2, args[1].Equals(1),
 					new Func<string>(() => Helper.getFile(ParentWnd, "Strings file", false, "Strings file (*.txt)|*.TXT")), false);
                 tpcStringsFilename = f.stringsFilename;
                 load_tpc(f);

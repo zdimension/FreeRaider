@@ -1,0 +1,6 @@
+namespace TRLevelUtility
+{
+	class Program
+	{
+	}
+}

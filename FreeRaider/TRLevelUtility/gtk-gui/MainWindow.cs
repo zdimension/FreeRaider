@@ -45,6 +45,18 @@ public partial class MainWindow
 
 	private global::Gtk.Button btnNewLevel;
 
+	private global::Gtk.HBox hbox44;
+
+	private global::Gtk.Label label47;
+
+	private global::Gtk.Button btnOpenRaw;
+
+	private global::Gtk.HBox hbox52;
+
+	private global::Gtk.Label label56;
+
+	private global::Gtk.Button btnOpenCDA;
+
 	private global::Gtk.VBox vbox31;
 
 	private global::Gtk.Label label46;
@@ -64,6 +76,14 @@ public partial class MainWindow
 	private global::Gtk.Label label43;
 
 	private global::Gtk.Label label44;
+
+	private global::TRLevelUtility.PgRAW pgraw1;
+
+	private global::Gtk.Label label54;
+
+	private global::TRLevelUtility.PgCDAudio pgcdaudio1;
+
+	private global::Gtk.Label label55;
 
 	protected virtual void Build()
 	{
@@ -160,7 +180,7 @@ public partial class MainWindow
 		this.notebook1 = new global::Gtk.Notebook();
 		this.notebook1.CanFocus = true;
 		this.notebook1.Name = "notebook1";
-		this.notebook1.CurrentPage = 1;
+		this.notebook1.CurrentPage = 0;
 		this.notebook1.ShowBorder = false;
 		// Container child notebook1.Gtk.Notebook+NotebookChild
 		this.vbox2 = new global::Gtk.VBox();
@@ -314,18 +334,88 @@ public partial class MainWindow
 		w27.Expand = false;
 		w27.Fill = false;
 		// Container child vbox2.Gtk.Box+BoxChild
+		this.hbox44 = new global::Gtk.HBox();
+		this.hbox44.Name = "hbox44";
+		this.hbox44.Spacing = 6;
+		// Container child hbox44.Gtk.Box+BoxChild
+		this.label47 = new global::Gtk.Label();
+		this.label47.Name = "label47";
+		this.label47.LabelProp = global::Mono.Unix.Catalog.GetString("Raw files\nSupported formats: RAW, PAK (TR4-TR5), Images (for PAK conversion)\nProv" +
+				"ides hexadecimal view, and image loading if needed");
+		this.hbox44.Add(this.label47);
+		global::Gtk.Box.BoxChild w28 = ((global::Gtk.Box.BoxChild)(this.hbox44[this.label47]));
+		w28.Position = 0;
+		w28.Expand = false;
+		w28.Fill = false;
+		// Container child hbox44.Gtk.Box+BoxChild
+		this.btnOpenRaw = new global::Gtk.Button();
+		this.btnOpenRaw.CanFocus = true;
+		this.btnOpenRaw.Name = "btnOpenRaw";
+		this.btnOpenRaw.UseUnderline = true;
+		this.btnOpenRaw.Relief = ((global::Gtk.ReliefStyle)(2));
+		this.btnOpenRaw.Label = global::Mono.Unix.Catalog.GetString("_Open");
+		global::Gtk.Image w29 = new global::Gtk.Image();
+		w29.Pixbuf = global::Stetic.IconLoader.LoadIcon(this, "gtk-open", global::Gtk.IconSize.LargeToolbar);
+		this.btnOpenRaw.Image = w29;
+		this.hbox44.Add(this.btnOpenRaw);
+		global::Gtk.Box.BoxChild w30 = ((global::Gtk.Box.BoxChild)(this.hbox44[this.btnOpenRaw]));
+		w30.PackType = ((global::Gtk.PackType)(1));
+		w30.Position = 1;
+		w30.Expand = false;
+		w30.Fill = false;
+		this.vbox2.Add(this.hbox44);
+		global::Gtk.Box.BoxChild w31 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.hbox44]));
+		w31.Position = 3;
+		w31.Expand = false;
+		w31.Fill = false;
+		// Container child vbox2.Gtk.Box+BoxChild
+		this.hbox52 = new global::Gtk.HBox();
+		this.hbox52.Name = "hbox52";
+		this.hbox52.Spacing = 6;
+		// Container child hbox52.Gtk.Box+BoxChild
+		this.label56 = new global::Gtk.Label();
+		this.label56.Name = "label56";
+		this.label56.LabelProp = global::Mono.Unix.Catalog.GetString("CDAUDIO.WAD\nUsed in TR3 to store all the audio, traditionally stored in the form " +
+				"of CD-Audio.");
+		this.hbox52.Add(this.label56);
+		global::Gtk.Box.BoxChild w32 = ((global::Gtk.Box.BoxChild)(this.hbox52[this.label56]));
+		w32.Position = 0;
+		w32.Expand = false;
+		w32.Fill = false;
+		// Container child hbox52.Gtk.Box+BoxChild
+		this.btnOpenCDA = new global::Gtk.Button();
+		this.btnOpenCDA.CanFocus = true;
+		this.btnOpenCDA.Name = "btnOpenCDA";
+		this.btnOpenCDA.UseUnderline = true;
+		this.btnOpenCDA.Relief = ((global::Gtk.ReliefStyle)(2));
+		this.btnOpenCDA.Label = global::Mono.Unix.Catalog.GetString("_Open");
+		global::Gtk.Image w33 = new global::Gtk.Image();
+		w33.Pixbuf = global::Stetic.IconLoader.LoadIcon(this, "gtk-open", global::Gtk.IconSize.LargeToolbar);
+		this.btnOpenCDA.Image = w33;
+		this.hbox52.Add(this.btnOpenCDA);
+		global::Gtk.Box.BoxChild w34 = ((global::Gtk.Box.BoxChild)(this.hbox52[this.btnOpenCDA]));
+		w34.PackType = ((global::Gtk.PackType)(1));
+		w34.Position = 1;
+		w34.Expand = false;
+		w34.Fill = false;
+		this.vbox2.Add(this.hbox52);
+		global::Gtk.Box.BoxChild w35 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.hbox52]));
+		w35.Position = 4;
+		w35.Expand = false;
+		w35.Fill = false;
+		// Container child vbox2.Gtk.Box+BoxChild
 		this.vbox31 = new global::Gtk.VBox();
 		this.vbox31.Name = "vbox31";
 		this.vbox31.Spacing = 6;
 		// Container child vbox31.Gtk.Box+BoxChild
 		this.label46 = new global::Gtk.Label();
 		this.label46.Name = "label46";
-		this.label46.LabelProp = global::Mono.Unix.Catalog.GetString("label3");
+		this.label46.LabelProp = global::Mono.Unix.Catalog.GetString("this triagonal sign");
 		this.vbox31.Add(this.label46);
-		global::Gtk.Box.BoxChild w28 = ((global::Gtk.Box.BoxChild)(this.vbox31[this.label46]));
-		w28.Position = 0;
-		w28.Expand = false;
-		w28.Fill = false;
+		global::Gtk.Box.BoxChild w36 = ((global::Gtk.Box.BoxChild)(this.vbox31[this.label46]));
+		w36.Position = 0;
+		w36.Expand = false;
+		w36.Fill = false;
 		// Container child vbox31.Gtk.Box+BoxChild
 		this.combobox3 = global::Gtk.ComboBox.NewText();
 		this.combobox3.AppendText(global::Mono.Unix.Catalog.GetString("a"));
@@ -334,23 +424,23 @@ public partial class MainWindow
 		this.combobox3.AppendText(global::Mono.Unix.Catalog.GetString("f"));
 		this.combobox3.Name = "combobox3";
 		this.vbox31.Add(this.combobox3);
-		global::Gtk.Box.BoxChild w29 = ((global::Gtk.Box.BoxChild)(this.vbox31[this.combobox3]));
-		w29.Position = 1;
-		w29.Expand = false;
-		w29.Fill = false;
+		global::Gtk.Box.BoxChild w37 = ((global::Gtk.Box.BoxChild)(this.vbox31[this.combobox3]));
+		w37.Position = 1;
+		w37.Expand = false;
+		w37.Fill = false;
 		// Container child vbox31.Gtk.Box+BoxChild
 		this.comboboxentry1 = global::Gtk.ComboBoxEntry.NewText();
 		this.comboboxentry1.Name = "comboboxentry1";
 		this.vbox31.Add(this.comboboxentry1);
-		global::Gtk.Box.BoxChild w30 = ((global::Gtk.Box.BoxChild)(this.vbox31[this.comboboxentry1]));
-		w30.Position = 2;
-		w30.Expand = false;
-		w30.Fill = false;
+		global::Gtk.Box.BoxChild w38 = ((global::Gtk.Box.BoxChild)(this.vbox31[this.comboboxentry1]));
+		w38.Position = 2;
+		w38.Expand = false;
+		w38.Fill = false;
 		this.vbox2.Add(this.vbox31);
-		global::Gtk.Box.BoxChild w31 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.vbox31]));
-		w31.Position = 3;
-		w31.Expand = false;
-		w31.Fill = false;
+		global::Gtk.Box.BoxChild w39 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.vbox31]));
+		w39.Position = 5;
+		w39.Expand = false;
+		w39.Fill = false;
 		this.notebook1.Add(this.vbox2);
 		// Notebook tab
 		this.label1 = new global::Gtk.Label();
@@ -363,8 +453,8 @@ public partial class MainWindow
 		this.pgtpcscript.Events = ((global::Gdk.EventMask)(256));
 		this.pgtpcscript.Name = "pgtpcscript";
 		this.notebook1.Add(this.pgtpcscript);
-		global::Gtk.Notebook.NotebookChild w33 = ((global::Gtk.Notebook.NotebookChild)(this.notebook1[this.pgtpcscript]));
-		w33.Position = 1;
+		global::Gtk.Notebook.NotebookChild w41 = ((global::Gtk.Notebook.NotebookChild)(this.notebook1[this.pgtpcscript]));
+		w41.Position = 1;
 		// Notebook tab
 		this.label33 = new global::Gtk.Label();
 		this.label33.Name = "label33";
@@ -376,8 +466,8 @@ public partial class MainWindow
 		this.pgtr4script.Events = ((global::Gdk.EventMask)(256));
 		this.pgtr4script.Name = "pgtr4script";
 		this.notebook1.Add(this.pgtr4script);
-		global::Gtk.Notebook.NotebookChild w34 = ((global::Gtk.Notebook.NotebookChild)(this.notebook1[this.pgtr4script]));
-		w34.Position = 2;
+		global::Gtk.Notebook.NotebookChild w42 = ((global::Gtk.Notebook.NotebookChild)(this.notebook1[this.pgtr4script]));
+		w42.Position = 2;
 		// Notebook tab
 		this.label43 = new global::Gtk.Label();
 		this.label43.Name = "label43";
@@ -385,17 +475,43 @@ public partial class MainWindow
 		this.notebook1.SetTabLabel(this.pgtr4script, this.label43);
 		this.label43.ShowAll();
 		// Notebook tab
-		global::Gtk.Label w35 = new global::Gtk.Label();
-		w35.Visible = true;
-		this.notebook1.Add(w35);
+		global::Gtk.Label w43 = new global::Gtk.Label();
+		w43.Visible = true;
+		this.notebook1.Add(w43);
 		this.label44 = new global::Gtk.Label();
 		this.label44.Name = "label44";
 		this.label44.LabelProp = global::Mono.Unix.Catalog.GetString("Level");
-		this.notebook1.SetTabLabel(w35, this.label44);
+		this.notebook1.SetTabLabel(w43, this.label44);
 		this.label44.ShowAll();
+		// Container child notebook1.Gtk.Notebook+NotebookChild
+		this.pgraw1 = new global::TRLevelUtility.PgRAW();
+		this.pgraw1.Events = ((global::Gdk.EventMask)(256));
+		this.pgraw1.Name = "pgraw1";
+		this.notebook1.Add(this.pgraw1);
+		global::Gtk.Notebook.NotebookChild w44 = ((global::Gtk.Notebook.NotebookChild)(this.notebook1[this.pgraw1]));
+		w44.Position = 4;
+		// Notebook tab
+		this.label54 = new global::Gtk.Label();
+		this.label54.Name = "label54";
+		this.label54.LabelProp = global::Mono.Unix.Catalog.GetString("Raw");
+		this.notebook1.SetTabLabel(this.pgraw1, this.label54);
+		this.label54.ShowAll();
+		// Container child notebook1.Gtk.Notebook+NotebookChild
+		this.pgcdaudio1 = new global::TRLevelUtility.PgCDAudio();
+		this.pgcdaudio1.Events = ((global::Gdk.EventMask)(256));
+		this.pgcdaudio1.Name = "pgcdaudio1";
+		this.notebook1.Add(this.pgcdaudio1);
+		global::Gtk.Notebook.NotebookChild w45 = ((global::Gtk.Notebook.NotebookChild)(this.notebook1[this.pgcdaudio1]));
+		w45.Position = 5;
+		// Notebook tab
+		this.label55 = new global::Gtk.Label();
+		this.label55.Name = "label55";
+		this.label55.LabelProp = global::Mono.Unix.Catalog.GetString("CD Audio");
+		this.notebook1.SetTabLabel(this.pgcdaudio1, this.label55);
+		this.label55.ShowAll();
 		this.vbox1.Add(this.notebook1);
-		global::Gtk.Box.BoxChild w36 = ((global::Gtk.Box.BoxChild)(this.vbox1[this.notebook1]));
-		w36.Position = 1;
+		global::Gtk.Box.BoxChild w46 = ((global::Gtk.Box.BoxChild)(this.vbox1[this.notebook1]));
+		w46.Position = 1;
 		this.Add(this.vbox1);
 		if ((this.Child != null))
 		{
@@ -411,6 +527,8 @@ public partial class MainWindow
 		this.btnNewScriptTPC.Clicked += new global::System.EventHandler(this.OnBtnNewScriptTPCClicked);
 		this.btnNewScriptTR4.Clicked += new global::System.EventHandler(this.OnBtnNewScriptTR4Clicked);
 		this.btnOpenScript.Clicked += new global::System.EventHandler(this.OnBtnOpenScriptClicked);
+		this.btnOpenRaw.Clicked += new global::System.EventHandler(this.OnBtnOpenRawClicked);
+		this.btnOpenCDA.Clicked += new global::System.EventHandler(this.OnBtnOpenCDAClicked);
 		this.pgtpcscript.SaveStateChanged += new global::TRLevelUtility.SSCHdlr(this.SetSave);
 		this.pgtr4script.SaveStateChanged += new global::TRLevelUtility.SSCHdlr(this.SetSave);
 	}

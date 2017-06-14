@@ -14,7 +14,7 @@ namespace TRLevelUtility
         protected void OnCbxInstrChanged(object sender, EventArgs e)
         {
             sbVal.Value = sbVal.Value;
-            if (cbxInstr.Active != 0)
+            if (cbxInstr.Active >= 4)
             {
                 sbVal.Value = 0;
                 sbVal.Sensitive = false;
@@ -27,7 +27,7 @@ namespace TRLevelUtility
 
         public int Command { get { return cbxInstr.Active; } set { cbxInstr.Active = value; } }
 
-        private uint[] instructions = { 0x00000000, 0x00000400, 0x00000500, 0x00000700 };
+        private uint[] instructions = { 0x00000000, 0x00000100, 0x00000200, 0x00000300, 0x00000400, 0x00000500, 0x00000700 };
 
         public uint UncompiledValue
         {
@@ -45,7 +45,7 @@ namespace TRLevelUtility
             {
 				if (value >= 0x00000700)
 				{
-					cbxInstr.Active = 3;
+					cbxInstr.Active = 6;
 					return;
 				}
                 int id = Array.IndexOf(instructions, value);
@@ -64,7 +64,7 @@ namespace TRLevelUtility
         protected void OnSbValOutput(object o, Gtk.OutputArgs args)
         {
             sbVal.Text = sbVal.ValueAsInt.ToString();
-            if (cbxInstr.Active == 0)
+            if (cbxInstr.Active < 4 && cbxInstr.Active != 1)
             {
                 sbVal.Text += " (" + OnGetLevelName(sbVal.ValueAsInt, cbxInstr.Active) + ")";
             }

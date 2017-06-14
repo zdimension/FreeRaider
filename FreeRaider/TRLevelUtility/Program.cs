@@ -19,6 +19,13 @@ namespace TRLevelUtility
 
 		public static void Main(string[] args)
 		{
+			GLib.ExceptionManager.UnhandledException += arg => 
+			{
+				arg.ExitApplication = Helper.Die(null, "An unhandled exception has been caught.\n" +
+				                                 "Do you want to exit the application?\n" +
+				                                 "Everything not saved will be lost™.", bt: ButtonsType.YesNo)
+					== ResponseType.Yes;
+			};
 			if (IsWindows)
 				CheckWindowsGtk();
 			Application.Init();
@@ -89,5 +96,10 @@ namespace TRLevelUtility
 		[System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
 		[return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
 		static extern bool SetDllDirectory(string lpPathName);
+
+		public static bool IsRunningOnMono()
+		{
+			return Type.GetType("Mono.Runtime") != null;
+		}
     }
 }

@@ -284,7 +284,7 @@ namespace TRLevelUtility
 			this.notebook2 = new global::Gtk.Notebook();
 			this.notebook2.CanFocus = true;
 			this.notebook2.Name = "notebook2";
-			this.notebook2.CurrentPage = 2;
+			this.notebook2.CurrentPage = 0;
 			// Container child notebook2.Gtk.Notebook+NotebookChild
 			this.larTPCLevels = new global::TRLevelUtility.ListAddRem();
 			this.larTPCLevels.Events = ((global::Gdk.EventMask)(256));

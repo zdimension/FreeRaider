@@ -71,7 +71,7 @@ public partial class MainWindow : Gtk.Window
 Thanks to the TRosettaStone authors for level and other game files reverse-engineering.
 Thanks to IceBerg for the TOMBPC.DAT information.
 Thanks to aktrekker for the TRLE .PRJ format documentation.
-Thanks to Unknown? for the CUTSEQ.BIN/.PAK format documentation.
+Thanks to sapper for the CUTSEQ.BIN/.PAK format documentation.
 Special thanks to b122251 and Cochrane from TRF.";
         #region LGPLv3
         abt.License =
@@ -253,46 +253,32 @@ Library.";
 
     protected void OnBtnOpenScriptClicked(object sender, EventArgs e)
     {
-		var fn = Helper.getFile2(this, "Open a script file", false, pgtpcscript.FileFilter, "Script file (*.DAT, *.TXT)|*.DAT;*.TXT");
-		if (fn.Item1 == null) return;
-		var dlg = new TPCImportDlg();
-		dlg.IconList = this.IconList;
-        if (System.IO.Path.GetFileNameWithoutExtension(fn.Item1).ToUpper() == "TOMBPSX")
-            dlg.Platform = 1;
-        dlg.ParentWindow = this.GdkWindow;
-		dlg.Run();
-		dlg.Destroy();
-        if (dlg.Game <= 3)
-        {
-            pgtpcscript.Open(fn.Item1, dlg.Game, dlg.Platform);
-            setCurPage(1);
-        }
-        else
-        {
-			pgtpcscript.Open(fn.Item1, dlg.Game);
-            setCurPage(1);
-            /*var dlg = new TR4ImportDlg();
-            dlg.IconList = IconList;
-            dlg.ParentWindow = this.GdkWindow;
-            dlg.Run();
-            dlg.Destroy();
-            tpcFilename = fn.Item1;
-            if (ext == ".DAT")
-            {
-                tpcIsTxt = false;
-
-                load_tr4(TR4ScriptFile.Read(fn.Item1));
-            }*/
-            //else if (ext == ".TXT")
-            {
-                /*tpcIsTxt = true;
-                var f = TOMBPCFile.ParseTXT(
-                    fn.Item1, dlg.Game == 3 ? TOMBPCGameVersion.TR3 : TOMBPCGameVersion.TR2, dlg.Platform == 1,
-                    () => getFile("Strings file", false, "Strings file (*.txt)|*.TXT"), false);
-                tpcStringsFilename = f.stringsFilename;
-                load_tr4(f);*/
-            }
-        }
+		try
+		{
+			var fn = Helper.getFile2(this, "Open a script file", false, pgtpcscript.FileFilter, pgtr4script.FileFilter);
+			if (fn.Item1 == null) return;
+			var dlg = new TPCImportDlg();
+			dlg.IconList = this.IconList;
+			if (System.IO.Path.GetFileNameWithoutExtension(fn.Item1).ToUpper() == "TOMBPSX")
+				dlg.Platform = 1;
+			dlg.ParentWindow = this.GdkWindow;
+			dlg.Run();
+			dlg.Destroy();
+			if (dlg.Game <= 3)
+			{
+				pgtpcscript.Open(fn.Item1, dlg.Game, dlg.Platform);
+				setCurPage(1);
+			}
+			else
+			{
+				pgtpcscript.Open(fn.Item1, dlg.Game);
+				setCurPage(2);
+			}
+		}
+		catch (Exception ex)
+		{
+			Helper.Die(ex, "An error occured while opening the script.", this);
+		}
     }
 
 
@@ -367,4 +353,20 @@ Library.";
     {
         btnSave.Visible = btnSaveAs.Visible = can;
     }
+
+	protected void OnBtnOpenRawClicked(object sender, EventArgs e)
+	{
+		var fn = Helper.getFile2(this, "Open a raw file", false, pgraw1.FileFilter);
+		if (fn.Item1 == null) return;
+		pgraw1.Open(fn.Item1, fn.Item2);
+		setCurPage(4);
+	}
+
+	protected void OnBtnOpenCDAClicked(object sender, EventArgs e)
+	{
+		var fn = Helper.getFile2(this, "Open a CDAUDIO file", false, pgcdaudio1.FileFilter);
+		if (fn.Item1 == null) return;
+		pgcdaudio1.Open(fn.Item1);
+		setCurPage(5);
+	}
 }

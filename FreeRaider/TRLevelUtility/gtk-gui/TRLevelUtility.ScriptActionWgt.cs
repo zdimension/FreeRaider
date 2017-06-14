@@ -24,6 +24,9 @@ namespace TRLevelUtility
 			// Container child hbox1.Gtk.Box+BoxChild
 			this.cbxInstr = global::Gtk.ComboBox.NewText();
 			this.cbxInstr.AppendText(global::Mono.Unix.Catalog.GetString("Level"));
+			this.cbxInstr.AppendText(global::Mono.Unix.Catalog.GetString("Saved game"));
+			this.cbxInstr.AppendText(global::Mono.Unix.Catalog.GetString("Cutscene"));
+			this.cbxInstr.AppendText(global::Mono.Unix.Catalog.GetString("FMV"));
 			this.cbxInstr.AppendText(global::Mono.Unix.Catalog.GetString("Demo (random)"));
 			this.cbxInstr.AppendText(global::Mono.Unix.Catalog.GetString("Exit to title"));
 			this.cbxInstr.AppendText(global::Mono.Unix.Catalog.GetString("Exit game"));

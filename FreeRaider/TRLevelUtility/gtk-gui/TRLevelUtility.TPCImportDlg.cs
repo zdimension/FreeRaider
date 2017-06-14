@@ -76,6 +76,7 @@ namespace TRLevelUtility
 			this.radiobutton2 = new global::Gtk.RadioButton(global::Mono.Unix.Catalog.GetString("-"));
 			this.radiobutton2.CanFocus = true;
 			this.radiobutton2.Name = "radiobutton2";
+			this.radiobutton2.Active = true;
 			this.radiobutton2.DrawIndicator = true;
 			this.radiobutton2.UseUnderline = true;
 			this.radiobutton2.Group = new global::GLib.SList(global::System.IntPtr.Zero);
@@ -96,6 +97,7 @@ namespace TRLevelUtility
 			this.rbTR2 = new global::Gtk.RadioButton(global::Mono.Unix.Catalog.GetString("Tomb Raider 2"));
 			this.rbTR2.CanFocus = true;
 			this.rbTR2.Name = "rbTR2";
+			this.rbTR2.Active = true;
 			this.rbTR2.DrawIndicator = true;
 			this.rbTR2.UseUnderline = true;
 			this.rbTR2.Group = new global::GLib.SList(global::System.IntPtr.Zero);

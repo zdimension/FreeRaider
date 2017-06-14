@@ -28,7 +28,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>7</LangVersion>
+    <LangVersion>default</LangVersion>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -81,6 +81,7 @@
     <Compile Include="TR5Level.cs" />
     <Compile Include="TRGame.cs" />
     <Compile Include="WADFile.cs" />
+    <Compile Include="CDAUDIO.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="entity_tr1.db" />

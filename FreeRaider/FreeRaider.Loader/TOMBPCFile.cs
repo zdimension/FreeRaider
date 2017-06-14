@@ -575,25 +575,25 @@ namespace FreeRaider.Loader
                         switch (cmd)
                         {
                             case "FIRSTOPTION":
-                                ret.FirstOption = (uint) ParseAction(value, "NOINPUT_TIME");
+                                ret.FirstOption = (uint) ParseAction(value, "FIRSTOPTION");
                                 break;
                             case "NOINPUT_TIME":
                                 ret.NoInput_Time = (uint) ParseAction(value, "NOINPUT_TIME", true);
                                 break;
                             case "ON_DEMO_INTERRUPT":
-                                ret.On_Demo_Interrupt = (uint) ParseAction(value, "NOINPUT_TIME");
+                                ret.On_Demo_Interrupt = (uint) ParseAction(value, "ON_DEMO_INTERRUPT");
                                 break;
                             case "ON_DEMO_END":
-                                ret.On_Demo_End = (uint) ParseAction(value, "NOINPUT_TIME");
+                                ret.On_Demo_End = (uint) ParseAction(value, "ON_DEMO_END");
                                 break;
                             case "ONDEATH_DEMO_MODE":
-                                ret.OnDeath_Demo_Mode = (uint) ParseAction(value, "NOINPUT_TIME");
+                                ret.OnDeath_Demo_Mode = (uint) ParseAction(value, "ONDEATH_DEMO_MODE");
                                 break;
                             case "ONDEATH_INGAME":
-                                ret.OnDeath_InGame = (uint) ParseAction(value, "NOINPUT_TIME");
+                                ret.OnDeath_InGame = (uint) ParseAction(value, "ONDEATH_INGAME");
                                 break;
                             case "TITLE_REPLACE":
-                                ret.Title_Replace = ParseAction(value, "NOINPUT_TIME");
+                                ret.Title_Replace = ParseAction(value, "TITLE_REPLACE");
                                 break;
                             case "SINGLELEVEL":
                                 ret.SingleLevel = (ushort) ParseAction(value, "SINGLELEVEL", true);

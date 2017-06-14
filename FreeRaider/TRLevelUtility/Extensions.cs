@@ -68,5 +68,41 @@ namespace TRLevelUtility
 			}
 			return -1;
 		}
+
+		public static string[] SplitEveryNocc(this string s, char c, int N = 2)
+		{
+			var ret = new List<string>();
+
+			var curBuf = "";
+
+			var curOcc = 0;
+
+			for (var i = 0; i < s.Length; i++)
+			{
+				var cc = s[i];
+				if (cc == c)
+				{
+					curOcc++;
+					if (curOcc % 2 == 0)
+					{
+						ret.Add(curBuf);
+						curBuf = "";
+						continue;
+					}
+				}
+				curBuf += cc;
+			}
+
+			if (!string.IsNullOrWhiteSpace(curBuf)) ret.Add(curBuf);
+
+			return ret.ToArray();
+		}
+
+		public static string MinSec(this double d)
+		{
+			var m = d / 60;
+			var tr = Math.Truncate(m);
+			return tr.ToString() + ":" + ((m - tr) * 60).ToString("00");
+		}
 	}
 }
